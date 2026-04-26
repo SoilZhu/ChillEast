@@ -10,9 +10,9 @@
 
 # 下载
 
-|系统|应用商店|Release|内地镜像|
+|系统|应用商店|Release|镜像(供中国内地网络环境下载)|
 |---|---|---|---|
-|Android|[咕咕咕]|[Release](https://github.com/soilzhu/ChillEast/releases/latest)|[咕咕咕]|
+|Android|[咕咕咕]|[GitHub Release](https://github.com/soilzhu/ChillEast/releases/latest)|[Cloudflare R2](https://eastchill-apk.soilzhu.su/1.0.0/app-release.apk)|
 |iOS|[咕咕咕]|[咕咕咕]|[咕咕咕]|
 
 # 关于项目
@@ -53,9 +53,11 @@
 
 # 预览
 
-|首页|日程|课表|作业|通知|功能|付款码|
-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-|![首页](img/screenshot/home_screen.png)|![日程](img/screenshot/schedule.png)|![课表](img/screenshot/timetable.png)|![作业](img/screenshot/homework_list.png)|![通知](img/screenshot/notification.png)|![功能](img/screenshot/function_page.png)|![付款码](img/screenshot/pay_code.png)|
+| 首页 | 日程 | 课表 | 作业 |
+| :---: | :---: | :---: | :---: |
+| ![首页](img/screenshot/home_screen.png) | ![日程](img/screenshot/schedule.png) | ![课表](img/screenshot/timetable.png) | ![作业](img/screenshot/homework_list.png) |
+| **通知** | **功能** | **付款码** |
+| ![通知](img/screenshot/notification.png) | ![功能](img/screenshot/function_page.png) | ![付款码](img/screenshot/pay_code.png) |
 
 # TODO
 - [ ] 图书馆座位的原生UI实现
@@ -70,6 +72,8 @@
 # 感谢
 
 灵感来源：[Life@USTC](https://github.com/Life-USTC/Life-USTC) ，一个优秀的帮助中国科大学生获取日常学业相关信息的项目。
+
+WebVPN 的链接转换则参考了 [spencerwooo/bit-webvpn-converter](https://github.com/spencerwooo/bit-webvpn-converter) 。
 
 感谢 Flutter 社区开源的组件们，将会尽力同步于应用中的“开源声明”页面。
 
