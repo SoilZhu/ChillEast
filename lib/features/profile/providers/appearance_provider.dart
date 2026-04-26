@@ -27,32 +27,60 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     const FunctionItem(id: 'ele_recharge', label: '电费充值', icon: Icons.bolt_outlined, color: Colors.yellow),
     const FunctionItem(id: 'bus', label: '实时校车', icon: Icons.airport_shuttle_outlined, color: Color(0xFF34E676)),
     const FunctionItem(id: 'cs_bus', label: '长沙实时公交', icon: Icons.directions_bus_outlined, color: Color(0xFF2196F3)),
+    const FunctionItem(id: 'settings', label: '设置', icon: Icons.settings_outlined, color: Colors.grey),
   ];
 
-  AppearanceNotifier() : super(AppearanceState(
-    homeItems: _getDefaultHomeItems(),
-    functionItems: _getDefaultFunctionItems(),
-  )) {
+  AppearanceNotifier()
+      : super(
+          AppearanceState(
+            homeItems: _getDefaultHomeItems(),
+            functionItems: _getDefaultFunctionItems(),
+          ),
+        ) {
     _loadSettings();
   }
 
   static List<FunctionItem> _getDefaultHomeItems() {
     final homeIds = ['payment_code', 'library', 'empty_classroom', 'xgxt', 'repairs', 'bus', 'score'];
-    return _masterPool.where((item) => homeIds.contains(item.id)).toList();
+    final items = _masterPool.map((item) {
+      return item.copyWith(isVisible: homeIds.contains(item.id));
+    }).toList();
+
+    items.sort((a, b) {
+      if (a.isVisible && !b.isVisible) return -1;
+      if (!a.isVisible && b.isVisible) return 1;
+      if (a.isVisible && b.isVisible) {
+        return homeIds.indexOf(a.id).compareTo(homeIds.indexOf(b.id));
+      }
+      return 0;
+    });
+
+    return items;
   }
 
   static List<FunctionItem> _getDefaultFunctionItems() {
-    // 默认全选，按照指定顺序
     final functionIds = [
-      'payment_code', 'recharge', 'ele_recharge', 'library', 'empty_classroom', 'repairs', 
-      'gym', 'xgxt', 'teaching_eval', 'score', 'vpn', 'campus_card', 'bus', 'cs_bus'
+      'payment_code',
+      'recharge',
+      'ele_recharge',
+      'library',
+      'empty_classroom',
+      'repairs',
+      'gym',
+      'xgxt',
+      'teaching_eval',
+      'score',
+      'vpn',
+      'campus_card',
+      'bus',
+      'cs_bus',
+      'settings',
     ];
     return functionIds.map((id) => _masterPool.firstWhere((item) => item.id == id)).toList();
   }
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    
     final homeJson = prefs.getString(_homeItemsKey);
     final funcJson = prefs.getString(_functionItemsKey);
 
@@ -62,7 +90,8 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     if (homeJson != null) {
       try {
         final decoded = json.decode(homeJson) as List;
-        homeItems = _mergeWithMaster(decoded);
+        final defaultHomeIds = _getDefaultHomeItems().where((e) => e.isVisible).map((e) => e.id).toList();
+        homeItems = _mergeWithMaster(decoded, defaultHomeIds);
       } catch (e) {
         debugPrint('Error loading home items: $e');
       }
@@ -71,7 +100,8 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     if (funcJson != null) {
       try {
         final decoded = json.decode(funcJson) as List;
-        funcItems = _mergeWithMaster(decoded);
+        final defaultFuncIds = _getDefaultFunctionItems().where((e) => e.isVisible).map((e) => e.id).toList();
+        funcItems = _mergeWithMaster(decoded, defaultFuncIds);
       } catch (e) {
         debugPrint('Error loading function items: $e');
       }
@@ -80,36 +110,42 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     state = state.copyWith(homeItems: homeItems, functionItems: funcItems);
   }
 
-  List<FunctionItem> _mergeWithMaster(List decoded) {
-    List<FunctionItem> items = [];
-    for (var data in decoded) {
+  List<FunctionItem> _mergeWithMaster(List decoded, List<String> defaultIds) {
+    final items = <FunctionItem>[];
+
+    for (final data in decoded) {
       final id = data['id'];
-      final template = _masterPool.firstWhere((item) => item.id == id, orElse: () => const FunctionItem(id: 'unknown', label: '未知', icon: Icons.help_outline, color: Colors.grey));
+      final template = _masterPool.firstWhere(
+        (item) => item.id == id,
+        orElse: () => const FunctionItem(
+          id: 'unknown',
+          label: '未知',
+          icon: Icons.help_outline,
+          color: Colors.grey,
+        ),
+      );
       if (template.id != 'unknown') {
         items.add(FunctionItem.fromJson(data, template));
       }
     }
-    
-    // 检查是否有 masterPool 中新增的项（不在保存的列表中）
-    final defaultIds = _getDefaultFunctionItems().map((e) => e.id).toList();
-    for (var masterItem in _masterPool) {
+
+    for (final masterItem in _masterPool) {
       if (!items.any((item) => item.id == masterItem.id)) {
-        // 如果是新项，如果在默认列表中，则默认显示
         items.add(masterItem.copyWith(isVisible: defaultIds.contains(masterItem.id)));
       }
     }
-    
+
     return items;
   }
 
   Future<void> updateHomeItems(List<FunctionItem> items) async {
     state = state.copyWith(homeItems: items);
-    _saveSettings();
+    await _saveSettings();
   }
 
   Future<void> updateFunctionItems(List<FunctionItem> items) async {
     state = state.copyWith(functionItems: items);
-    _saveSettings();
+    await _saveSettings();
   }
 
   Future<void> _saveSettings() async {
@@ -142,30 +178,23 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     final isHome = listType == 'home';
     final items = List<FunctionItem>.from(isHome ? state.homeItems : state.functionItems);
     final visibleCount = items.where((e) => e.isVisible).length;
-    
-    // 1. 修正 oldIndex (UI -> 数据)
-    // UI 列表中，HeaderHidden 占据了 visibleCount 这个位置
+
     int realOldIndex = oldIndex;
     if (oldIndex > visibleCount) {
       realOldIndex = oldIndex - 1;
     } else if (oldIndex == visibleCount) {
-      return; // 拖动的是标题，忽略
+      return;
     }
 
-    // 2. 修正 newIndex (UI -> 数据)
     int realNewIndex = newIndex;
     if (newIndex > visibleCount) {
       realNewIndex = newIndex - 1;
     }
 
-    // 处理 ReorderableListView 的 newIndex 偏移特性
     if (realNewIndex > realOldIndex) realNewIndex -= 1;
-    
+
     final movedItem = items.removeAt(realOldIndex);
-    
-    // 3. 判定新可见性
-    // 如果 newIndex <= visibleCount，说明被拖到了标题之前（或原位），设为可见
-    // 如果 newIndex > visibleCount，说明被拖到了标题之后，设为隐藏
+
     bool newVisibility = movedItem.isVisible;
     if (newIndex <= visibleCount) {
       newVisibility = true;
@@ -174,10 +203,8 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     }
 
     final updatedItem = movedItem.copyWith(isVisible: newVisibility);
-    
-    // 4. 插入并重新排序，确保内存中的 list 始终保持 [Visible..., Hidden...]
     items.insert(realNewIndex > items.length ? items.length : realNewIndex, updatedItem);
-    
+
     items.sort((a, b) {
       if (a.isVisible && !b.isVisible) return -1;
       if (!a.isVisible && b.isVisible) return 1;
