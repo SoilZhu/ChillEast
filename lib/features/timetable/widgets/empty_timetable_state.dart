@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// 课表空状态组件 (样式与 LoginRequiredPlaceholder 保持同步)
+/// 课表空状态组件
 class EmptyTimetableState extends StatelessWidget {
-  final VoidCallback onDownload;
-  
-  const EmptyTimetableState({
-    super.key,
-    required this.onDownload,
-  });
+  const EmptyTimetableState({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +28,7 @@ class EmptyTimetableState extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             Text(
-              '暂无本地课表',
+              '课表正在同步中',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
@@ -43,7 +38,7 @@ class EmptyTimetableState extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              '点击下方按钮或者右上角下载图标\n即可同步您的教务课表',
+              '系统正在为您全自动拉取教务课表\n请稍等片刻...',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -51,26 +46,11 @@ class EmptyTimetableState extends StatelessWidget {
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 48),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton.icon(
-                onPressed: onDownload,
-                icon: const Icon(Icons.download_rounded, size: 20),
-                label: const Text(
-                  '立即导入',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.primaryColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  elevation: 0,
-                ),
-              ),
+            const SizedBox(height: 32),
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
             ),
           ],
         ),

@@ -68,6 +68,11 @@ class AppConstants {
   static const String paymentCodeUrl = campusCardUrl; // 起始地址相同
   static const String campusCardUA = 'Mozilla/5.0 (Linux; Android 16; MEIZU 20 Build/BQ2A.251110.001-BP2A.250605.031.A3; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/147.0.7727.55 Mobile Safari/537.36 (device:MEIZU 20) Language/zh_CN com.chaoxing.mobile.hunannongyedaxue/ChaoXingStudy_1000257_5.3_android_phone_53_234 (Kalimdor)';
   
+  // 移动教务系统 (YDJWXT)
+  static const String ydjwxtOAuthUrl = 'https://auth.chaoxing.com/connect/oauth2/authorize?appid=ccf57937af7e40dcbdef0523e05e5ddd&redirect_uri=https%3A%2F%2Fydjwxt.hunau.edu.cn%2Fnjwhd%2Flogin%2Foauth2%3FappId%3Dccf57937af7e40dcbdef0523e05e5ddd%26appKey%3D1D13d6neUcz6c20f%26uid%3D22073114%26fidEnc%3Da915b52ee0aa18ad%26mappId%3D6127153%26formid%3D&response_type=code&scope=snsapi_base&state=128516';
+  static const String ydjwxtApiUrl = 'https://ydjwxt.hunau.edu.cn/njwhd/student/curriculum';
+  static const String ydjwxtUA = campusCardUA;
+  
   // 报修平台
   static const String repairsBaseUrl = 'https://bxpt.hunau.edu.cn';
   static const String repairsIndexUrl = '$repairsBaseUrl/relax/mobile/index.html';

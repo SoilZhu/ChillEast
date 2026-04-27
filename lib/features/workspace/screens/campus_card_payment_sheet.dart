@@ -77,7 +77,7 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(12),
           topRight: Radius.circular(12),
@@ -141,14 +141,13 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
 
           const SizedBox(height: 32),
 
-          // 内容区域
           if (_isPaying && !_isSuccess)
             Center(
               child: Column(
                 children: [
                   CircularProgressIndicator(color: themeColor),
                   const SizedBox(height: 16),
-                  const Text('请在跳转后的支付宝中完成支付', style: TextStyle(fontSize: 14, color: Colors.black54)),
+                  Text('请在跳转后的支付宝中完成支付', style: TextStyle(fontSize: 14, color: isDark ? Colors.white54 : Colors.black54)),
                 ],
               ),
             ),

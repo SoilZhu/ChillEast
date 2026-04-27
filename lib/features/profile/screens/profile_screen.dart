@@ -77,9 +77,13 @@ class ProfileScreen extends ConsumerWidget {
               _buildListTile(
                 context,
                 icon: Icons.logout_rounded,
-                title: isAuthenticating ? '正在登录...' : '退出登录',
-                titleColor: Colors.redAccent,
-                iconColor: Colors.redAccent,
+                title: '退出登录',
+                titleColor: isAuthenticating 
+                    ? (Theme.of(context).brightness == Brightness.dark ? Colors.white38 : Colors.grey) 
+                    : Colors.redAccent,
+                iconColor: isAuthenticating 
+                    ? (Theme.of(context).brightness == Brightness.dark ? Colors.white38 : Colors.grey) 
+                    : Colors.redAccent,
                 onTap: isAuthenticating 
                     ? () {} 
                     : () => _handleLogout(context, ref),
@@ -91,10 +95,11 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Widget _buildUserInfo(BuildContext context, AuthState authState) {
-    final isLoggedIn = authState.status == AuthStatus.authenticated;
+    final isUnauthenticated = authState.status == AuthStatus.unauthenticated;
+    final isAuthenticating = authState.status == AuthStatus.authenticating;
     
     ImageProvider? avatarImage;
-    if (isLoggedIn && authState.avatarUrl != null) {
+    if (!isUnauthenticated && authState.avatarUrl != null) {
       if (authState.avatarUrl!.startsWith('http')) {
         avatarImage = NetworkImage(authState.avatarUrl!);
       } else {
@@ -105,54 +110,54 @@ class ProfileScreen extends ConsumerWidget {
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-      width: double.infinity,
-      child: Row(
-        children: [
-          // 头像
-          CircleAvatar(
-            radius: 36,
-            backgroundColor: const Color(0xFFF5F5F5),
-            backgroundImage: avatarImage,
-            child: avatarImage == null ? const Icon(
-              Icons.person_rounded,
-              size: 36,
-              color: Color(0xFFBDBDBD),
-            ) : null,
-          ),
-          const SizedBox(width: 20),
-          // 姓名与学号
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isLoggedIn ? (authState.realName ?? '湖南农大学子') : '未登录',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF202124),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  isLoggedIn ? (authState.username ?? '') : '点击登录以访问更多功能',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
+    return InkWell(
+      onTap: isUnauthenticated ? () => _showLoginDialog(context) : null,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        width: double.infinity,
+        child: Row(
+          children: [
+            // 头像
+            CircleAvatar(
+              radius: 36,
+              backgroundColor: const Color(0xFFF5F5F5),
+              backgroundImage: avatarImage,
+              child: avatarImage == null ? const Icon(
+                Icons.person_rounded,
+                size: 36,
+                color: Color(0xFFBDBDBD),
+              ) : null,
             ),
-          ),
-          if (!isLoggedIn)
-            IconButton(
-              onPressed: () => _showLoginDialog(context),
-              icon: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
+            const SizedBox(width: 20),
+            // 姓名与学号
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    !isUnauthenticated ? (authState.realName ?? '湖南农大学子') : '未登录',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF202124),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    !isUnauthenticated ? (authState.username ?? '') : '点击登录以访问更多功能',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
             ),
-        ],
+            if (isUnauthenticated)
+              const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }
@@ -168,7 +173,7 @@ class ProfileScreen extends ConsumerWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
           children: [
             Icon(icon, size: 24, color: iconColor ?? const Color(0xFF5F6368)),

@@ -202,13 +202,8 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
     final amberColor = const Color(0xFFFFC107);
     
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
       appBar: AppBar(
-        title: const Text('电费充值', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18, color: Colors.black87)),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        centerTitle: false,
+        title: const Text('电费充值', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -237,24 +232,24 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Flat Header (Amber)
-                  Container(
+                    Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: amberColor.withOpacity(0.05), // Lighter background
+                      color: isDark ? themeColor.withOpacity(0.1) : amberColor.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: amberColor.withOpacity(0.2)),
+                      border: Border.all(color: isDark ? themeColor.withOpacity(0.2) : amberColor.withOpacity(0.2)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('当前充值房间', style: TextStyle(fontSize: 12, color: Colors.black54, fontWeight: FontWeight.bold)),
+                        Text('当前充值房间', style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.black54, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         Text(
                           _selectedRoom != null 
                             ? '${_selectedArea?.name} - ${_selectedBuilding?.name} - ${_selectedRoom?.name}'
                             : '尚未选择房间',
-                          style: const TextStyle(fontSize: 15, color: Colors.black87, fontWeight: FontWeight.w500),
+                          style: TextStyle(fontSize: 15, color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.w500),
                         ),
                       ],
                     ),
@@ -282,7 +277,7 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
                   
                   const SizedBox(height: 32),
                   
-                  const Text('选择充值金额', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black54)),
+                  Text('选择充值金额', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white54 : Colors.black54)),
                   const SizedBox(height: 12),
                   
                   // Grid (No Shadow)
@@ -303,15 +298,15 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
                         onTap: () => _handlePresetAmountSelect(amount),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: isSelected ? themeColor : Colors.white,
+                            color: isSelected ? themeColor : (isDark ? Colors.white.withOpacity(0.05) : Colors.white),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: isSelected ? themeColor : Colors.grey.withOpacity(0.3)),
+                            border: Border.all(color: isSelected ? themeColor : (isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.3))),
                           ),
                           alignment: Alignment.center,
                           child: Text(
                             '${amount.toStringAsFixed(0)}元',
                             style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.black54,
+                              color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black54),
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                             ),
                           ),
@@ -329,9 +324,10 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
                     inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
                     decoration: InputDecoration(
                       labelText: '其他金额',
-                      labelStyle: TextStyle(color: themeColor),
+                      labelStyle: TextStyle(color: isDark ? themeColor.withOpacity(0.8) : themeColor),
                       prefixText: '¥ ',
-                      filled: false, // Ensure no background color
+                      filled: isDark,
+                      fillColor: isDark ? Colors.white.withOpacity(0.05) : null,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: themeColor.withOpacity(0.3))),
                       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: themeColor.withOpacity(0.4))),
@@ -379,16 +375,18 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
   }
 
   Widget _buildRoomSelectionBox(String label, List<String> items, String? current, Function(String?) onChanged) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return DropdownButtonFormField<String>(
       value: items.contains(current) ? current : null,
       decoration: InputDecoration(
         labelText: label,
-        filled: false, // Remove background color
+        filled: isDark,
+        fillColor: isDark ? Colors.white.withOpacity(0.05) : null,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
+          borderSide: BorderSide(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.3)),
         ),
       ),
       items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(fontSize: 14)))).toList(),

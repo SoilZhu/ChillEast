@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import '../../workspace/screens/webview_detail_screen.dart';
 import '../../../core/network/cookie_manager.dart';
+import '../../../core/utils/route_utils.dart';
+
 
 class HomeworkScreen extends ConsumerStatefulWidget {
   const HomeworkScreen({super.key});
@@ -319,7 +321,7 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
            _logger.i('Opening homework detail: ${item.dataUrl}');
            await AppCookieManager().injectAllChaoxingCookies();
            if (context.mounted) {
-             Navigator.push(context, MaterialPageRoute(builder: (context) => WebViewDetailScreen(title: '作业详情', url: item.dataUrl)));
+             Navigator.push(context, createSlideUpRoute(WebViewDetailScreen(title: '作业详情', url: item.dataUrl)));
            }
         }
       },

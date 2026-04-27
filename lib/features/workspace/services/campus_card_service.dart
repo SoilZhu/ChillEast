@@ -134,10 +134,12 @@ class CampusCardService {
         final html = response.data.toString();
         
         // ✨ 检测会话过期：如果 HTML 包含登录关键字且不包含支付码关键字
-        if ((html.contains('cas/login') || html.contains('统一身份认证')) && !html.contains('id="qrcode"')) {
-          _logger.w('⚠️ Session expired detected in fetchPaymentCode');
+        if (((html.contains('cas/login') || html.contains('统一身份认证')) && !html.contains('id="qrcode"')) || 
+            html.contains('资源受限') || html.contains('页面丢失')) {
+          _logger.w('⚠️ Session expired or error page detected in fetchPaymentCode: ${html.contains('资源受限') ? '资源受限' : '会话过期'}');
           if (!isRetry) {
             _openid = null; // 清除无效的 OpenID
+            await _clearDomainCookies(); // ✨ 清除该域名的 Cookie 强制重新授权
             return fetchPaymentCode(isRetry: true);
           }
         }
@@ -242,10 +244,12 @@ class CampusCardService {
         final html = response.data.toString();
         
         // ✨ 检测会话过期
-        if ((html.contains('cas/login') || html.contains('统一身份认证')) && !html.contains('idserial')) {
-          _logger.w('⚠️ Session expired detected in fetchRechargeInfo');
+        if (((html.contains('cas/login') || html.contains('统一身份认证')) && !html.contains('idserial')) || 
+            html.contains('资源受限') || html.contains('页面丢失')) {
+          _logger.w('⚠️ Session expired or error page detected in fetchRechargeInfo: ${html.contains('资源受限') ? '资源受限' : '会话过期'}');
           if (!isRetry) {
             _openid = null;
+            await _clearDomainCookies();
             return fetchRechargeInfo(isRetry: true);
           }
         }
@@ -413,5 +417,25 @@ class CampusCardService {
   String getCampusCardHomeUrl() {
     if (_openid == null) return AppConstants.campusCardUrl;
     return 'https://fin-serv.hunau.edu.cn/home/openHomePage?openid=$_openid';
+  }
+
+  /// 清除该业务域名的所有 Cookie
+  Future<void> _clearDomainCookies() async {
+    try {
+      _logger.i('🧹 Clearing fin-serv.hunau.edu.cn cookies...');
+      final cookieManager = AppCookieManager();
+      final dioCookieJar = cookieManager.dioCookieJar;
+      
+      // 1. 清除 Dio Cookie
+      await dioCookieJar.delete(Uri.parse('https://fin-serv.hunau.edu.cn'));
+      
+      // 2. 清除 WebView Cookie
+      final webViewCookieManager = CookieManager.instance();
+      await webViewCookieManager.deleteCookies(url: WebUri('https://fin-serv.hunau.edu.cn'));
+      
+      _logger.i('✅ Domain cookies cleared');
+    } catch (e) {
+      _logger.w('⚠️ Failed to clear domain cookies: $e');
+    }
   }
 }

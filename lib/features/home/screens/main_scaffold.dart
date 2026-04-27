@@ -391,18 +391,10 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with SingleTickerPr
                     GestureDetector(
                       onTap: () {
                         _dismissReminder(); // 点击后标记为已看
-                        if (authState.status == AuthStatus.authenticated) {
-                          Navigator.push(
-                            context,
-                            createSlideUpRoute(const ProfileScreen()),
-                          );
-                        } else if (authState.status == AuthStatus.authenticating) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('正在登录...'), behavior: SnackBarBehavior.floating),
-                          );
-                        } else {
-                          _showLoginDialog(context);
-                        }
+                        Navigator.push(
+                          context,
+                          createSlideUpRoute(const ProfileScreen()),
+                        );
                       },
                       child: SizedBox(
                         width: 40, height: 40,

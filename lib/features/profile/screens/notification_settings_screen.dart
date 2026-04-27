@@ -31,18 +31,31 @@ class NotificationSettingsScreen extends ConsumerWidget {
       {'label': '48小时前', 'value': 48.0},
     ];
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('通知设置'),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          color: isDark ? Colors.white : const Color(0xFF202124),
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+        iconTheme: IconThemeData(
+          color: isDark ? Colors.white : Colors.black87,
+        ),
       ),
       body: ListView(
         children: [
-          ListTile(
-            title: const Text('上课提醒'),
-            subtitle: Text(courseDurations.firstWhere((e) => e['value'] == settings.reminderMinutes, orElse: () => courseDurations[0])['label'] as String),
-            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+          _buildSettingItem(
+            context,
+            icon: Icons.book_outlined,
+            title: '上课提醒',
+            subtitle: courseDurations.firstWhere((e) => e['value'] == settings.reminderMinutes, orElse: () => courseDurations[0])['label'] as String,
             onTap: () => _showPicker(
               context, 
               title: '上课提醒时间',
@@ -51,11 +64,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
               onSelected: (val) => ref.read(settingsProvider.notifier).setReminderMinutes(val as int),
             ),
           ),
-          const Divider(height: 1, indent: 16),
-          ListTile(
-            title: const Text('作业截止提醒'),
-            subtitle: Text(homeworkDurations.firstWhere((e) => (e['value'] as double) == settings.homeworkReminderHours, orElse: () => homeworkDurations[0])['label'] as String),
-            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+          _buildSettingItem(
+            context,
+            icon: Icons.assignment_outlined,
+            title: '作业截止提醒',
+            subtitle: homeworkDurations.firstWhere((e) => (e['value'] as double) == settings.homeworkReminderHours, orElse: () => homeworkDurations[0])['label'] as String,
             onTap: () => _showPicker(
               context, 
               title: '作业提醒时间',
@@ -65,6 +78,51 @@ class NotificationSettingsScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSettingItem(BuildContext context, {
+    required IconData icon, 
+    required String title, 
+    required String subtitle,
+    required VoidCallback onTap
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            Icon(icon, size: 24, color: const Color(0xFF5F6368)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: isDark ? Colors.white : const Color(0xFF202124),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

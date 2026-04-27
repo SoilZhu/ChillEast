@@ -60,5 +60,5 @@ ios/ServiceDefinitions.json
 ios/Runner/GeneratedPluginRegistrant.h
 ios/Runner/GeneratedPluginRegistrant.m
 
-# Test
-/test/
+# debug
+debug

@@ -111,7 +111,7 @@ class NotificationService {
         if (reminderTime.isAfter(now.add(const Duration(days: 14)))) continue;
 
         // 生成通知 ID (课程使用1开头)
-        final int notificationId = 100000000 + (course.hashCode.abs() + reminderTime.millisecondsSinceEpoch ~/ 60000).toInt() % 100000000;
+        final int notificationId = 100000000 + (course.id.hashCode.abs() + reminderTime.millisecondsSinceEpoch ~/ 60000).toInt() % 100000000;
 
         final timeStr = '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
 
@@ -130,7 +130,7 @@ class NotificationService {
               showWhen: true,
             ),
           ),
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
           payload: 'course_${course.id}',
         );
@@ -192,7 +192,7 @@ class NotificationService {
             showWhen: true,
           ),
         ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         payload: 'homework_${hw.id}',
       );

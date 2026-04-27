@@ -112,13 +112,8 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
     final primaryColor = const Color(AppConstants.primaryColorValue);
     
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
       appBar: AppBar(
-        title: const Text('校园卡充值', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18, color: Colors.black87)),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        centerTitle: false,
+        title: const Text('校园卡充值', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -151,9 +146,9 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.05),
+                      color: isDark ? Colors.white.withOpacity(0.05) : primaryColor.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: primaryColor.withOpacity(0.2)),
+                      border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : primaryColor.withOpacity(0.2)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,9 +174,9 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
                           ],
                         ),
                         const SizedBox(height: 24),
-                        const Text(
+                        Text(
                           '当前余额 (元)',
-                          style: TextStyle(color: Colors.black54, fontSize: 12, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -194,9 +189,9 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
                   
                   const SizedBox(height: 32),
                   
-                  const Text(
+                  Text(
                     '选择充值金额',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black54),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white54 : Colors.black54),
                   ),
                   const SizedBox(height: 16),
                   
@@ -219,17 +214,17 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
                         borderRadius: BorderRadius.circular(6),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: isSelected ? themeColor : Colors.white,
+                            color: isSelected ? themeColor : (isDark ? Colors.white.withOpacity(0.05) : Colors.white),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: isSelected ? themeColor : Colors.grey.withOpacity(0.3),
+                              color: isSelected ? themeColor : (isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.3)),
                             ),
                           ),
                           alignment: Alignment.center,
                           child: Text(
                             '${amount.toStringAsFixed(0)}元',
                             style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.black54,
+                              color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black54),
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                               fontSize: 15,
                             ),
@@ -248,9 +243,10 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
                     inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
                     decoration: InputDecoration(
                       labelText: '其他金额',
-                      labelStyle: TextStyle(color: themeColor),
+                      labelStyle: TextStyle(color: isDark ? themeColor.withOpacity(0.8) : themeColor),
                       prefixText: '¥ ',
-                      filled: false,
+                      filled: isDark,
+                      fillColor: isDark ? Colors.white.withOpacity(0.05) : null,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(6),

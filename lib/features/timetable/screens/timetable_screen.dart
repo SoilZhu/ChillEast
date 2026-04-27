@@ -14,12 +14,14 @@ import '../../../core/widgets/triangle_painter.dart';
 import '../providers/timetable_status_provider.dart';
 import '../providers/reminder_trigger_provider.dart';
 import '../widgets/weekly_calendar_view.dart';
-import '../widgets/download_timetable_screen.dart';
+import '../widgets/weekly_calendar_view.dart';
+import '../widgets/empty_timetable_state.dart';
 import '../widgets/empty_timetable_state.dart';
 import '../../homework/providers/homework_provider.dart';
 import '../../homework/models/homework_model.dart';
 import '../../../core/state/auth_state.dart';
 import '../../../core/widgets/login_required_placeholder.dart';
+import '../../../core/constants/app_constants.dart';
 import 'package:logger/logger.dart';
 
 /// 自定义次顶栏指示器：上圆下方
@@ -156,7 +158,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> with SingleTi
 
   /// 生成完整的日程时间轴（跨周）
   void _generateAgendaTimeline() {
-    if (_courses.isEmpty || _firstWeekMonday == null) return;
+    if (_firstWeekMonday == null) return;
     
     final Map<DateTime, List<CourseModel>> grouped = {};
     
@@ -183,7 +185,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> with SingleTi
         final hasHomework = homeworkState.maybeWhen(
           data: (list) => list.any((h) => 
             h.status == HomeworkStatus.pending && 
-            h.endTime != null && // 👈 只显示有截止时间的作业
+            h.endTime != null && 
             h.endTime?.year == dayKey.year && 
             h.endTime?.month == dayKey.month && 
             h.endTime?.day == dayKey.day
@@ -250,47 +252,52 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> with SingleTi
         offset += 40.0;
       }
       final cardCount = _agendaTimeline[i].value.length;
-      // 计算高度：单张卡片 72px (包括 12px margin), 区域底部间距 24px
-      double sectionHeight = cardCount * 72.0 + 24.0;
+      // 计算高度：单张卡片 60px + 4px margin = 64px, 区域底部间距 24px
+      double sectionHeight = cardCount * 64.0 + 24.0;
       if (sectionHeight < 84) sectionHeight = 84;
       offset += sectionHeight;
     }
     _agendaScrollController.jumpTo(offset);
   }
-  
-  Future<void> _showDownloadDialog() async {
-    final success = await Navigator.push<bool>(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const DownloadTimetableScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          const begin = Offset(0.0, 0.1); // 从下方 10% 处开始
-          const end = Offset.zero;
-          const curve = Curves.easeOutCubic;
 
-          var slideTween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-          var fadeTween = Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: curve));
-
-          return FadeTransition(
-            opacity: animation.drive(fadeTween),
-            child: SlideTransition(
-              position: animation.drive(slideTween),
-              child: child,
-            ),
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 400),
-      ),
-    );
-    
-    if (success == true) {
+  /// 手动刷新课表
+  Future<void> _handleManualRefresh() async {
+    setState(() { _isLoading = true; });
+    try {
+      final service = TimetableService();
+      await service.downloadAndSaveTimetable(
+        semester: AppConstants.defaultSemester,
+        onProgress: (status) {
+           // 如果需要，可以在这里显示一个小气泡或提示
+        }
+      );
+      
+      // 重新加载本地数据
       await _loadLocalTimetable();
-      // 刷新全局课表状态
+      
+      // 刷新全局状态
       ref.read(timetableStatusProvider.notifier).refresh();
-      // 强制触发提醒气泡刷新逻辑
       ref.read(classReminderTriggerProvider.notifier).update((state) => state + 1);
+      
+      // 重新安排通知
+      await ref.read(settingsProvider.notifier).rescheduleNotifications();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('课表已刷新'), behavior: SnackBarBehavior.floating),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('刷新失败: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() { _isLoading = false; });
     }
   }
+  
 
   /// 分享课表
   Future<void> _shareTimetable() async {
@@ -390,63 +397,15 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> with SingleTi
               onPressed: _handleTodayClick,
               tooltip: '回到今天',
             ),
-            () {
-              // 计算当前是否已经超过 20 周
-              bool needsSync = false;
-              if (_firstWeekMonday != null) {
-                final currentWeek = DateCalculator.getCurrentWeekNumber(_firstWeekMonday!);
-                if (currentWeek > 20) needsSync = true;
-              }
-              
-              final downloadBtn = IconButton(
-                icon: Icon(
-                  Icons.download_rounded, 
-                  size: 22, 
-                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF5F6368)
-                ),
-                onPressed: _showDownloadDialog,
-                tooltip: needsSync ? '同步新学期的课表' : '导入新课表',
-              );
-
-              if (needsSync) {
-                final isDark = Theme.of(context).brightness == Brightness.dark;
-                return Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.center,
-                  children: [
-                    downloadBtn,
-                    Positioned(
-                      top: 40, // 位于按钮下方
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // 小尖尖 (向上)
-                          CustomPaint(
-                            size: const Size(10, 6),
-                            painter: TrianglePainter(
-                              color: isDark ? Colors.grey.withOpacity(0.4) : Colors.black54,
-                            ),
-                          ),
-                          // 气泡主体
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: isDark ? Colors.grey.withOpacity(0.4) : Colors.black54,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              '同步新学期',
-                              style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              }
-              return downloadBtn;
-            }(),
+            IconButton(
+              icon: Icon(
+                Icons.refresh_rounded, 
+                size: 22, 
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF5F6368)
+              ),
+              onPressed: _isLoading ? null : _handleManualRefresh,
+              tooltip: '刷新课表',
+            ),
             IconButton(
               icon: Icon(
                 Icons.share_rounded, 
@@ -475,10 +434,11 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> with SingleTi
     }
 
     if (_isLoading) return const Center(child: CircularProgressIndicator());
-    if (_errorMessage != null) return _buildErrorState();
-    if (!_hasLocalTimetable || _courses.isEmpty) {
-      return EmptyTimetableState(onDownload: _showDownloadDialog);
+    if (!_hasLocalTimetable) {
+      return const EmptyTimetableState();
     }
+    
+    // 如果没有课程但是有元数据（已同步过），则继续渲染（为了展示作业）
     if (_firstWeekMonday == null) return _buildMetadataMissingState();
 
     return TabBarView(
@@ -496,7 +456,16 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> with SingleTi
 
   Widget _buildAgendaView() {
     if (_agendaTimeline.isEmpty) {
-      return const Center(child: Text('本学期暂无课程安排'));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.event_busy_rounded, size: 48, color: Theme.of(context).hintColor.withOpacity(0.3)),
+            const SizedBox(height: 16),
+            Text('本学期暂无课程及作业安排', style: TextStyle(color: Theme.of(context).hintColor)),
+          ],
+        ),
+      );
     }
 
     return ListView.builder(
@@ -605,12 +574,12 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> with SingleTi
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 4),
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      height: 60, // 60 + 12 margin = 72 total
+      height: 60,
       decoration: BoxDecoration(
         color: baseColor,
-        borderRadius: BorderRadius.circular(8), // 圆角调回 8px
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -654,7 +623,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> with SingleTi
           const Text('课表信息不完整'),
           const Text('请重新下载课表'),
           const SizedBox(height: 24),
-          ElevatedButton(onPressed: _showDownloadDialog, child: const Text('重新下载')),
+          ElevatedButton(onPressed: _loadLocalTimetable, child: const Text('重试')),
       ]));
   }
   List<Widget> _buildDayHomeworkItems(DateTime date) {
@@ -681,11 +650,11 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> with SingleTi
   Widget _buildHomeworkAgendaTask(HomeworkModel item) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF3D3D29) : const Color(0xFFFFF9E6),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         children: [

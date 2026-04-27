@@ -49,6 +49,19 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
 
   @override
   Widget build(BuildContext context) {
+    // 判定是否全局无课 (20周都没有课程)
+    if (widget.courses.isEmpty) {
+      return Center(
+        child: Text(
+          '未获取到课表',
+          style: TextStyle(
+            fontSize: 14,
+            color: Theme.of(context).hintColor.withOpacity(0.5),
+          ),
+        ),
+      );
+    }
+
     final weekMonday = DateCalculator.getWeekMonday(
       widget.firstWeekMonday,
       _currentWeekNumber,
@@ -116,7 +129,8 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = constraints.maxWidth;
-        // 定义大节固定高度和间距（保持内外间距一致）
+        const timeColumnWidth = 55.0;
+        // 定义大节固定高度和间距
         const double sectionHeight = 100.0;
         const double targetGap = 4.0;
         const int totalBigSections = 6;
@@ -143,7 +157,7 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
                       // 左侧时间轴 (起止时间显示)
                       _buildFixedTimeAxis(totalBigSections, sectionHeight, targetGap),
                       
-                      // 课程块 (直接使用 Stack)
+                      // 课程块
                       ..._buildFixedCourseBlocks(weekCourses, screenWidth, sectionHeight, targetGap),
                     ],
                   ),

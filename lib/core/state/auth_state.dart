@@ -5,7 +5,9 @@ import '../network/cookie_manager.dart';
 import '../../features/homework/providers/homework_provider.dart';
 import '../../features/notice/providers/notice_provider.dart';
 import '../../features/timetable/services/timetable_storage.dart';
+import '../../features/timetable/services/timetable_service.dart';
 import '../../features/workspace/services/campus_card_service.dart';
+import '../constants/app_constants.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
@@ -26,7 +28,6 @@ class AuthState {
   final String? avatarUrl;
   final bool isGuestMode;
   final bool isInitialized;
-  final bool needsTimetablePrompt;
 
   const AuthState({
     required this.status,
@@ -37,14 +38,13 @@ class AuthState {
     this.avatarUrl,
     this.isGuestMode = false,
     this.isInitialized = false,
-    this.needsTimetablePrompt = false,
   });
   
   /// 初始状态 - 未登录
-  const AuthState.initial() : this(status: AuthStatus.unauthenticated, isGuestMode: false, isInitialized: true, needsTimetablePrompt: false);
+  const AuthState.initial() : this(status: AuthStatus.unauthenticated, isGuestMode: false, isInitialized: true);
   
   /// 正在登录状态
-  const AuthState.authenticating() : this(status: AuthStatus.authenticating, isGuestMode: false, isInitialized: false, needsTimetablePrompt: false);
+  const AuthState.authenticating() : this(status: AuthStatus.authenticating, isGuestMode: false, isInitialized: false);
   
   /// 已登录状态
   const AuthState.authenticated({
@@ -74,7 +74,6 @@ class AuthState {
     String? avatarUrl,
     bool? isGuestMode,
     bool? isInitialized,
-    bool? needsTimetablePrompt,
   }) {
     return AuthState(
       status: status ?? this.status,
@@ -85,7 +84,6 @@ class AuthState {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       isGuestMode: isGuestMode ?? this.isGuestMode,
       isInitialized: isInitialized ?? this.isInitialized,
-      needsTimetablePrompt: needsTimetablePrompt ?? this.needsTimetablePrompt,
     );
   }
   
@@ -183,6 +181,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // ✨ 校园卡静默授权
       Future.microtask(() => _ref.read(campusCardServiceProvider).authenticate());
       
+      // ✨ 自动同步课表
+      _syncTimetableSilently();
+      
     } catch (e) {
       _logger.e('❌ Auto-login failed: $e');
       
@@ -241,10 +242,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await _ref.read(authServiceProvider).logout();
     _ref.read(noticeProvider.notifier).clear();
     
-    // 退出登录时删除本地课表数据
+    // 退出登录时删除本地课表数据 (ICS, 元数据, 以及课程列表 JSON)
     final storage = TimetableStorage();
     await storage.deleteTimetable();
     await storage.deleteMetadata();
+    await storage.deleteCourseList();
     
     // 退出登录时删除本地作业数据
     await _ref.read(homeworkProvider.notifier).clearAll();
@@ -263,12 +265,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(status: AuthStatus.authenticating);
       await _ref.read(authServiceProvider).login(username, password);
       
-      // 检查是否有本地课表
-      final hasTimetable = await TimetableStorage().hasLocalTimetable();
-      
-      // 手动登录成功且没有本地课表，标记为需要弹出课表提示
+      // 标记为已登录
       state = AuthState.authenticated(username: username).copyWith(
-        needsTimetablePrompt: !hasTimetable,
         isInitialized: true,
       );
       
@@ -283,6 +281,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       // ✨ 校园卡静默授权
       Future.microtask(() => _ref.read(campusCardServiceProvider).authenticate());
+
+      // ✨ 自动同步课表
+      _syncTimetableSilently();
     } catch (e) {
       state = AuthState.error(e.toString());
       rethrow;
@@ -313,8 +314,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isGuestMode: true);
   }
 
-  /// 完成/关闭课表同步提示
-  void completeTimetablePrompt() {
-    state = state.copyWith(needsTimetablePrompt: false);
+  /// 静默同步课表 (仅在本地无课表时执行)
+  Future<void> _syncTimetableSilently() async {
+    try {
+      final storage = TimetableStorage();
+      final hasLocal = await storage.hasLocalTimetable();
+      
+      if (hasLocal) {
+        _logger.i('📅 Local timetable exists, skipping automatic sync.');
+        return;
+      }
+
+      _logger.i('📅 No local timetable, starting background sync...');
+      
+      await TimetableService().downloadAndSaveTimetable(
+        semester: AppConstants.defaultSemester,
+        firstWeekMonday: null, 
+      );
+      _logger.i('✅ Background timetable sync success');
+    } catch (e) {
+      _logger.w('⚠️ Background timetable sync failed: $e');
+    }
   }
 }

@@ -19,6 +19,7 @@ class _DownloadTimetableScreenState extends ConsumerState<DownloadTimetableScree
   String? _selectedSemester;
   DateTime? _selectedDate;
   bool _isLoading = false;
+  String _syncStatus = '';
   
   late final List<String> _semesters;
 
@@ -176,12 +177,25 @@ class _DownloadTimetableScreenState extends ConsumerState<DownloadTimetableScree
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 if (_isLoading)
-                  const Padding(
-                    padding: EdgeInsets.only(right: 16),
-                    child: SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _syncStatus,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ],
                     ),
                   ),
                 ElevatedButton.icon(
@@ -272,6 +286,11 @@ class _DownloadTimetableScreenState extends ConsumerState<DownloadTimetableScree
       await _timetableService.downloadAndSaveTimetable(
         semester: _selectedSemester!,
         firstWeekMonday: _selectedDate!,
+        onProgress: (status) {
+          if (mounted) {
+            setState(() { _syncStatus = status; });
+          }
+        },
       );
       
       // ✨ 导入成功后，重新安排上课提醒通知

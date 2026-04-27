@@ -3,6 +3,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/location_helper.dart';
 
 class BusTrackingScreen extends StatefulWidget {
   const BusTrackingScreen({super.key});
@@ -55,7 +56,13 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
       }
 
       Position position = await Geolocator.getCurrentPosition();
-      final url = '${AppConstants.schoolBusUrl}?lat=${position.latitude}&lng=${position.longitude}';
+      
+      // ✨ 转换为 GCJ-02 (火星坐标系)，因为该页面使用腾讯地图
+      final gcj02 = LocationHelper.wgs84ToGcj02(position.longitude, position.latitude);
+      final lat = gcj02['lat'];
+      final lng = gcj02['lng'];
+      
+      final url = '${AppConstants.schoolBusUrl}?lat=$lat&lng=$lng';
       
       if (_webViewController != null) {
         _webViewController!.loadUrl(urlRequest: URLRequest(url: WebUri(url)));

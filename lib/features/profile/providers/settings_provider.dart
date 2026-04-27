@@ -65,8 +65,10 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     await rescheduleNotifications();
   }
 
-  /// 重新安排所有课程和作业通知
   Future<void> rescheduleNotifications() async {
+    // 0. 先取消所有旧通知，防止重复或残留
+    await NotificationService().cancelAll();
+
     // 1. 安排课程通知
     final storage = TimetableStorage();
     final hasTimetable = await storage.hasLocalTimetable();
