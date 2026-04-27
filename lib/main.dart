@@ -16,12 +16,16 @@ void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   
-  // 初始化通知服务
-  await NotificationService().init();
-  
+  try {
+    // 初始化通知服务
+    await NotificationService().init().timeout(const Duration(seconds: 5));
+  } catch (e) {
+    debugPrint('⚠️ Notification initialization failed: $e');
+  }
+
   // 初始化中文日期格式化环境
   await initializeDateFormatting('zh_CN', null);
-  
+
   try {
     // 初始化 DioClient (包含 CookieManager)
     await DioClient().initialize().timeout(const Duration(seconds: 5));
