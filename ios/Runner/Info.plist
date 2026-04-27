@@ -66,6 +66,10 @@
 			<string>UIInterfaceOrientationLandscapeLeft</string>
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>需要获取您的位置信息以提供校园周边服务</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>需要获取您的位置信息以提供校园周边服务</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
 	</dict>
