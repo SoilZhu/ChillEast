@@ -66,6 +66,10 @@
 			<string>UIInterfaceOrientationLandscapeLeft</string>
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
+		<key>NSCameraUsageDescription</key>
+		<string>需要使用相机以扫描二维码</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>需要访问相册以选择图片</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>需要获取您的位置信息以提供校园周边服务</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
