@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:install_plugin_v2/install_plugin_v2.dart';
+import 'package:android_package_installer/android_package_installer.dart';
 import 'package:logger/logger.dart';
 import '../../../core/utils/route_utils.dart';
 import '../widgets/update_screen.dart';
@@ -138,11 +138,11 @@ class UpdateService {
 
   Future<void> _installApk(String path) async {
     try {
-      final packageInfo = await PackageInfo.fromPlatform();
-      final appId = packageInfo.packageName;
-      
-      final result = await InstallPluginV2.installApk(path, appId);
-      _logger.i('Install APK result: $result');
+      final statusCode = await AndroidPackageInstaller.installApk(apkFilePath: path);
+      if (statusCode != null) {
+        PackageInstallerStatus installationStatus = PackageInstallerStatus.byCode(statusCode);
+        _logger.i('Install APK status: ${installationStatus.name}');
+      }
     } catch (e) {
       _logger.e('Install APK error: $e');
     }
