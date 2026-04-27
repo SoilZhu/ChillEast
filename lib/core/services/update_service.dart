@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:open_filex/open_filex.dart';
+import 'package:install_plugin_v2/install_plugin_v2.dart';
 import 'package:logger/logger.dart';
 import '../../../core/utils/route_utils.dart';
 import '../widgets/update_screen.dart';
@@ -138,10 +138,11 @@ class UpdateService {
 
   Future<void> _installApk(String path) async {
     try {
-      final result = await OpenFilex.open(path);
-      if (result.type != ResultType.done) {
-        _logger.e('Install APK failed: ${result.message}');
-      }
+      final packageInfo = await PackageInfo.fromPlatform();
+      final appId = packageInfo.packageName;
+      
+      final result = await InstallPluginV2.installApk(path, appId);
+      _logger.i('Install APK result: $result');
     } catch (e) {
       _logger.e('Install APK error: $e');
     }

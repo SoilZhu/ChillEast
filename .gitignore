@@ -45,6 +45,7 @@ app.*.map.json
 /android/app/release
 /android/local.properties
 /android/.gradle/
+/android/.kotlin/
 
 # iOS
 ios/Pods/
