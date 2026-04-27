@@ -23,6 +23,7 @@ import '../../../core/state/auth_state.dart';
 import '../../../core/widgets/login_required_placeholder.dart';
 import '../../../core/constants/app_constants.dart';
 import 'package:logger/logger.dart';
+import '../../profile/providers/settings_provider.dart';
 
 /// 自定义次顶栏指示器：上圆下方
 class MD2Indicator extends Decoration {
