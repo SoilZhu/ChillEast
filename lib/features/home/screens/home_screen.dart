@@ -114,28 +114,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             return true;
           }).toList();
 
-          final upcomingCourses = <CourseModel>[];
-          if (!isAfter10PM) {
-            final currentTime = TimeOfDay.fromDateTime(now);
-            for (final course in previewCourses) {
-              final endTime = DateCalculator.getSectionTime(course.endPeriod)['end'];
-              if (endTime != null) {
-                final endMinutes = endTime.hour * 60 + endTime.minute;
-                final currentMinutes = currentTime.hour * 60 + currentTime.minute;
-                if (endMinutes > currentMinutes) {
-                  upcomingCourses.add(course);
-                }
-              }
-            }
-          } else {
-            upcomingCourses.addAll(previewCourses);
-          }
-
-          upcomingCourses.sort((a, b) => a.startPeriod.compareTo(b.startPeriod));
+          previewCourses.sort((a, b) => a.startPeriod.compareTo(b.startPeriod));
 
           if (mounted) {
             setState(() {
-              _todayCourses = upcomingCourses;
+              _todayCourses = previewCourses;
               _isShowingTomorrow = isAfter10PM;
             });
           }
@@ -221,7 +204,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildQuickActions(context, authState),
-            if (_firstWeekMonday != null) _buildSemesterProgress(context),
+            if (_firstWeekMonday != null) _buildSemesterProgress(),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
@@ -262,7 +245,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Row(
             children: [
               ...visibleItems.map(
-                (item) => _buildQuickActionItem(
+                    (item) => _buildQuickActionItem(
                   context,
                   icon: item.icon,
                   label: item.label,
@@ -279,85 +262,130 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildSemesterProgress(BuildContext context) {
+  Widget _buildSemesterProgress() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = Theme.of(context).primaryColor;
+    final progressValue = (_progressPercent / 100.0).clamp(0.0, 1.0);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 顶部：标题与周数信息
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 '学期进度',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 18.0,
                   fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white : Colors.black87,
                 ),
               ),
-              Text(
-                '第 $_currentWeek 周 / 共 $_totalWeeks 周',
-                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.calendar_today_outlined,
+                    size: 15,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '第 $_currentWeek 周 / 共 $_totalWeeks 周',
+                    style: TextStyle(
+                      fontSize: 14.0,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 12.0),
+
+          // 进度卡片主体
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16.0),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(16.0),
               border: Border.all(
-                color: isDark ? Colors.white10 : Colors.grey.shade200,
-                width: 1,
+                color: isDark ? Colors.white12 : Colors.grey.withOpacity(0.15),
               ),
+              boxShadow: isDark
+                  ? []
+                  : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 8.0,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // 天数信息行
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       '已开学 $_elapsedDays 天',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 16.0,
                         fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white70 : Colors.black87,
+                        color: isDark ? Colors.white : Colors.black87,
                       ),
                     ),
                     Text(
                       '剩余 $_remainingDays 天',
-                      style: TextStyle(
-                        fontSize: 14,
+                      style: const TextStyle(
+                        fontSize: 16.0,
                         fontWeight: FontWeight.w500,
-                        color: primaryColor,
+                        color: Color(0xFF52C68C), // 还原图片的薄荷绿色
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16.0),
+
+                // 渐变圆角进度条
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    minHeight: 12,
-                    value: (_progressPercent / 100).clamp(0.0, 1.0),
-                    backgroundColor: isDark ? Colors.white10 : Colors.grey[200],
-                    valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                  borderRadius: BorderRadius.circular(8.0),
+                  child: Container(
+                    height: 10.0,
+                    width: double.infinity,
+                    color: isDark ? Colors.grey[800] : const Color(0xFFF2F2F2),
+                    alignment: Alignment.centerLeft,
+                    child: FractionallySizedBox(
+                      widthFactor: progressValue,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8.0),
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF6DDAA6),
+                              Color(0xFF4DBE84)
+                            ], // 浅绿过渡到主绿
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12.0),
+
+                // 底部百分比提示
                 Align(
                   alignment: Alignment.centerRight,
                   child: Text(
                     '当前进度 $_progressPercent%',
                     style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[500],
+                      fontSize: 13.0,
+                      color: isDark ? Colors.grey[500] : Colors.grey[400],
                     ),
                   ),
                 ),
@@ -369,74 +397,205 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildTodayTimetablePreview(BuildContext context, AuthState authState) {
-    final isLoggedIn = authState.status == AuthStatus.authenticated;
+  void _showCustomizationBanner() {
+    // ...existing code...
+  }
 
-    if (!isLoggedIn) {
-      return Container(
-        margin: const EdgeInsets.only(top: 8),
+  Widget _buildProgressInfoCard(BuildContext context,
+      {required IconData icon, required String label, required String value, required Color color}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: const SizedBox(
-          height: 220,
-          child: LoginRequiredPlaceholder(
-            title: '登录后查看课表',
-            message: '登录后可展示今日课程与学期进度信息',
-            padding: EdgeInsets.all(20),
-          ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-      );
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _isShowingTomorrow ? '明日课表' : '今日课表',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                tooltip: '刷新',
-                onPressed: _loadPreviewCourses,
-                icon: const Icon(Icons.refresh_rounded),
-              ),
-            ],
-          ),
-          if (_isLoadingTimetable)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2.4)),
-            )
-          else if (_todayCourses.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                _isShowingTomorrow ? '明天暂无课程安排' : '今天暂无后续课程',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-            )
-          else
-            ..._todayCourses.take(3).map((course) => _buildCoursePreviewItem(context, course)),
-        ],
       ),
     );
   }
 
-  Widget _buildCoursePreviewItem(BuildContext context, CourseModel course) {
+  Widget _buildTodayTimetablePreview(BuildContext context, AuthState authState) {
+    final isLoggedIn = authState.status == AuthStatus.authenticated;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    if (!isLoggedIn) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '今日课表',
+                style: TextStyle(
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.schedule_outlined,
+                    size: 15,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '未登录',
+                    style: TextStyle(
+                      fontSize: 14.0,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12.0),
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              borderRadius: BorderRadius.circular(16.0),
+              border: Border.all(
+                color: isDark ? Colors.white12 : Colors.grey.withOpacity(0.15),
+              ),
+              boxShadow: isDark
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 8.0,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+            ),
+            child: const SizedBox(
+              height: 220,
+              child: LoginRequiredPlaceholder(
+                title: '登录后查看课表',
+                message: '登录后可展示今日课程与学期进度信息',
+                padding: EdgeInsets.all(20),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              _isShowingTomorrow ? '明日课表' : '今日课表',
+              style: TextStyle(
+                fontSize: 18.0,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+            GestureDetector(
+              onTap: _loadPreviewCourses,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.refresh_rounded,
+                    size: 16,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '刷新',
+                    style: TextStyle(
+                      fontSize: 14.0,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12.0),
+        Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: BorderRadius.circular(16.0),
+            border: Border.all(
+              color: isDark ? Colors.white12 : Colors.grey.withOpacity(0.15),
+            ),
+            boxShadow: isDark
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 8.0,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_isLoadingTimetable)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: CircularProgressIndicator(strokeWidth: 2.4)),
+                )
+              else if (_todayCourses.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(
+                    _isShowingTomorrow ? '明天暂无课程安排' : '今天暂无课程安排',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                )
+              else
+                ..._todayCourses.take(3).toList().asMap().entries.map((entry) => 
+                    _buildCoursePreviewItem(context, entry.value, isFirst: entry.key == 0)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCoursePreviewItem(BuildContext context, CourseModel course, {bool isFirst = false}) {
     final color = CourseColorUtils.getColorForCourse(course.name);
     final start = DateCalculator.getSectionTime(course.startPeriod)['start'];
     final end = DateCalculator.getSectionTime(course.endPeriod)['end'];
@@ -446,7 +605,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         : '第${course.startPeriod}-${course.endPeriod}节';
 
     return Container(
-      margin: const EdgeInsets.only(top: 10),
+      margin: EdgeInsets.only(top: isFirst ? 0 : 12.0),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
@@ -531,64 +690,64 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 'xgxt':
         isLoggedIn
             ? Navigator.push(
-                context,
-                createSlideUpRoute(
-                  const WebViewDetailScreen(
-                    title: '学工系统',
-                    url: AppConstants.xgxtWapUrl,
-                    showAppBar: false,
-                    showWebBack: false,
-                    appBarColor: Color(0xFF3C8DBC),
-                  ),
-                ),
-              )
+          context,
+          createSlideUpRoute(
+            const WebViewDetailScreen(
+              title: '学工系统',
+              url: AppConstants.xgxtWapUrl,
+              showAppBar: false,
+              showWebBack: false,
+              appBarColor: Color(0xFF3C8DBC),
+            ),
+          ),
+        )
             : _showLoginDialog(context);
         break;
       case 'repairs':
         isLoggedIn
             ? Navigator.push(
-                context,
-                createSlideUpRoute(
-                  const WebViewDetailScreen(
-                    title: '报修平台',
-                    url: AppConstants.repairsSsoUrl,
-                    userAgent:
-                        'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Mobile Safari/537.36',
-                    showWebBack: true,
-                    targetUrl: '/relax/mobile/index.html',
-                  ),
-                ),
-              )
+          context,
+          createSlideUpRoute(
+            const WebViewDetailScreen(
+              title: '报修平台',
+              url: AppConstants.repairsSsoUrl,
+              userAgent:
+              'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Mobile Safari/537.36',
+              showWebBack: true,
+              targetUrl: '/relax/mobile/index.html',
+            ),
+          ),
+        )
             : _showLoginDialog(context);
         break;
       case 'gym':
         isLoggedIn
             ? Navigator.push(
-                context,
-                createSlideUpRoute(
-                  const WebViewDetailScreen(
-                    title: '场馆预约',
-                    url: AppConstants.gymReservationUrl,
-                    showWebBack: true,
-                  ),
-                ),
-              )
+          context,
+          createSlideUpRoute(
+            const WebViewDetailScreen(
+              title: '场馆预约',
+              url: AppConstants.gymReservationUrl,
+              showWebBack: true,
+            ),
+          ),
+        )
             : _showLoginDialog(context);
         break;
       case 'teaching_eval':
         isLoggedIn
             ? Navigator.push(
-                context,
-                createSlideUpRoute(
-                  const WebViewDetailScreen(
-                    title: '教评系统',
-                    url: AppConstants.teachingEvalUrl,
-                    showAppBar: false,
-                    showWebBack: false,
-                    appBarColor: Colors.white,
-                  ),
-                ),
-              )
+          context,
+          createSlideUpRoute(
+            const WebViewDetailScreen(
+              title: '教评系统',
+              url: AppConstants.teachingEvalUrl,
+              showAppBar: false,
+              showWebBack: false,
+              appBarColor: Colors.white,
+            ),
+          ),
+        )
             : _showLoginDialog(context);
         break;
       case 'score':
@@ -667,13 +826,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildQuickActionItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required Color iconColor,
-    required Color bgColor,
-    required VoidCallback onTap,
-  }) {
+      BuildContext context, {
+        required IconData icon,
+        required String label,
+        required Color iconColor,
+        required Color bgColor,
+        required VoidCallback onTap,
+      }) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
