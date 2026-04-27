@@ -119,8 +119,8 @@ class NoticeService {
       // 获取当前将要发送的 Cookie 以便日志记录
       final uri = Uri.parse(url);
       final cookies = await AppCookieManager().dioCookieJar.loadForRequest(uri);
-      final cookieString = cookies.map((c) => '${c.name}=${c.value}').join('; ');
-      _logger.d('🍪 Auth Cookies: $cookieString');
+      final cookieKeys = cookies.map((c) => c.name).join(', ');
+      _logger.d('🍪 Auth Cookies included: $cookieKeys');
 
       final response = await DioClient().dio.get(url);
       

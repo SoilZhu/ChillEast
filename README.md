@@ -12,7 +12,7 @@
 
 |系统|应用商店|Release|镜像(供中国内地网络环境下载)|
 |---|---|---|---|
-|Android|[咕咕咕]|[GitHub Release](https://github.com/soilzhu/ChillEast/releases/latest)|[Cloudflare R2](https://eastchill-apk.soilzhu.su/1.0.0/app-release.apk)|
+|Android|[咕咕咕]|[GitHub Release](https://github.com/soilzhu/ChillEast/releases/latest)|[Cloudflare R2](https://eastchill-apk.soilzhu.su/latest/app-release.apk)|
 |iOS|[咕咕咕]|[咕咕咕]|[咕咕咕]|
 
 # 关于项目
