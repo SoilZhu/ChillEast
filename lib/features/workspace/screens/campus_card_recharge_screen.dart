@@ -79,11 +79,11 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
 
   Future<void> _handleRecharge() async {
     final amountText = _amountController.text;
-    final amount = double.tryParse(amountText);
+    final amount = int.tryParse(amountText);
     
-    if (amount == null || amount <= 0) {
+    if (amount == null || amount < 1 || amount > 1000) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入有效的充值金额')),
+        const SnackBar(content: Text('请输入1-1000之间的整数金额')),
       );
       return;
     }
@@ -239,8 +239,8 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
                   // 自定义金额输入 (MD2 Outlined)
                   TextField(
                     controller: _amountController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: InputDecoration(
                       labelText: '其他金额',
                       labelStyle: TextStyle(color: isDark ? themeColor.withOpacity(0.8) : themeColor),

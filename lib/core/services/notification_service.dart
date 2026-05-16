@@ -2,6 +2,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/timetable/models/course_model.dart';
 import '../../features/timetable/utils/date_calculator.dart';
 import '../../features/timetable/utils/week_parser.dart';
@@ -104,8 +105,39 @@ class NotificationService {
         // 计算提醒时间
         final reminderTime = startTime.subtract(Duration(minutes: reminderMinutes));
 
-        // 如果提醒时间已经过了，就不安排
-        if (reminderTime.isBefore(now)) continue;
+        // 如果提醒时间已经过了，检查是否需要补发
+        if (reminderTime.isBefore(now)) {
+          // 如果现在还没有到上课时间，说明是在提醒窗口期内打开了App，我们补发一个
+          if (now.isBefore(startTime)) {
+            final prefs = await SharedPreferences.getInstance();
+            final String makeupKey = 'makeup_course_${course.id}_${date.year}_${date.month}_${date.day}_${startTime.hour}_${startTime.minute}';
+            
+            if (prefs.getBool(makeupKey) != true) {
+              await prefs.setBool(makeupKey, true);
+              
+              final int makeupId = 150000000 + (course.id.hashCode.abs() % 10000000);
+              final timeStr = '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
+              
+              await _notificationsPlugin.show(
+                makeupId,
+                '$timeStr ${course.name}', 
+                course.classroom, 
+                const NotificationDetails(
+                  android: AndroidNotificationDetails(
+                    'course_reminder_channel',
+                    '上课提醒',
+                    channelDescription: '在每节课开始前发送提醒',
+                    importance: Importance.max,
+                    priority: Priority.high,
+                  ),
+                ),
+                payload: 'course_${course.id}',
+              );
+              _logger.i('📨 Makeup course notification sent for ${course.name}');
+            }
+          }
+          continue;
+        }
 
         // 我们只安排未来 14 天内的，防止超出安卓限制 (500个)
         if (reminderTime.isAfter(now.add(const Duration(days: 14)))) continue;
@@ -130,7 +162,7 @@ class NotificationService {
               showWhen: true,
             ),
           ),
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
           payload: 'course_${course.id}',
         );
@@ -159,8 +191,47 @@ class NotificationService {
 
       final reminderTime = hw.endTime!.subtract(Duration(minutes: (advanceHours * 60).toInt()));
 
-      // 如果提醒时间已经过了，就不安排
-      if (reminderTime.isBefore(now)) continue;
+      // 如果提醒时间已经过了，检查是否需要补发
+      if (reminderTime.isBefore(now)) {
+        // 如果作业还没有截止，补发
+        if (now.isBefore(hw.endTime!)) {
+          final prefs = await SharedPreferences.getInstance();
+          final String makeupKey = 'makeup_hw_${hw.id}_${hw.endTime!.millisecondsSinceEpoch}';
+          
+          if (prefs.getBool(makeupKey) != true) {
+            await prefs.setBool(makeupKey, true);
+            
+            final int makeupId = 250000000 + (hw.id.hashCode.abs() % 10000000);
+            
+            String timeLabel = '';
+            if (advanceHours < 1) {
+              timeLabel = '${(advanceHours * 60).toInt()}分钟';
+            } else if (advanceHours == advanceHours.toInt()) {
+              timeLabel = '${advanceHours.toInt()}小时';
+            } else {
+              timeLabel = '$advanceHours小时';
+            }
+
+            await _notificationsPlugin.show(
+              makeupId,
+              '${hw.title} ${hw.courseName}',
+              '作业将在不到$timeLabel后截止',
+              const NotificationDetails(
+                android: AndroidNotificationDetails(
+                  'homework_reminder_channel',
+                  '作业截止提醒',
+                  channelDescription: '在作业截止前发送提醒',
+                  importance: Importance.max,
+                  priority: Priority.high,
+                ),
+              ),
+              payload: 'homework_${hw.id}',
+            );
+            _logger.i('📨 Makeup homework notification sent for ${hw.title}');
+          }
+        }
+        continue;
+      }
 
       // 我们只安排未来 7 天内的
       if (reminderTime.isAfter(now.add(const Duration(days: 7)))) continue;
@@ -192,7 +263,7 @@ class NotificationService {
             showWhen: true,
           ),
         ),
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         payload: 'homework_${hw.id}',
       );
