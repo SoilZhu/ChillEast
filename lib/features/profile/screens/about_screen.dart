@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/utils/route_utils.dart';
 import '../../../core/services/update_service.dart';
 import 'oss_licenses_screen.dart';
@@ -8,7 +9,6 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const String version = '1.0.0';
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -68,13 +68,19 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 4),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Text(
-                'Version $version',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                  letterSpacing: 0.2,
-                ),
+              child: FutureBuilder<PackageInfo>(
+                future: PackageInfo.fromPlatform(),
+                builder: (context, snapshot) {
+                  final versionStr = snapshot.hasData ? snapshot.data!.version : '1.0.2';
+                  return Text(
+                    'Version $versionStr',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      letterSpacing: 0.2,
+                    ),
+                  );
+                },
               ),
             ),
             
