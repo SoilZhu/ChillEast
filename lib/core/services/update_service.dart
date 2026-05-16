@@ -217,7 +217,7 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       title: const Text('正在下载更新'),
       content: Column(
         mainAxisSize: MainAxisSize.min,

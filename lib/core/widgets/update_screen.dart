@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/update_service.dart';
 
 class UpdateScreen extends StatelessWidget {
@@ -44,7 +46,7 @@ class UpdateScreen extends StatelessWidget {
                           height: 80,
                           decoration: BoxDecoration(
                             color: Theme.of(context).primaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: Icon(
                             Icons.system_update_rounded,
@@ -78,17 +80,21 @@ class UpdateScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(6),
                       border: Border.all(
                         color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]!,
                       ),
                     ),
-                    child: Text(
-                      releaseNotes,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark ? Colors.white60 : Colors.grey[800],
-                        height: 1.6,
+                    child: SelectionArea(
+                      child: Text.rich(
+                        _linkify(
+                          releaseNotes,
+                          TextStyle(
+                            fontSize: 14,
+                            color: isDark ? Colors.white60 : Colors.grey[800],
+                            height: 1.6,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -110,7 +116,7 @@ class UpdateScreen extends StatelessWidget {
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 54),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     elevation: 0,
                   ),
@@ -133,5 +139,43 @@ class UpdateScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  TextSpan _linkify(String text, TextStyle style) {
+    final List<InlineSpan> spans = [];
+    final RegExp linkRegExp = RegExp(
+      r'https?://[\w-]+(\.[\w-]+)+([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?',
+      caseSensitive: false,
+    );
+
+    int start = 0;
+    for (final match in linkRegExp.allMatches(text)) {
+      if (match.start > start) {
+        spans.add(TextSpan(text: text.substring(start, match.start), style: style));
+      }
+      final String url = match.group(0)!;
+      spans.add(
+        TextSpan(
+          text: url,
+          style: style.copyWith(
+            color: Colors.blue,
+            decoration: TextDecoration.underline,
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () async {
+              final Uri uri = Uri.parse(url);
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+        ),
+      );
+      start = match.end;
+    }
+    if (start < text.length) {
+      spans.add(TextSpan(text: text.substring(start), style: style));
+    }
+
+    return TextSpan(children: spans);
   }
 }
