@@ -46,6 +46,7 @@ app.*.map.json
 /android/local.properties
 /android/.gradle/
 /android/.kotlin/
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 
 # iOS
 ios/Pods/
@@ -63,3 +64,11 @@ ios/Runner/GeneratedPluginRegistrant.m
 
 # debug
 debug
+
+# Android signing material (never commit)
+/android/key.properties
+/android/app/*.jks
+/android/app/*.keystore
+
+# Android generated build output
+/android/build/
