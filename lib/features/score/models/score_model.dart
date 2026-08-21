@@ -4,6 +4,10 @@ class ScoreModel {
   final String? credit;
   final String? dailyScore;
   final String? examType;
+  final String? curriculumAttributes;
+  final String? courseNature;
+  final String? courseCode;
+  final String? id;
 
   ScoreModel({
     required this.courseName,
@@ -11,33 +15,44 @@ class ScoreModel {
     this.credit,
     this.dailyScore,
     this.examType,
+    this.curriculumAttributes,
+    this.courseNature,
+    this.courseCode,
+    this.id,
   });
 
   @override
-  String toString() => 'ScoreModel(courseName: $courseName, score: $score)';
+  String toString() => 'ScoreModel(courseName: $courseName, score: $score, credit: $credit, examType: $examType)';
 }
 
 class SemesterModel {
-  final String value; // e.g. "2025-2026"
-  final String xq;    // e.g. "1"
-  final String name;  // e.g. "2025-2026第1学期"
+  final String id;    // e.g. "2025-2026-2"
+  final String name;  // e.g. "2025-2026-2"
   final bool isActive;
 
   SemesterModel({
-    required this.value,
-    required this.xq,
+    required this.id,
     required this.name,
     this.isActive = false,
   });
+
+  /// 向后兼容字段
+  String get value => id;
+  String get xq {
+    final parts = id.split('-');
+    return parts.length >= 3 ? parts.last : '';
+  }
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is SemesterModel &&
           runtimeType == other.runtimeType &&
-          value == other.value &&
-          xq == other.xq;
+          id == other.id;
 
   @override
-  int get hashCode => value.hashCode ^ xq.hashCode;
+  int get hashCode => id.hashCode;
+
+  @override
+  String toString() => 'SemesterModel(id: $id, name: $name, isActive: $isActive)';
 }

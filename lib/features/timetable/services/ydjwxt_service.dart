@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/network/dio_client.dart';
-import '../../../core/network/cookie_manager.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/services/ydjwxt_auth_service.dart';
 import '../models/course_model.dart';
 import '../parsers/ydjwxt_json_parser.dart';
 import '../services/timetable_storage.dart';
@@ -12,6 +11,7 @@ import '../utils/ics_generator.dart';
 
 class YdjwxtService {
   final _logger = AppLogger.instance;
+  final _authService = YdjwxtAuthService();
   String? _token;
 
   /// 全自动同步课表
@@ -27,11 +27,7 @@ class YdjwxtService {
       
       // 1. 获取 Token
       onProgress('正在进行身份验证...');
-      _token = await _authenticate();
-      
-      if (_token == null) {
-        throw Exception('身份验证失败，未能获取 Token。请确保已在首页登录。');
-      }
+      _token = await _authService.getToken();
       
       _logger.i('✅ Token acquired, starting data fetch...');
 
@@ -124,68 +120,6 @@ class YdjwxtService {
     }
     return guess;
   }
-
-  /// 身份验证并提取 Token
-  Future<String?> _authenticate() async {
-    final completer = Completer<String?>();
-    HeadlessInAppWebView? webView;
-    Timer? timeoutTimer;
-
-    try {
-      await AppCookieManager().injectAllChaoxingCookies();
-
-      webView = HeadlessInAppWebView(
-        initialUrlRequest: URLRequest(url: WebUri(AppConstants.ydjwxtOAuthUrl)),
-        initialSettings: InAppWebViewSettings(
-          javaScriptEnabled: true,
-          domStorageEnabled: true,
-          userAgent: AppConstants.ydjwxtUA,
-          useShouldInterceptRequest: true,
-        ),
-        onLoadStop: (controller, url) async {
-          final token = await controller.evaluateJavascript(source: '''
-            (function() {
-              return localStorage.getItem('token') || 
-                     sessionStorage.getItem('token') || 
-                     localStorage.getItem('access_token') || '';
-            })()
-          ''');
-          if (token != null && token.toString().isNotEmpty && token.toString().length > 20) {
-            if (!completer.isCompleted) completer.complete(token.toString());
-          }
-        },
-        shouldInterceptRequest: (controller, request) async {
-          final headers = request.headers;
-          if (headers != null) {
-            final token = headers['token'] ?? headers['Token'] ?? headers['authorization'] ?? headers['Authorization'];
-            if (token != null && token.isNotEmpty && token.length > 20) {
-              if (!token.startsWith('Basic') && !token.startsWith('Bearer ')) {
-                 if (!completer.isCompleted) completer.complete(token);
-              } else if (token.startsWith('Bearer ')) {
-                 final cleanToken = token.replaceFirst('Bearer ', '');
-                 if (!completer.isCompleted) completer.complete(cleanToken);
-              }
-            }
-          }
-          return null;
-        }
-      );
-
-      await webView.run();
-      timeoutTimer = Timer(const Duration(seconds: 45), () {
-        if (!completer.isCompleted) completer.completeError(TimeoutException('身份验证超时'));
-      });
-
-      return await completer.future;
-    } catch (e) {
-      _logger.e('Authentication error: $e');
-      return null;
-    } finally {
-      timeoutTimer?.cancel();
-      webView?.dispose();
-    }
-  }
-
   /// 获取单周课表原始 JSON
   Future<Map<String, dynamic>> _fetchRawWeekJson(int week) async {
     if (_token == null) throw Exception('Token is null');
