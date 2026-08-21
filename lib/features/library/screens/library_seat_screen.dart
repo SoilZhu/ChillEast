@@ -49,9 +49,8 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
   void _initTimeSlots() {
     final now = DateTime.now();
     final todayStr = DateFormat('yyyy-MM-dd').format(now);
-    
+
     if (widget.day == todayStr) {
-      // 今天的默认时段：如果当前已过 8 点，选下一个半点/整点
       int currentHour = now.hour;
       int currentMinute = now.minute;
       int startHour = currentHour;
@@ -107,7 +106,6 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
       if (mounted) {
         setState(() {
           _usedSeats = used;
-          // 如果当前选中的座位被占用了，清除选中
           if (_selectedSeatNum != null && _usedSeats.contains(_selectedSeatNum)) {
             _selectedSeatNum = null;
           }
@@ -145,7 +143,8 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
         endTime: _endTime,
       );
 
-      // 刷新全局状态
+      // 刷新全局状态与本地缓存
+      ref.read(cachedLibraryReserveProvider.notifier).addOrUpdateReserve(result);
       ref.read(libraryIndexProvider.notifier).refresh();
 
       if (!mounted) return;
@@ -154,12 +153,12 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           title: const Row(
             children: [
               Icon(Icons.check_circle, color: Color(0xFF09C489)),
               SizedBox(width: 8),
-              Text('预约成功'),
+              Text('预约成功', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
           content: Column(
@@ -168,7 +167,7 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
             children: [
               Text('阅览室：${widget.room.displayName}'),
               const SizedBox(height: 4),
-              Text('座位号：#${result.seatNum}'),
+              Text('座位号：${result.seatNum} 号'),
               const SizedBox(height: 4),
               Text('日期：${widget.day}'),
               const SizedBox(height: 4),
@@ -180,13 +179,21 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
               ),
             ],
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            TextButton(
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF09C489),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                minimumSize: const Size(0, 36),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              ),
               onPressed: () {
-                Navigator.pop(ctx); // 关闭弹窗
-                Navigator.pop(context, true); // 返回阅览室列表/首页
+                Navigator.pop(ctx);
+                Navigator.pop(context, true);
               },
-              child: const Text('完成', style: TextStyle(color: Color(0xFF09C489), fontWeight: FontWeight.bold)),
+              child: const Text('完成', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -196,19 +203,27 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             title: const Row(
               children: [
                 Icon(Icons.error_outline, color: Colors.red),
                 SizedBox(width: 8),
-                Text('预约失败'),
+                Text('预约失败', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
             content: Text(e.toString().replaceAll('Exception:', '').trim()),
+            actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             actions: [
-              TextButton(
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF09C489),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  minimumSize: const Size(0, 36),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                ),
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('我知道了'),
+                child: const Text('我知道了', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -224,8 +239,8 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
   void _showTimeRangePicker() {
     String tempStart = _startTime;
     String tempEnd = _endTime;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // 生成可用时间点列表 (07:00 到 22:00 每半小时一个)
     final timeSlots = <String>[];
     for (int h = 7; h <= 22; h++) {
       timeSlots.add('${h.toString().padLeft(2, '0')}:00');
@@ -236,9 +251,9 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
@@ -252,21 +267,29 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         '选择预约时段',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close),
+                        icon: Icon(Icons.close, color: isDark ? Colors.white60 : Colors.black54),
                         onPressed: () => Navigator.pop(ctx),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  const Text('开始时间', style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 12),
+                  Text('开始时间',
+                      style: TextStyle(
+                          fontSize: 13,
+                          color: isDark ? Colors.white60 : Colors.grey[700],
+                          fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   SizedBox(
-                    height: 40,
+                    height: 38,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: timeSlots.length - 1,
@@ -279,18 +302,30 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                           selected: isSelected,
                           selectedColor: const Color(0xFF09C489).withValues(alpha: 0.15),
                           labelStyle: TextStyle(
-                            color: isSelected ? const Color(0xFF09C489) : Colors.black87,
+                            fontSize: 13,
+                            color: isSelected
+                                ? const Color(0xFF09C489)
+                                : (isDark ? Colors.white70 : Colors.black87),
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            side: BorderSide(
+                              color: isSelected
+                                  ? const Color(0xFF09C489)
+                                  : (isDark ? Colors.white12 : Colors.grey[300]!),
+                            ),
                           ),
                           onSelected: (selected) {
                             if (selected) {
                               setModalState(() {
                                 tempStart = slot;
-                                // 如果开始时间大于等于结束时间，自动往后推 2 小时
                                 final startIdx = timeSlots.indexOf(tempStart);
                                 final endIdx = timeSlots.indexOf(tempEnd);
                                 if (startIdx >= endIdx) {
-                                  final newEndIdx = (startIdx + 4 < timeSlots.length) ? startIdx + 4 : timeSlots.length - 1;
+                                  final newEndIdx = (startIdx + 4 < timeSlots.length)
+                                      ? startIdx + 4
+                                      : timeSlots.length - 1;
                                   tempEnd = timeSlots[newEndIdx];
                                 }
                               });
@@ -301,10 +336,14 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text('结束时间', style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w600)),
+                  Text('结束时间',
+                      style: TextStyle(
+                          fontSize: 13,
+                          color: isDark ? Colors.white60 : Colors.grey[700],
+                          fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   SizedBox(
-                    height: 40,
+                    height: 38,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: timeSlots.length,
@@ -320,8 +359,21 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                           selected: isSelected,
                           selectedColor: const Color(0xFF09C489).withValues(alpha: 0.15),
                           labelStyle: TextStyle(
-                            color: !isAvailable ? Colors.grey[400] : (isSelected ? const Color(0xFF09C489) : Colors.black87),
+                            fontSize: 13,
+                            color: !isAvailable
+                                ? (isDark ? Colors.white24 : Colors.grey[400])
+                                : (isSelected
+                                    ? const Color(0xFF09C489)
+                                    : (isDark ? Colors.white70 : Colors.black87)),
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            side: BorderSide(
+                              color: isSelected
+                                  ? const Color(0xFF09C489)
+                                  : (isDark ? Colors.white12 : Colors.grey[300]!),
+                            ),
                           ),
                           onSelected: isAvailable
                               ? (selected) {
@@ -334,14 +386,16 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                       },
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
-                    height: 48,
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
+                    height: 42,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF09C489),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                       ),
                       onPressed: () {
                         Navigator.pop(ctx);
@@ -351,7 +405,8 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                         });
                         _loadUsedSeats();
                       },
-                      child: const Text('确定时段', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: const Text('确定时段',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -365,12 +420,15 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(widget.room.displayName),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+        foregroundColor: isDark ? Colors.white : Colors.black87,
         elevation: 0,
         actions: [
           IconButton(
@@ -385,23 +443,26 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
           // 顶部时段与图例栏
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: Colors.white,
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
             child: Column(
               children: [
                 // 时段选择卡片
                 InkWell(
                   onTap: _showTimeRangePicker,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(6),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF09C489).withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFF09C489).withValues(alpha: 0.2)),
+                      color: const Color(0xFF09C489).withValues(alpha: isDark ? 0.15 : 0.08),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                          color: const Color(0xFF09C489)
+                              .withValues(alpha: isDark ? 0.35 : 0.2)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.access_time_filled_rounded, size: 18, color: Color(0xFF09C489)),
+                        const Icon(Icons.access_time_filled_rounded,
+                            size: 16, color: Color(0xFF09C489)),
                         const SizedBox(width: 8),
                         Text(
                           '日期：${widget.day}  |  时段：$_startTime - $_endTime',
@@ -416,10 +477,12 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                           const SizedBox(
                             width: 14,
                             height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF09C489)),
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Color(0xFF09C489)),
                           )
                         else
-                          const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Color(0xFF09C489)),
+                          const Icon(Icons.arrow_forward_ios_rounded,
+                              size: 12, color: Color(0xFF09C489)),
                       ],
                     ),
                   ),
@@ -430,34 +493,40 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _buildLegendItem(
-                      color: const Color(0xFFE8F5E9),
+                      color: isDark ? const Color(0xFF16382B) : const Color(0xFFE8F5E9),
                       borderColor: const Color(0xFF09C489),
                       label: '可选',
+                      isDark: isDark,
                     ),
                     _buildLegendItem(
                       color: const Color(0xFF09C489),
                       borderColor: const Color(0xFF09C489),
                       label: '已选',
+                      isDark: isDark,
                     ),
                     _buildLegendItem(
-                      color: Colors.grey[300]!,
-                      borderColor: Colors.grey[400]!,
+                      color: isDark ? const Color(0xFF2A2A2A) : Colors.grey[300]!,
+                      borderColor: isDark ? const Color(0xFF3D3D3D) : Colors.grey[400]!,
                       label: '占用/不可选',
+                      isDark: isDark,
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFEEEEEE)),
+          Divider(
+            height: 1,
+            color: isDark ? Colors.white12 : const Color(0xFFEEEEEE),
+          ),
 
           // 中间互动座位图
           Expanded(
-            child: _buildSeatGridContent(),
+            child: _buildSeatGridContent(isDark),
           ),
 
           // 底部确认卡片
-          _buildBottomActionCard(),
+          _buildBottomActionCard(isDark),
         ],
       ),
     );
@@ -467,26 +536,33 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
     required Color color,
     required Color borderColor,
     required String label,
+    required bool isDark,
   }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 16,
-          height: 16,
+          width: 14,
+          height: 14,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(3),
             border: Border.all(color: borderColor, width: 1),
           ),
         ),
         const SizedBox(width: 6),
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isDark ? Colors.white60 : Colors.grey[700],
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildSeatGridContent() {
+  Widget _buildSeatGridContent(bool isDark) {
     if (_isLoadingGrid) {
       return const Center(
         child: Column(
@@ -509,8 +585,13 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
             const SizedBox(height: 12),
             Text(_errorMessage ?? '加载失败'),
             const SizedBox(height: 12),
-            FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF09C489)),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF09C489),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              ),
               onPressed: _loadSeatGrid,
               child: const Text('重试'),
             ),
@@ -530,7 +611,7 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
       constrained: false,
       child: Container(
         padding: const EdgeInsets.all(24),
-        color: const Color(0xFFF8F9FA),
+        color: isDark ? const Color(0xFF141414) : const Color(0xFFF8F9FA),
         child: SizedBox(
           width: data.cols * cellSize,
           height: data.rows * cellSize,
@@ -545,14 +626,17 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                   height: cellSize - 2,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: isDark ? const Color(0xFF242424) : Colors.grey[200],
                       borderRadius: BorderRadius.circular(4),
                     ),
                     alignment: Alignment.center,
                     child: obs.label.isNotEmpty
                         ? Text(
                             obs.label,
-                            style: const TextStyle(fontSize: 10, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: isDark ? Colors.white38 : Colors.grey,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           )
                         : const SizedBox(),
@@ -561,7 +645,7 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
 
               // 2. 渲染座位
               for (final seat in data.seats)
-                _buildSeatWidget(seat, cellSize),
+                _buildSeatWidget(seat, cellSize, isDark),
             ],
           ),
         ),
@@ -569,7 +653,7 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
     );
   }
 
-  Widget _buildSeatWidget(LibrarySeatItem seat, double cellSize) {
+  Widget _buildSeatWidget(LibrarySeatItem seat, double cellSize, bool isDark) {
     final isOccupied = _usedSeats.contains(seat.seatNum) || seat.reserveStatus != 0;
     final isSelected = _selectedSeatNum == seat.seatNum;
 
@@ -578,17 +662,17 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
     Color textColor;
 
     if (isOccupied) {
-      bgColor = Colors.grey[300]!;
-      borderColor = Colors.grey[400]!;
-      textColor = Colors.grey[600]!;
+      bgColor = isDark ? const Color(0xFF262626) : Colors.grey[300]!;
+      borderColor = isDark ? const Color(0xFF383838) : Colors.grey[400]!;
+      textColor = isDark ? Colors.white24 : Colors.grey[600]!;
     } else if (isSelected) {
       bgColor = const Color(0xFF09C489);
       borderColor = const Color(0xFF09C489);
       textColor = Colors.white;
     } else {
-      bgColor = const Color(0xFFE8F5E9);
-      borderColor = const Color(0xFF09C489).withValues(alpha: 0.5);
-      textColor = const Color(0xFF1B5E20);
+      bgColor = isDark ? const Color(0xFF16382B) : const Color(0xFFE8F5E9);
+      borderColor = const Color(0xFF09C489).withValues(alpha: isDark ? 0.6 : 0.5);
+      textColor = isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20);
     }
 
     return Positioned(
@@ -608,21 +692,11 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                   }
                 });
               },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
+        child: Container(
           decoration: BoxDecoration(
             color: bgColor,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: borderColor, width: isSelected ? 2 : 1),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF09C489).withValues(alpha: 0.4),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    )
-                  ]
-                : null,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: borderColor, width: isSelected ? 1.8 : 1),
           ),
           alignment: Alignment.center,
           child: Text(
@@ -638,18 +712,17 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
     );
   }
 
-  Widget _buildBottomActionCard() {
+  Widget _buildBottomActionCard(bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -3),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? Colors.white.withValues(alpha: 0.12) : const Color(0xFFE0E0E0),
+            width: 1,
           ),
-        ],
+        ),
       ),
       child: SafeArea(
         child: Row(
@@ -660,28 +733,37 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _selectedSeatNum != null ? '已选座位：#$_selectedSeatNum' : '请点击座位图选择座位',
+                    _selectedSeatNum != null
+                        ? '已选座位：${_selectedSeatNum!} 号'
+                        : '请在上方座位图选座',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: _selectedSeatNum != null ? const Color(0xFF09C489) : Colors.black87,
+                      color: _selectedSeatNum != null
+                          ? const Color(0xFF09C489)
+                          : (isDark ? Colors.white : Colors.black87),
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '$_startTime - $_endTime (${widget.day})',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white54 : Colors.grey[600],
+                    ),
                   ),
                 ],
               ),
             ),
             SizedBox(
-              height: 44,
-              child: FilledButton(
-                style: FilledButton.styleFrom(
+              height: 38,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF09C489),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                 ),
                 onPressed: (_selectedSeatNum != null && !_isSubmitting)
                     ? _submitReservation
@@ -694,7 +776,7 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                       )
                     : const Text(
                         '立即预约',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                       ),
               ),
             ),

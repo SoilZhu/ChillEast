@@ -130,6 +130,27 @@ class LibraryReserveModel {
       uid: json['uid'] is int ? json['uid'] : int.tryParse(json['uid']?.toString() ?? ''),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'roomId': roomId,
+      'deptId': deptId,
+      'seatNum': seatNum,
+      'startTime': startTime.millisecondsSinceEpoch,
+      'endTime': endTime.millisecondsSinceEpoch,
+      'expireTime': expireTime?.millisecondsSinceEpoch,
+      'inserttime': insertTime?.millisecondsSinceEpoch,
+      'status': status,
+      'firstLevelName': firstLevelName,
+      'secondLevelName': secondLevelName,
+      'thirdLevelName': thirdLevelName,
+      'today': today,
+      'duration': duration,
+      'uname': uname,
+      'uid': uid,
+    };
+  }
 }
 
 /// 阅览室/教室模型

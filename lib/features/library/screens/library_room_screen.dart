@@ -66,13 +66,15 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
   @override
   Widget build(BuildContext context) {
     final roomsAsync = ref.watch(libraryRoomsProvider(_selectedDay));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('选择阅览室'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+        foregroundColor: isDark ? Colors.white : Colors.black87,
         elevation: 0,
         actions: [
           IconButton(
@@ -87,7 +89,7 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
         children: [
           // 1. 日期选择栏
           Container(
-            color: Colors.white,
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -101,8 +103,19 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
                       selected: isSelected,
                       selectedColor: const Color(0xFF09C489).withValues(alpha: 0.15),
                       labelStyle: TextStyle(
-                        color: isSelected ? const Color(0xFF09C489) : Colors.black87,
+                        fontSize: 13,
+                        color: isSelected
+                            ? const Color(0xFF09C489)
+                            : (isDark ? Colors.white70 : Colors.black87),
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        side: BorderSide(
+                          color: isSelected
+                              ? const Color(0xFF09C489)
+                              : (isDark ? Colors.white12 : Colors.grey[300]!),
+                        ),
                       ),
                       onSelected: (selected) {
                         if (selected && _selectedDay != day) {
@@ -120,18 +133,34 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
 
           // 2. 搜索框与楼层筛选
           Container(
-            color: Colors.white,
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
             child: Column(
               children: [
                 TextField(
                   controller: _searchController,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
                   decoration: InputDecoration(
                     hintText: '搜索阅览室名称 / 楼层',
-                    prefixIcon: const Icon(Icons.search, size: 20, color: Colors.grey),
+                    hintStyle: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white38 : Colors.grey,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      size: 20,
+                      color: isDark ? Colors.white38 : Colors.grey,
+                    ),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
+                            icon: Icon(
+                              Icons.clear,
+                              size: 18,
+                              color: isDark ? Colors.white38 : Colors.grey,
+                            ),
                             onPressed: () {
                               _searchController.clear();
                               setState(() => _searchQuery = '');
@@ -140,10 +169,12 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
                         : null,
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                    fillColor: const Color(0xFFF1F3F5),
+                    fillColor: isDark
+                        ? Colors.white.withValues(alpha: 0.06)
+                        : const Color(0xFFF1F3F5),
                     filled: true,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(6),
                       borderSide: BorderSide.none,
                     ),
                   ),
@@ -154,7 +185,10 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
               ],
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFEEEEEE)),
+          Divider(
+            height: 1,
+            color: isDark ? Colors.white12 : const Color(0xFFEEEEEE),
+          ),
 
           // 3. 阅览室列表
           Expanded(
@@ -171,8 +205,13 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
                     const SizedBox(height: 12),
                     Text(err.toString().replaceAll('Exception:', '').trim()),
                     const SizedBox(height: 12),
-                    FilledButton(
-                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFF09C489)),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF09C489),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      ),
                       onPressed: () => ref.invalidate(libraryRoomsProvider(_selectedDay)),
                       child: const Text('重试'),
                     ),
@@ -187,6 +226,8 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
   }
 
   Widget _buildRoomList(List<LibraryRoomModel> rooms) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     // 提取全部楼层
     final floors = <String>{'全部'};
     for (final r in rooms) {
@@ -215,7 +256,7 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
         if (floors.length > 2)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: Colors.white,
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -229,8 +270,18 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
                       selectedColor: const Color(0xFF09C489).withValues(alpha: 0.15),
                       labelStyle: TextStyle(
                         fontSize: 12,
-                        color: isSelected ? const Color(0xFF09C489) : Colors.black87,
+                        color: isSelected
+                            ? const Color(0xFF09C489)
+                            : (isDark ? Colors.white70 : Colors.black87),
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        side: BorderSide(
+                          color: isSelected
+                              ? const Color(0xFF09C489)
+                              : (isDark ? Colors.white12 : Colors.grey[300]!),
+                        ),
                       ),
                       onSelected: (selected) {
                         setState(() {
@@ -246,8 +297,11 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
 
         Expanded(
           child: filtered.isEmpty
-              ? const Center(
-                  child: Text('暂无符合条件的阅览室', style: TextStyle(color: Colors.grey)),
+              ? Center(
+                  child: Text(
+                    '暂无符合条件的阅览室',
+                    style: TextStyle(color: isDark ? Colors.white38 : Colors.grey),
+                  ),
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
@@ -263,23 +317,22 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
   }
 
   Widget _buildRoomCard(LibraryRoomModel room) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.12) : const Color(0xFFE0E0E0),
+          width: 1,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(6),
           onTap: () {
             Navigator.push(
               context,
@@ -290,24 +343,24 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
             );
           },
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             child: Row(
               children: [
                 // 楼层图标装饰
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF09C489).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFF09C489).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Icon(
                     Icons.meeting_room_rounded,
                     color: Color(0xFF09C489),
-                    size: 26,
+                    size: 22,
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
 
                 // 阅览室详细信息
                 Expanded(
@@ -319,42 +372,61 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
                           Expanded(
                             child: Text(
                               room.displayName,
-                              style: const TextStyle(
-                                fontSize: 16,
+                              style: TextStyle(
+                                fontSize: 15,
                                 fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : const Color(0xFF222222),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: Colors.blue.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
+                              color: Colors.blue.withValues(alpha: isDark ? 0.2 : 0.1),
+                              borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               room.floorName,
-                              style: const TextStyle(fontSize: 11, color: Colors.blue, fontWeight: FontWeight.w600),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark ? Colors.blue[300] : Colors.blue[700],
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 5),
                       Row(
                         children: [
-                          Icon(Icons.event_seat_outlined, size: 14, color: Colors.grey[600]),
+                          Icon(
+                            Icons.event_seat_outlined,
+                            size: 13,
+                            color: isDark ? Colors.white38 : Colors.grey[600],
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '总座位数：${room.capacity}',
-                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? Colors.white54 : Colors.grey[600],
+                            ),
                           ),
                           const SizedBox(width: 12),
-                          Icon(Icons.schedule_rounded, size: 14, color: Colors.grey[600]),
+                          Icon(
+                            Icons.schedule_rounded,
+                            size: 13,
+                            color: isDark ? Colors.white38 : Colors.grey[600],
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '07:00 - 22:00',
-                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? Colors.white54 : Colors.grey[600],
+                            ),
                           ),
                         ],
                       ),
@@ -363,7 +435,11 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
                 ),
 
                 const SizedBox(width: 8),
-                const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 13,
+                  color: isDark ? Colors.white24 : Colors.grey,
+                ),
               ],
             ),
           ),
