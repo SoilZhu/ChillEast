@@ -23,6 +23,7 @@ import '../../workspace/screens/campus_card_recharge_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../workspace/services/campus_card_service.dart';
 import '../../workspace/screens/vpn_converter_screen.dart';
+import '../../library/screens/library_home_screen.dart';
 
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -203,24 +204,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             : _showLoginDialog(context);
         break;
       case 'library':
-        if (isLoggedIn) {
-          final status = await Permission.camera.request();
-          if (status.isGranted) {
-            Navigator.push(context, createSlideUpRoute(const WebViewDetailScreen(
-              title: '图书馆',
-              url: AppConstants.libraryUrl,
-              showWebBack: true,
-            )));
-          } else {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('需要相机权限以完成扫码')),
-              );
-            }
-          }
-        } else {
-          _showLoginDialog(context);
-        }
+        isLoggedIn 
+            ? Navigator.push(context, createSlideUpRoute(const LibraryHomeScreen()))
+            : _showLoginDialog(context);
         break;
       case 'empty_classroom':
         isLoggedIn 
