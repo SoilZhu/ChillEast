@@ -7,6 +7,7 @@ import '../../features/timetable/models/course_model.dart';
 import '../../features/timetable/utils/date_calculator.dart';
 import '../../features/timetable/utils/week_parser.dart';
 import '../../features/homework/models/homework_model.dart';
+import '../../features/library/models/library_models.dart';
 import 'package:logger/logger.dart';
 
 class NotificationService {
@@ -272,5 +273,90 @@ class NotificationService {
     }
 
     _logger.i('🚀 Scheduled $scheduledCount homework reminders (Advance: $advanceHours h)');
+  }
+
+  /// 为图书馆预约安排提醒
+  /// [reserves]: 预约列表
+  /// [reminderMinutes]: 提前多少分钟提醒
+  Future<void> scheduleLibraryReminders(
+    List<LibraryReserveModel> reserves,
+    int reminderMinutes,
+  ) async {
+    if (reminderMinutes <= 0 || reserves.isEmpty) return;
+
+    final now = DateTime.now();
+    int scheduledCount = 0;
+
+    for (var reserve in reserves) {
+      final startTime = reserve.startTime;
+      final reminderTime = startTime.subtract(Duration(minutes: reminderMinutes));
+
+      final timeStr = '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
+      final title = '$timeStr ${reserve.seatNum}号座位';
+      final body = reserve.fullRoomName;
+
+      // 如果提醒时间已经过了，检查是否需要补发
+      if (reminderTime.isBefore(now)) {
+        // 如果在签到有效期内，补发提醒
+        if (now.isBefore(startTime.add(const Duration(minutes: 15)))) {
+          final prefs = await SharedPreferences.getInstance();
+          final String makeupKey = 'makeup_library_${reserve.id}_${startTime.millisecondsSinceEpoch}';
+
+          if (prefs.getBool(makeupKey) != true) {
+            await prefs.setBool(makeupKey, true);
+
+            final int makeupId = 350000000 + (reserve.id.hashCode.abs() % 10000000);
+
+            await _notificationsPlugin.show(
+              makeupId,
+              title,
+              body,
+              const NotificationDetails(
+                android: AndroidNotificationDetails(
+                  'library_reminder_channel',
+                  '图书馆预约提醒',
+                  channelDescription: '在图书馆座位预约开始前发送提醒',
+                  importance: Importance.max,
+                  priority: Priority.high,
+                ),
+              ),
+              payload: 'library_${reserve.id}',
+            );
+            _logger.i('📨 Makeup library notification sent for ${reserve.seatNum}');
+          }
+        }
+        continue;
+      }
+
+      // 只安排未来 7 天内的预约
+      if (reminderTime.isAfter(now.add(const Duration(days: 7)))) continue;
+
+      // 生成图书馆通知 ID (3开头)
+      final int notificationId = 300000000 + (reserve.id.hashCode.abs() % 100000000);
+
+      await _notificationsPlugin.zonedSchedule(
+        notificationId,
+        title,
+        body,
+        tz.TZDateTime.from(reminderTime, tz.local),
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'library_reminder_channel',
+            '图书馆预约提醒',
+            channelDescription: '在图书馆座位预约开始前发送提醒',
+            importance: Importance.max,
+            priority: Priority.high,
+            showWhen: true,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        payload: 'library_${reserve.id}',
+      );
+
+      scheduledCount++;
+    }
+
+    _logger.i('🚀 Scheduled $scheduledCount library reminders (Pre-notify: $reminderMinutes min)');
   }
 }

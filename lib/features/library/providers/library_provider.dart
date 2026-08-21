@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/library_models.dart';
 import '../services/library_service.dart';
 import '../services/library_storage.dart';
+import '../../profile/providers/settings_provider.dart';
 
 final libraryServiceProvider = Provider<LibraryService>((ref) {
   return LibraryService();
@@ -37,6 +38,7 @@ class CachedLibraryReserveNotifier
       } else {
         await LibraryStorage.clearReserves();
       }
+      ref.read(settingsProvider.notifier).rescheduleNotifications();
     } catch (_) {
       // 发生网络错误时，保留本地已有的缓存数据，不做清除
     }
@@ -56,6 +58,7 @@ class CachedLibraryReserveNotifier
     ];
     state = AsyncValue.data(updatedList);
     await LibraryStorage.saveReserves(updatedList);
+    ref.read(settingsProvider.notifier).rescheduleNotifications();
   }
 
   /// 取消预约（及时移除该项，下一个预约自动顶上来）
@@ -70,8 +73,9 @@ class CachedLibraryReserveNotifier
       } else {
         await LibraryStorage.clearReserves();
       }
-      // 同时通知 indexProvider 刷新
+      // 同时通知 indexProvider 刷新并重新安排通知
       ref.read(libraryIndexProvider.notifier).refresh();
+      ref.read(settingsProvider.notifier).rescheduleNotifications();
     }
     return success;
   }

@@ -77,6 +77,19 @@ class NotificationSettingsScreen extends ConsumerWidget {
               onSelected: (val) => ref.read(settingsProvider.notifier).setHomeworkReminderHours(val as double),
             ),
           ),
+          _buildSettingItem(
+            context,
+            icon: Icons.event_seat_outlined,
+            title: '图书馆预约提醒',
+            subtitle: courseDurations.firstWhere((e) => e['value'] == settings.libraryReminderMinutes, orElse: () => courseDurations[0])['label'] as String,
+            onTap: () => _showPicker(
+              context, 
+              title: '图书馆预约提醒时间',
+              options: courseDurations,
+              currentValue: settings.libraryReminderMinutes,
+              onSelected: (val) => ref.read(settingsProvider.notifier).setLibraryReminderMinutes(val as int),
+            ),
+          ),
         ],
       ),
     );

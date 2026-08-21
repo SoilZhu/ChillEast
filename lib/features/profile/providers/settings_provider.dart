@@ -3,23 +3,28 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/notification_service.dart';
 import '../../timetable/services/timetable_storage.dart';
 import '../../homework/services/homework_storage.dart';
+import '../../library/services/library_storage.dart';
 
 class SettingsState {
   final int reminderMinutes; // 0: 不通知, 5, 10, 20, 30, 40, 50, 60
   final double homeworkReminderHours; // 0: 不通知, 0.5, 1, 2, 6, 12, 24, 48
+  final int libraryReminderMinutes; // 0: 不通知, 5, 10, 20, 30, 40, 50, 60
 
   SettingsState({
     required this.reminderMinutes,
     required this.homeworkReminderHours,
+    required this.libraryReminderMinutes,
   });
 
   SettingsState copyWith({
     int? reminderMinutes,
     double? homeworkReminderHours,
+    int? libraryReminderMinutes,
   }) {
     return SettingsState(
       reminderMinutes: reminderMinutes ?? this.reminderMinutes,
       homeworkReminderHours: homeworkReminderHours ?? this.homeworkReminderHours,
+      libraryReminderMinutes: libraryReminderMinutes ?? this.libraryReminderMinutes,
     );
   }
 }
@@ -29,11 +34,16 @@ final settingsProvider = StateNotifierProvider<SettingsNotifier, SettingsState>(
 });
 
 class SettingsNotifier extends StateNotifier<SettingsState> {
-  final Ref _ref;
   static const String _reminderKey = 'course_reminder_minutes';
   static const String _hwReminderKey = 'homework_reminder_hours';
+  static const String _libraryReminderKey = 'library_reminder_minutes';
 
-  SettingsNotifier(this._ref) : super(SettingsState(reminderMinutes: 0, homeworkReminderHours: 0)) {
+  SettingsNotifier([Ref? _])
+      : super(SettingsState(
+          reminderMinutes: 0,
+          homeworkReminderHours: 0,
+          libraryReminderMinutes: 0,
+        )) {
     _loadSettings();
   }
 
@@ -41,7 +51,12 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     final prefs = await SharedPreferences.getInstance();
     final minutes = prefs.getInt(_reminderKey) ?? 0;
     final hwHours = prefs.getDouble(_hwReminderKey) ?? 0;
-    state = state.copyWith(reminderMinutes: minutes, homeworkReminderHours: hwHours);
+    final libMinutes = prefs.getInt(_libraryReminderKey) ?? 0;
+    state = state.copyWith(
+      reminderMinutes: minutes,
+      homeworkReminderHours: hwHours,
+      libraryReminderMinutes: libMinutes,
+    );
     
     // 初始化时也尝试安排一次通知
     rescheduleNotifications();
@@ -61,6 +76,15 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     await prefs.setDouble(_hwReminderKey, hours);
     state = state.copyWith(homeworkReminderHours: hours);
     
+    // 更改设置后，立即重新安排通知
+    await rescheduleNotifications();
+  }
+
+  Future<void> setLibraryReminderMinutes(int minutes) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_libraryReminderKey, minutes);
+    state = state.copyWith(libraryReminderMinutes: minutes);
+
     // 更改设置后，立即重新安排通知
     await rescheduleNotifications();
   }
@@ -93,6 +117,15 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       await NotificationService().scheduleHomeworkReminders(
         homeworks,
         state.homeworkReminderHours,
+      );
+    }
+
+    // 3. 安排图书馆预约通知
+    final libReserves = await LibraryStorage.getCachedReserves();
+    if (libReserves.isNotEmpty) {
+      await NotificationService().scheduleLibraryReminders(
+        libReserves,
+        state.libraryReminderMinutes,
       );
     }
   }

@@ -7,6 +7,8 @@ import '../../features/notice/providers/notice_provider.dart';
 import '../../features/timetable/services/timetable_storage.dart';
 import '../../features/timetable/services/timetable_service.dart';
 import '../../features/workspace/services/campus_card_service.dart';
+import '../../features/library/services/library_storage.dart';
+import '../../features/library/providers/library_provider.dart';
 import '../../features/workspace/services/electricity_service.dart';
 import '../constants/app_constants.dart';
 import 'package:logger/logger.dart';
@@ -252,9 +254,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     // 退出登录时删除本地作业数据
     await _ref.read(homeworkProvider.notifier).clearAll();
     
-    // 退出登录时清除记住的宿舍信息
-    await _ref.read(electricityServiceProvider).clearSavedRoom();
-    
     state = const AuthState.initial();
   }
 
@@ -274,10 +273,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isInitialized: true,
       );
       
-      // ✨ 登录成功的第一时间发起作业和通知同步
+      // ✨ 登录成功的第一时间发起作业、通知和图书馆预约同步
       Future.microtask(() {
         _ref.read(homeworkProvider.notifier).refresh(username);
         _ref.read(noticeProvider.notifier).refresh();
+        _ref.read(cachedLibraryReserveProvider.notifier).refresh();
       });
       
       // 登录成功后刷新资料 (后台异步执行，不阻塞跳转)
