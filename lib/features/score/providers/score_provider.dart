@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/score_service.dart';
 import '../models/score_model.dart';
-import 'package:logger/logger.dart';
+import '../../../core/utils/app_logger.dart';
 
 class ScoreState {
   final bool isLoading;
@@ -48,7 +48,7 @@ final scoreProvider = StateNotifierProvider.autoDispose<ScoreNotifier, ScoreStat
 
 class ScoreNotifier extends StateNotifier<ScoreState> {
   final _service = ScoreService();
-  final _logger = Logger();
+  final _logger = AppLogger.instance;
 
   ScoreNotifier() : super(ScoreState.initial()) {
     fetchInitialData();
@@ -57,16 +57,25 @@ class ScoreNotifier extends StateNotifier<ScoreState> {
   Future<void> fetchInitialData() async {
     try {
       state = state.copyWith(isLoading: true, errorMessage: null);
-      final data = await _service.fetchScores();
       
-      final List<SemesterModel> semesters = data['semesters'];
-      final List<ScoreModel> scores = data['scores'];
-      
-      // 找到当前活跃的学期
-      SemesterModel? active = semesters.cast<SemesterModel?>().firstWhere(
-        (s) => s?.isActive ?? false, 
-        orElse: () => semesters.isNotEmpty ? semesters.first : null
+      final semesters = await _service.fetchSemesterList();
+      if (semesters.isEmpty) {
+        state = state.copyWith(
+          isLoading: false,
+          scores: [],
+          semesters: [],
+          selectedSemester: null,
+        );
+        return;
+      }
+
+      // 找到当前活跃学期，默认选择第一个
+      final SemesterModel active = semesters.firstWhere(
+        (s) => s.isActive,
+        orElse: () => semesters.first,
       );
+
+      final scores = await _service.fetchScores(semester: active.id);
 
       state = state.copyWith(
         isLoading: false,
@@ -75,22 +84,24 @@ class ScoreNotifier extends StateNotifier<ScoreState> {
         selectedSemester: active,
       );
     } catch (e) {
+      _logger.e('Error fetching initial score data: $e');
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
   }
 
   Future<void> changeSemester(SemesterModel semester) async {
     if (semester == state.selectedSemester) return;
-    
+
     try {
       state = state.copyWith(isLoading: true, selectedSemester: semester, errorMessage: null);
-      final data = await _service.fetchScores(xn: semester.value, xq: semester.xq);
-      
+      final scores = await _service.fetchScores(semester: semester.id);
+
       state = state.copyWith(
         isLoading: false,
-        scores: data['scores'],
+        scores: scores,
       );
     } catch (e) {
+      _logger.e('Error changing semester to ${semester.id}: $e');
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
   }

@@ -71,6 +71,8 @@ class AppConstants {
   // 移动教务系统 (YDJWXT)
   static const String ydjwxtOAuthUrl = 'https://auth.chaoxing.com/connect/oauth2/authorize?appid=ccf57937af7e40dcbdef0523e05e5ddd&redirect_uri=https%3A%2F%2Fydjwxt.hunau.edu.cn%2Fnjwhd%2Flogin%2Foauth2%3FappId%3Dccf57937af7e40dcbdef0523e05e5ddd%26appKey%3D1D13d6neUcz6c20f%26uid%3D22073114%26fidEnc%3Da915b52ee0aa18ad%26mappId%3D6127153%26formid%3D&response_type=code&scope=snsapi_base&state=128516';
   static const String ydjwxtApiUrl = 'https://ydjwxt.hunau.edu.cn/njwhd/student/curriculum';
+  static const String ydjwxtSemesterListUrl = 'https://ydjwxt.hunau.edu.cn/njwhd/semesterList';
+  static const String ydjwxtScoreUrl = 'https://ydjwxt.hunau.edu.cn/njwhd/student/termGPA';
   static const String ydjwxtUA = campusCardUA;
   
   // 报修平台

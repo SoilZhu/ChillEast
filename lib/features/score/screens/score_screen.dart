@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/score_provider.dart';
 import '../models/score_model.dart';
-import '../../../core/constants/app_constants.dart';
 
 class ScoreScreen extends ConsumerWidget {
   const ScoreScreen({super.key});

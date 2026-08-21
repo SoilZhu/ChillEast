@@ -1,124 +1,152 @@
 import 'package:dio/dio.dart';
-import 'package:html/parser.dart' as html_parser;
-import 'package:html/dom.dart' as dom;
-import '../../../core/network/dio_client.dart';
-import '../models/score_model.dart';
-import '../../../core/exceptions/app_exceptions.dart';
-import 'package:logger/logger.dart';
-
 import '../../../core/constants/app_constants.dart';
+import '../../../core/exceptions/app_exceptions.dart';
+import '../../../core/network/dio_client.dart';
+import '../../../core/services/ydjwxt_auth_service.dart';
+import '../../../core/utils/app_logger.dart';
+import '../models/score_model.dart';
 
 class ScoreService {
-  final Logger _logger = Logger();
-  
-  static const String scoreUrl = 
-      '${AppConstants.portalBaseUrl}/pc/view/scoreIndex';
+  final _logger = AppLogger.instance;
+  final _authService = YdjwxtAuthService();
 
-  /// 获取成绩数据
-  Future<Map<String, dynamic>> fetchScores({String? xn, String? xq}) async {
+  /// 获取学期列表
+  Future<List<SemesterModel>> fetchSemesterList({bool isRetry = false}) async {
     try {
-      final queryParams = <String, String>{};
-      if (xn != null) queryParams['xn'] = xn;
-      if (xq != null) queryParams['xq'] = xq;
+      final token = await _authService.getToken(forceRefresh: isRetry);
+      final dio = DioClient().dio;
 
-      _logger.i('Fetching scores for xn=$xn, xq=$xq...');
-      
-      final response = await DioClient().dio.get(
-        scoreUrl,
-        queryParameters: queryParams,
+      _logger.i('Fetching semester list from YDJWXT...');
+      final response = await dio.post(
+        AppConstants.ydjwxtSemesterListUrl,
         options: Options(
           headers: {
-            'Referer': '${AppConstants.portalBaseUrl}/pc/template/scoreIndex',
-            'Host': 'portal.hunau.edu.cn',
+            'token': token,
+            'User-Agent': AppConstants.ydjwxtUA,
+            'Referer': 'https://ydjwxt.hunau.edu.cn/hnnydx/',
+            'Accept': 'application/json, text/plain, */*',
+            'Origin': 'https://ydjwxt.hunau.edu.cn',
+            'Content-Type': 'application/json',
           },
         ),
       );
 
-      if (response.statusCode != 200) {
-        throw NetworkException('获取成绩失败: HTTP ${response.statusCode}');
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          final code = data['code']?.toString();
+          if (code == '1') {
+            final list = data['data'] as List? ?? [];
+            final semesters = list.map((item) {
+              final map = item as Map<String, dynamic>;
+              final id = map['semesterId']?.toString() ?? '';
+              final name = map['semesterName']?.toString() ?? id;
+              final isdqxq = map['isdqxq']?.toString() == '1';
+              return SemesterModel(
+                id: id,
+                name: name,
+                isActive: isdqxq,
+              );
+            }).toList();
+            _logger.i('Successfully fetched ${semesters.length} semesters from YDJWXT');
+            return semesters;
+          } else if (!isRetry && _isAuthError(code, data['Msg']?.toString())) {
+            _logger.w('Token expired or invalid in semesterList, retrying with fresh token...');
+            return fetchSemesterList(isRetry: true);
+          } else {
+            throw AppException(data['Msg']?.toString() ?? '获取学期列表失败');
+          }
+        }
       }
 
-      final htmlContent = response.data.toString();
-      
-      // ✨ 检查是否被重定向到了登录页
-      if (htmlContent.contains('统一登录门户') || 
-          htmlContent.contains('cas/login')) {
-        _logger.w('⚠️ Session expired. Redirected to login page.');
-        throw AuthException('会话已失效，请重新登录');
-      }
-
-      return _parseScoreHtml(htmlContent);
+      throw NetworkException('获取学期列表失败: HTTP ${response.statusCode}');
     } catch (e) {
+      if (!isRetry && e is DioException && (e.response?.statusCode == 401 || e.response?.statusCode == 403)) {
+        _logger.w('HTTP 401/403 in semesterList, retrying with fresh token...');
+        return fetchSemesterList(isRetry: true);
+      }
+      _logger.e('Error fetching semester list: $e');
+      rethrow;
+    }
+  }
+
+  /// 获取指定学期的成绩列表
+  Future<List<ScoreModel>> fetchScores({required String semester, bool isRetry = false}) async {
+    try {
+      final token = await _authService.getToken(forceRefresh: isRetry);
+      final dio = DioClient().dio;
+
+      _logger.i('Fetching scores for semester=$semester from YDJWXT...');
+      final response = await dio.post(
+        AppConstants.ydjwxtScoreUrl,
+        queryParameters: {
+          'semester': semester,
+          'type': '1',
+        },
+        options: Options(
+          headers: {
+            'token': token,
+            'User-Agent': AppConstants.ydjwxtUA,
+            'Referer': 'https://ydjwxt.hunau.edu.cn/hnnydx/',
+            'Accept': 'application/json, text/plain, */*',
+            'Origin': 'https://ydjwxt.hunau.edu.cn',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          final code = data['code']?.toString();
+          if (code == '1') {
+            final rawList = data['data'] as List? ?? [];
+            if (rawList.isEmpty) return [];
+
+            final firstStudent = rawList.first as Map<String, dynamic>? ?? {};
+            final achievements = firstStudent['achievement'] as List? ?? [];
+
+            final scores = achievements.map((item) {
+              final map = item as Map<String, dynamic>;
+              return ScoreModel(
+                courseName: map['courseName']?.toString() ?? '未知课程',
+                score: map['fraction']?.toString() ?? 'N/A',
+                credit: map['credit']?.toString(),
+                examType: map['examinationNature']?.toString() ?? '正常考试',
+                curriculumAttributes: map['curriculumAttributes']?.toString(),
+                courseNature: map['courseNature']?.toString(),
+                courseCode: map['kcbh']?.toString(),
+                id: map['cj0708id']?.toString(),
+              );
+            }).toList();
+
+            _logger.i('Successfully parsed ${scores.length} scores for semester $semester');
+            return scores;
+          } else if (!isRetry && _isAuthError(code, data['Msg']?.toString())) {
+            _logger.w('Token expired or invalid in fetchScores, retrying with fresh token...');
+            return fetchScores(semester: semester, isRetry: true);
+          } else {
+            throw AppException(data['Msg']?.toString() ?? '获取成绩失败');
+          }
+        }
+      }
+
+      throw NetworkException('获取成绩失败: HTTP ${response.statusCode}');
+    } catch (e) {
+      if (!isRetry && e is DioException && (e.response?.statusCode == 401 || e.response?.statusCode == 403)) {
+        _logger.w('HTTP 401/403 in fetchScores, retrying with fresh token...');
+        return fetchScores(semester: semester, isRetry: true);
+      }
       _logger.e('Error fetching scores: $e');
       rethrow;
     }
   }
 
-  /// 解析 HTML 响应
-  Map<String, dynamic> _parseScoreHtml(String html) {
-    _logger.d('Parsing score HTML...');
-    final document = html_parser.parse(html);
-    
-    // 1. 解析学期列表
-    final semesterList = <SemesterModel>[];
-    final semesterElements = document.querySelectorAll('.selectSemesterList li');
-    
-    for (var element in semesterElements) {
-      final text = element.text.trim();
-      final isActive = element.className.contains('active');
-      
-      // 提取 onclick 中的 xn 和 xq
-      // onclick="... selXq('2025-2026','1') ..."
-      final onclick = element.attributes['onclick'] ?? '';
-      final regExp = RegExp(r"selXq\('([^']+)','([^']+)'\)");
-      final match = regExp.firstMatch(onclick);
-      
-      if (match != null) {
-        semesterList.add(SemesterModel(
-          value: match.group(1)!,
-          xq: match.group(2)!,
-          name: text,
-          isActive: isActive,
-        ));
-      }
+  bool _isAuthError(String? code, String? msg) {
+    if (code == '401' || code == '-1' || code == '0') return true;
+    if (msg != null && (msg.contains('登录') || msg.contains('token') || msg.contains('Token') || msg.contains('失效'))) {
+      return true;
     }
-
-    // 2. 解析成绩列表
-    final scoreList = <ScoreModel>[];
-    final scoreElements = document.querySelectorAll('.subjectItem');
-    
-    for (var element in scoreElements) {
-      final courseName = element.querySelector('.subjectName .line_slh')?.text.trim() ?? '未知课程';
-      final scoreVal = element.querySelector('.subjectValue span')?.text.trim() ?? 'N/A';
-      
-      final id = element.attributes['id'];
-      String? credit;
-      String? pscj;
-      String? cxbj;
-
-      if (id != null) {
-        // 从 hidden input 中获取更多元数据 (虽然 id 是 0, 1, 2...)
-        credit = document.querySelector('#xf$id')?.attributes['value'];
-        pscj = document.querySelector('#pscj$id')?.attributes['value'];
-        cxbj = document.querySelector('#cxbj$id')?.attributes['value'];
-        if (cxbj == "1") cxbj = "重修";
-        else if (cxbj == "0") cxbj = "正常考试";
-      }
-
-      scoreList.add(ScoreModel(
-        courseName: courseName,
-        score: scoreVal,
-        credit: credit,
-        dailyScore: pscj,
-        examType: cxbj,
-      ));
-    }
-
-    _logger.i('Successfully parsed ${semesterList.length} semesters and ${scoreList.length} scores');
-    
-    return {
-      'semesters': semesterList,
-      'scores': scoreList,
-    };
+    return false;
   }
 }
