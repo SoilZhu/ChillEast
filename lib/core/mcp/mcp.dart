@@ -1,0 +1,10 @@
+export 'models/mcp_tool.dart';
+export 'models/mcp_protocol.dart';
+export 'services/mcp_tool_registry.dart';
+export 'tools/timetable_tool.dart';
+export 'tools/homework_tools.dart';
+export 'tools/classroom_tool.dart';
+export 'tools/score_tool.dart';
+export 'tools/campus_card_tool.dart';
+export 'tools/electricity_tool.dart';
+export 'tools/notice_tool.dart';
