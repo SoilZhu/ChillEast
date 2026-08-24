@@ -33,24 +33,27 @@ class ScoreTool {
         },
       },
       handler: (arguments) async {
-        final xn = arguments['academicYear'] as String?;
-        final xq = arguments['semester'] as String?;
+        final targetSemester = arguments['semester'] as String?;
         final courseName = arguments['courseName'] as String?;
 
         try {
           final semesters = await scoreService.fetchSemesterList();
-          String targetSemester = '';
-          if (xn != null && xq != null) {
-            targetSemester = '$xn-$xq';
-          } else if (xq != null && xq.contains('-')) {
-            targetSemester = xq;
-          } else if (semesters.isNotEmpty) {
-            final active = semesters.firstWhere((s) => s.isActive, orElse: () => semesters.first);
-            targetSemester = active.id;
+          String selectedSemesterId = '';
+          if (semesters.isNotEmpty) {
+            if (targetSemester != null && targetSemester.isNotEmpty) {
+              final matched = semesters.firstWhere(
+                (s) => s.id.contains(targetSemester) || s.name.contains(targetSemester),
+                orElse: () => semesters.first,
+              );
+              selectedSemesterId = matched.id;
+            } else {
+              final active = semesters.firstWhere((s) => s.isActive, orElse: () => semesters.first);
+              selectedSemesterId = active.id;
+            }
           }
 
-          final List<ScoreModel> scores = targetSemester.isNotEmpty
-              ? await scoreService.fetchScores(semester: targetSemester)
+          final scores = selectedSemesterId.isNotEmpty
+              ? await scoreService.fetchScores(semester: selectedSemesterId)
               : <ScoreModel>[];
 
           // 过滤课程
@@ -62,9 +65,8 @@ class ScoreTool {
           }).toList();
 
           final formattedSemesters = semesters.map((sem) => {
+            'id': sem.id,
             'name': sem.name,
-            'academicYear': sem.value,
-            'semester': sem.xq,
             'isActive': sem.isActive,
           }).toList();
 
@@ -72,13 +74,12 @@ class ScoreTool {
             'courseName': s.courseName,
             'score': s.score,
             'credit': s.credit,
-            'dailyScore': s.dailyScore,
             'examType': s.examType,
+            'curriculumAttributes': s.curriculumAttributes,
           }).toList();
 
           return McpToolResult.json({
-            'queriedAcademicYear': xn,
-            'queriedSemester': xq,
+            'queriedSemesterId': selectedSemesterId,
             'totalScoresCount': formattedScores.length,
             'scores': formattedScores,
             'availableSemesters': formattedSemesters,

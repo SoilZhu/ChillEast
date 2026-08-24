@@ -208,6 +208,112 @@ class SecureStorageHelper {
     }
   }
 
+  /// 保存 AI API Key
+  Future<void> saveAiApiKey(String apiKey) async {
+    if (!_initialized) await initialize();
+    try {
+      await _storage.write(key: 'ai_api_key', value: apiKey.trim());
+      _logger.d('AI API Key saved');
+    } catch (e) {
+      _logger.e('Failed to save AI API Key: $e');
+    }
+  }
+
+  /// 获取 AI API Key
+  Future<String?> getAiApiKey() async {
+    if (!_initialized) await initialize();
+    try {
+      final key = await _storage.read(key: 'ai_api_key');
+      if (key != null && key.isNotEmpty) return key;
+      // 兼容旧键名
+      return await _storage.read(key: 'ai_glm_api_key');
+    } catch (e) {
+      _logger.e('Failed to read AI API Key: $e');
+      return null;
+    }
+  }
+
+  /// 清除 AI API Key
+  Future<void> clearAiApiKey() async {
+    if (!_initialized) await initialize();
+    try {
+      await _storage.delete(key: 'ai_api_key');
+      await _storage.delete(key: 'ai_glm_api_key');
+      _logger.d('AI API Key cleared');
+    } catch (e) {
+      _logger.e('Failed to clear AI API Key: $e');
+    }
+  }
+
+  /// 保存 AI API URL
+  Future<void> saveAiApiUrl(String url) async {
+    if (!_initialized) await initialize();
+    try {
+      await _storage.write(key: 'ai_api_url', value: url.trim());
+      _logger.d('AI API URL saved');
+    } catch (e) {
+      _logger.e('Failed to save AI API URL: $e');
+    }
+  }
+
+  /// 获取 AI API URL
+  Future<String?> getAiApiUrl() async {
+    if (!_initialized) await initialize();
+    try {
+      return await _storage.read(key: 'ai_api_url');
+    } catch (e) {
+      _logger.e('Failed to read AI API URL: $e');
+      return null;
+    }
+  }
+
+  /// 清除 AI API URL
+  Future<void> clearAiApiUrl() async {
+    if (!_initialized) await initialize();
+    try {
+      await _storage.delete(key: 'ai_api_url');
+      _logger.d('AI API URL cleared');
+    } catch (e) {
+      _logger.e('Failed to clear AI API URL: $e');
+    }
+  }
+
+  /// 保存 AI 模型名称
+  Future<void> saveAiModel(String model) async {
+    if (!_initialized) await initialize();
+    try {
+      await _storage.write(key: 'ai_model', value: model.trim());
+      _logger.d('AI Model saved');
+    } catch (e) {
+      _logger.e('Failed to save AI Model: $e');
+    }
+  }
+
+  /// 获取 AI 模型名称
+  Future<String?> getAiModel() async {
+    if (!_initialized) await initialize();
+    try {
+      final model = await _storage.read(key: 'ai_model');
+      if (model != null && model.isNotEmpty) return model;
+      return await _storage.read(key: 'ai_glm_model');
+    } catch (e) {
+      _logger.e('Failed to read AI Model: $e');
+      return null;
+    }
+  }
+
+  /// 清除 AI 模型名称
+  Future<void> clearAiModel() async {
+    if (!_initialized) await initialize();
+    try {
+      await _storage.delete(key: 'ai_model');
+      await _storage.delete(key: 'ai_glm_model');
+      _logger.d('AI Model cleared');
+    } catch (e) {
+      _logger.e('Failed to clear AI Model: $e');
+    }
+  }
+
   /// 检查是否有保存的凭证
   Future<bool> hasCredentials() async {
     final username = await getUsername();
