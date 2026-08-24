@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/utils/app_logger.dart';
@@ -316,12 +317,67 @@ class ElectricityService {
 
       if (response.data != null) {
         final data = response.data is String ? jsonDecode(response.data) : response.data;
-        return data['success'] == true;
+        final success = data['success'] == true;
+        if (success) {
+          await saveSavedRoom(
+            SavedElectricityRoom(
+              areaName: areaName,
+              buildingName: buildingName,
+              roomId: roomId,
+              roomName: roomId,
+              mertype: mertype,
+            ),
+          );
+        }
+        return success;
       }
       return false;
     } catch (e) {
       _logger.e('❌ recharge failed: $e');
       rethrow;
+    }
+  }
+
+  static const String _savedRoomKey = 'saved_electricity_room';
+
+  /// 获取上次保存/选择的宿舍房间
+  Future<SavedElectricityRoom?> getSavedRoom() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_savedRoomKey);
+      if (raw != null && raw.isNotEmpty) {
+        final data = jsonDecode(raw);
+        if (data is Map<String, dynamic>) {
+          return SavedElectricityRoom.fromJson(data);
+        } else if (data is Map) {
+          return SavedElectricityRoom.fromJson(Map<String, dynamic>.from(data));
+        }
+      }
+    } catch (e) {
+      _logger.w('Failed to get saved electricity room: $e');
+    }
+    return null;
+  }
+
+  /// 保存当前选择的宿舍房间
+  Future<void> saveSavedRoom(SavedElectricityRoom room) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_savedRoomKey, jsonEncode(room.toJson()));
+      _logger.d('💾 Saved electricity room: ${room.areaName} - ${room.buildingName} - ${room.roomName}');
+    } catch (e) {
+      _logger.w('Failed to save electricity room: $e');
+    }
+  }
+
+  /// 清除保存的宿舍房间 (例如退出登录时)
+  Future<void> clearSavedRoom() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_savedRoomKey);
+      _logger.d('🧹 Cleared saved electricity room');
+    } catch (e) {
+      _logger.w('Failed to clear saved electricity room: $e');
     }
   }
 }

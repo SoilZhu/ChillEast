@@ -38,10 +38,20 @@ class ScoreTool {
         final courseName = arguments['courseName'] as String?;
 
         try {
-          final data = await scoreService.fetchScores(xn: xn, xq: xq);
+          final semesters = await scoreService.fetchSemesterList();
+          String targetSemester = '';
+          if (xn != null && xq != null) {
+            targetSemester = '$xn-$xq';
+          } else if (xq != null && xq.contains('-')) {
+            targetSemester = xq;
+          } else if (semesters.isNotEmpty) {
+            final active = semesters.firstWhere((s) => s.isActive, orElse: () => semesters.first);
+            targetSemester = active.id;
+          }
 
-          final List<SemesterModel> semesters = data['semesters'] as List<SemesterModel>? ?? [];
-          final List<ScoreModel> scores = data['scores'] as List<ScoreModel>? ?? [];
+          final List<ScoreModel> scores = targetSemester.isNotEmpty
+              ? await scoreService.fetchScores(semester: targetSemester)
+              : <ScoreModel>[];
 
           // 过滤课程
           final filteredScores = scores.where((s) {

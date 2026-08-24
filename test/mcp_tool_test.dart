@@ -111,18 +111,16 @@ class FakeClassroomService extends ClassroomService {
 
 class FakeScoreService extends ScoreService {
   @override
-  Future<Map<String, dynamic>> fetchScores({String? xn, String? xq}) async {
-    return {
-      'semesters': [
-        SemesterModel(value: '2024-2025', xq: '2', name: '2024-2025第2学期', isActive: true),
-        SemesterModel(value: '2024-2025', xq: '1', name: '2024-2025第1学期', isActive: false),
-      ],
-      'scores': [
+  Future<List<SemesterModel>> fetchSemesterList({bool isRetry = false}) async => [
+        SemesterModel(id: '2024-2025-2', name: '2024-2025第2学期', isActive: true),
+        SemesterModel(id: '2024-2025-1', name: '2024-2025第1学期', isActive: false),
+      ];
+
+  @override
+  Future<List<ScoreModel>> fetchScores({required String semester, bool isRetry = false}) async => [
         ScoreModel(courseName: '数据结构与算法', score: '95', credit: '3.5', dailyScore: '98', examType: '正常考试'),
         ScoreModel(courseName: '操作系统原理', score: '88', credit: '4.0', dailyScore: '85', examType: '正常考试'),
-      ],
-    };
-  }
+      ];
 }
 
 class FakeCampusCardService extends CampusCardService {
@@ -144,6 +142,21 @@ class FakeCampusCardService extends CampusCardService {
 }
 
 class FakeElectricityService implements ElectricityService {
+  SavedElectricityRoom? _savedRoom;
+
+  @override
+  Future<SavedElectricityRoom?> getSavedRoom() async => _savedRoom;
+
+  @override
+  Future<void> saveSavedRoom(SavedElectricityRoom room) async {
+    _savedRoom = room;
+  }
+
+  @override
+  Future<void> clearSavedRoom() async {
+    _savedRoom = null;
+  }
+
   @override
   Future<List<ElectricityArea>> getAreas() async => [
         ElectricityArea(id: '东湖校区', name: '东湖校区'),
@@ -175,8 +188,16 @@ class FakeElectricityService implements ElectricityService {
     required String roomId,
     required String mertype,
     required double amount,
-  }) async =>
-      true;
+  }) async {
+    _savedRoom = SavedElectricityRoom(
+      areaName: areaName,
+      buildingName: buildingName,
+      roomId: roomId,
+      roomName: roomId,
+      mertype: mertype,
+    );
+    return true;
+  }
 }
 
 class FakeNoticeService extends NoticeService {
@@ -345,6 +366,14 @@ void main() {
       });
       expect(rechargeRes.isError, isFalse);
       expect(rechargeRes.content.first.text, contains('电费充值成功'));
+
+      // Query balance without specifying dorm (should use remembered dorm)
+      final defaultQueryRes = await registry.callTool('recharge_electricity', {
+        'action': 'query_balance',
+      });
+      expect(defaultQueryRes.isError, isFalse);
+      expect(defaultQueryRes.content.first.text, contains('35.80'));
+      expect(defaultQueryRes.content.first.text, contains('东湖公寓1栋'));
     });
 
     test('8. Notice Tool (query_notices) query & detail execution', () async {

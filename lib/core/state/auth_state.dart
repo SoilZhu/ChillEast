@@ -7,6 +7,7 @@ import '../../features/notice/providers/notice_provider.dart';
 import '../../features/timetable/services/timetable_storage.dart';
 import '../../features/timetable/services/timetable_service.dart';
 import '../../features/workspace/services/campus_card_service.dart';
+import '../../features/workspace/services/electricity_service.dart';
 import '../constants/app_constants.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -250,6 +251,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     
     // 退出登录时删除本地作业数据
     await _ref.read(homeworkProvider.notifier).clearAll();
+    
+    // 退出登录时清除记住的宿舍信息
+    await _ref.read(electricityServiceProvider).clearSavedRoom();
     
     state = const AuthState.initial();
   }

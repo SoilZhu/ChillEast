@@ -11,7 +11,7 @@ class ElectricityTool {
     return McpTool(
       name: toolName,
       description:
-          '湖南农业大学宿舍电费充值与电费余额查询工具。支持从校园卡扣款进行电费在线充值（操作类型 recharge），以及查询指定宿舍房间的电费剩余度数/金额（query_balance），并支持获取校区、楼栋、房间列表。',
+          '湖南农业大学宿舍电费充值与电费余额查询工具。支持从校园卡扣款进行电费在线充值（操作类型 recharge），以及查询指定宿舍房间的电费剩余度数/金额（query_balance），并支持获取校区、楼栋、房间列表。若未指定 areaName、buildingName、roomId，则默认使用用户在电费充值中选择并记住的宿舍。',
       inputSchema: {
         'type': 'object',
         'properties': {
@@ -23,19 +23,19 @@ class ElectricityTool {
           },
           'areaName': {
             'type': 'string',
-            'description': '校区名称（例如“东湖校区”或由 get_areas 获取的校区）。充值或查询余额时必填。',
+            'description': '校区名称（例如“东湖校区”或由 get_areas 获取的校区）。如未提供则默认使用记住的宿舍校区。',
           },
           'buildingName': {
             'type': 'string',
-            'description': '楼栋名称（例如“丰泽学生公寓1栋”、“东湖公寓2栋”等）。充值或查询余额时必填。',
+            'description': '楼栋名称（例如“丰泽学生公寓1栋”、“东湖公寓2栋”等）。如未提供则默认使用记住的宿舍楼栋。',
           },
           'roomId': {
             'type': 'string',
-            'description': '房间号或房间ID（例如“101”、“203”等）。充值或查询余额时必填。',
+            'description': '房间号或房间ID（例如“101”、“203”等）。如未提供则默认使用记住的宿舍房间。',
           },
           'mertype': {
             'type': 'string',
-            'description': '电表类型代码（例如“yk”预付费表或“rt”实时表），通常通过 get_rooms 获得，默认为“yk”。',
+            'description': '电表类型代码（例如“yk”预付费表或“rt”实时表），默认为记住的宿舍表类型或“yk”。',
             'default': 'yk',
           },
           'amount': {
@@ -88,21 +88,47 @@ class ElectricityTool {
               });
 
             case 'query_balance':
-              if (areaName == null || areaName.trim().isEmpty ||
-                  buildingName == null || buildingName.trim().isEmpty ||
-                  roomId == null || roomId.trim().isEmpty) {
-                return McpToolResult.error('查询电费余额需要提供 areaName、buildingName 和 roomId');
+              var targetArea = areaName;
+              var targetBuilding = buildingName;
+              var targetRoomId = roomId;
+              var targetMertype = mertype;
+
+              if (targetArea == null || targetArea.trim().isEmpty ||
+                  targetBuilding == null || targetBuilding.trim().isEmpty ||
+                  targetRoomId == null || targetRoomId.trim().isEmpty) {
+                final saved = await service.getSavedRoom();
+                if (saved != null) {
+                  if (targetArea == null || targetArea.trim().isEmpty) {
+                    targetArea = saved.areaName.isNotEmpty ? saved.areaName : null;
+                  }
+                  if (targetBuilding == null || targetBuilding.trim().isEmpty) {
+                    targetBuilding = saved.buildingName.isNotEmpty ? saved.buildingName : null;
+                  }
+                  if (targetRoomId == null || targetRoomId.trim().isEmpty) {
+                    targetRoomId = saved.roomId.isNotEmpty ? saved.roomId : null;
+                  }
+                  if (arguments['mertype'] == null && saved.mertype.isNotEmpty) {
+                    targetMertype = saved.mertype;
+                  }
+                }
               }
+
+              if (targetArea == null || targetArea.trim().isEmpty ||
+                  targetBuilding == null || targetBuilding.trim().isEmpty ||
+                  targetRoomId == null || targetRoomId.trim().isEmpty) {
+                return McpToolResult.error('查询电费余额需要提供 areaName、buildingName 和 roomId，或先在电费充值页面选择宿舍');
+              }
+
               final balanceInfo = await service.getBalance(
-                areaName: areaName,
-                buildingName: buildingName,
-                roomId: roomId,
-                mertype: mertype,
+                areaName: targetArea,
+                buildingName: targetBuilding,
+                roomId: targetRoomId,
+                mertype: targetMertype,
               );
               return McpToolResult.json({
-                'areaName': areaName,
-                'buildingName': buildingName,
-                'roomId': roomId,
+                'areaName': targetArea,
+                'buildingName': targetBuilding,
+                'roomId': targetRoomId,
                 'balance': balanceInfo.balance,
                 'detail': balanceInfo.detail,
                 'unit': '元/度',
@@ -111,29 +137,54 @@ class ElectricityTool {
 
             case 'recharge':
             default:
-              if (areaName == null || areaName.trim().isEmpty ||
-                  buildingName == null || buildingName.trim().isEmpty ||
-                  roomId == null || roomId.trim().isEmpty) {
-                return McpToolResult.error('执行电费充值需要提供 areaName、buildingName 和 roomId');
+              var targetArea = areaName;
+              var targetBuilding = buildingName;
+              var targetRoomId = roomId;
+              var targetMertype = mertype;
+
+              if (targetArea == null || targetArea.trim().isEmpty ||
+                  targetBuilding == null || targetBuilding.trim().isEmpty ||
+                  targetRoomId == null || targetRoomId.trim().isEmpty) {
+                final saved = await service.getSavedRoom();
+                if (saved != null) {
+                  if (targetArea == null || targetArea.trim().isEmpty) {
+                    targetArea = saved.areaName.isNotEmpty ? saved.areaName : null;
+                  }
+                  if (targetBuilding == null || targetBuilding.trim().isEmpty) {
+                    targetBuilding = saved.buildingName.isNotEmpty ? saved.buildingName : null;
+                  }
+                  if (targetRoomId == null || targetRoomId.trim().isEmpty) {
+                    targetRoomId = saved.roomId.isNotEmpty ? saved.roomId : null;
+                  }
+                  if (arguments['mertype'] == null && saved.mertype.isNotEmpty) {
+                    targetMertype = saved.mertype;
+                  }
+                }
+              }
+
+              if (targetArea == null || targetArea.trim().isEmpty ||
+                  targetBuilding == null || targetBuilding.trim().isEmpty ||
+                  targetRoomId == null || targetRoomId.trim().isEmpty) {
+                return McpToolResult.error('执行电费充值需要提供 areaName、buildingName 和 roomId，或先在电费充值页面选择宿舍');
               }
               if (amountNum == null || amountNum <= 0) {
                 return McpToolResult.error('充值金额必须大于 0 元');
               }
 
               final success = await service.recharge(
-                areaName: areaName,
-                buildingName: buildingName,
-                roomId: roomId,
-                mertype: mertype,
+                areaName: targetArea,
+                buildingName: targetBuilding,
+                roomId: targetRoomId,
+                mertype: targetMertype,
                 amount: amountNum.toDouble(),
               );
 
               return McpToolResult.json({
                 'success': success,
                 'message': success ? '电费充值成功' : '电费充值失败，请检查卡内余额或稍后重试',
-                'areaName': areaName,
-                'buildingName': buildingName,
-                'roomId': roomId,
+                'areaName': targetArea,
+                'buildingName': targetBuilding,
+                'roomId': targetRoomId,
                 'amount': amountNum,
                 'unit': '元',
               });
@@ -145,3 +196,4 @@ class ElectricityTool {
     );
   }
 }
+
