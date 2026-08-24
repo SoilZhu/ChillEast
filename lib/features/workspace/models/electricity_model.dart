@@ -65,3 +65,55 @@ class ElectricityBalanceInfo {
     );
   }
 }
+
+class SavedElectricityRoom {
+  final String areaName;
+  final String buildingName;
+  final String roomId;
+  final String roomName;
+  final String mertype;
+
+  const SavedElectricityRoom({
+    required this.areaName,
+    required this.buildingName,
+    required this.roomId,
+    required this.roomName,
+    required this.mertype,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'areaName': areaName,
+    'buildingName': buildingName,
+    'roomId': roomId,
+    'roomName': roomName,
+    'mertype': mertype,
+  };
+
+  factory SavedElectricityRoom.fromJson(Map<String, dynamic> json) => SavedElectricityRoom(
+    areaName: (json['areaName'] ?? '').toString(),
+    buildingName: (json['buildingName'] ?? '').toString(),
+    roomId: (json['roomId'] ?? '').toString(),
+    roomName: (json['roomName'] ?? json['roomId'] ?? '').toString(),
+    mertype: (json['mertype'] ?? 'yk').toString(),
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SavedElectricityRoom &&
+          runtimeType == other.runtimeType &&
+          areaName == other.areaName &&
+          buildingName == other.buildingName &&
+          roomId == other.roomId &&
+          roomName == other.roomName &&
+          mertype == other.mertype;
+
+  @override
+  int get hashCode =>
+      areaName.hashCode ^
+      buildingName.hashCode ^
+      roomId.hashCode ^
+      roomName.hashCode ^
+      mertype.hashCode;
+}
+

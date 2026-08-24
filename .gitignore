@@ -72,3 +72,8 @@ debug
 
 # Android generated build output
 /android/build/
+
+# Environment / Secret configs
+.env
+.env.*
+.env.json

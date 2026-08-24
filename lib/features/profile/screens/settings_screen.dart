@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/utils/route_utils.dart';
 import 'notification_settings_screen.dart';
 import 'appearance_settings_screen.dart';
+import 'ai_settings_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -28,6 +29,17 @@ class SettingsScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
+          _buildSettingItem(
+            context,
+            icon: Icons.code_rounded,
+            title: 'Agent 设置',
+            onTap: () {
+              Navigator.push(
+                context,
+                createSlideUpRoute(const AiSettingsScreen()),
+              );
+            },
+          ),
           _buildSettingItem(
             context,
             icon: Icons.palette_outlined,

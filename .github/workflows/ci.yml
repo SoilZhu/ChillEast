@@ -66,7 +66,7 @@ jobs:
         run: flutter pub get --enforce-lockfile
 
       - name: Build debug APK
-        run: flutter build apk --debug --no-pub
+        run: flutter build apk --debug --no-pub --dart-define=DEFAULT_AI_API_KEY="${{ secrets.DEFAULT_AI_API_KEY }}"
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v7

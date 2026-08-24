@@ -17,7 +17,8 @@
         android:label="自在东湖"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        android:enableOnBackInvokedCallback="true">
         <activity
             android:name="su.soilzhu.chilleast.MainActivity"
             android:exported="true"

@@ -54,11 +54,37 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
 
     try {
       final service = ref.read(electricityServiceProvider);
+      final savedRoom = await service.getSavedRoom();
       _areas = await service.getAreas();
       
       if (_areas.isNotEmpty) {
-        _selectedArea = _areas.first;
-        await _loadBuildings(_selectedArea!.name);
+        ElectricityArea? targetArea;
+        if (savedRoom != null && savedRoom.areaName.isNotEmpty) {
+          targetArea = _areas.where((e) => e.name == savedRoom.areaName).firstOrNull;
+        }
+        _selectedArea = targetArea ?? _areas.first;
+
+        final buildings = await service.getBuildings(_selectedArea!.name);
+        _buildings = buildings;
+
+        ElectricityBuilding? targetBuilding;
+        if (savedRoom != null && targetArea != null && savedRoom.buildingName.isNotEmpty) {
+          targetBuilding = _buildings.where((e) => e.name == savedRoom.buildingName).firstOrNull;
+        }
+        _selectedBuilding = targetBuilding ?? (_buildings.isNotEmpty ? _buildings.first : null);
+
+        if (_selectedBuilding != null) {
+          final rooms = await service.getRooms(_selectedArea!.name, _selectedBuilding!.name);
+          _rooms = rooms;
+
+          ElectricityRoom? targetRoom;
+          if (savedRoom != null && targetBuilding != null && savedRoom.roomId.isNotEmpty) {
+            targetRoom = _rooms.where((e) => e.id == savedRoom.roomId || e.name == savedRoom.roomName).firstOrNull;
+          }
+          _selectedRoom = targetRoom ?? (_rooms.isNotEmpty ? _rooms.first : null);
+        }
+
+        _saveCurrentSelection();
       }
 
       if (mounted) {
@@ -74,6 +100,20 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
           _isLoading = false;
         });
       }
+    }
+  }
+
+  void _saveCurrentSelection() {
+    if (_selectedArea != null && _selectedBuilding != null && _selectedRoom != null) {
+      ref.read(electricityServiceProvider).saveSavedRoom(
+        SavedElectricityRoom(
+          areaName: _selectedArea!.name,
+          buildingName: _selectedBuilding!.name,
+          roomId: _selectedRoom!.id,
+          roomName: _selectedRoom!.name,
+          mertype: _selectedRoom!.mertype,
+        ),
+      );
     }
   }
 
@@ -106,6 +146,7 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
           _rooms = rooms;
           _selectedRoom = rooms.isNotEmpty ? rooms.first : null;
         });
+        _saveCurrentSelection();
       }
     } catch (e) {
       _logger.w('Failed to load rooms: $e');
@@ -273,6 +314,7 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
                   _buildRoomSelectionBox('房间', _rooms.map((e) => e.name).toList(), _selectedRoom?.name, (val) {
                     final room = _rooms.firstWhere((e) => e.name == val);
                     setState(() => _selectedRoom = room);
+                    _saveCurrentSelection();
                   }),
                   
                   const SizedBox(height: 32),
