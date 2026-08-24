@@ -18,7 +18,7 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
 
   final registry = McpToolRegistry();
 
-  // 注册 8 个标准 MCP 工具
+  // 注册 9 个标准 MCP 工具
   // 1. 课表查询
   registry.register(TimetableTool.create());
 
@@ -28,19 +28,22 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
   // 3. 作业添加
   registry.register(HomeworkAddTool.create());
 
-  // 4. 空教室查询
+  // 4. 作业完成（仅限手动添加）
+  registry.register(HomeworkCompleteTool.create());
+
+  // 5. 空教室查询
   registry.register(ClassroomTool.create());
 
-  // 5. 成绩查询
+  // 6. 成绩查询
   registry.register(ScoreTool.create());
 
-  // 6. 校园卡余额查询
+  // 7. 校园卡余额查询
   registry.register(CampusCardTool.create(service: campusCardService));
 
-  // 7. 电费充值与查询
+  // 8. 电费充值与查询
   registry.register(ElectricityTool.create(service: electricityService));
 
-  // 8. 通知查询
+  // 9. 通知查询
   registry.register(NoticeTool.create());
 
   return registry;

@@ -70,6 +70,15 @@ class FakeHomeworkStorage extends HomeworkStorage {
       studentId: '20240001',
       endTime: DateTime.parse('2026-09-05 23:59:00'),
     ),
+    HomeworkModel(
+      id: 'manual_1',
+      courseName: '英语四级',
+      title: '背诵Unit 1单词',
+      status: HomeworkStatus.pending,
+      studentId: 'manual',
+      isManual: true,
+      endTime: DateTime.parse('2026-09-15 23:59:00'),
+    ),
   ];
 
   @override
@@ -249,12 +258,15 @@ class FakeNoticeService extends NoticeService {
 void main() {
   group('Standard MCP Tools Tests', () {
     late McpToolRegistry registry;
+    late FakeHomeworkStorage fakeHomeworkStorage;
 
     setUp(() {
+      fakeHomeworkStorage = FakeHomeworkStorage();
       registry = McpToolRegistry([
         TimetableTool.create(storage: FakeTimetableStorage()),
-        HomeworkQueryTool.create(storage: FakeHomeworkStorage()),
-        HomeworkAddTool.create(storage: FakeHomeworkStorage()),
+        HomeworkQueryTool.create(storage: fakeHomeworkStorage),
+        HomeworkAddTool.create(storage: fakeHomeworkStorage),
+        HomeworkCompleteTool.create(storage: fakeHomeworkStorage),
         ClassroomTool.create(service: FakeClassroomService()),
         ScoreTool.create(service: FakeScoreService()),
         CampusCardTool.create(service: FakeCampusCardService()),
@@ -263,15 +275,16 @@ void main() {
       ]);
     });
 
-    test('All 8 tools are registered and conform to MCP tool schema', () {
+    test('All 9 tools are registered and conform to MCP tool schema', () {
       final tools = registry.listTools();
-      expect(tools.length, 8);
+      expect(tools.length, 9);
 
       final toolNames = tools.map((t) => t['name']).toSet();
       expect(toolNames, containsAll([
         'query_timetable',
         'query_homework',
         'add_homework',
+        'complete_homework',
         'query_empty_classrooms',
         'query_scores',
         'query_campus_card_balance',
@@ -314,7 +327,36 @@ void main() {
       expect(res.content.first.text, contains('作业添加成功'));
     });
 
-    test('4. Empty Classroom Tool (query_empty_classrooms) execution', () async {
+    test('4. Homework Complete Tool (complete_homework) execution', () async {
+      // 1) 成功标记手动添加的作业为完成（通过 ID）
+      final resById = await registry.callTool('complete_homework', {'id': 'manual_1'});
+      expect(resById.isError, isFalse);
+      expect(resById.content.first.text, contains('背诵Unit 1单词'));
+      expect(resById.content.first.text, contains('作业已成功标记为完成'));
+
+      // 2) 成功标记手动添加的作业为完成（通过 title）
+      await registry.callTool('add_homework', {
+        'title': '操作系统实验',
+        'courseName': '操作系统',
+      });
+      final resByTitle = await registry.callTool('complete_homework', {'title': '操作系统实验'});
+      expect(resByTitle.isError, isFalse);
+      expect(resByTitle.content.first.text, contains('操作系统实验'));
+      expect(resByTitle.content.first.text, contains('已完成'));
+
+      // 3) 尝试标记超星同步的非手动作业 -> 失败并提示仅限手动添加的作业
+      final resNonManual = await registry.callTool('complete_homework', {'id': 'hw1'});
+      expect(resNonManual.isError, isTrue);
+      expect(resNonManual.content.first.text, contains('超星/学习通同步作业'));
+      expect(resNonManual.content.first.text, contains('仅支持完成自己手动添加的作业'));
+
+      // 4) 参数为空 -> 报错
+      final resEmpty = await registry.callTool('complete_homework', {});
+      expect(resEmpty.isError, isTrue);
+      expect(resEmpty.content.first.text, contains('请提供需要标记完成的作业 id 或 title'));
+    });
+
+    test('5. Empty Classroom Tool (query_empty_classrooms) execution', () async {
       // Query options
       final optionsRes = await registry.callTool('query_empty_classrooms', {'action': 'get_options'});
       expect(optionsRes.isError, isFalse);
@@ -404,7 +446,7 @@ void main() {
         const McpRequest(id: 2, method: 'tools/list'),
       );
       expect(listResp.error, isNull);
-      expect((listResp.result['tools'] as List).length, 8);
+      expect((listResp.result['tools'] as List).length, 9);
 
       // tools/call
       final callResp = await registry.handleRequest(

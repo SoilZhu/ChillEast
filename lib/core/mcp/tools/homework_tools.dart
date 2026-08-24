@@ -232,3 +232,109 @@ class HomeworkAddTool {
     );
   }
 }
+
+/// MCP Tool: 作业完成 (complete_homework)
+class HomeworkCompleteTool {
+  static const String toolName = 'complete_homework';
+
+  static McpTool create({
+    HomeworkStorage? storage,
+  }) {
+    final homeworkStorage = storage ?? HomeworkStorage();
+
+    return McpTool(
+      name: toolName,
+      description:
+          '将手动添加的作业标记为已完成。注意：仅支持完成用户手动添加的作业，超星/学习通同步的作业状态由系统自动同步，无法手动标记完成。',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'id': {
+            'type': 'string',
+            'description': '作业唯一ID（优先通过 id 查找，例如 "manual_1710000000000" 或通过 query_homework 获取到的 id）。',
+          },
+          'title': {
+            'type': 'string',
+            'description': '作业标题关键词（当未提供 id 时，可通过作业标题匹配手动添加的待办作业）。',
+          },
+        },
+      },
+      handler: (arguments) async {
+        final id = (arguments['id'] as String?)?.trim();
+        final title = (arguments['title'] as String?)?.trim();
+
+        if ((id == null || id.isEmpty) && (title == null || title.isEmpty)) {
+          return McpToolResult.error('请提供需要标记完成的作业 id 或 title');
+        }
+
+        final currentList = await homeworkStorage.readHomeworkList();
+
+        HomeworkModel? target;
+        int targetIndex = -1;
+
+        if (id != null && id.isNotEmpty) {
+          targetIndex = currentList.indexWhere((hw) => hw.id == id);
+          if (targetIndex != -1) {
+            target = currentList[targetIndex];
+          }
+        } else if (title != null && title.isNotEmpty) {
+          final queryTitle = title.toLowerCase();
+          // 先尝试在手动添加的作业中精确匹配
+          targetIndex = currentList.indexWhere(
+            (hw) => hw.isManual && hw.title.toLowerCase() == queryTitle,
+          );
+          // 再尝试在手动添加的作业中模糊包含匹配
+          if (targetIndex == -1) {
+            targetIndex = currentList.indexWhere(
+              (hw) => hw.isManual && hw.title.toLowerCase().contains(queryTitle),
+            );
+          }
+          // 如果手动作业没找到，看看非手动作业是否存在同名，以便给出明确的错误提示
+          if (targetIndex == -1) {
+            final nonManualIndex = currentList.indexWhere(
+              (hw) => hw.title.toLowerCase().contains(queryTitle),
+            );
+            if (nonManualIndex != -1) {
+              targetIndex = nonManualIndex;
+            }
+          }
+          if (targetIndex != -1) {
+            target = currentList[targetIndex];
+          }
+        }
+
+        if (target == null || targetIndex == -1) {
+          return McpToolResult.error('未找到符合条件的作业');
+        }
+
+        // 仅限自己手动添加的作业
+        if (!target.isManual) {
+          return McpToolResult.error(
+            '作业「${target.title}」是超星/学习通同步作业，其完成状态由系统自动同步，仅支持完成自己手动添加的作业。',
+          );
+        }
+
+        final updatedItem = target.copyWith(status: HomeworkStatus.completed);
+        final updatedList = List<HomeworkModel>.from(currentList);
+        updatedList[targetIndex] = updatedItem;
+
+        await homeworkStorage.saveHomeworkList(updatedList);
+
+        return McpToolResult.json({
+          'success': true,
+          'message': '作业已成功标记为完成',
+          'homework': {
+            'id': updatedItem.id,
+            'title': updatedItem.title,
+            'courseName': updatedItem.courseName,
+            'status': '已完成',
+            'statusCode': updatedItem.status.name,
+            'isManual': true,
+            'endTime': updatedItem.endTime?.toIso8601String(),
+            'remarks': updatedItem.remarks,
+          },
+        });
+      },
+    );
+  }
+}
