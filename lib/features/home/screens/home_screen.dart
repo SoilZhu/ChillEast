@@ -8,7 +8,7 @@ import '../../timetable/models/course_model.dart';
 import '../../timetable/utils/date_calculator.dart';
 import '../../timetable/utils/week_parser.dart';
 import '../../../core/utils/location_helper.dart';
-import '../../../core/utils/coordinate_converter.dart';
+import 'package:intl/intl.dart';
 import '../../../core/constants/app_constants.dart';
 import '../screens/bus_tracking_screen.dart';
 import '../../score/screens/score_screen.dart';
@@ -23,6 +23,9 @@ import '../../workspace/screens/campus_card_recharge_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../workspace/services/campus_card_service.dart';
 import '../../workspace/screens/vpn_converter_screen.dart';
+import '../../library/models/library_models.dart';
+import '../../library/providers/library_provider.dart';
+import '../../library/screens/library_home_screen.dart';
 
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -141,6 +144,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 8),
+                  // 图书馆当天预约卡片（如果有缓存）
+                  _buildLibrarySeatCard(context),
                   // 今日课表预览
                   _buildTodayTimetablePreview(context),
                   const SizedBox(height: 24),
@@ -203,24 +208,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             : _showLoginDialog(context);
         break;
       case 'library':
-        if (isLoggedIn) {
-          final status = await Permission.camera.request();
-          if (status.isGranted) {
-            Navigator.push(context, createSlideUpRoute(const WebViewDetailScreen(
-              title: '图书馆',
-              url: AppConstants.libraryUrl,
-              showWebBack: true,
-            )));
-          } else {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('需要相机权限以完成扫码')),
-              );
-            }
-          }
-        } else {
-          _showLoginDialog(context);
-        }
+        isLoggedIn 
+            ? Navigator.push(context, createSlideUpRoute(const LibraryHomeScreen()))
+            : _showLoginDialog(context);
         break;
       case 'empty_classroom':
         isLoggedIn 
@@ -372,6 +362,362 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
   
+  Widget _buildLibrarySeatCard(BuildContext context) {
+    final cachedReservesAsync = ref.watch(cachedLibraryReserveProvider);
+    final reserves = cachedReservesAsync.value ?? [];
+    if (reserves.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final now = DateTime.now();
+    final todayStr = DateFormat('yyyy-MM-dd').format(now);
+    final todayReserves = reserves.where((reserve) {
+      return reserve.today == todayStr ||
+          (reserve.startTime.year == now.year &&
+              reserve.startTime.month == now.month &&
+              reserve.startTime.day == now.day);
+    }).toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+
+    if (todayReserves.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '图书馆预约',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        for (int i = 0; i < todayReserves.length; i++) ...[
+          _buildSingleLibrarySeatItem(context, todayReserves[i], isDark),
+          const SizedBox(height: 12),
+        ],
+        const SizedBox(height: 4),
+      ],
+    );
+  }
+
+  Widget _buildSingleLibrarySeatItem(
+      BuildContext context, LibraryReserveModel reserve, bool isDark) {
+    final timeFormat = DateFormat('HH:mm');
+    final timeRange =
+        '${timeFormat.format(reserve.startTime)}-${timeFormat.format(reserve.endTime)}';
+    final canSignBack = reserve.reserveStatus.canSignBack;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : const Color(0xFFE0E0E0),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: () {
+            Navigator.push(
+                context, createSlideUpRoute(const LibraryHomeScreen()));
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. 座位与阅览室名称
+                Text(
+                  '${reserve.seatNum}@${reserve.fullRoomName}',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : const Color(0xFF222222),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+
+                // 2. 时间与右下角操作按钮
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      timeRange,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? Colors.white54 : Colors.black54,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (!canSignBack)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor:
+                                  isDark ? Colors.white60 : Colors.black54,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () =>
+                                _handleCancelLibraryReserve(context, reserve),
+                            child: const Text('取消',
+                                style: TextStyle(fontSize: 13)),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF09C489),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              minimumSize: const Size(0, 36),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                            onPressed: () =>
+                                _handleSignInLibraryReserve(context, reserve),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.check_circle_outline_rounded,
+                                    size: 16),
+                                SizedBox(width: 4),
+                                Text(
+                                  '签到',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF4D4F),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          minimumSize: const Size(0, 36),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        onPressed: () =>
+                            _handleSignBackLibraryReserve(context, reserve),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.logout_rounded, size: 16),
+                            SizedBox(width: 4),
+                            Text(
+                              '退座',
+                              style: TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleSignInLibraryReserve(
+      BuildContext context, LibraryReserveModel reserve) async {
+    try {
+      final success = await ref
+          .read(cachedLibraryReserveProvider.notifier)
+          .signInSeat(reserve);
+
+      if (context.mounted && success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('签到成功！祝您学习愉快。'),
+              ],
+            ),
+            backgroundColor: Color(0xFF09C489),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                '签到失败: ${e.toString().replaceAll(RegExp(r'^.*?: '), '').replaceAll(RegExp(r'\s*\(code:.*\)$'), '').trim()}'),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleSignBackLibraryReserve(
+      BuildContext context, LibraryReserveModel reserve) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        title: const Text('确认退座？',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        content: Text(
+          '确定结束在【${reserve.thirdLevelName}】的 ${reserve.seatNum} 号座位使用吗？',
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: isDark ? Colors.white60 : Colors.black54,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            ),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('我再想想', style: TextStyle(fontSize: 14)),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF4D4F),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              minimumSize: const Size(0, 36),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('确认退座',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !context.mounted) return;
+
+    try {
+      final success = await ref
+          .read(cachedLibraryReserveProvider.notifier)
+          .signBackSeat(reserve);
+      if (context.mounted && success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('退座成功')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('退座失败: ${_libraryErrorMessage(e)}')),
+        );
+      }
+    }
+  }
+
+  String _libraryErrorMessage(Object error) {
+    return error
+        .toString()
+        .replaceAll(RegExp(r'^.*?: '), '')
+        .replaceAll(RegExp(r'\s*\(code:.*\)$'), '')
+        .trim();
+  }
+
+  Future<void> _handleCancelLibraryReserve(
+      BuildContext context, LibraryReserveModel reserve) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        title: const Text('确认取消预约？', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        content: Text('确定取消在【${reserve.thirdLevelName}】的 ${reserve.seatNum} 号座位预约吗？'),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: isDark ? Colors.white60 : Colors.black54,
+              elevation: 0,
+              shadowColor: Colors.transparent,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            ),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('我再想想', style: TextStyle(fontSize: 14)),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF4D4F),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shadowColor: Colors.transparent,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              minimumSize: const Size(0, 36),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              '确认取消',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      try {
+        final success = await ref
+            .read(cachedLibraryReserveProvider.notifier)
+            .cancelReservation(reserve.id);
+        if (context.mounted && success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('已成功取消该预约')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(
+                    '取消失败: ${e.toString().replaceAll('Exception:', '').trim()}')),
+          );
+        }
+      }
+    }
+  }
+
   Widget _buildTodayTimetablePreview(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     if (authState.status == AuthStatus.unauthenticated && !authState.hasAccount) {

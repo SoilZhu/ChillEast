@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 /// 创建一个从下方弹出的淡入淡出路由
-Route createSlideUpRoute(Widget page) {
-  return PageRouteBuilder(
+Route<T> createSlideUpRoute<T>(Widget page) {
+  return PageRouteBuilder<T>(
     pageBuilder: (context, animation, secondaryAnimation) => page,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       const begin = Offset(0.0, 0.05); // 从下方稍微偏移

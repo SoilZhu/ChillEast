@@ -17,6 +17,7 @@ import '../services/campus_card_service.dart';
 import '../../profile/providers/appearance_provider.dart';
 import '../../../core/utils/location_helper.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../library/screens/library_home_screen.dart';
 
 /// 功能页 - 展示各种功能入口
 class FunctionsScreen extends ConsumerStatefulWidget {
@@ -120,26 +121,9 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
             : _showLoginDialog();
         break;
       case 'library':
-        if (isLoggedIn) {
-          final status = await Permission.camera.request();
-          if (status.isGranted) {
-            _safeNavigate(
-              const WebViewDetailScreen(
-                title: '图书馆',
-                url: AppConstants.libraryUrl,
-                showWebBack: true,
-              ),
-            );
-          } else {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('需要相机权限以完成扫码')),
-              );
-            }
-          }
-        } else {
-          _showLoginDialog();
-        }
+        isLoggedIn 
+            ? _safeNavigate(const LibraryHomeScreen())
+            : _showLoginDialog();
         break;
       case 'empty_classroom':
         isLoggedIn 

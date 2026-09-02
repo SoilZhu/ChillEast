@@ -61,8 +61,8 @@ class AppConstants {
   
   // 办事大厅 (超星授权)
   static const String ehallUrl = 'https://auth.chaoxing.com/connect/oauth2/authorize?appid=b90d1387d9ea42e7bba56450e6eb7087&redirect_uri=https%3A%2F%2Fehall.hunau.edu.cn%2Fmobile%2Findex.html%3Fuseragent%3Dchaoxing%26appId%3Db90d1387d9ea42e7bba56450e6eb7087%26appKey%3DI7JYq0kU87gKgF2b%26uid%3D22073114%26fidEnc%3Da915b52ee0aa18ad%26mappId%3D4311705%26formid%3D&response_type=code&scope=snsapi_base&state=128516';
-  // 图书馆预约 (超星授权)
-  static const String libraryUrl = 'https://auth.chaoxing.com/connect/oauth2/authorize?appid=a78d8ada07784074a6ae839eb187d649&redirect_uri=https%3A%2F%2Flibseat.hunau.edu.cn%2Fappindex.aspx%3Funitcode%3Dhunau%26appId%3Da78d8ada07784074a6ae839eb187d649%26appKey%3D6z2PCy8Jr1eAD72j%26uid%3D67661390%26fidEnc%3Da915b52ee0aa18ad%26formid%3Dnull%26mappId%3D8234750&response_type=code&scope=snsapi_base&state=128516';
+  // 图书馆预约 (超星座位系统)
+  static const String libraryUrl = 'https://office.chaoxing.com/front/third/apps/seat/index?fidEnc=4dc85b11270eab26';
   // 校园卡 (超星授权)
   static const String campusCardUrl = 'https://auth.chaoxing.com/connect/oauth2/authorize?appid=5f1cdbd2506748a8a1d7cbe737e40d32&redirect_uri=http%3A%2F%2Ffin-serv.hunau.edu.cn%2Fhomecx%2FopenCXOAuthPage%3Furltype%3D1%26appId%3D5f1cdbd2506748a8a1d7cbe737e40d32%26appKey%3D8VT2Ov83Vv12M8ZC%26uid%3D22073114%26fidEnc%3Da915b52ee0aa18ad%26mappId%3D4556968%26formid%3Dnull&response_type=code&scope=snsapi_base&state=128516';
   static const String paymentCodeUrl = campusCardUrl; // 起始地址相同

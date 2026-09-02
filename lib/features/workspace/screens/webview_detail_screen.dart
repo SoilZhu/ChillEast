@@ -407,6 +407,9 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                     if (widget.url.isNotEmpty) {
                       // 重要：同步多域名 Cookie 才能通过 WebVPN
                       await AppCookieManager().syncMultiDomainCookiesFromWebView();
+                      if (widget.url.contains('chaoxing.com')) {
+                        await AppCookieManager().injectAllChaoxingCookies();
+                      }
                       await controller.loadUrl(urlRequest: URLRequest(url: WebUri(widget.url)));
                     }
                   },
