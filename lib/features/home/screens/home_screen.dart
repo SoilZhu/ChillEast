@@ -23,7 +23,6 @@ import '../../workspace/screens/campus_card_recharge_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../workspace/services/campus_card_service.dart';
 import '../../workspace/screens/vpn_converter_screen.dart';
-import '../../workspace/screens/scanner_screen.dart';
 import '../../library/models/library_models.dart';
 import '../../library/providers/library_provider.dart';
 import '../../library/screens/library_home_screen.dart';
@@ -411,6 +410,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final timeFormat = DateFormat('HH:mm');
     final timeRange =
         '${timeFormat.format(reserve.startTime)}-${timeFormat.format(reserve.endTime)}';
+    final canSignBack = reserve.reserveStatus.canSignBack;
 
     return Container(
       decoration: BoxDecoration(
@@ -462,54 +462,84 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            foregroundColor:
-                                isDark ? Colors.white60 : Colors.black54,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    if (!canSignBack)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor:
+                                  isDark ? Colors.white60 : Colors.black54,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () =>
+                                _handleCancelLibraryReserve(context, reserve),
+                            child: const Text('取消',
+                                style: TextStyle(fontSize: 13)),
                           ),
-                          onPressed: () =>
-                              _handleCancelLibraryReserve(context, reserve),
-                          child: const Text('取消',
-                              style: TextStyle(fontSize: 13)),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF09C489),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            minimumSize: const Size(0, 36),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF09C489),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              minimumSize: const Size(0, 36),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                            onPressed: () =>
+                                _handleSignInLibraryReserve(context, reserve),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.check_circle_outline_rounded,
+                                    size: 16),
+                                SizedBox(width: 4),
+                                Text(
+                                  '签到',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ],
                             ),
                           ),
-                          onPressed: () =>
-                              _handleSignInLibraryReserve(context, reserve),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.qr_code_scanner_rounded, size: 16),
-                              SizedBox(width: 4),
-                              Text(
-                                '签到',
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ],
+                        ],
+                      )
+                    else
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF4D4F),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          minimumSize: const Size(0, 36),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
                           ),
                         ),
-                      ],
-                    ),
+                        onPressed: () =>
+                            _handleSignBackLibraryReserve(context, reserve),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.logout_rounded, size: 16),
+                            SizedBox(width: 4),
+                            Text(
+                              '退座',
+                              style: TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ],
@@ -522,58 +552,104 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _handleSignInLibraryReserve(
       BuildContext context, LibraryReserveModel reserve) async {
-    final status = await Permission.camera.request();
-    if (!status.isGranted) {
-      if (context.mounted) {
+    try {
+      final success = await ref
+          .read(cachedLibraryReserveProvider.notifier)
+          .signInSeat(reserve);
+
+      if (context.mounted && success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('需要相机权限以完成扫码签到')),
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('签到成功！祝您学习愉快。'),
+              ],
+            ),
+            backgroundColor: Color(0xFF09C489),
+          ),
         );
       }
-      return;
-    }
-
-    if (!context.mounted) return;
-
-    final scanResult = await Navigator.push<String>(
-      context,
-      createSlideUpRoute(const ScannerScreen()),
-    );
-
-    if (scanResult != null && scanResult.isNotEmpty && context.mounted) {
-      try {
-        final success = await ref
-            .read(cachedLibraryReserveProvider.notifier)
-            .signInSeat(
-              seatNum: reserve.seatNum,
-              roomId: reserve.roomId,
-              reserveId: reserve.id,
-              qrUrl: scanResult,
-            );
-
-        if (context.mounted && success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text('签到成功！祝您学习愉快。'),
-                ],
-              ),
-              backgroundColor: Color(0xFF09C489),
-            ),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(
-                    '签到失败: ${e.toString().replaceAll('Exception:', '').trim()}')),
-          );
-        }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                '签到失败: ${e.toString().replaceAll(RegExp(r'^.*?: '), '').replaceAll(RegExp(r'\s*\(code:.*\)$'), '').trim()}'),
+          ),
+        );
       }
     }
+  }
+
+  Future<void> _handleSignBackLibraryReserve(
+      BuildContext context, LibraryReserveModel reserve) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        title: const Text('确认退座？',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        content: Text(
+          '确定结束在【${reserve.thirdLevelName}】的 ${reserve.seatNum} 号座位使用吗？',
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: isDark ? Colors.white60 : Colors.black54,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            ),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('我再想想', style: TextStyle(fontSize: 14)),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF4D4F),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              minimumSize: const Size(0, 36),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('确认退座',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !context.mounted) return;
+
+    try {
+      final success = await ref
+          .read(cachedLibraryReserveProvider.notifier)
+          .signBackSeat(reserve);
+      if (context.mounted && success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('退座成功')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('退座失败: ${_libraryErrorMessage(e)}')),
+        );
+      }
+    }
+  }
+
+  String _libraryErrorMessage(Object error) {
+    return error
+        .toString()
+        .replaceAll(RegExp(r'^.*?: '), '')
+        .replaceAll(RegExp(r'\s*\(code:.*\)$'), '')
+        .trim();
   }
 
   Future<void> _handleCancelLibraryReserve(

@@ -39,7 +39,8 @@ class LibraryService {
   }
 
   /// 安全解析 Map 结构，兼容 String / dynamic
-  Map<String, dynamic> _parseResponseMap(dynamic raw, [String defaultError = '获取数据失败']) {
+  Map<String, dynamic> _parseResponseMap(dynamic raw,
+      [String defaultError = '获取数据失败']) {
     if (raw == null) {
       throw AppException(defaultError);
     }
@@ -71,7 +72,8 @@ class LibraryService {
     }
 
     if (map['success'] != true) {
-      final msg = map['msg']?.toString() ?? map['message']?.toString() ?? defaultError;
+      final msg =
+          map['msg']?.toString() ?? map['message']?.toString() ?? defaultError;
       throw AppException(msg);
     }
 
@@ -81,7 +83,8 @@ class LibraryService {
   /// 获取图书馆首页数据（当前预约、历史预约、系统规则）
   Future<LibraryIndexData> fetchIndexData() async {
     await _ensureCookies();
-    final url = '$officeBase/data/apps/seat/index?fidEnc=$deptIdEnc&r=${DateTime.now().millisecondsSinceEpoch}';
+    final url =
+        '$officeBase/data/apps/seat/index?fidEnc=$deptIdEnc&r=${DateTime.now().millisecondsSinceEpoch}';
     _logger.i('📚 Fetching Library Index data...');
 
     try {
@@ -89,7 +92,8 @@ class LibraryService {
         url,
         options: Options(
           headers: {
-            'Referer': '$officeBase/front/third/apps/seat/index?fidEnc=$deptIdEnc',
+            'Referer':
+                '$officeBase/front/third/apps/seat/index?fidEnc=$deptIdEnc',
             'X-Requested-With': 'XMLHttpRequest',
           },
         ),
@@ -106,7 +110,8 @@ class LibraryService {
 
       LibrarySeatConfig? config;
       if (resData['seatConfig'] != null && resData['seatConfig'] is Map) {
-        config = LibrarySeatConfig.fromJson((resData['seatConfig'] as Map).cast<String, dynamic>());
+        config = LibrarySeatConfig.fromJson(
+            (resData['seatConfig'] as Map).cast<String, dynamic>());
       }
 
       final curReservesRaw = resData['curReserves'] as List<dynamic>? ?? [];
@@ -135,7 +140,8 @@ class LibraryService {
   /// 查询指定日期的阅览室列表
   Future<List<LibraryRoomModel>> fetchRoomList({required String day}) async {
     await _ensureCookies();
-    final url = '$officeBase/data/apps/seat/room/list?time=&cpage=1&pageSize=100&firstLevelName=&secondLevelName=&thirdLevelName=&day=$day&deptIdEnc=$deptIdEnc';
+    final url =
+        '$officeBase/data/apps/seat/room/list?time=&cpage=1&pageSize=100&firstLevelName=&secondLevelName=&thirdLevelName=&day=$day&deptIdEnc=$deptIdEnc';
     _logger.i('📚 Fetching Library Rooms for day=$day...');
 
     try {
@@ -143,7 +149,8 @@ class LibraryService {
         url,
         options: Options(
           headers: {
-            'Referer': '$officeBase/front/third/apps/seat/list?deptIdEnc=$deptIdEnc',
+            'Referer':
+                '$officeBase/front/third/apps/seat/list?deptIdEnc=$deptIdEnc',
             'X-Requested-With': 'XMLHttpRequest',
           },
         ),
@@ -175,14 +182,16 @@ class LibraryService {
     required String day,
   }) async {
     await _ensureCookies();
-    final url = '$officeBase/data/apps/seat/room/reserve-window/check?roomId=$roomId&day=$day&deptIdEnc=$deptIdEnc&fidEnc=$deptIdEnc';
+    final url =
+        '$officeBase/data/apps/seat/room/reserve-window/check?roomId=$roomId&day=$day&deptIdEnc=$deptIdEnc&fidEnc=$deptIdEnc';
 
     try {
       final response = await _dio.get(
         url,
         options: Options(
           headers: {
-            'Referer': '$officeBase/front/third/apps/seat/list?deptIdEnc=$deptIdEnc',
+            'Referer':
+                '$officeBase/front/third/apps/seat/list?deptIdEnc=$deptIdEnc',
             'X-Requested-With': 'XMLHttpRequest',
           },
         ),
@@ -204,7 +213,8 @@ class LibraryService {
   /// 获取阅览室座位网格坐标与结构
   Future<LibrarySeatGridData> fetchSeatGrid({required int roomId}) async {
     await _ensureCookies();
-    final url = '$officeBase/data/apps/seat/seatgrid/roomid?roomId=$roomId&fidEnc=$deptIdEnc';
+    final url =
+        '$officeBase/data/apps/seat/seatgrid/roomid?roomId=$roomId&fidEnc=$deptIdEnc';
     _logger.i('📚 Fetching Seat Grid for roomId=$roomId...');
 
     try {
@@ -212,7 +222,8 @@ class LibraryService {
         url,
         options: Options(
           headers: {
-            'Referer': '$officeBase/front/third/apps/seat/select?deptIdEnc=$deptIdEnc&id=$roomId&fidEnc=$deptIdEnc',
+            'Referer':
+                '$officeBase/front/third/apps/seat/select?deptIdEnc=$deptIdEnc&id=$roomId&fidEnc=$deptIdEnc',
             'X-Requested-With': 'XMLHttpRequest',
           },
         ),
@@ -242,7 +253,8 @@ class LibraryService {
   }) async {
     await _ensureCookies();
     const url = '$officeBase/data/apps/seat/getusedseatnums';
-    _logger.i('📚 Fetching used seats for roomId=$roomId, $day $startTime-$endTime...');
+    _logger.i(
+        '📚 Fetching used seats for roomId=$roomId, $day $startTime-$endTime...');
 
     try {
       final response = await _dio.post(
@@ -257,7 +269,8 @@ class LibraryService {
         options: Options(
           contentType: Headers.formUrlEncodedContentType,
           headers: {
-            'Referer': '$officeBase/front/third/apps/seat/select?deptIdEnc=$deptIdEnc&id=$roomId&day=$day&backLevel=2&fidEnc=$deptIdEnc',
+            'Referer':
+                '$officeBase/front/third/apps/seat/select?deptIdEnc=$deptIdEnc&id=$roomId&day=$day&backLevel=2&fidEnc=$deptIdEnc',
             'X-Requested-With': 'XMLHttpRequest',
           },
         ),
@@ -292,7 +305,8 @@ class LibraryService {
     required int roomId,
     required String day,
   }) async {
-    final pageUrl = '$officeBase/front/third/apps/seat/select?deptIdEnc=$deptIdEnc&id=$roomId&day=$day&backLevel=2&fidEnc=$deptIdEnc';
+    final pageUrl =
+        '$officeBase/front/third/apps/seat/select?deptIdEnc=$deptIdEnc&id=$roomId&day=$day&backLevel=2&fidEnc=$deptIdEnc';
     _logger.d('🔍 Extracting submit_enc from $pageUrl...');
 
     try {
@@ -300,7 +314,8 @@ class LibraryService {
         pageUrl,
         options: Options(
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36',
+            'User-Agent':
+                'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36',
           },
         ),
       );
@@ -354,7 +369,8 @@ class LibraryService {
     required String endTime,
   }) async {
     await _ensureCookies();
-    _logger.i('🚀 Submitting reservation: roomId=$roomId, seatNum=$seatNum, day=$day, time=$startTime-$endTime...');
+    _logger.i(
+        '🚀 Submitting reservation: roomId=$roomId, seatNum=$seatNum, day=$day, time=$startTime-$endTime...');
 
     try {
       // 1. 获取 submit_enc
@@ -392,7 +408,8 @@ class LibraryService {
         options: Options(
           contentType: Headers.formUrlEncodedContentType,
           headers: {
-            'Referer': '$officeBase/front/third/apps/seat/select?deptIdEnc=$deptIdEnc&id=$roomId&day=$day&backLevel=2&fidEnc=$deptIdEnc',
+            'Referer':
+                '$officeBase/front/third/apps/seat/select?deptIdEnc=$deptIdEnc&id=$roomId&day=$day&backLevel=2&fidEnc=$deptIdEnc',
             'X-Requested-With': 'XMLHttpRequest',
           },
         ),
@@ -408,8 +425,20 @@ class LibraryService {
           : <String, dynamic>{};
       final reserveData = resData['seatReserve'] is Map
           ? (resData['seatReserve'] as Map).cast<String, dynamic>()
-          : <String, dynamic>{};
-      return LibraryReserveModel.fromJson(reserveData);
+          : null;
+
+      if (reserveData == null || reserveData.isEmpty) {
+        final message = jsonMap['msg']?.toString() ??
+            jsonMap['message']?.toString() ??
+            '预约失败，服务器未返回有效预约结果';
+        throw AppException(message);
+      }
+
+      final reserve = LibraryReserveModel.fromJson(reserveData);
+      if (reserve.id <= 0 && reserve.seatNum.isEmpty) {
+        throw const AppException('预约失败，服务器未返回有效预约结果');
+      }
+      return reserve;
     } catch (e) {
       _logger.e('❌ submitReservation error: $e');
       rethrow;
@@ -427,7 +456,8 @@ class LibraryService {
         url,
         options: Options(
           headers: {
-            'Referer': '$officeBase/front/third/apps/seat/index?fidEnc=$deptIdEnc',
+            'Referer':
+                '$officeBase/front/third/apps/seat/index?fidEnc=$deptIdEnc',
             'X-Requested-With': 'XMLHttpRequest',
           },
         ),
@@ -444,87 +474,129 @@ class LibraryService {
     }
   }
 
-  /// 检查是否存在未签退座位
-  Future<Map<String, dynamic>> checkExistSeat({
-    required String seatNum,
-    required int roomId,
-  }) async {
+  /// 签到座位
+  Future<bool> signInSeat(LibraryReserveModel reserve) async {
+    if (reserve.id <= 0 ||
+        reserve.roomId <= 0 ||
+        reserve.seatNum.trim().isEmpty) {
+      throw const AppException('当前预约信息不完整，无法签到');
+    }
+    if (reserve.reserveStatus == ReserveStatus.inUse) {
+      throw const AppException('当前预约已经签到');
+    }
+    if (reserve.reserveStatus != ReserveStatus.reserved &&
+        reserve.reserveStatus != ReserveStatus.flexibleSign) {
+      throw AppException('当前预约状态不支持签到: ${reserve.reserveStatus.label}');
+    }
+
     await _ensureCookies();
-    final url = '$officeBase/data/apps/seat/check/exist?seatNum=$seatNum&roomId=$roomId';
+    _logger.i(
+      '📍 Direct sign-in: room=${reserve.roomId}, seat=${reserve.seatNum}, reserveId=${reserve.id}',
+    );
+
+    final pageUrl = _buildSeatCodePageUrl(
+      roomId: reserve.roomId,
+      seatNum: reserve.seatNum,
+      reserveId: reserve.id,
+    );
 
     try {
       final response = await _dio.get(
-        url,
+        '$officeBase/data/apps/seat/sign',
+        queryParameters: {'id': reserve.id},
         options: Options(
           headers: {
-            'Referer': '$officeBase/front/third/apps/seat/index?fidEnc=$deptIdEnc',
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Origin': officeBase,
+            'Referer': pageUrl,
             'X-Requested-With': 'XMLHttpRequest',
           },
         ),
       );
 
-      if (response.statusCode == 200 && response.data != null) {
-        final jsonMap = _parseResponseMap(response.data, '检查座位状态失败');
-        return jsonMap['data'] is Map
-            ? (jsonMap['data'] as Map).cast<String, dynamic>()
-            : <String, dynamic>{};
-      }
-      return {};
-    } catch (e) {
-      _logger.w('⚠️ checkExistSeat error: $e');
-      return {};
-    }
-  }
-
-  /// 签到座位
-  Future<bool> signInSeat({
-    required String seatNum,
-    required int roomId,
-    required int reserveId,
-    String? qrUrl,
-  }) async {
-    await _ensureCookies();
-    _logger.i('📍 Signing in seat: room=$roomId, seat=$seatNum, reserveId=$reserveId...');
-
-    try {
-      // 1. 检查是否存在未签退座位
-      final existCheck = await checkExistSeat(seatNum: seatNum, roomId: roomId);
-      final existCount = existCheck['existCount'] as int? ?? 0;
-      if (existCount > 0) {
-        throw const AppException('您存在未签退座位，不可再次签到');
+      if (response.statusCode != 200) {
+        throw NetworkException('签到请求失败: HTTP ${response.statusCode}');
       }
 
-      // 2. 构造签到 URL
-      String targetUrl;
-      if (qrUrl != null && qrUrl.contains('/apps/seat/code')) {
-        targetUrl = qrUrl;
-        if (!targetUrl.contains('reserveId=')) {
-          targetUrl += '&reserveId=$reserveId&num=$seatNum&room=$roomId&fidEnc=$deptIdEnc';
-        }
-      } else {
-        targetUrl = '$officeBase/front/third/apps/seat/code?seatNum=$seatNum&id=$roomId&num=$seatNum&reserveId=$reserveId&room=$roomId&fidEnc=$deptIdEnc';
-      }
-
-      final response = await _dio.get(
-        targetUrl,
-        options: Options(
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36',
-          },
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        final html = response.data.toString();
-        if (html.contains('签到成功') || html.contains('落座成功') || !html.contains('错误') && !html.contains('失败')) {
-          _logger.i('✅ Seat signed in successfully');
-          return true;
-        }
-      }
+      _parseResponseMap(response.data, '签到失败，请稍后重试');
+      _logger.i('✅ Seat signed in successfully');
       return true;
     } catch (e) {
       _logger.e('❌ signInSeat error: $e');
       rethrow;
     }
+  }
+
+  /// 退座。与取消预约是两个不同的业务接口。
+  Future<bool> signBackSeat(LibraryReserveModel reserve,
+      {String? objectId}) async {
+    if (reserve.id <= 0) {
+      throw const AppException('预约信息不完整，无法退座');
+    }
+
+    await _ensureCookies();
+    _logger.i('🛑 Signing back seat: reserveId=${reserve.id}...');
+
+    try {
+      final params = <String, dynamic>{'id': reserve.id};
+      if (objectId != null && objectId.isNotEmpty) {
+        params['objectId'] = objectId;
+      }
+
+      // 官方页面通过 GET + query 参数调用该接口（operateData/getJSON）。
+      final response = await _dio.get(
+        '$officeBase/data/apps/seat/signback',
+        queryParameters: params,
+        options: Options(
+          headers: {
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Origin': officeBase,
+            'Referer':
+                '$officeBase/front/third/apps/seat/index?fidEnc=$deptIdEnc',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        ),
+      );
+
+      if (response.statusCode != 200) {
+        throw NetworkException('退座请求失败: HTTP ${response.statusCode}');
+      }
+
+      _parseResponseMap(response.data, '退座失败，请稍后重试');
+      _logger.i('✅ Seat signed back successfully');
+      return true;
+    } catch (e) {
+      _logger.e('❌ signBackSeat error: $e');
+      rethrow;
+    }
+  }
+
+  String _buildSeatCodePageUrl({
+    required int roomId,
+    required String seatNum,
+    required int reserveId,
+  }) {
+    final normalizedSeatNum = _normalizeSeatNum(seatNum);
+    final paddedSeatNum = normalizedSeatNum.isEmpty
+        ? ''
+        : int.tryParse(normalizedSeatNum)?.toString().padLeft(3, '0') ??
+            normalizedSeatNum;
+
+    return Uri.parse('$officeBase/front/apps/seat/code').replace(
+      queryParameters: {
+        if (roomId > 0) 'id': roomId.toString(),
+        if (normalizedSeatNum.isNotEmpty) 'seatNum': normalizedSeatNum,
+        if (paddedSeatNum.isNotEmpty) 'num': paddedSeatNum,
+        'reserveId': reserveId.toString(),
+        if (roomId > 0) 'room': roomId.toString(),
+        'signType': '1',
+      },
+    ).toString();
+  }
+
+  String _normalizeSeatNum(String seatNum) {
+    final value = seatNum.trim();
+    final parsed = int.tryParse(value);
+    return parsed == null ? value : parsed.toString();
   }
 }

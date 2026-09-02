@@ -9,8 +9,8 @@ final libraryServiceProvider = Provider<LibraryService>((ref) {
 });
 
 /// 本地缓存的图书馆有效预约列表 Provider
-final cachedLibraryReserveProvider =
-    AsyncNotifierProvider<CachedLibraryReserveNotifier, List<LibraryReserveModel>>(() {
+final cachedLibraryReserveProvider = AsyncNotifierProvider<
+    CachedLibraryReserveNotifier, List<LibraryReserveModel>>(() {
   return CachedLibraryReserveNotifier();
 });
 
@@ -81,18 +81,18 @@ class CachedLibraryReserveNotifier
   }
 
   /// 签到
-  Future<bool> signInSeat({
-    required String seatNum,
-    required int roomId,
-    required int reserveId,
-    String? qrUrl,
-  }) async {
-    final success = await _service.signInSeat(
-      seatNum: seatNum,
-      roomId: roomId,
-      reserveId: reserveId,
-      qrUrl: qrUrl,
-    );
+  Future<bool> signInSeat(LibraryReserveModel reserve) async {
+    final success = await _service.signInSeat(reserve);
+    if (success) {
+      await _syncWithCloud();
+      ref.read(libraryIndexProvider.notifier).refresh();
+    }
+    return success;
+  }
+
+  /// 退座并同步首页缓存。
+  Future<bool> signBackSeat(LibraryReserveModel reserve) async {
+    final success = await _service.signBackSeat(reserve);
     if (success) {
       await _syncWithCloud();
       ref.read(libraryIndexProvider.notifier).refresh();
@@ -147,28 +147,29 @@ class LibraryIndexNotifier extends AsyncNotifier<LibraryIndexData> {
   }
 
   /// 签到
-  Future<bool> signInSeat({
-    required String seatNum,
-    required int roomId,
-    required int reserveId,
-    String? qrUrl,
-  }) async {
-    final success = await _service.signInSeat(
-      seatNum: seatNum,
-      roomId: roomId,
-      reserveId: reserveId,
-      qrUrl: qrUrl,
-    );
+  Future<bool> signInSeat(LibraryReserveModel reserve) async {
+    final success = await _service.signInSeat(reserve);
     if (success) {
       await refresh();
       ref.read(cachedLibraryReserveProvider.notifier).refresh();
     }
     return success;
   }
+
+  /// 退座
+  Future<bool> signBackSeat(LibraryReserveModel reserve) async {
+    final success = await _service.signBackSeat(reserve);
+    if (success) {
+      await refresh();
+      await ref.read(cachedLibraryReserveProvider.notifier).refresh();
+    }
+    return success;
+  }
 }
 
 /// 阅览室列表 Provider (按日期入参缓存)
-final libraryRoomsProvider = FutureProvider.family<List<LibraryRoomModel>, String>((ref, day) async {
+final libraryRoomsProvider =
+    FutureProvider.family<List<LibraryRoomModel>, String>((ref, day) async {
   final service = ref.read(libraryServiceProvider);
   return service.fetchRoomList(day: day);
 });

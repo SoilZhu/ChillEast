@@ -45,6 +45,23 @@ enum ReserveStatus {
         return '未知';
     }
   }
+
+  /// 当前状态是否允许执行退座操作。
+  ///
+  /// 超星座位系统在“使用中”、“暂离中”和“被监督中”状态下都提供退座入口。
+  bool get canSignBack {
+    switch (this) {
+      case ReserveStatus.inUse:
+      case ReserveStatus.temporarilyAway:
+      case ReserveStatus.flexibleSign:
+        return true;
+      case ReserveStatus.reserved:
+      case ReserveStatus.completed:
+      case ReserveStatus.cancelled:
+      case ReserveStatus.unknown:
+        return false;
+    }
+  }
 }
 
 /// 预约记录模型
