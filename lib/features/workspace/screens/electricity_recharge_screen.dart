@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../services/electricity_service.dart';
 import '../services/campus_card_service.dart';
 import '../models/electricity_model.dart';
 import 'payment_result_screen.dart';
+import 'campus_card_payment_sheet.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/app_logger.dart';
 
@@ -32,6 +34,7 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
 
   double? _selectedAmount;
   final List<double> _presetAmounts = [10, 20, 50, 100];
+  CampusCardInfo? _cardInfo;
   bool _isPaying = false;
 
   @override
@@ -86,6 +89,13 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
 
         _saveCurrentSelection();
       }
+
+      // 静默后台预加载校园卡信息
+      ref.read(campusCardServiceProvider).fetchRechargeInfo().then((info) {
+        if (mounted) setState(() => _cardInfo = info);
+      }).catchError((e) {
+        _logger.w('Pre-fetching campus card info error: $e');
+      });
 
       if (mounted) {
         setState(() {
@@ -160,7 +170,7 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
     });
   }
 
-  Future<void> _handleRecharge() async {
+  Future<void> _handleCampusCardRecharge() async {
     if (_selectedArea == null || _selectedBuilding == null || _selectedRoom == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('请选择完整的房间信息')),
@@ -220,8 +230,15 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
           );
           ref.read(campusCardServiceProvider).fetchRechargeInfo();
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('充值失败，请重试')),
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            isScrollControlled: true,
+            builder: (context) => const PaymentResultSheet(
+              type: PaymentResultType.failure,
+              merchantName: '缴电费 (校园卡支付)',
+              message: '充值失败，请重试',
+            ),
           );
         }
       }
@@ -229,11 +246,93 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
       _logger.e('Recharge failed: $e');
       if (mounted) {
         setState(() => _isPaying = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('充值失败: $e')),
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          isScrollControlled: true,
+          builder: (context) => PaymentResultSheet(
+            type: PaymentResultType.failure,
+            merchantName: '缴电费 (校园卡支付)',
+            message: '充值失败: $e',
+          ),
         );
       }
     }
+  }
+
+  Future<void> _handleThirdPartyRecharge(PaymentMethod method) async {
+    if (_selectedArea == null || _selectedBuilding == null || _selectedRoom == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请选择完整的房间信息')),
+      );
+      return;
+    }
+
+    final amountText = _amountController.text;
+    final amount = int.tryParse(amountText);
+
+    if (amount == null || amount < 1 || amount > 1000) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请输入1-1000之间的整数金额')),
+      );
+      return;
+    }
+
+    final CampusCardInfo cardInfo;
+    final cached = _cardInfo ?? ref.read(campusCardServiceProvider).cachedInfo;
+    if (cached != null) {
+      cardInfo = cached;
+    } else {
+      setState(() => _isPaying = true);
+      try {
+        cardInfo = await ref.read(campusCardServiceProvider).fetchRechargeInfo();
+        _cardInfo = cardInfo;
+      } catch (e) {
+        _logger.e('Failed to fetch card info: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('获取校园卡信息失败: $e')),
+          );
+        }
+        return;
+      } finally {
+        if (mounted) setState(() => _isPaying = false);
+      }
+    }
+
+    if (!mounted) return;
+
+    final roomDesc = '${_selectedArea!.name} ${_selectedBuilding!.name} ${_selectedRoom!.name}';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => CampusCardPaymentSheet(
+        amount: amountText,
+        merchantName: '缴电费 ($roomDesc)',
+        info: cardInfo,
+        paymentMethod: method,
+        successTitle: '电费充值成功',
+        onCardRechargeSuccess: () async {
+          final service = ref.read(electricityServiceProvider);
+          final success = await service.recharge(
+            areaName: _selectedArea!.name,
+            buildingName: _selectedBuilding!.name,
+            roomId: _selectedRoom!.id,
+            mertype: _selectedRoom!.mertype,
+            amount: amount.toDouble(),
+          );
+          if (!success) {
+            throw Exception('电费充值接口未返回成功');
+          }
+        },
+      ),
+    ).then((_) {
+      if (mounted) {
+        ref.read(campusCardServiceProvider).fetchRechargeInfo();
+      }
+    });
   }
 
   @override
@@ -380,32 +479,97 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
                   
                   const SizedBox(height: 40),
                   
-                  // Right Aligned Recharge Button
+                  // 底部支付操作按钮 (校园卡支付、微信支付、支付宝支付)
                   Align(
                     alignment: Alignment.centerRight,
-                    child: SizedBox(
-                      width: 100,
-                      height: 40,
-                      child: ElevatedButton(
-                        onPressed: _isPaying ? null : _handleRecharge,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: themeColor,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: EdgeInsets.zero, // Minimal padding to prevent overflow
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 8,
+                      runSpacing: 10,
+                      children: [
+                        // 校园卡支付
+                        SizedBox(
+                          height: 42,
+                          child: ElevatedButton(
+                            onPressed: _isPaying ? null : _handleCampusCardRecharge,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: themeColor,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                            ),
+                            child: _isPaying 
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                )
+                              : const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.credit_card, size: 18),
+                                    SizedBox(width: 6),
+                                    Text('校园卡支付', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                  ],
+                                ),
+                          ),
                         ),
-                        child: _isPaying 
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                        // 微信支付
+                        SizedBox(
+                          height: 42,
+                          child: ElevatedButton(
+                            onPressed: _isPaying ? null : () => _handleThirdPartyRecharge(PaymentMethod.wechat),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF07C160),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.send, size: 16), // Smaller icon
-                                SizedBox(width: 4), // Less spacing
-                                Text('充值', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)), // Slightly smaller text
+                                SvgPicture.string(
+                                  kWechatSvg,
+                                  width: 18,
+                                  height: 18,
+                                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                                ),
+                                const SizedBox(width: 6),
+                                const Text('微信支付', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                               ],
                             ),
-                      ),
+                          ),
+                        ),
+                        // 支付宝支付
+                        SizedBox(
+                          height: 42,
+                          child: ElevatedButton(
+                            onPressed: _isPaying ? null : () => _handleThirdPartyRecharge(PaymentMethod.alipay),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1677FF),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SvgPicture.string(
+                                  kAlipaySvg,
+                                  width: 18,
+                                  height: 18,
+                                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                                ),
+                                const SizedBox(width: 6),
+                                const Text('支付宝支付', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   

@@ -1,12 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'payment_result_screen.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../services/campus_card_service.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/app_logger.dart';
@@ -19,37 +15,52 @@ class CampusCardRechargeScreen extends ConsumerStatefulWidget {
   ConsumerState<CampusCardRechargeScreen> createState() => _CampusCardRechargeScreenState();
 }
 
-// 移除 PaymentMethod 枚举，仅保留支付宝
-
-class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScreen> {
+class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScreen> with WidgetsBindingObserver {
   final _logger = AppLogger.instance;
   final TextEditingController _amountController = TextEditingController();
   
   CampusCardInfo? _info;
   bool _isLoading = true;
+  bool _isRefreshing = false;
   String? _error;
   
   double? _selectedAmount;
   final List<double> _presetAmounts = [10, 30, 50, 100, 200, 500];
-  
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadInfo();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _amountController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadInfo() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadInfo(isSilent: true);
+    }
+  }
+
+  Future<void> _loadInfo({bool isSilent = false}) async {
+    if (!mounted) return;
+    if (_info == null) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    } else {
+      setState(() {
+        _isRefreshing = true;
+      });
+    }
+
     try {
       final service = ref.read(campusCardServiceProvider);
       final info = await service.fetchRechargeInfo();
@@ -57,14 +68,19 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
         setState(() {
           _info = info;
           _isLoading = false;
+          _isRefreshing = false;
+          _error = null;
         });
       }
     } catch (e) {
       _logger.e('Failed to load recharge info: $e');
       if (mounted) {
         setState(() {
-          _error = e.toString();
-          _isLoading = false;
+          _isRefreshing = false;
+          if (!isSilent || _info == null) {
+            _error = e.toString();
+            _isLoading = false;
+          }
         });
       }
     }
@@ -77,7 +93,7 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
     });
   }
 
-  Future<void> _handleRecharge() async {
+  Future<void> _handleRecharge(PaymentMethod method) async {
     final amountText = _amountController.text;
     final amount = int.tryParse(amountText);
     
@@ -99,9 +115,10 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
         amount: amountText,
         merchantName: '校园卡充值',
         info: _info!,
+        paymentMethod: method,
       ),
     ).then((_) {
-      if (mounted) _loadInfo(); // 关闭后刷新余额
+      if (mounted) _loadInfo(isSilent: true); // 关闭后静默刷新最新余额
     });
   }
 
@@ -118,6 +135,19 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: _isRefreshing
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh),
+            tooltip: '刷新余额',
+            onPressed: _isRefreshing ? null : () => _loadInfo(isSilent: true),
+          ),
+        ],
       ),
       body: _isLoading 
         ? Center(child: CircularProgressIndicator(color: primaryColor))
@@ -142,48 +172,69 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // MD2 Style Info Card (Flat)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withOpacity(0.05) : primaryColor.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : primaryColor.withOpacity(0.2)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _info?.name ?? '---',
-                                  style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 20, fontWeight: FontWeight.bold),
+                  InkWell(
+                    onTap: _isRefreshing ? null : () => _loadInfo(isSilent: true),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white.withOpacity(0.05) : primaryColor.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : primaryColor.withOpacity(0.2)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _info?.name ?? '---',
+                                    style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 20, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '卡号: ${_info?.idserial ?? '---'}',
+                                    style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                              Icon(Icons.account_balance_wallet_outlined, color: primaryColor, size: 32),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              Text(
+                                '当前余额 (元)',
+                                style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(width: 6),
+                              if (_isRefreshing)
+                                const SizedBox(
+                                  width: 12,
+                                  height: 12,
+                                  child: CircularProgressIndicator(strokeWidth: 1.5),
+                                )
+                              else
+                                Icon(
+                                  Icons.refresh,
+                                  size: 13,
+                                  color: isDark ? Colors.white38 : Colors.black38,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '卡号: ${_info?.idserial ?? '---'}',
-                                  style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 13),
-                                ),
-                              ],
-                            ),
-                            Icon(Icons.account_balance_wallet_outlined, color: primaryColor, size: 32),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          '当前余额 (元)',
-                          style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '¥${_info?.balance ?? '0.00'}',
-                          style: TextStyle(color: primaryColor, fontSize: 32, fontWeight: FontWeight.bold),
-                        ),
-                      ],
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '¥${_info?.balance ?? '0.00'}',
+                            style: TextStyle(color: primaryColor, fontSize: 32, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   
@@ -271,37 +322,72 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
                   
                   const SizedBox(height: 48),
                   
-                  // 右对齐的充值按钮 (MD2 Style)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: SizedBox(
-                      width: 130, // 增加宽度防止溢出
-                      height: 44,
-                      child: ElevatedButton(
-                        onPressed: _handleRecharge,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: themeColor,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: EdgeInsets.zero, // 减少内部边距
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min, // 核心：使用最小尺寸
-                          children: [
-                            SvgPicture.string(
-                              '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g><path fill="none" d="M0 0h24v24H0z"/><path d="M21.422 15.358c-3.83-1.153-6.055-1.84-6.678-2.062a12.41 12.41 0 0 0 1.32-3.32H12.8V8.872h4v-.68h-4V6.344h-1.536c-.28 0-.312.248-.312.248v1.592H7.2v.68h3.752v1.104H7.88v.616h6.224a10.972 10.972 0 0 1-.888 2.176c-1.408-.464-2.192-.784-3.912-.944-3.256-.312-4.008 1.48-4.128 2.576C5 16.064 6.48 17.424 8.688 17.424s3.68-1.024 5.08-2.72c1.167.558 3.338 1.525 6.514 2.902A9.99 9.99 0 0 1 12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10a9.983 9.983 0 0 1-.578 3.358zm-12.99 1.01c-2.336 0-2.704-1.48-2.584-2.096.12-.616.8-1.416 2.104-1.416 1.496 0 2.832.384 4.44 1.16-1.136 1.48-2.52 2.352-3.96 2.352z"/></g></svg>''',
-                              width: 24,
-                              height: 24,
-                              colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text('支付宝', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          ],
+                  // 右对齐的两个支付按钮 (微信支付 & 支付宝)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      // 微信支付按钮
+                      SizedBox(
+                        height: 44,
+                        child: ElevatedButton(
+                          onPressed: () => _handleRecharge(PaymentMethod.wechat),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF07C160),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SvgPicture.string(
+                                kWechatSvg,
+                                width: 22,
+                                height: 22,
+                                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                '微信支付',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      // 支付宝按钮
+                      SizedBox(
+                        height: 44,
+                        child: ElevatedButton(
+                          onPressed: () => _handleRecharge(PaymentMethod.alipay),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1677FF),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SvgPicture.string(
+                                kAlipaySvg,
+                                width: 22,
+                                height: 22,
+                                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                '支付宝',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   
                   const SizedBox(height: 32),
@@ -310,5 +396,4 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
             ),
     );
   }
-
 }
