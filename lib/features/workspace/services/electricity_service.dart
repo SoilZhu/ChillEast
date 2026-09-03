@@ -257,6 +257,9 @@ class ElectricityService {
     required String mertype,
     required double amount,
   }) async {
+    if (_cardService.openid == null || _cardService.cachedInfo == null) {
+      await _cardService.fetchRechargeInfo();
+    }
     final openid = _cardService.openid;
     final cardInfo = _cardService.cachedInfo;
     if (openid == null || cardInfo == null) throw Exception('未授权或卡信息缺失');
