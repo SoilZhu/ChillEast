@@ -71,7 +71,7 @@ class AboutScreen extends StatelessWidget {
               child: FutureBuilder<PackageInfo>(
                 future: PackageInfo.fromPlatform(),
                 builder: (context, snapshot) {
-                  final versionStr = snapshot.hasData ? snapshot.data!.version : '1.0.3';
+                  final versionStr = snapshot.hasData ? snapshot.data!.version : '1.0.4';
                   return Text(
                     'Version $versionStr',
                     style: TextStyle(

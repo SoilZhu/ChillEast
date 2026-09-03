@@ -104,8 +104,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # R2 是正式发布的必要目标；凭据缺失或上传失败时应让发布失败，不能静默跳过。
       - name: Upload to Cloudflare R2
-        if: env.R2_SECRET_ACCESS_KEY != '' && env.R2_ACCESS_KEY_ID != '' && env.CLOUDFLARE_ACCOUNT_ID != '' && env.R2_BUCKET_NAME != ''
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -119,14 +119,31 @@ jobs:
             --cache-control "public, max-age=300, s-maxage=300"
           echo "Successfully uploaded latest/app-release.apk to Cloudflare R2"
 
-      - name: Purge Cloudflare CDN Cache
-        if: env.CF_ZONE_ID != '' && env.CF_API_TOKEN != ''
+      # CDN 清缓存是可选步骤。使用前置步骤检查 Secrets，避免在步骤自己的 if 中
+      # 判断尚未映射的 env，导致 Secrets 已配置却仍被静默跳过。
+      - name: Check CDN purge configuration
+        id: cdn_purge_config
         env:
           CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
         run: |
-          PURGE_RES=$(curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/purge_cache" \
+          if [ -n "$CF_ZONE_ID" ] && [ -n "$CF_API_TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CF_ZONE_ID or CF_API_TOKEN is not configured; skipping CDN cache purge."
+          fi
+
+      - name: Purge Cloudflare CDN Cache
+        if: steps.cdn_purge_config.outputs.enabled == 'true'
+        env:
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          PURGE_RES=$(curl --fail-with-body -sS -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/purge_cache" \
             -H "Authorization: Bearer ${CF_API_TOKEN}" \
             -H "Content-Type: application/json" \
             --data '{"files":["https://eastchill-apk.soilzhu.su/latest/app-release.apk"]}')
           echo "Cloudflare Purge Cache Response: $PURGE_RES"
+          python3 -c 'import json,sys; data=json.load(sys.stdin); sys.exit(0 if data.get("success") is True else 1)' <<< "$PURGE_RES"
