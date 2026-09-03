@@ -10,6 +10,11 @@ import '../../../../core/network/dio_client.dart';
 
 final campusCardServiceProvider = Provider((ref) => CampusCardService());
 
+enum PaymentMethod {
+  wechat,
+  alipay,
+}
+
 class CampusCardInfo {
   final String name;
   final String idserial;
@@ -25,6 +30,40 @@ class CampusCardInfo {
 
   @override
   String toString() => 'CampusCardInfo(name: $name, idserial: $idserial, balance: $balance)';
+}
+
+class WeChatRechargeOrder {
+  final String partnerjourno;
+  final String mwebUrl;
+  final String returnurl;
+  final String? redirectUrl;
+  final String? prepayId;
+
+  WeChatRechargeOrder({
+    required this.partnerjourno,
+    required this.mwebUrl,
+    required this.returnurl,
+    this.redirectUrl,
+    this.prepayId,
+  });
+
+  @override
+  String toString() => 'WeChatRechargeOrder(partnerjourno: $partnerjourno, mwebUrl: $mwebUrl, returnurl: $returnurl)';
+}
+
+class WeChatPayStatusResult {
+  final bool isSuccess;
+  final bool isPending;
+  final String? message;
+
+  WeChatPayStatusResult({
+    required this.isSuccess,
+    required this.isPending,
+    this.message,
+  });
+
+  @override
+  String toString() => 'WeChatPayStatusResult(isSuccess: $isSuccess, isPending: $isPending, message: $message)';
 }
 
 class CampusCardService {
@@ -146,7 +185,7 @@ class CampusCardService {
 
         // 1. 解析 Base64 二维码
         final qrMatch = RegExp(r'id="qrcode".*?src="data:image/png;base64,(.*?)"', dotAll: true).firstMatch(html);
-        final qrBase64 = qrMatch?.group(1)?.replaceAll('\n', '')?.replaceAll('\r', '')?.trim();
+        final qrBase64 = qrMatch?.group(1)?.replaceAll('\n', '').replaceAll('\r', '').trim();
         
         // 2. 解析 paycode (id="code")
         final codeMatch = RegExp(r'id="code"\s+value="(.*?)"').firstMatch(html);
@@ -219,8 +258,18 @@ class CampusCardService {
     }
   }
 
-  /// 获取校园卡充值页信息
+  /// 获取校园卡充值页信息（对齐付款码页面的实时余额刷新方式）
   Future<CampusCardInfo> fetchRechargeInfo({bool isRetry = false}) async {
+    // 优先通过付款码页面 (openVirtualcard) 获取最新实时余额
+    try {
+      await fetchPaymentCode(isRetry: isRetry);
+      if (_cachedInfo != null) {
+        return _cachedInfo!;
+      }
+    } catch (e) {
+      _logger.w('⚠️ fetchPaymentCode in fetchRechargeInfo error, fallback to openCardPay: $e');
+    }
+
     if (_openid == null) {
       final authResult = await authenticate();
       if (authResult == null) throw Exception('授权失败');
@@ -373,6 +422,201 @@ class CampusCardService {
     } catch (e) {
       _logger.e('❌ getAlipayForm error: $e');
       rethrow;
+    }
+  }
+
+  /// 提交微信充值请求，获取微信充值订单信息 (含 mweb_url 等)
+  Future<WeChatRechargeOrder> createWeChatOrder(double amount) async {
+    if (_openid == null || _cachedInfo == null) {
+      await fetchRechargeInfo();
+    }
+
+    final dio = DioClient().dio;
+
+    // 1. 尝试记录用户最后一次选择的支付方式 (HAR 中 Entry 0/32)
+    try {
+      await dio.post(
+        'https://fin-serv.hunau.edu.cn/myaccount/userlastbind?openid=$_openid&connect_redirect=1',
+        data: {
+          'payinfo': {'cardpayWay': '1'},
+          'idserial': _cachedInfo!.idserial,
+        },
+        options: Options(
+          contentType: Headers.jsonContentType,
+          headers: {
+            'User-Agent': AppConstants.campusCardUA,
+            'Referer': 'https://fin-serv.hunau.edu.cn/cardpay/openCardPay?openid=$_openid',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        ),
+      );
+    } catch (e) {
+      _logger.w('⚠️ userlastbind failed (non-fatal): $e');
+    }
+
+    // 2. 发起微信充值统一下单 (HAR 中 Entry 1/31)
+    final url = 'https://fin-serv.hunau.edu.cn/wxpay/transferFromWx2Card?openid=$_openid&connect_redirect=1';
+    try {
+      final response = await dio.post(
+        url,
+        data: {
+          'txamt': amount.toStringAsFixed(0),
+          'payWay': '1',
+          'openid': _openid,
+          'idserial': _cachedInfo!.idserial,
+          'tradetype': 'WAP',
+        },
+        options: Options(
+          contentType: Headers.jsonContentType,
+          headers: {
+            'User-Agent': AppConstants.campusCardUA,
+            'Referer': 'https://fin-serv.hunau.edu.cn/cardpay/openCardPay?openid=$_openid&displayflag=1&id=28',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final dynamic respData = response.data is String ? jsonDecode(response.data as String) : response.data;
+        if (respData is Map<String, dynamic>) {
+          if (respData['success'] == true) {
+            final resultData = respData['resultData'] as Map<String, dynamic>?;
+            if (resultData != null && resultData['mweb_url'] != null) {
+              var returnurl = resultData['returnurl']?.toString() ?? '';
+              if (returnurl.contains('%')) {
+                try {
+                  returnurl = Uri.decodeComponent(returnurl);
+                } catch (_) {}
+              }
+              if (returnurl.startsWith('http://')) {
+                returnurl = returnurl.replaceFirst('http://', 'https://');
+              }
+              return WeChatRechargeOrder(
+                partnerjourno: resultData['partnerjourno']?.toString() ?? '',
+                mwebUrl: resultData['mweb_url'].toString(),
+                returnurl: returnurl,
+                redirectUrl: resultData['redirect_url']?.toString(),
+                prepayId: resultData['prepay_id']?.toString(),
+              );
+            }
+          }
+          throw Exception(respData['message'] ?? '创建微信充值订单失败');
+        }
+      }
+      throw Exception('微信充值请求失败: ${response.statusCode}');
+    } catch (e) {
+      _logger.e('❌ createWeChatOrder error: $e');
+      rethrow;
+    }
+  }
+
+  /// 从微信 H5 支付页 (mweb_url) 中提取 weixin://wap/pay?... 唤醒链接
+  Future<String?> getWeChatDeepLink(String mwebUrl) async {
+    final dio = DioClient().dio;
+    try {
+      final response = await dio.get(
+        mwebUrl,
+        options: Options(
+          headers: {
+            'Referer': 'https://fin-serv.hunau.edu.cn/',
+            'User-Agent': AppConstants.campusCardUA,
+          },
+          responseType: ResponseType.plain,
+        ),
+      );
+      if (response.statusCode == 200 && response.data != null) {
+        final html = response.data.toString();
+        // 匹配 weixin://wap/pay?...
+        final match = RegExp(r'''(weixin://wap/pay\?[^"'\s<>\)]+)''').firstMatch(html);
+        if (match != null) {
+          final deepLink = match.group(1);
+          _logger.i('✅ Extracted WeChat DeepLink: $deepLink');
+          return deepLink;
+        }
+      }
+    } catch (e) {
+      _logger.w('⚠️ getWeChatDeepLink error: $e');
+    }
+    return null;
+  }
+
+  /// 查询微信充值订单状态 (HAR 中 queryWxWapPayStatus)
+  Future<WeChatPayStatusResult> queryWeChatPayStatus({
+    required String partnerjourno,
+    required String returnurl,
+  }) async {
+    if (_openid == null) throw Exception('未授权 (OpenID 为空)');
+
+    final dio = DioClient().dio;
+    const url = 'https://fin-serv.hunau.edu.cn/wxpay/queryWxWapPayStatus';
+
+    try {
+      final response = await dio.get(
+        url,
+        queryParameters: {
+          'partnerjourno': partnerjourno,
+          'openid': _openid,
+          'returnurl': returnurl,
+        },
+        options: Options(
+          headers: {
+            'User-Agent': AppConstants.campusCardUA,
+            'Referer': 'https://fin-serv.hunau.edu.cn/cardpay/openCardPay?openid=$_openid',
+          },
+          responseType: ResponseType.plain,
+          validateStatus: (status) => status != null && status < 400,
+        ),
+      );
+
+      final statusCode = response.statusCode ?? 200;
+      final location = response.headers.value('location') ?? '';
+      final realPath = response.realUri.path;
+      final body = response.data.toString();
+
+      _logger.d('🔍 queryWxWapPayStatus: status=$statusCode, location=$location, path=$realPath');
+
+      // 1. 如果重定向到了 paySuccess（无论是 302 Header 中的 Location，还是已跟随跳转的 realPath）
+      if (location.contains('paySuccess') || realPath.contains('paySuccess')) {
+        _logger.i('🎉 WeChat Pay completed successfully! loc=$location, path=$realPath');
+        return WeChatPayStatusResult(isSuccess: true, isPending: false);
+      }
+
+      // 2. 如果页面仍在查询中（待支付），明确返回 pending，绝对不能判定为成功
+      if (body.contains('微信支付订单查询中') || body.contains('icon-wait.png')) {
+        _logger.d('⏳ WeChat Pay status: still querying in progress...');
+        return WeChatPayStatusResult(isSuccess: false, isPending: true);
+      }
+
+      // 3. 判断支付成功：页面明确展示充值/支付成功（且不含查询中、失败原因等）
+      final isBodySuccess = (body.contains('支付成功') || body.contains('充值成功')) &&
+          !body.contains('失败原因') &&
+          !body.contains('static.css');
+
+      if (isBodySuccess) {
+        _logger.i('🎉 WeChat Pay completed successfully! realPath=$realPath');
+        return WeChatPayStatusResult(isSuccess: true, isPending: false);
+      }
+
+      // 3. 提取失败原因（若有）
+      final reasonMatch = RegExp(r'id="message"[^>]*>([^<]+)<\/p>').firstMatch(body);
+      final reason = reasonMatch?.group(1)?.trim();
+
+      if (reason != null && reason.isNotEmpty && reason != '微信支付订单查询中') {
+        _logger.w('⚠️ WeChat Pay failed: $reason');
+        return WeChatPayStatusResult(
+          isSuccess: false,
+          isPending: false,
+          message: reason,
+        );
+      }
+
+      return WeChatPayStatusResult(
+        isSuccess: false,
+        isPending: true,
+      );
+    } catch (e) {
+      _logger.e('❌ queryWeChatPayStatus error: $e');
+      return WeChatPayStatusResult(isSuccess: false, isPending: true, message: e.toString());
     }
   }
 
