@@ -8,18 +8,33 @@ import 'features/home/screens/main_scaffold.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'core/state/auth_state.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/background_worker.dart';
 
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+  // 初始化后台周期重调度（WorkManager）—— 需在其他初始化前
+  try {
+    await BackgroundWorker.initialize().timeout(const Duration(seconds: 5));
+  } catch (e) {
+    debugPrint('⚠️ Workmanager initialization failed: $e');
+  }
   
   try {
     // 初始化通知服务
     await NotificationService().init().timeout(const Duration(seconds: 5));
   } catch (e) {
     debugPrint('⚠️ Notification initialization failed: $e');
+  }
+
+  // 注册周期任务（根据用户设置决定是否注册）
+  try {
+    await BackgroundWorker.ensurePeriodicReschedule().timeout(const Duration(seconds: 3));
+  } catch (e) {
+    debugPrint('⚠️ Workmanager register failed: $e');
   }
 
   // 初始化中文日期格式化环境

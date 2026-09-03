@@ -80,6 +80,19 @@ class CachedLibraryReserveNotifier
     return success;
   }
 
+  /// 本地删除（无需网络，用于幽灵清理或过期清理）
+  Future<void> removeLocalReserve(int reserveId) async {
+    final currentList = state.value ?? [];
+    final updatedList = currentList.where((r) => r.id != reserveId).toList();
+    state = AsyncValue.data(updatedList);
+    if (updatedList.isNotEmpty) {
+      await LibraryStorage.saveReserves(updatedList);
+    } else {
+      await LibraryStorage.clearReserves();
+    }
+    ref.read(settingsProvider.notifier).rescheduleNotifications();
+  }
+
   /// 签到
   Future<bool> signInSeat(LibraryReserveModel reserve) async {
     final success = await _service.signInSeat(reserve);

@@ -1,9 +1,48 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../../../core/services/notification_service.dart';
 import '../providers/settings_provider.dart';
 
 class NotificationSettingsScreen extends ConsumerWidget {
   const NotificationSettingsScreen({super.key});
+
+  /// 开启时自动申请缺失的权限，不展示任何卡片
+  Future<void> _ensurePermissionsIfNeeded() async {
+    try {
+      // iOS：仅需通知权限（已在 NotificationService init 时设为不自动申请）
+      if (Platform.isIOS) {
+        final status = await Permission.notification.status;
+        if (!status.isGranted) {
+          await Permission.notification.request();
+        }
+        return;
+      }
+
+      if (!Platform.isAndroid) return;
+
+      // Android：1. 通知总开关（Android 13+）
+      final notifEnabled = await NotificationService().areNotificationsEnabled();
+      if (notifEnabled != true) {
+        await NotificationService().requestNotificationsPermission();
+      }
+
+      // 2. 精确闹钟（Android 12+）
+      final canExact = await NotificationService().canScheduleExactAlarms();
+      if (canExact != true) {
+        await NotificationService().requestExactAlarmsPermission();
+      }
+
+      // 3. 后台运行 / 忽略省电优化（国产 ROM 关键）
+      try {
+        final status = await Permission.ignoreBatteryOptimizations.status;
+        if (!status.isGranted) {
+          await Permission.ignoreBatteryOptimizations.request();
+        }
+      } catch (_) {}
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -61,7 +100,14 @@ class NotificationSettingsScreen extends ConsumerWidget {
               title: '上课提醒时间',
               options: courseDurations,
               currentValue: settings.reminderMinutes,
-              onSelected: (val) => ref.read(settingsProvider.notifier).setReminderMinutes(val as int),
+              onSelected: (val) async {
+                final v = val as int;
+                await ref.read(settingsProvider.notifier).setReminderMinutes(v);
+                if (v != 0) {
+                  // 缺啥自动申请，不展示卡片
+                  await _ensurePermissionsIfNeeded();
+                }
+              },
             ),
           ),
           _buildSettingItem(
@@ -74,7 +120,13 @@ class NotificationSettingsScreen extends ConsumerWidget {
               title: '作业提醒时间',
               options: homeworkDurations,
               currentValue: settings.homeworkReminderHours,
-              onSelected: (val) => ref.read(settingsProvider.notifier).setHomeworkReminderHours(val as double),
+              onSelected: (val) async {
+                final v = val as double;
+                await ref.read(settingsProvider.notifier).setHomeworkReminderHours(v);
+                if (v != 0) {
+                  await _ensurePermissionsIfNeeded();
+                }
+              },
             ),
           ),
           _buildSettingItem(
@@ -87,7 +139,13 @@ class NotificationSettingsScreen extends ConsumerWidget {
               title: '图书馆预约提醒时间',
               options: courseDurations,
               currentValue: settings.libraryReminderMinutes,
-              onSelected: (val) => ref.read(settingsProvider.notifier).setLibraryReminderMinutes(val as int),
+              onSelected: (val) async {
+                final v = val as int;
+                await ref.read(settingsProvider.notifier).setLibraryReminderMinutes(v);
+                if (v != 0) {
+                  await _ensurePermissionsIfNeeded();
+                }
+              },
             ),
           ),
         ],
@@ -173,8 +231,8 @@ class NotificationSettingsScreen extends ConsumerWidget {
                       title: Text(opt['label']),
                       trailing: isSelected ? const Icon(Icons.check, color: Color(0xFF09C489)) : null,
                       onTap: () {
-                        onSelected(opt['value']);
                         Navigator.pop(context);
+                        onSelected(opt['value']);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('已设置为: ${opt['label']}'),

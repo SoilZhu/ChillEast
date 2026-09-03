@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/services/background_worker.dart';
 import '../../timetable/services/timetable_storage.dart';
 import '../../homework/services/homework_storage.dart';
 import '../../library/services/library_storage.dart';
@@ -92,6 +93,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> rescheduleNotifications() async {
     // 0. 先取消所有旧通知，防止重复或残留
     await NotificationService().cancelAll();
+    // 记录重调度时间戳，供 MainScaffold 滚动补定判断
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('last_notification_reschedule_ts', DateTime.now().millisecondsSinceEpoch);
+    } catch (_) {}
 
     // 1. 安排课程通知
     final storage = TimetableStorage();
@@ -128,5 +134,10 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
         state.libraryReminderMinutes,
       );
     }
+
+    // 4. 同步后台周期任务注册状态
+    try {
+      await BackgroundWorker.ensurePeriodicReschedule();
+    } catch (_) {}
   }
 }

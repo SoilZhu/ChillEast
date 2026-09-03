@@ -19,6 +19,7 @@ import '../../timetable/providers/reminder_trigger_provider.dart';
 import '../../../core/widgets/triangle_painter.dart';
 import '../widgets/ai_response_card.dart';
 import '../../../core/ai/ai_provider.dart';
+import '../../profile/providers/settings_provider.dart';
 
 
 /// 自定义顶部滑动指示器，圆角朝下
@@ -74,12 +75,13 @@ class MainScaffold extends ConsumerStatefulWidget {
   ConsumerState<MainScaffold> createState() => _MainScaffoldState();
 }
 
-class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProviderStateMixin {
+class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
   late AnimationController _aiAnimController;
   String _hitokoto = '自在东湖在湖东！';
   final HitokotoService _hitokotoService = HitokotoService();
   bool _hasSeenReminder = false;
+  DateTime _lastReschedule = DateTime.fromMillisecondsSinceEpoch(0);
 
   // AI 助理交互状态
   bool _isAiMode = false;
@@ -89,6 +91,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 5, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
@@ -192,7 +195,40 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _maybeRescheduleOnResume();
+    }
+  }
+
+  Future<void> _maybeRescheduleOnResume() async {
+    // 节流：5分钟内不重复重调度，避免频繁 cancelAll
+    final now = DateTime.now();
+    if (now.difference(_lastReschedule).inMinutes < 5) return;
+    _lastReschedule = now;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastTs = prefs.getInt('last_notification_reschedule_ts') ?? 0;
+      final last = DateTime.fromMillisecondsSinceEpoch(lastTs);
+      // 12小时未重调度 或 待响数量为0时强制补定
+      if (now.difference(last).inHours >= 12) {
+        // 动态 import 避免循环依赖，用 ref 读取
+        // 延迟一帧确保 ref 可用
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (!mounted) return;
+        try {
+          await ref.read(settingsProvider.notifier).rescheduleNotifications();
+          await prefs.setInt('last_notification_reschedule_ts', now.millisecondsSinceEpoch);
+        } catch (_) {
+          // ignore, 下次 resumed 再试
+        }
+      }
+    } catch (_) {}
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tabController.dispose();
     _aiAnimController.dispose();
     _aiInputController.dispose();
