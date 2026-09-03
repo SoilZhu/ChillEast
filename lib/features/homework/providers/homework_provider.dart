@@ -95,6 +95,7 @@ class HomeworkNotifier extends StateNotifier<AsyncValue<List<HomeworkModel>>> {
     final manual = current.where((e) => e.isManual).toList();
     await _ref.read(homeworkStorageProvider).saveHomeworkList(manual);
     state = AsyncValue.data(manual);
+    _rescheduleAll();
   }
 
   /// 添加手动作业
@@ -129,6 +130,8 @@ class HomeworkNotifier extends StateNotifier<AsyncValue<List<HomeworkModel>>> {
     final updated = current.where((e) => e.id != id).toList();
     await _ref.read(homeworkStorageProvider).saveHomeworkList(updated);
     state = AsyncValue.data(updated);
+    // 取消幽灵闹钟：删除后重调度
+    _rescheduleAll();
   }
 
   /// 切换完成状态
@@ -145,6 +148,7 @@ class HomeworkNotifier extends StateNotifier<AsyncValue<List<HomeworkModel>>> {
     }).toList();
     await _ref.read(homeworkStorageProvider).saveHomeworkList(updated);
     state = AsyncValue.data(updated);
+    _rescheduleAll();
   }
 
   /// 存档/撤销存档
@@ -158,12 +162,25 @@ class HomeworkNotifier extends StateNotifier<AsyncValue<List<HomeworkModel>>> {
     }).toList();
     await _ref.read(homeworkStorageProvider).saveHomeworkList(updated);
     state = AsyncValue.data(updated);
+    _rescheduleAll();
   }
 
   /// 撤销删除 (恢复之前的状态)
   Future<void> restoreList(List<HomeworkModel> oldList) async {
     await _ref.read(homeworkStorageProvider).saveHomeworkList(oldList);
     state = AsyncValue.data(oldList);
+    _rescheduleAll();
+  }
+
+  void _rescheduleAll() {
+    // 统一走全局重调度，避免幽灵闹钟残留
+    try {
+      _ref.read(settingsProvider.notifier).rescheduleNotifications();
+    } catch (e) {
+      _logger.w('⚠️ reschedule after homework change failed: $e');
+      // 降级：至少重调度当前作业列表
+      _scheduleReminders(state.value ?? []);
+    }
   }
 
   void _scheduleReminders(List<HomeworkModel> list) {
