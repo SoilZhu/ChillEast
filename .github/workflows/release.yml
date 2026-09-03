@@ -67,13 +67,31 @@ jobs:
             echo "::warning::KEYSTORE_BASE64 secret not found. APK will be built without custom release signing."
           fi
 
+      - name: Verify dependency manifests
+        run: |
+          test -f pubspec.yaml
+          test -f pubspec.lock
+
       - name: Install locked dependencies
-        run: flutter pub get --enforce-lockfile
+        run: |
+          flutter pub get --enforce-lockfile
+          git diff --exit-code -- pubspec.lock
 
       - name: Build Universal Release APK
         run: |
           flutter build apk --release --no-pub \
+            --obfuscate \
+            --split-debug-info=build/symbols \
             --dart-define=DEFAULT_AI_API_KEY="${{ secrets.DEFAULT_AI_API_KEY }}"
+
+      # 混淆后的 Dart 堆栈必须使用 symbols 目录还原；不把符号文件放进 APK。
+      - name: Upload obfuscation symbols
+        uses: actions/upload-artifact@v4
+        with:
+          name: chilleast-symbols-${{ github.ref_name }}
+          path: build/symbols
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

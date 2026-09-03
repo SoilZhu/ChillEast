@@ -210,8 +210,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
       final prefs = await SharedPreferences.getInstance();
       final lastTs = prefs.getInt('last_notification_reschedule_ts') ?? 0;
       final last = DateTime.fromMillisecondsSinceEpoch(lastTs);
-      // 12小时未重调度 或 待响数量为0时强制补定
-      if (now.difference(last).inHours >= 12) {
+      // 长时间未重调度，或系统中已没有待处理通知时，强制补排。
+      final pendingCount = await ref.read(settingsProvider.notifier).getPendingNotificationCount();
+      if (now.difference(last).inHours >= 12 || pendingCount == 0) {
         // 动态 import 避免循环依赖，用 ref 读取
         // 延迟一帧确保 ref 可用
         await Future.delayed(const Duration(milliseconds: 300));

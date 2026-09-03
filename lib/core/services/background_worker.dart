@@ -19,9 +19,13 @@ void callbackDispatcher() {
       if (task == kRescheduleTaskName || task == kRescheduleTaskUnique) {
         // 后台 isolate 需重新初始化
         try {
-          await NotificationService().init().timeout(const Duration(seconds: 5));
+          await NotificationService()
+              .init()
+              .timeout(const Duration(seconds: 5));
         } catch (e) {
+          // 插件未初始化时继续 cancelAll 会造成“清空旧通知但无法恢复”。
           debugPrint('⚠️ BG NotificationService init failed: $e');
+          return Future.value(false);
         }
 
         final prefs = await SharedPreferences.getInstance();
@@ -35,6 +39,7 @@ void callbackDispatcher() {
 
         // 先清理旧的
         await NotificationService().cancelAll();
+        var allSucceeded = true;
 
         // 课程
         if (reminderMinutes > 0) {
@@ -44,12 +49,17 @@ void callbackDispatcher() {
             if (has) {
               final courses = await storage.readCourseList();
               final meta = await storage.readMetadata();
-              if (courses.isNotEmpty && meta != null && meta['firstWeekMonday'] != null) {
-                final firstWeekMonday = DateTime.parse(meta['firstWeekMonday'] as String);
-                await NotificationService().scheduleCourseReminders(courses, firstWeekMonday, reminderMinutes);
+              if (courses.isNotEmpty &&
+                  meta != null &&
+                  meta['firstWeekMonday'] != null) {
+                final firstWeekMonday =
+                    DateTime.parse(meta['firstWeekMonday'] as String);
+                await NotificationService().scheduleCourseReminders(
+                    courses, firstWeekMonday, reminderMinutes);
               }
             }
           } catch (e) {
+            allSucceeded = false;
             debugPrint('⚠️ BG course reschedule failed: $e');
           }
         }
@@ -60,9 +70,11 @@ void callbackDispatcher() {
             final hwStorage = HomeworkStorage();
             final list = await hwStorage.readHomeworkList();
             if (list.isNotEmpty) {
-              await NotificationService().scheduleHomeworkReminders(list, hwHours);
+              await NotificationService()
+                  .scheduleHomeworkReminders(list, hwHours);
             }
           } catch (e) {
+            allSucceeded = false;
             debugPrint('⚠️ BG homework reschedule failed: $e');
           }
         }
@@ -72,18 +84,26 @@ void callbackDispatcher() {
           try {
             final reserves = await LibraryStorage.getCachedReserves();
             if (reserves.isNotEmpty) {
-              await NotificationService().scheduleLibraryReminders(reserves, libMinutes);
+              await NotificationService()
+                  .scheduleLibraryReminders(reserves, libMinutes);
             }
           } catch (e) {
+            allSucceeded = false;
             debugPrint('⚠️ BG library reschedule failed: $e');
           }
         }
 
-        try {
-          await prefs.setInt('last_notification_reschedule_ts', DateTime.now().millisecondsSinceEpoch);
-        } catch (_) {}
-
-        debugPrint('✅ BG reschedule done');
+        if (allSucceeded) {
+          try {
+            await prefs.setInt('last_notification_reschedule_ts',
+                DateTime.now().millisecondsSinceEpoch);
+          } catch (_) {}
+          debugPrint('✅ BG reschedule done');
+        } else {
+          debugPrint(
+              '⚠️ BG reschedule incomplete; requesting WorkManager retry');
+          return Future.value(false);
+        }
       }
       return Future.value(true);
     } catch (e) {
@@ -97,15 +117,17 @@ class BackgroundWorker {
   static bool _initialized = false;
 
   /// 在 main() 中尽早调用（目前仅 Android 需要滚动补定，iOS 本地通知由系统保障）
-  static Future<void> initialize() async {
-    if (!Platform.isAndroid) return;
-    if (_initialized) return;
+  static Future<bool> initialize() async {
+    if (!Platform.isAndroid) return true;
+    if (_initialized) return true;
     try {
       await Workmanager().initialize(callbackDispatcher);
       _initialized = true;
       debugPrint('✅ Workmanager initialized');
+      return true;
     } catch (e) {
       debugPrint('⚠️ Workmanager init failed: $e');
+      return false;
     }
   }
 
@@ -124,6 +146,12 @@ class BackgroundWorker {
         try {
           await Workmanager().cancelByUniqueName(kRescheduleTaskUnique);
         } catch (_) {}
+        return;
+      }
+
+      if (!_initialized) {
+        debugPrint(
+            '⚠️ Skip periodic registration: Workmanager is not initialized');
         return;
       }
 

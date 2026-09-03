@@ -16,7 +16,8 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   final _logger = Logger();
 
   Future<void> init() async {
@@ -36,7 +37,8 @@ class NotificationService {
     );
 
     // 3. 整体初始化
-    const InitializationSettings initializationSettings = InitializationSettings(
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
     );
@@ -60,8 +62,9 @@ class NotificationService {
     if (kIsWeb) return true;
     if (Platform.isAndroid) {
       try {
-        final android = _notificationsPlugin
-            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+        final android =
+            _notificationsPlugin.resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
         final enabled = await android?.areNotificationsEnabled();
         return enabled ?? true;
       } catch (e) {
@@ -78,8 +81,9 @@ class NotificationService {
     if (kIsWeb) return true;
     if (!Platform.isAndroid) return true;
     try {
-      final android = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final android =
+          _notificationsPlugin.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
       final can = await android?.canScheduleExactNotifications();
       // can == null 表示系统版本 < S (无需此权限) 或插件未实现，视为可调度
       if (can == null) return true;
@@ -95,8 +99,9 @@ class NotificationService {
   Future<bool> requestExactAlarmsPermission() async {
     if (kIsWeb || !Platform.isAndroid) return true;
     try {
-      final android = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final android =
+          _notificationsPlugin.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
       final result = await android?.requestExactAlarmsPermission();
       return result ?? false;
     } catch (e) {
@@ -109,8 +114,9 @@ class NotificationService {
   Future<bool> requestNotificationsPermission() async {
     if (kIsWeb || !Platform.isAndroid) return true;
     try {
-      final android = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final android =
+          _notificationsPlugin.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
       final result = await android?.requestNotificationsPermission();
       return result ?? false;
     } catch (e) {
@@ -123,7 +129,8 @@ class NotificationService {
   Future<AndroidScheduleMode> _resolveScheduleMode() async {
     final canExact = await canScheduleExactAlarms();
     if (canExact) return AndroidScheduleMode.exactAllowWhileIdle;
-    _logger.w('⚠️ Exact alarm not permitted, fallback to inexactAllowWhileIdle');
+    _logger
+        .w('⚠️ Exact alarm not permitted, fallback to inexactAllowWhileIdle');
     return AndroidScheduleMode.inexactAllowWhileIdle;
   }
 
@@ -145,7 +152,8 @@ class NotificationService {
         scheduledDate,
         notificationDetails,
         androidScheduleMode: mode,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
         payload: payload,
       );
     } on Exception catch (e) {
@@ -165,7 +173,8 @@ class NotificationService {
             scheduledDate,
             notificationDetails,
             androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-            uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
             payload: payload,
           );
           return;
@@ -200,11 +209,8 @@ class NotificationService {
   /// [courses]: 课程列表
   /// [firstWeekMonday]: 本学期第一周周一
   /// [reminderMinutes]: 提前多少分钟提醒
-  Future<void> scheduleCourseReminders(
-    List<CourseModel> courses, 
-    DateTime firstWeekMonday,
-    int reminderMinutes
-  ) async {
+  Future<void> scheduleCourseReminders(List<CourseModel> courses,
+      DateTime firstWeekMonday, int reminderMinutes) async {
     // 这里我们先不 cancelAll，避免误删作业通知
     // 我们手动取消课程 Channel 的通知 (如果有记录的话)
     // 暂时简单处理：如果不通知，直接返回
@@ -216,7 +222,7 @@ class NotificationService {
     for (var course in courses) {
       // 解析周次
       final weeks = WeekParser.parseWeeks(course.weeks);
-      
+
       for (final weekNum in weeks) {
         // 计算这一周这一天的日期
         final date = DateCalculator.calculateDate(
@@ -236,27 +242,31 @@ class NotificationService {
           tod.hour,
           tod.minute,
         );
-        
+
         // 计算提醒时间
-        final reminderTime = startTime.subtract(Duration(minutes: reminderMinutes));
+        final reminderTime =
+            startTime.subtract(Duration(minutes: reminderMinutes));
 
         // 如果提醒时间已经过了，检查是否需要补发
-        if (reminderTime.isBefore(now)) {
+        if (!reminderTime.isAfter(now)) {
           // 如果现在还没有到上课时间，说明是在提醒窗口期内打开了App，我们补发一个
           if (now.isBefore(startTime)) {
             final prefs = await SharedPreferences.getInstance();
-            final String makeupKey = 'makeup_course_${course.id}_${date.year}_${date.month}_${date.day}_${startTime.hour}_${startTime.minute}';
-            
+            final String makeupKey =
+                'makeup_course_${course.id}_${date.year}_${date.month}_${date.day}_${startTime.hour}_${startTime.minute}';
+
             if (prefs.getBool(makeupKey) != true) {
-              await prefs.setBool(makeupKey, true);
-              
-              final int makeupId = 150000000 + (course.id.hashCode.abs() % 10000000);
-              final timeStr = '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
-              
+              final int makeupId = 150000000 +
+                  ((course.id.hashCode ^ startTime.millisecondsSinceEpoch)
+                          .abs() %
+                      10000000);
+              final timeStr =
+                  '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
+
               await _notificationsPlugin.show(
                 makeupId,
-                '$timeStr ${course.name}', 
-                course.classroom, 
+                '$timeStr ${course.name}',
+                course.classroom,
                 const NotificationDetails(
                   android: AndroidNotificationDetails(
                     'course_reminder_channel',
@@ -268,7 +278,9 @@ class NotificationService {
                 ),
                 payload: 'course_${course.id}',
               );
-              _logger.i('📨 Makeup course notification sent for ${course.name}');
+              await prefs.setBool(makeupKey, true);
+              _logger
+                  .i('📨 Makeup course notification sent for ${course.name}');
             }
           }
           continue;
@@ -278,9 +290,14 @@ class NotificationService {
         if (reminderTime.isAfter(now.add(const Duration(days: 14)))) continue;
 
         // 生成通知 ID (课程使用1开头)
-        final int notificationId = 100000000 + (course.id.hashCode.abs() + reminderTime.millisecondsSinceEpoch ~/ 60000).toInt() % 100000000;
+        final int notificationId = 100000000 +
+            (course.id.hashCode.abs() +
+                        reminderTime.millisecondsSinceEpoch ~/ 60000)
+                    .toInt() %
+                100000000;
 
-        final timeStr = '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
+        final timeStr =
+            '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
 
         await _zonedScheduleWithFallback(
           id: notificationId,
@@ -299,12 +316,13 @@ class NotificationService {
           ),
           payload: 'course_${course.id}',
         );
-        
+
         scheduledCount++;
       }
     }
 
-    _logger.i('🚀 Scheduled $scheduledCount course reminders (Pre-notify: $reminderMinutes min)');
+    _logger.i(
+        '🚀 Scheduled $scheduledCount course reminders (Pre-notify: $reminderMinutes min)');
   }
 
   /// 为作业列表安排提醒
@@ -322,20 +340,22 @@ class NotificationService {
     for (var hw in homeworks) {
       if (hw.status != HomeworkStatus.pending || hw.endTime == null) continue;
 
-      final reminderTime = hw.endTime!.subtract(Duration(minutes: (advanceHours * 60).toInt()));
+      final reminderTime =
+          hw.endTime!.subtract(Duration(minutes: (advanceHours * 60).toInt()));
 
       // 如果提醒时间已经过了，检查是否需要补发
-      if (reminderTime.isBefore(now)) {
+      if (!reminderTime.isAfter(now)) {
         // 如果作业还没有截止，补发
         if (now.isBefore(hw.endTime!)) {
           final prefs = await SharedPreferences.getInstance();
-          final String makeupKey = 'makeup_hw_${hw.id}_${hw.endTime!.millisecondsSinceEpoch}';
-          
+          final String makeupKey =
+              'makeup_hw_${hw.id}_${hw.endTime!.millisecondsSinceEpoch}';
+
           if (prefs.getBool(makeupKey) != true) {
-            await prefs.setBool(makeupKey, true);
-            
-            final int makeupId = 250000000 + (hw.id.hashCode.abs() % 10000000);
-            
+            final int makeupId = 250000000 +
+                ((hw.id.hashCode ^ hw.endTime!.millisecondsSinceEpoch).abs() %
+                    10000000);
+
             String timeLabel = '';
             if (advanceHours < 1) {
               timeLabel = '${(advanceHours * 60).toInt()}分钟';
@@ -360,6 +380,7 @@ class NotificationService {
               ),
               payload: 'homework_${hw.id}',
             );
+            await prefs.setBool(makeupKey, true);
             _logger.i('📨 Makeup homework notification sent for ${hw.title}');
           }
         }
@@ -398,11 +419,12 @@ class NotificationService {
         ),
         payload: 'homework_${hw.id}',
       );
-      
+
       scheduledCount++;
     }
 
-    _logger.i('🚀 Scheduled $scheduledCount homework reminders (Advance: $advanceHours h)');
+    _logger.i(
+        '🚀 Scheduled $scheduledCount homework reminders (Advance: $advanceHours h)');
   }
 
   /// 为图书馆预约安排提醒
@@ -419,23 +441,27 @@ class NotificationService {
 
     for (var reserve in reserves) {
       final startTime = reserve.startTime;
-      final reminderTime = startTime.subtract(Duration(minutes: reminderMinutes));
+      final reminderTime =
+          startTime.subtract(Duration(minutes: reminderMinutes));
 
-      final timeStr = '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
+      final timeStr =
+          '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
       final title = '$timeStr ${reserve.seatNum}号座位';
       final body = reserve.fullRoomName;
 
       // 如果提醒时间已经过了，检查是否需要补发
-      if (reminderTime.isBefore(now)) {
+      if (!reminderTime.isAfter(now)) {
         // 如果在签到有效期内，补发提醒
         if (now.isBefore(startTime.add(const Duration(minutes: 15)))) {
           final prefs = await SharedPreferences.getInstance();
-          final String makeupKey = 'makeup_library_${reserve.id}_${startTime.millisecondsSinceEpoch}';
+          final String makeupKey =
+              'makeup_library_${reserve.id}_${startTime.millisecondsSinceEpoch}';
 
           if (prefs.getBool(makeupKey) != true) {
-            await prefs.setBool(makeupKey, true);
-
-            final int makeupId = 350000000 + (reserve.id.hashCode.abs() % 10000000);
+            final int makeupId = 350000000 +
+                ((reserve.id.hashCode ^ startTime.millisecondsSinceEpoch)
+                        .abs() %
+                    10000000);
 
             await _notificationsPlugin.show(
               makeupId,
@@ -452,7 +478,9 @@ class NotificationService {
               ),
               payload: 'library_${reserve.id}',
             );
-            _logger.i('📨 Makeup library notification sent for ${reserve.seatNum}');
+            await prefs.setBool(makeupKey, true);
+            _logger.i(
+                '📨 Makeup library notification sent for ${reserve.seatNum}');
           }
         }
         continue;
@@ -462,7 +490,8 @@ class NotificationService {
       if (reminderTime.isAfter(now.add(const Duration(days: 7)))) continue;
 
       // 生成图书馆通知 ID (3开头)
-      final int notificationId = 300000000 + (reserve.id.hashCode.abs() % 100000000);
+      final int notificationId =
+          300000000 + (reserve.id.hashCode.abs() % 100000000);
 
       await _zonedScheduleWithFallback(
         id: notificationId,
@@ -485,6 +514,7 @@ class NotificationService {
       scheduledCount++;
     }
 
-    _logger.i('🚀 Scheduled $scheduledCount library reminders (Pre-notify: $reminderMinutes min)');
+    _logger.i(
+        '🚀 Scheduled $scheduledCount library reminders (Pre-notify: $reminderMinutes min)');
   }
 }

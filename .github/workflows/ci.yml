@@ -62,8 +62,15 @@ jobs:
           test -f android/gradle/wrapper/gradle-wrapper.jar
           test -f android/gradle/wrapper/gradle-wrapper.properties
 
+      - name: Verify dependency manifests
+        run: |
+          test -f pubspec.yaml
+          test -f pubspec.lock
+
       - name: Install locked dependencies
-        run: flutter pub get --enforce-lockfile
+        run: |
+          flutter pub get --enforce-lockfile
+          git diff --exit-code -- pubspec.lock
 
       - name: Build debug APK
         run: flutter build apk --debug --no-pub --dart-define=DEFAULT_AI_API_KEY="${{ secrets.DEFAULT_AI_API_KEY }}"
