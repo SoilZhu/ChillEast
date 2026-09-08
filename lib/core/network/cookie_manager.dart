@@ -53,7 +53,7 @@ class AppCookieManager {
   /// 获取 Dio CookieJar
   PersistCookieJar get dioCookieJar {
     if (!_initialized) {
-      throw CookieException('CookieManager 未初始化,请先调用 initialize()');
+      throw const CookieException('CookieManager 未初始化,请先调用 initialize()');
     }
     return _dioCookieJar;
   }
@@ -61,40 +61,66 @@ class AppCookieManager {
   /// 清除所有 SSO 和 Portal 相关的 Cookie
   Future<void> clearSsoCookies() async {
     if (!_initialized) await initialize();
-    
+
     try {
       // 清除 Dio 中的 SSO 和 Portal Cookie
       final domains = [
         AppConstants.ssoBaseUrl,
         AppConstants.portalBaseUrl,
         'https://passport2.chaoxing.com',
+        'https://passport2-api.chaoxing.com',
       ];
-      
-      await Future.wait(domains.map((domain) async {
-        final cookies = await _dioCookieJar.loadForRequest(Uri.parse(domain));
-        final expiredCookies = cookies.map((cookie) {
-          final expired = io.Cookie(cookie.name, '');
-          expired.domain = cookie.domain ?? Uri.parse(domain).host;
-          expired.path = cookie.path ?? '/';
-          expired.expires = DateTime.now().subtract(const Duration(days: 1));
-          return expired;
-        }).toList();
-        
-        if (expiredCookies.isNotEmpty) {
-          await _dioCookieJar.saveFromResponse(Uri.parse(domain), expiredCookies);
-        }
-      }));
-      
+
+      // Delete the entire host, including /cas, /authn and /portal paths.
+      // Expiring only cookies visible at "/" leaves path-scoped TGC/session
+      // cookies behind. Sequential deletes also avoid persistence write races.
+      for (final domain in domains) {
+        await _dioCookieJar.delete(Uri.parse(domain), true);
+      }
+
       // 清除 WebView 中的所有 Cookie
       await _webViewCookieManager.deleteAllCookies();
-      
+
       _logger.i('✅ SSO and Portal cookies cleared successfully');
     } catch (e) {
       _logger.e('Failed to clear SSO cookies: $e');
       throw CookieException('清除 SSO Cookie 失败: $e');
     }
   }
-  
+
+  /// Publish a successful, fresh HTTP session to Dio and WebView.
+  /// Preserve host-only scope, path, expiry, Secure and HttpOnly attributes.
+  Future<void> saveHttpLoginCookies(Map<Uri, List<io.Cookie>> cookies) async {
+    if (!_initialized) await initialize();
+    try {
+      for (final entry in cookies.entries) {
+        await _dioCookieJar.saveFromResponse(entry.key, entry.value);
+        for (final cookie in entry.value) {
+          final saved = await _webViewCookieManager.setCookie(
+            url: webview.WebUri(entry.key.toString()),
+            name: cookie.name,
+            value: cookie.value,
+            domain: cookie.domain,
+            path: cookie.path ?? '/',
+            expiresDate: cookie.expires?.millisecondsSinceEpoch,
+            isSecure: cookie.secure,
+            isHttpOnly: cookie.httpOnly,
+            sameSite: const {
+              io.SameSite.lax: webview.HTTPCookieSameSitePolicy.LAX,
+              io.SameSite.strict: webview.HTTPCookieSameSitePolicy.STRICT,
+              io.SameSite.none: webview.HTTPCookieSameSitePolicy.NONE,
+            }[cookie.sameSite],
+          );
+          if (!saved) throw const CookieException('同步登录 Cookie 失败');
+        }
+      }
+    } catch (_) {
+      // Do not retain a half-published login or include cookie values in logs.
+      await clearSsoCookies();
+      throw const CookieException('同步登录 Cookie 失败，请重新登录');
+    }
+  }
+
   /// 清除所有 Cookie（包括 WebVPN、CAS、教务系统等）
   Future<void> clearAllCookies() async {
     if (!_initialized) await initialize();
@@ -130,6 +156,7 @@ class AppCookieManager {
         'https://bxpt.hunau.edu.cn/relax/', // 👈 增加带路径的探测
         'https://webvpn.hunau.edu.cn',
         'https://passport2.chaoxing.com',
+        'https://passport2-api.chaoxing.com',
         'https://notice.chaoxing.com',
         'https://mooc1.chaoxing.com',
         'https://mooc1-api.chaoxing.com',
@@ -248,6 +275,7 @@ class AppCookieManager {
       'http://chaoxing.com',
       'https://chaoxing.com',
       'https://passport2.chaoxing.com',
+      'https://passport2-api.chaoxing.com',
       'https://notice.chaoxing.com',
       'http://notice.chaoxing.com',
       'https://mooc1.chaoxing.com',

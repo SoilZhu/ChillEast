@@ -1,17 +1,15 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
-import 'dart:async';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import '../../../../core/constants/app_constants.dart';
-import '../../../../core/network/cookie_manager.dart';
-import '../../../../core/network/dio_client.dart';
-import '../../../../core/utils/secure_storage_helper.dart';
-import '../../../../core/exceptions/app_exceptions.dart';
-import '../../../../core/utils/app_logger.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/network/cookie_manager.dart';
+import '../../../core/network/dio_client.dart';
+import '../../../core/utils/secure_storage_helper.dart';
+import '../../../core/exceptions/app_exceptions.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../workspace/services/campus_card_service.dart';
+import '../services/http_login_service.dart';
 
 final authServiceProvider = Provider((ref) {
   final campusCardService = ref.read(campusCardServiceProvider);
@@ -22,8 +20,12 @@ class AuthService {
   final _logger = AppLogger.instance;
   final CampusCardService _campusCardService;
 
-  AuthService(this._campusCardService);
-  
+  final HttpLoginService _httpLoginService;
+
+  AuthService(this._campusCardService, {HttpLoginService? httpLoginService})
+      : _httpLoginService = httpLoginService ??
+            HttpLoginService(onProgress: (message) => AppLogger.instance.i(message));
+
   /// 获取详细的用户资料（姓名、学号、头像）
   Future<Map<String, String?>> fetchFullUserInfo() async {
     try {
@@ -78,8 +80,8 @@ class AuthService {
           authFuture,
         ]);
         
-        localAvatarPath = results[0] as String?;
-        openid = results[1] as String?;
+        localAvatarPath = results[0];
+        openid = results[1];
       } catch (e) {
         _logger.w('⚠️ Parallel task error: $e');
       }
@@ -150,9 +152,9 @@ class AuthService {
 
   /// 核心登录入口
   Future<void> login(String username, String password) async {
-    _logger.i('🔐 Manual login attempt for $username...');
-    await _loginWithWebView(username, password);
-    
+    _logger.i('🔐 Starting HTTP login...');
+    await _loginWithHttp(username, password);
+
     // 登录成功后保存凭据
     await SecureStorageHelper().saveUsername(username);
     await SecureStorageHelper().savePassword(password);
@@ -164,13 +166,11 @@ class AuthService {
     final password = await SecureStorageHelper().getPassword();
 
     if (username == null || password == null) {
-      throw AppException('无保存的凭据');
+      throw const AppException('无保存的凭据');
     }
 
-    _logger.i('🔄 Auto-login attempt for $username...');
-    // 💡 优化：清除 SSO 和 Portal Cookie 让其重新登录
-    await AppCookieManager().clearSsoCookies();
-    await _loginWithWebView(username, password);
+    _logger.i('🔄 Starting silent HTTP login...');
+    await _loginWithHttp(username, password);
   }
 
   /// 退出登录
@@ -185,162 +185,26 @@ class AuthService {
     await AppCookieManager().clearAllCookies();
   }
 
-  Future<void> _loginWithWebView(String username, String password) async {
-    _logger.d('🚀 Starting HeadlessInAppWebView for SSO login...');
+  bool _loginInProgress = false;
 
-    final completer = Completer<void>();
-    bool isLoginSubmitted = false;
-    bool isLoginSuccess = false;
-    HeadlessInAppWebView? webView;
-
+  Future<void> _loginWithHttp(String username, String password) async {
+    if (_loginInProgress) {
+      throw const AuthException('登录正在进行中，请稍候');
+    }
+    _loginInProgress = true;
+    final cookieManager = AppCookieManager();
     try {
-      // 使用带service参数的CAS登录URL,登录后自动跳转到portal
-      const ssoLoginUrl = 'https://sso.hunau.edu.cn/cas/login?service=https%3A%2F%2Fportal.hunau.edu.cn%2Flogin';
-
-      webView = HeadlessInAppWebView(
-        initialUrlRequest: URLRequest(url: WebUri(ssoLoginUrl)),
-        initialSettings: InAppWebViewSettings(
-          javaScriptEnabled: true,
-          domStorageEnabled: true,
-          useShouldOverrideUrlLoading: false,
-          supportMultipleWindows: true,
-          javaScriptCanOpenWindowsAutomatically: true,
-          userAgent: 'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Mobile Safari/537.36',
-          mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
-          loadsImagesAutomatically: false, // 🚀 Speed up: Don't load images in headless mode
-          disableDefaultErrorPage: true,
-        ),
-        onLoadStart: (controller, url) async {
-          final urlString = url?.toString() ?? '';
-          _logger.d('🚀 onLoadStart: $urlString');
-
-          // 1. 登录页面检测与自动注入
-          final isLoginPage = urlString.contains('/cas/login') || 
-                              urlString.contains('/authn/login.html') ||
-                              urlString.contains('sso.hunau.edu.cn');
-                              
-          if (isLoginPage && !isLoginSubmitted && !isLoginSuccess) {
-            _logger.d('🔐 Detected SSO login page, preparing injection...');
-            
-            // 使用 evaluateJavascript 的异步特性，并在脚本内部处理重试逻辑
-            final result = await controller.evaluateJavascript(source: '''
-              (async function() {
-                const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-                
-                for (let i = 0; i < 20; i++) {
-                  // console.log('=== JS Login Injection Attempt ' + (i+1) + ' ===');
-                  
-                  // A. 安全检查 body 是否存在
-                  if (!document.body) {
-                    await sleep(500);
-                    continue;
-                  }
-
-                  // B. 检查页面报错文本
-                  const findError = () => {
-                    const texts = ['密码错误', '账号或密码不正确', '验证码错误', '失败', '非法'];
-                    const bodyText = document.body.innerText || '';
-                    for (let t of texts) {
-                      if (bodyText.includes(t)) return t;
-                    }
-                    return null;
-                  };
-
-                  const err = findError();
-                  if (err) return 'LOGIN_ERROR: ' + err;
-
-                  // C. 定义深度探测函数 (支持 iframe)
-                  const queryInside = (selector) => {
-                    let el = document.querySelector(selector);
-                    if (el) return el;
-                    const frames = document.querySelectorAll('iframe');
-                    for (const f of frames) {
-                      try {
-                        let doc = f.contentDocument || f.contentWindow.document;
-                        let e = doc.querySelector(selector);
-                        if (e) return e;
-                      } catch (e) {}
-                    }
-                    return null;
-                  };
-
-                  // D. 账号密码匹配
-                  const userIn = queryInside('input.email-username') || queryInside('input[name="username"]');
-                  const passIn = queryInside('input[name="authcode"]') || queryInside('input[type="password"]');
-                  
-                  if (userIn && passIn) {
-                    userIn.value = '$username';
-                    passIn.value = '$password';
-                    console.log('JS: Fields filled');
-
-                    let btn = queryInside('button.exeActionBtn') || 
-                              queryInside('input[type="submit"]') ||
-                              queryInside('button[type="submit"]') ||
-                              queryInside('.login-btn');
-                    
-                    if (btn) {
-                      console.log('JS: Clicking button');
-                      btn.click();
-                      return 'SUBMITTED_VIA_CLICK';
-                    } else if (userIn.form) {
-                      console.log('JS: Submitting form');
-                      userIn.form.submit();
-                      return 'SUBMITTED_VIA_FORM';
-                    }
-                  }
-
-                  await sleep(500); // 🚀 Faster polling (1000ms -> 500ms)
-                }
-                return 'NOT_FOUND';
-              })();
-            ''');
-
-            _logger.d('💉 Injection result: $result');
-            if (result != null) {
-              final resStr = result.toString();
-              if (resStr.contains('SUBMITTED')) {
-                isLoginSubmitted = true;
-              } else if (resStr.contains('LOGIN_ERROR')) {
-                if (!completer.isCompleted) completer.completeError(AppException(resStr));
-              }
-            }
-          }
-        },
-        onLoadStop: (controller, url) async {
-          final urlString = url?.toString() ?? '';
-          _logger.d('🏁 onLoadStop: $urlString');
-          
-          // 2. 成功判定：到达 portal.hunau.edu.cn (登录后自动跳转)
-          final isPortalSuccess = urlString.contains('portal.hunau.edu.cn') && !urlString.contains('/cas/login');
-          
-          if (isPortalSuccess && !isLoginSuccess) {
-            isLoginSuccess = true;
-            _logger.i('✅ Login successful, reached portal: $urlString');
-
-            // 🚀 优化：删除了冗余的 WebVPN 授权激活和会话轮询逻辑
-            // 课表同步已拥有独立的 WebView 登录链，此处直接同步 Cookie 以提速。
-            
-            // 4. 同步所有域名的 Cookie 到 Dio
-            _logger.i('🍪 Syncing multi-domain cookies...');
-            await AppCookieManager().syncMultiDomainCookiesFromWebView();
-            
-            // 5. 🚀 优化：此处原本有一个复杂的融合门户 Token 获取逻辑 (Token sync)
-            // 但根据日志和目前的架构，该逻辑不再必要（返回登录页且已迁移至新 API），故移除以提速。
-            if (!completer.isCompleted) completer.complete();
-          }
-        },
-        onConsoleMessage: (controller, consoleMessage) {
-          _logger.d('🌐 [WebView] ${consoleMessage.message}');
-        },
-      );
-
-      await webView.run();
-      await completer.future.timeout(const Duration(seconds: 60));
-    } catch (e) {
-      _logger.e('⛔ WebView Login Failed: $e');
+      // Both manual and silent login discard old SSO/portal cookies. The HTTP
+      // service also uses its own empty jar, never importing persisted cookies.
+      await cookieManager.clearSsoCookies();
+      final cookies = await _httpLoginService.login(username, password);
+      await cookieManager.saveHttpLoginCookies(cookies);
+      _logger.i('✅ HTTP login successful; fresh cookies synchronized');
+    } on AppException catch (error) {
+      _logger.w('HTTP 登录未完成：${error.message}');
       rethrow;
     } finally {
-      webView?.dispose();
+      _loginInProgress = false;
     }
   }
 }
