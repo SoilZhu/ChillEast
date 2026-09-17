@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../../core/services/course_live_service.dart';
+import '../../../core/services/flyme_live_service.dart';
 import '../../../core/services/notification_service.dart';
 import '../providers/settings_provider.dart';
 
@@ -91,6 +93,10 @@ class NotificationSettingsScreen extends ConsumerWidget {
       ),
       body: ListView(
         children: [
+          // 实时活动置顶（仅 Android 可见；iOS 直接隐藏）
+          if (Platform.isAndroid) const CourseLiveSection(),
+          // Flyme 实况通知：紧跟实时活动，仅 Flyme 12+ 可见
+          if (Platform.isAndroid) const FlymeLiveSection(),
           _buildSettingItem(
             context,
             icon: Icons.book_outlined,
@@ -215,8 +221,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
     required List<Map<String, dynamic>> options,
     required dynamic currentValue,
     required Future<void> Function(dynamic) onSelected,
-  }) {
-    showModalBottomSheet(
+  }) {    showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
@@ -276,6 +281,423 @@ class NotificationSettingsScreen extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// 实时活动：Android 16+ Live Updates 开关 + 点行发送/撤回测试。
+///
+/// - 非 A16 设备：显示不支持，开关置灰，点行只提示。
+/// - A16 设备：点整行发一次测试（含课程卡 + 图书馆座位卡），再点一次撤回。
+class CourseLiveSection extends ConsumerStatefulWidget {
+  const CourseLiveSection({super.key});
+
+  @override
+  ConsumerState<CourseLiveSection> createState() => _CourseLiveSectionState();
+}
+
+class _CourseLiveSectionState extends ConsumerState<CourseLiveSection> {
+  bool? _supported; // null = 检测中（只按 AOSP 版本：Android 16+ 即支持）
+  bool _notifOn = false;
+  bool _busy = false;
+  bool _testing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshStatus();
+  }
+
+  Future<void> _refreshStatus() async {
+    final supported = await CourseLiveService().isSupported();
+    bool notifOn = false;
+    if (supported) {
+      notifOn = await CourseLiveService().areNotificationsEnabled();
+    }
+    if (mounted) {
+      setState(() {
+        _supported = supported;
+        _notifOn = notifOn;
+      });
+    }
+  }
+
+  void _snack(String msg, {bool error = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: error ? Colors.red : null,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _onToggle(bool value) async {
+    if (_supported != true) {
+      _snack('当前设备不支持 Live Updates（需 Android 16+）', error: true);
+      return;
+    }
+    if (value) {
+      // 开启前确保通知总开关已给，避免开了也弹不出。
+      final on = await CourseLiveService().areNotificationsEnabled();
+      if (!on) {
+        final granted =
+            await NotificationService().requestNotificationsPermission();
+        await _refreshStatus();
+        if (granted != true) {
+          _snack('需先允许通知权限', error: true);
+          return;
+        }
+      }
+    }
+    final flymeWasOn = ref.read(settingsProvider).flymeLiveEnabled;
+    await ref.read(settingsProvider.notifier).setCourseLiveEnabled(value);
+    if (value && flymeWasOn) {
+      _snack('已开启实时活动，实况通知已关闭');
+    } else {
+      _snack(value ? '已开启实时活动' : '已关闭实时活动');
+    }
+  }
+
+  /// 单击整行：跳本应用的系统通知设置页。
+  Future<void> _onRowTap() async {
+    if (_busy || _supported != true) return;
+    final ok = await CourseLiveService().openNotificationSettings();
+    if (!ok) {
+      _snack('打不开系统设置，请手动去设置 > 通知里查看', error: true);
+    } else {
+      // 从设置页返回后刷新通知开关状态
+      await _refreshStatus();
+    }
+  }
+
+  /// 双击整行：没在测就发一次测试，在测就撤回。
+  Future<void> _onRowDoubleTap() async {
+    if (_busy) return;
+    if (_supported != true) {
+      _snack('当前设备不支持 Live Updates（需 Android 16+）', error: true);
+      return;
+    }
+    if (_testing) {
+      await CourseLiveService().cancelTest();
+      if (mounted) {
+        setState(() {
+          _testing = false;
+        });
+      }
+      _snack('测试已撤回');
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      final on = await CourseLiveService().areNotificationsEnabled();
+      if (!on) {
+        await NotificationService().requestNotificationsPermission();
+      }
+      final ok = await CourseLiveService().startTest();
+      await _refreshStatus();
+      if (!mounted) return;
+      if (ok) {
+        setState(() {
+          _testing = true;
+        });
+        _snack('测试已发送');
+      } else {
+        _snack('发送失败：请检查通知权限', error: true);
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = ref.watch(settingsProvider).courseLiveEnabled;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // A16 以下直接整条隐藏（检测中也先不占位，避免闪一下再消失）
+    if (_supported != true) return const SizedBox.shrink();
+
+    String subtitle = '使用 Live Updates API 提醒';
+    if (_testing) {
+      subtitle += ' · 双击撤回';
+    } else if (!_notifOn) {
+      subtitle += ' · 系统通知未开启';
+    }
+
+    return InkWell(
+      onTap: _busy ? null : _onRowTap,
+      onDoubleTap: _busy ? null : _onRowDoubleTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            const Icon(Icons.timeline_outlined,
+                size: 24, color: Color(0xFF5F6368)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text('实时活动',
+                          style: TextStyle(fontSize: 16)),
+                      if (_testing) ...[
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: isDark ? Colors.white : null,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // 与 App 主题色一致的 MD2 样式开关
+            _BrandSwitch(
+              value: enabled && _supported == true,
+              onChanged: (_supported == null || _busy) ? null : _onToggle,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 实况通知：Flyme 12+ 专属，紧跟“实时活动”下面，与之互斥（不能同开）。
+///
+/// - 非 Flyme 12+：整条隐藏。
+/// - 点整行发一次测试（含课程卡 + 图书馆座位卡），再点一次撤回。
+class FlymeLiveSection extends ConsumerStatefulWidget {
+  const FlymeLiveSection({super.key});
+
+  @override
+  ConsumerState<FlymeLiveSection> createState() => _FlymeLiveSectionState();
+}
+
+class _FlymeLiveSectionState extends ConsumerState<FlymeLiveSection> {
+  bool? _supported; // null = 检测中
+  bool _notifOn = false;
+  bool _busy = false;
+  bool _testing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshStatus();
+  }
+
+  Future<void> _refreshStatus() async {
+    final supported = await FlymeLiveService().isSupported();
+    bool notifOn = false;
+    if (supported) {
+      notifOn = await FlymeLiveService().areNotificationsEnabled();
+    }
+    if (mounted) {
+      setState(() {
+        _supported = supported;
+        _notifOn = notifOn;
+      });
+    }
+  }
+
+  void _snack(String msg, {bool error = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: error ? Colors.red : null,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _onToggle(bool value) async {
+    if (_supported != true) return;
+    if (value) {
+      final on = await FlymeLiveService().areNotificationsEnabled();
+      if (!on) {
+        final granted =
+            await NotificationService().requestNotificationsPermission();
+        await _refreshStatus();
+        if (granted != true) {
+          _snack('需先允许通知权限', error: true);
+          return;
+        }
+      }
+    }
+    final courseWasOn = ref.read(settingsProvider).courseLiveEnabled;
+    await ref.read(settingsProvider.notifier).setFlymeLiveEnabled(value);
+    if (value && courseWasOn) {
+      _snack('已开启实况通知，实时活动已关闭');
+    } else {
+      _snack(value ? '已开启实况通知' : '已关闭实况通知');
+    }
+  }
+
+  /// 单击整行：跳本应用的系统通知设置页。
+  Future<void> _onRowTap() async {
+    if (_busy || _supported != true) return;
+    final ok = await FlymeLiveService().openNotificationSettings();
+    if (!ok) {
+      _snack('打不开系统设置，请手动去设置 > 通知里查看', error: true);
+    } else {
+      await _refreshStatus();
+    }
+  }
+
+  /// 双击整行：没在测就发一次测试，在测就撤回。
+  Future<void> _onRowDoubleTap() async {
+    if (_busy) return;
+    if (_supported != true) return;
+    if (_testing) {
+      await FlymeLiveService().cancelTest();
+      if (mounted) {
+        setState(() {
+          _testing = false;
+        });
+      }
+      _snack('测试已撤回');
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      final on = await FlymeLiveService().areNotificationsEnabled();
+      if (!on) {
+        await NotificationService().requestNotificationsPermission();
+      }
+      final ok = await FlymeLiveService().startTest();
+      await _refreshStatus();
+      if (!mounted) return;
+      if (ok) {
+        setState(() {
+          _testing = true;
+        });
+        _snack('测试已发送');
+      } else {
+        _snack('发送失败：请检查通知权限', error: true);
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = ref.watch(settingsProvider).flymeLiveEnabled;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // 非 Flyme 12+ 直接整条隐藏
+    if (_supported != true) return const SizedBox.shrink();
+
+    String subtitle = '使用 Flyme 实况通知 API';
+    if (_testing) {
+      subtitle += ' · 双击撤回';
+    } else if (!_notifOn) {
+      subtitle += ' · 系统通知未开启';
+    }
+
+    return InkWell(
+      onTap: _busy ? null : _onRowTap,
+      onDoubleTap: _busy ? null : _onRowDoubleTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            const Icon(Icons.notifications_active_outlined,
+                size: 24, color: Color(0xFF5F6368)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text('实况通知',
+                          style: TextStyle(fontSize: 16)),
+                      if (_testing) ...[
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: isDark ? Colors.white : null,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // 与 App 主题色一致的 MD2 样式开关
+            _BrandSwitch(
+              value: enabled && _supported == true,
+              onChanged: (_supported == null || _busy) ? null : _onToggle,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 与 App 主题色（#09C489）一致的 MD2 样式开关。
+class _BrandSwitch extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+  const _BrandSwitch({required this.value, required this.onChanged});
+
+  static const Color _brand = Color(0xFF09C489);
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: ThemeData(
+        useMaterial3: false,
+        colorScheme: Theme.of(context).colorScheme,
+      ),
+      child: Switch(
+        value: value,
+        onChanged: onChanged,
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return _brand;
+          return null;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return _brand.withValues(alpha: 0.5);
+          }
+          return null;
+        }),
+      ),
     );
   }
 }

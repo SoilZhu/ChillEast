@@ -8,6 +8,7 @@ import 'features/auth/screens/login_screen.dart';
 import 'core/state/auth_state.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/background_worker.dart';
+import 'core/services/live_scheduler.dart';
 
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
@@ -35,6 +36,12 @@ Future<void> _initializeAfterFirstFrame() async {
     _initializeBackgroundWorker(),
     _initializeNotifications(),
   ]);
+  // 实时卡：前台 tick + 原生闹钟编排（内部自带 try/catch，不阻塞启动）
+  try {
+    LiveScheduler().start();
+  } catch (e) {
+    debugPrint('⚠️ LiveScheduler start failed: $e');
+  }
   try {
     await BackgroundWorker.ensurePeriodicReschedule()
         .timeout(const Duration(seconds: 3));

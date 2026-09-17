@@ -60,6 +60,8 @@ android {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    // Live Updates 需要 NotificationCompat.ProgressStyle / setRequestPromotedOngoing (core 1.17+)
+    implementation("androidx.core:core:1.17.0")
 }
 
 flutter {
