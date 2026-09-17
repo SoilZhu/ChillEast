@@ -596,6 +596,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                                     color: isDark ? Colors.white38 : Colors.grey[400],
                                   ),
                                   border: InputBorder.none,
+                                  filled: false,
+                                  fillColor: Colors.transparent,
                                   isDense: true,
                                   contentPadding: EdgeInsets.zero,
                                 ),
