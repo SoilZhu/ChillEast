@@ -21,6 +21,7 @@ import '../../workspace/screens/payment_code_screen.dart';
 import '../../../core/utils/route_utils.dart';
 import '../../profile/providers/appearance_provider.dart';
 import '../../workspace/screens/campus_card_recharge_screen.dart';
+import '../../workspace/screens/electricity_recharge_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../workspace/services/campus_card_service.dart';
 import '../../workspace/screens/vpn_converter_screen.dart';
@@ -206,6 +207,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 'recharge':
         isLoggedIn 
             ? Navigator.push(context, createSlideUpRoute(const CampusCardRechargeScreen()))
+            : _showLoginDialog(context);
+        break;
+      case 'ele_recharge':
+        isLoggedIn
+            ? Navigator.push(context, createSlideUpRoute(const ElectricityRechargeScreen()))
             : _showLoginDialog(context);
         break;
       case 'library':

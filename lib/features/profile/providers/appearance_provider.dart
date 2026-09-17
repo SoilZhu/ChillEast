@@ -37,9 +37,13 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     _loadSettings();
   }
 
+  static const List<String> _defaultVisibleHomeIds = ['payment_code', 'library', 'empty_classroom', 'xgxt', 'repairs', 'bus', 'score'];
+
   static List<FunctionItem> _getDefaultHomeItems() {
-    final homeIds = ['payment_code', 'library', 'empty_classroom', 'xgxt', 'repairs', 'bus', 'score'];
-    return _masterPool.where((item) => homeIds.contains(item.id)).toList();
+    // 首页设置页应包含功能页的全部功能，默认只有首页的 7 个按钮显示，其余隐藏
+    return _masterPool
+        .map((item) => item.copyWith(isVisible: _defaultVisibleHomeIds.contains(item.id)))
+        .toList();
   }
 
   static List<FunctionItem> _getDefaultFunctionItems() {
@@ -48,7 +52,14 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
       'payment_code', 'recharge', 'ele_recharge', 'library', 'empty_classroom', 'repairs', 
       'sunshine', 'gym', 'xgxt', 'teaching_eval', 'score', 'vpn', 'campus_card', 'bus', 'cs_bus'
     ];
-    return functionIds.map((id) => _masterPool.firstWhere((item) => item.id == id)).toList();
+    final items = functionIds.map((id) => _masterPool.firstWhere((item) => item.id == id)).toList();
+    // 兜底：只加了 _masterPool 忘记加 functionIds 的新功能，自动追加为可见，避免新装用户丢失
+    for (final masterItem in _masterPool) {
+      if (!items.any((e) => e.id == masterItem.id)) {
+        items.add(masterItem);
+      }
+    }
+    return items;
   }
 
   Future<void> _loadSettings() async {
@@ -63,7 +74,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     if (homeJson != null) {
       try {
         final decoded = json.decode(homeJson) as List;
-        homeItems = _mergeWithMaster(decoded);
+        homeItems = _mergeWithMaster(decoded, isHome: true);
       } catch (e) {
         debugPrint('Error loading home items: $e');
       }
@@ -72,7 +83,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     if (funcJson != null) {
       try {
         final decoded = json.decode(funcJson) as List;
-        funcItems = _mergeWithMaster(decoded);
+        funcItems = _mergeWithMaster(decoded, isHome: false);
       } catch (e) {
         debugPrint('Error loading function items: $e');
       }
@@ -81,7 +92,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     state = state.copyWith(homeItems: homeItems, functionItems: funcItems);
   }
 
-  List<FunctionItem> _mergeWithMaster(List decoded) {
+  List<FunctionItem> _mergeWithMaster(List decoded, {required bool isHome}) {
     List<FunctionItem> items = [];
     for (var data in decoded) {
       final id = data['id'];
@@ -92,11 +103,14 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     }
     
     // 检查是否有 masterPool 中新增的项（不在保存的列表中）
-    final defaultIds = _getDefaultFunctionItems().map((e) => e.id).toList();
+    // 老用户已保存的首页列表只有 7 项，缺的 8 项会在这里补上并默认隐藏，实现迁移
     for (var masterItem in _masterPool) {
       if (!items.any((item) => item.id == masterItem.id)) {
-        // 如果是新项，如果在默认列表中，则默认显示
-        items.add(masterItem.copyWith(isVisible: defaultIds.contains(masterItem.id)));
+        // 功能页新增项默认显示，首页新增项默认隐藏（除非在首页默认显示名单里）
+        final defaultVisible = isHome
+            ? _defaultVisibleHomeIds.contains(masterItem.id)
+            : true;
+        items.add(masterItem.copyWith(isVisible: defaultVisible));
       }
     }
     
