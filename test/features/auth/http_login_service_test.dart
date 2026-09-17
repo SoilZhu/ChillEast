@@ -188,11 +188,170 @@ void main() {
     });
   });
 
+  group('direct portal optimization', () {
+    test('verified portal identity cuts normal login from 14 to 10 requests',
+        () async {
+      final baseline = _SsoAdapter(1);
+      final previous = await HttpLoginService(
+          directPortal: false,
+          adapterFactory: () => baseline).login('test-user', 'test-password');
+      final progress = <String>[];
+      final fast = _SsoAdapter(2, directPortal: true);
+      final optimized = await HttpLoginService(
+              adapterFactory: () => fast, onProgress: progress.add)
+          .login('test-user', 'test-password');
+      expect(previous.requestCount, 14);
+      expect(optimized.requestCount, 10);
+      expect(optimized.profile?.username, 'test-user');
+      expect(optimized.profile?.realName, 'Test user');
+      expect(
+          fast.requests.any((r) => r.uri.path == '/portal/main.html'), isFalse);
+      expect(
+          fast.requests.any((r) => r.uri.path.endsWith('fetchCurrentUserInfo')),
+          isFalse);
+      expect(
+          fast.requests
+              .where((r) => r.method == 'POST' && r.uri.path == '/cas/login')
+              .length,
+          1);
+      expect(fast.requests.first.headers['Cookie'], isNull);
+      expect(
+          optimized.cookies.values
+              .expand((c) => c)
+              .singleWhere((c) => c.name == 'TGC')
+              .value,
+          'tgc-2');
+      expect(progress.join('\n'), contains('requests=10'));
+      expect(progress.join('\n'), contains('elapsedMs='));
+      expect(progress.join('\n'), isNot(contains('test-user')));
+    });
+
+    test(
+        'unknown portal layout falls back to SSO verification without retrying passwords',
+        () async {
+      final adapter = _SsoAdapter(1, directPortal: true)
+        ..responseOverride = (r) =>
+            r.uri.host == 'portal.hunau.edu.cn' && r.uri.path == '/index'
+                ? _body('<html>changed portal layout</html>')
+                : null;
+      final result = await HttpLoginService(adapterFactory: () => adapter)
+          .login('test-user', 'test-password');
+      expect(result.profile, isNull);
+      expect(result.requestCount, 14);
+      expect(
+          adapter.requests
+              .where((r) => r.uri.path.endsWith('checkAuthcode'))
+              .length,
+          1);
+      expect(
+          adapter.requests.last.uri.path, '/portal/user/fetchCurrentUserInfo');
+    });
+
+    test('fallback verification failure cannot publish a session', () async {
+      final adapter = _SsoAdapter(1, directPortal: true)
+        ..responseOverride = (r) {
+          if (r.uri.host == 'portal.hunau.edu.cn' && r.uri.path == '/index') {
+            return _body('<html>unknown layout</html>');
+          }
+          if (r.uri.path.endsWith('fetchCurrentUserInfo')) {
+            return _json({
+              'ok': false,
+              'data': {'userId': 'synthetic'}
+            });
+          }
+          return null;
+        };
+      await expectLater(
+          HttpLoginService(adapterFactory: () => adapter)
+              .login('test-user', 'test-password'),
+          throwsA(isA<AuthException>()));
+      expect(adapter.requests.length, 14);
+    });
+
+    test(
+        'mismatched portal identity fails instead of falling back or leaking it',
+        () async {
+      final adapter = _SsoAdapter(1, directPortal: true)
+        ..responseOverride = (r) => r.uri.host == 'portal.hunau.edu.cn' &&
+                r.uri.path == '/index'
+            ? _body(
+                '<div class="infoTxt"><em>SECRET</em><p>学号：OTHER_ACCOUNT</p></div>')
+            : null;
+      await expectLater(
+          HttpLoginService(adapterFactory: () => adapter)
+              .login('test-user', 'test-password'),
+          throwsA(isA<AuthException>()
+              .having((e) => e.message, 'account validation', contains('不一致'))
+              .having(
+                  (e) => e.message, 'redacted', isNot(contains('SECRET')))));
+      expect(adapter.requests.length, 10);
+    });
+
+    test('login forms never count as authenticated portal identity', () async {
+      final adapter = _SsoAdapter(1, directPortal: true)
+        ..responseOverride = (r) => r.uri.host == 'portal.hunau.edu.cn' &&
+                r.uri.path == '/index'
+            ? _body(
+                '<div class="infoTxt"><em>Test user</em><p>学号：test-user</p></div><input type="password">')
+            : null;
+      await expectLater(
+          HttpLoginService(adapterFactory: () => adapter)
+              .login('test-user', 'test-password'),
+          throwsA(isA<AuthException>()));
+      expect(adapter.requests.length, 10);
+    });
+
+    test(
+        'direct CAS posts cannot be replayed or forwarded to untrusted origins',
+        () async {
+      for (final response in [
+        _redirect('https://evil.test/?ticket=SECRET'),
+        _redirect('$_portal/login', status: 307),
+        _redirect('$_portal/login', status: 308),
+        _body('<html>login denied</html>'),
+        _body('', status: 302),
+      ]) {
+        final adapter = _SsoAdapter(1, directPortal: true)
+          ..responseOverride = (r) =>
+              r.method == 'POST' && r.uri.path == '/cas/login'
+                  ? response
+                  : null;
+        await expectLater(
+            HttpLoginService(adapterFactory: () => adapter)
+                .login('test-user', 'test-password'),
+            throwsA(isA<AuthException>()));
+        expect(adapter.requests.length, 6);
+      }
+    });
+
+    test('each optimized login still gets a fresh session', () async {
+      final attempts = <_SsoAdapter>[];
+      final service = HttpLoginService(adapterFactory: () {
+        final adapter = _SsoAdapter(attempts.length + 1, directPortal: true);
+        attempts.add(adapter);
+        return adapter;
+      });
+      await service.login('test-user', 'test-password');
+      final second = await service.login('test-user', 'test-password');
+      expect(attempts.length, 2);
+      expect(attempts.every((a) => a.requests.first.headers['Cookie'] == null),
+          isTrue);
+      expect(
+          second.cookies.values
+              .expand((c) => c)
+              .singleWhere((c) => c.name == 'TGC')
+              .value,
+          'tgc-2');
+      expect(second.requestCount, 10);
+    });
+  });
+
   group('pure HTTP login', () {
     test('completes CIMS, verifies user info, then authorizes the app portal',
         () async {
       final adapter = _SsoAdapter(1);
-      final service = HttpLoginService(adapterFactory: () => adapter);
+      final service =
+          HttpLoginService(directPortal: false, adapterFactory: () => adapter);
       final result = await service.login('test-user', 'test-password');
       expect(adapter.requests.length, 14);
       final handoff = adapter.requests
@@ -209,7 +368,7 @@ void main() {
       ]);
       expect(adapter.requests.every((r) => r.followRedirects == false), isTrue);
       expect(adapter.closed, isTrue);
-      final cookies = result.values.expand((c) => c).toList();
+      final cookies = result.cookies.values.expand((c) => c).toList();
       final tgc = cookies.singleWhere((c) => c.name == 'TGC');
       expect(tgc.value, 'tgc-1');
       expect(tgc.path, '/cas');
@@ -222,7 +381,7 @@ void main() {
       expect(apiCookie.path, '/api');
       expect(apiCookie.domain, isNull);
       expect(
-          result.entries
+          result.cookies.entries
               .singleWhere((e) => e.value.contains(apiCookie))
               .key
               .host,
@@ -230,30 +389,35 @@ void main() {
       expect(cookies.any((c) => c.name == 'INITIAL'), isFalse);
       expect(
           cookies.singleWhere((c) => c.name == 'UID').domain, '.chaoxing.com');
-      expect(result.keys.every((u) => !u.hasQuery && !u.hasFragment), isTrue);
+      expect(
+          result.cookies.keys
+              .every((u) => !u.hasQuery && !u.hasFragment),
+          isTrue);
     });
 
     test('every login starts empty and gets new execution, token and cookies',
         () async {
       final attempts = <_SsoAdapter>[];
-      final service = HttpLoginService(adapterFactory: () {
-        final adapter = _SsoAdapter(attempts.length + 1);
-        attempts.add(adapter);
-        return adapter;
-      });
+      final service = HttpLoginService(
+          directPortal: false,
+          adapterFactory: () {
+            final adapter = _SsoAdapter(attempts.length + 1);
+            attempts.add(adapter);
+            return adapter;
+          });
       final first = await service.login('test-user', 'test-password');
       final second = await service.login('test-user', 'test-password');
       expect(attempts.length, 2);
       expect(attempts.every((a) => a.requests.first.headers['Cookie'] == null),
           isTrue);
       expect(
-          first.values
+          first.cookies.values
               .expand((c) => c)
               .singleWhere((c) => c.name == 'TGC')
               .value,
           'tgc-1');
       expect(
-          second.values
+          second.cookies.values
               .expand((c) => c)
               .singleWhere((c) => c.name == 'TGC')
               .value,
@@ -263,20 +427,23 @@ void main() {
     test('a failed attempt cannot leak cookies or tokens into the next login',
         () async {
       var generation = 0;
-      final service = HttpLoginService(adapterFactory: () {
-        final adapter = _SsoAdapter(++generation);
-        if (generation == 1) {
-          adapter.responseOverride = (r) => r.uri.path.endsWith('checkAuthcode')
-              ? _json({'status': 9052, 'msg': 'SECRET'})
-              : null;
-        }
-        return adapter;
-      });
+      final service = HttpLoginService(
+          directPortal: false,
+          adapterFactory: () {
+            final adapter = _SsoAdapter(++generation);
+            if (generation == 1) {
+              adapter.responseOverride = (r) =>
+                  r.uri.path.endsWith('checkAuthcode')
+                      ? _json({'status': 9052, 'msg': 'SECRET'})
+                      : null;
+            }
+            return adapter;
+          });
       await expectLater(service.login('test-user', 'test-password'),
           throwsA(isA<AuthException>()));
       final second = await service.login('test-user', 'test-password');
       expect(
-          second.values
+          second.cookies.values
               .expand((c) => c)
               .singleWhere((c) => c.name == 'TGC')
               .value,
@@ -294,7 +461,7 @@ void main() {
               ? _json({'status': 1000, ...initial})
               : null;
         await expectLater(
-            HttpLoginService(adapterFactory: () => adapter)
+            HttpLoginService(directPortal: false, adapterFactory: () => adapter)
                 .login('test-user', 'test-password'),
             throwsA(isA<AuthException>()));
         expect(adapter.requests.length, 3);
@@ -320,7 +487,7 @@ void main() {
               ? _json({'status': code, 'msg': 'SECRET'})
               : null;
         await expectLater(
-            HttpLoginService(adapterFactory: () => adapter)
+            HttpLoginService(directPortal: false, adapterFactory: () => adapter)
                 .login('test-user', 'test-password'),
             throwsA(isA<AuthException>().having(
                 (e) => e.toString(), 'redacted', isNot(contains('SECRET')))));
@@ -352,7 +519,7 @@ void main() {
           ..responseOverride = (r) =>
               r.uri.path.endsWith('fetchCurrentUserInfo') ? response : null;
         await expectLater(
-            HttpLoginService(adapterFactory: () => adapter)
+            HttpLoginService(directPortal: false, adapterFactory: () => adapter)
                 .login('test-user', 'test-password'),
             throwsA(isA<AuthException>()));
         expect(adapter.requests.length, 9);
@@ -368,7 +535,7 @@ void main() {
         final adapter = _SsoAdapter(1)
           ..responseOverride = (_) => _redirect(target);
         await expectLater(
-            HttpLoginService(adapterFactory: () => adapter)
+            HttpLoginService(directPortal: false, adapterFactory: () => adapter)
                 .login('test-user', 'test-password'),
             throwsA(isA<AuthException>()));
         expect(adapter.requests.length, 1);
@@ -383,7 +550,7 @@ void main() {
                   ? _redirect('/cas/login', status: status)
                   : null;
         await expectLater(
-            HttpLoginService(adapterFactory: () => adapter)
+            HttpLoginService(directPortal: false, adapterFactory: () => adapter)
                 .login('test-user', 'test-password'),
             throwsA(isA<AuthException>()));
         expect(adapter.requests.length, 6);
@@ -412,7 +579,7 @@ void main() {
           ..responseOverride =
               (r) => r.uri.path.endsWith('othertype') ? response : null;
         await expectLater(
-            HttpLoginService(adapterFactory: () => adapter)
+            HttpLoginService(directPortal: false, adapterFactory: () => adapter)
                 .login('test-user', 'test-password'),
             throwsA(isA<AuthException>()));
         expect(adapter.requests.length, 4);
@@ -449,12 +616,13 @@ void main() {
           return null;
         };
       final cookies = await HttpLoginService(
+        directPortal: false,
         adapterFactory: () => adapter,
         onProgress: progress.add,
       ).login('test-user', 'test-password');
       expect(adapter.requests.every((r) => r.uri.scheme == 'https'), isTrue);
       expect(
-          cookies.values
+          cookies.cookies.values
               .expand((c) => c)
               .singleWhere((c) => c.name == 'UID')
               .value,
@@ -481,6 +649,7 @@ void main() {
               : null;
         await expectLater(
             HttpLoginService(
+              directPortal: false,
               adapterFactory: () => adapter,
               onProgress: progress.add,
             ).login('test-user', 'test-password'),
@@ -501,7 +670,9 @@ void main() {
       final progress = <String>[];
       final adapter = _SsoAdapter(1);
       await HttpLoginService(
-              adapterFactory: () => adapter, onProgress: progress.add)
+              directPortal: false,
+              adapterFactory: () => adapter,
+              onProgress: progress.add)
           .login('test-user', 'test-password');
       final text = progress.join('\n');
       expect(text, contains('SSO 验证通过，授权融合门户'));
@@ -539,7 +710,7 @@ void main() {
                   ? response
                   : null;
         await expectLater(
-            HttpLoginService(adapterFactory: () => adapter)
+            HttpLoginService(directPortal: false, adapterFactory: () => adapter)
                 .login('test-user', 'test-password'),
             throwsA(isA<AuthException>()));
         expect(adapter.requests.length, 14);
@@ -552,14 +723,14 @@ void main() {
       final loop = _SsoAdapter(1)
         ..responseOverride = (_) => _redirect('/cas/login');
       await expectLater(
-          HttpLoginService(adapterFactory: () => loop)
+          HttpLoginService(directPortal: false, adapterFactory: () => loop)
               .login('test-user', 'test-password'),
           throwsA(isA<AuthException>()));
       expect(loop.requests.length, 12);
       final missing = _SsoAdapter(1)
         ..responseOverride = (_) => _body('', status: 302);
       await expectLater(
-          HttpLoginService(adapterFactory: () => missing)
+          HttpLoginService(directPortal: false, adapterFactory: () => missing)
               .login('test-user', 'test-password'),
           throwsA(isA<AuthException>()));
       expect(missing.requests.length, 1);
@@ -680,7 +851,9 @@ void main() {
               );
         await expectLater(
             HttpLoginService(
-                    adapterFactory: () => adapter, onProgress: progress.add)
+                    directPortal: false,
+                    adapterFactory: () => adapter,
+                    onProgress: progress.add)
                 .login('test-user', 'test-password'),
             throwsA(isA<AuthException>()
                 .having((e) => e.code, 'network classification', scenario.code)
@@ -713,7 +886,9 @@ void main() {
         };
       await expectLater(
           HttpLoginService(
-                  adapterFactory: () => adapter, onProgress: progress.add)
+                  directPortal: false,
+                  adapterFactory: () => adapter,
+                  onProgress: progress.add)
               .login('test-user', 'test-password'),
           throwsA(isA<AuthException>()
               .having((e) => e.message, 'stage', contains('校验加密密码'))
@@ -743,7 +918,7 @@ void main() {
                   Response(requestOptions: r, statusCode: 503, data: 'SECRET'),
             );
       await expectLater(
-          HttpLoginService(adapterFactory: () => adapter)
+          HttpLoginService(directPortal: false, adapterFactory: () => adapter)
               .login('test-user', 'test-password'),
           throwsA(isA<AuthException>()
               .having((e) => e.message, 'HTTP status', contains('HTTP 状态 503'))
@@ -760,7 +935,7 @@ void main() {
               type: DioExceptionType.connectionTimeout,
             );
       await expectLater(
-          HttpLoginService(adapterFactory: () => adapter)
+          HttpLoginService(directPortal: false, adapterFactory: () => adapter)
               .login('test-user', 'test-password'),
           throwsA(isA<AuthException>().having(
               (e) => e.toString(), 'redacted', isNot(contains('SECRET')))));
@@ -785,7 +960,9 @@ ResponseBody _redirect(String location,
     });
 
 class _SsoAdapter implements HttpClientAdapter {
-  _SsoAdapter(this.generation);
+  _SsoAdapter(this.generation, {this.directPortal = false});
+
+  final bool directPortal;
 
   final int generation;
   final List<RequestOptions> requests = [];
@@ -805,7 +982,9 @@ class _SsoAdapter implements HttpClientAdapter {
         : <String, String>{};
     expect(r.followRedirects, isFalse);
     if (uri.path == '/cas/login' && r.method == 'GET') {
-      if (uri.queryParameters['service'] == '$_base/portal/auth/casLogin') {
+      if (requests.length == 1) {
+        expect(uri.queryParameters['service'],
+            directPortal ? '$_portal/login' : '$_base/portal/auth/casLogin');
         expect(cookie, isEmpty,
             reason: 'Every login must start with an empty jar');
         return _body(
@@ -819,6 +998,10 @@ class _SsoAdapter implements HttpClientAdapter {
               ],
             });
       }
+      if (uri.queryParameters['service'] == '$_base/portal/auth/casLogin') {
+        expect(cookie, contains('TGC=tgc-$generation'));
+        return _redirect('/portal/auth/casLogin?ticket=SECRET');
+      }
       expect(uri.queryParameters['service'], '$_portal/login');
       expect(cookie, contains('TGC=tgc-$generation'));
       expect(cookie, isNot(contains('INITIAL=')));
@@ -829,12 +1012,19 @@ class _SsoAdapter implements HttpClientAdapter {
     if (uri.path == '/authn/login.html') {
       expect(cookie, contains('AUTHN=authn-$generation'));
       expect(cookie, isNot(contains('INITIAL=')));
-      expect(r.headers['Referer'], _loginUri.toString());
+      expect(
+          r.headers['Referer'],
+          (directPortal
+                  ? Uri.parse('$_base/cas/login')
+                      .replace(queryParameters: {'service': '$_portal/login'})
+                  : _loginUri)
+              .toString());
       return _body('<html>iframe</html>');
     }
     if (uri.path.endsWith('/getqrcode')) {
       expect(uri.queryParameters['sign'], 'REQ|YQ%3D%3D|AAAA$generation');
-      expect(uri.queryParameters['urlCode'], '$_base/portal/auth/casLogin');
+      expect(uri.queryParameters['urlCode'],
+          directPortal ? '$_portal/login' : '$_base/portal/auth/casLogin');
       expect(r.headers['X-Requested-With'], 'XMLHttpRequest');
       return _json({
         'status': 1000,
@@ -882,10 +1072,14 @@ class _SsoAdapter implements HttpClientAdapter {
       expect(fields.containsKey('authcode'), isFalse);
       expect(fields.containsKey('password'), isFalse);
       expect(cookie, contains('INITIAL=initial-$generation'));
-      return _redirect('/portal/auth/casLogin?ticket=SECRET', cookies: [
-        'TGC=tgc-$generation; Path=/cas; Secure; HttpOnly; SameSite=Lax; Max-Age=3600',
-        'INITIAL=; Path=/cas; Secure; Max-Age=0',
-      ]);
+      return _redirect(
+          directPortal
+              ? '$_portal/login?ticket=SECRET'
+              : '/portal/auth/casLogin?ticket=SECRET',
+          cookies: [
+            'TGC=tgc-$generation; Path=/cas; Secure; HttpOnly; SameSite=Lax; Max-Age=3600',
+            'INITIAL=; Path=/cas; Secure; Max-Age=0',
+          ]);
     }
     if (uri.path == '/portal/auth/casLogin') {
       expect(r.method, 'GET');
@@ -942,7 +1136,8 @@ class _SsoAdapter implements HttpClientAdapter {
       expect(cookie, contains('FUSION=fusion-$generation'));
       expect(cookie, isNot(contains('UID=')));
       expect(cookie, isNot(contains('SSO_HOST_ONLY')));
-      return _body('<div class="infoTxt"><em>Test user</em></div>');
+      return _body(
+          '<div class="infoTxt"><p><em>Test user</em></p><p>学号：test-user</p></div>');
     }
     fail('Unexpected request to ${uri.host}${uri.path}');
   }

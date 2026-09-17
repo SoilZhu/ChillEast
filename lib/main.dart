@@ -1,9 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'core/constants/app_constants.dart';
 import 'core/network/dio_client.dart';
-import 'core/network/cookie_manager.dart';
 import 'features/home/screens/main_scaffold.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'core/state/auth_state.dart';
@@ -13,48 +12,51 @@ import 'core/services/background_worker.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 void main() async {
-  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  // 初始化后台周期重调度（WorkManager）—— 需在其他初始化前
+  // Only keep the lightweight dependencies needed before the first frame.
+  await initializeDateFormatting('zh_CN', null);
+  try {
+    await DioClient().initialize().timeout(const Duration(seconds: 5));
+  } catch (e) {
+    debugPrint('⚠️ Network initialization failed: $e');
+  }
+
+  runApp(const ProviderScope(child: LiveHunauApp()));
+
+  // These plugins are not required to render or authenticate. Initializing
+  // them after runApp removes their platform-channel work from the splash.
+  unawaited(_initializeAfterFirstFrame());
+}
+
+Future<void> _initializeAfterFirstFrame() async {
+  await Future.wait([
+    _initializeBackgroundWorker(),
+    _initializeNotifications(),
+  ]);
+  try {
+    await BackgroundWorker.ensurePeriodicReschedule()
+        .timeout(const Duration(seconds: 3));
+  } catch (e) {
+    debugPrint('⚠️ Workmanager register failed: $e');
+  }
+}
+
+Future<void> _initializeBackgroundWorker() async {
   try {
     await BackgroundWorker.initialize().timeout(const Duration(seconds: 5));
   } catch (e) {
     debugPrint('⚠️ Workmanager initialization failed: $e');
   }
-  
+}
+
+Future<void> _initializeNotifications() async {
   try {
-    // 初始化通知服务
     await NotificationService().init().timeout(const Duration(seconds: 5));
   } catch (e) {
     debugPrint('⚠️ Notification initialization failed: $e');
   }
-
-  // 注册周期任务（根据用户设置决定是否注册）
-  try {
-    await BackgroundWorker.ensurePeriodicReschedule().timeout(const Duration(seconds: 3));
-  } catch (e) {
-    debugPrint('⚠️ Workmanager register failed: $e');
-  }
-
-  // 初始化中文日期格式化环境
-  await initializeDateFormatting('zh_CN', null);
-
-  try {
-    // 初始化 DioClient (包含 CookieManager)
-    await DioClient().initialize().timeout(const Duration(seconds: 5));
-    
-    // 🧹 启动时尝试清除 Cookie
-    await AppCookieManager().clearAllCookies().timeout(const Duration(seconds: 3));
-  } catch (e) {
-    debugPrint('⚠️ Startup initialization failed: $e');
-  }
-  
-  runApp(
-    const ProviderScope(
-      child: LiveHunauApp(),
-    ),
-  );
 }
 
 class LiveHunauApp extends ConsumerWidget {
@@ -102,7 +104,8 @@ class LiveHunauApp extends ConsumerWidget {
           backgroundColor: Colors.white,
           selectedItemColor: const Color(0xFF09C489),
           unselectedItemColor: Colors.grey,
-          selectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          selectedLabelStyle:
+              const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
           unselectedLabelStyle: const TextStyle(fontSize: 12),
           type: BottomNavigationBarType.fixed,
           elevation: 8,
@@ -196,7 +199,8 @@ class LiveHunauApp extends ConsumerWidget {
           backgroundColor: const Color(0xFF1E1E1E),
           selectedItemColor: const Color(0xFF09C489),
           unselectedItemColor: Colors.white54,
-          selectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          selectedLabelStyle:
+              const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
           unselectedLabelStyle: const TextStyle(fontSize: 12),
           type: BottomNavigationBarType.fixed,
           elevation: 8,
@@ -270,7 +274,6 @@ class LiveHunauApp extends ConsumerWidget {
   }
 
   Widget _buildHome(BuildContext context, WidgetRef ref, AuthState authState) {
-
     if (!authState.hasAccount && !authState.isGuestMode) {
       return LoginScreen(
         key: const ValueKey('login'),

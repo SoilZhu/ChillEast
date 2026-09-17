@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/widgets.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../utils/secure_storage_helper.dart';
 import '../network/cookie_manager.dart';
@@ -7,18 +9,16 @@ import '../../features/notice/providers/notice_provider.dart';
 import '../../features/timetable/services/timetable_storage.dart';
 import '../../features/timetable/services/timetable_service.dart';
 import '../../features/workspace/services/campus_card_service.dart';
-import '../../features/library/services/library_storage.dart';
 import '../../features/library/providers/library_provider.dart';
-import '../../features/workspace/services/electricity_service.dart';
 import '../constants/app_constants.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 /// 认证状态枚举
 enum AuthStatus {
-  unauthenticated,  // 未登录
-  authenticating,   // 正在登录
-  authenticated,    // 已登录
+  unauthenticated, // 未登录
+  authenticating, // 正在登录
+  authenticated, // 已登录
 }
 
 /// 认证状态模型
@@ -42,13 +42,21 @@ class AuthState {
     this.isGuestMode = false,
     this.isInitialized = false,
   });
-  
+
   /// 初始状态 - 未登录
-  const AuthState.initial() : this(status: AuthStatus.unauthenticated, isGuestMode: false, isInitialized: true);
-  
+  const AuthState.initial()
+      : this(
+            status: AuthStatus.unauthenticated,
+            isGuestMode: false,
+            isInitialized: true);
+
   /// 正在登录状态
-  const AuthState.authenticating() : this(status: AuthStatus.authenticating, isGuestMode: false, isInitialized: false);
-  
+  const AuthState.authenticating()
+      : this(
+            status: AuthStatus.authenticating,
+            isGuestMode: false,
+            isInitialized: false);
+
   /// 已登录状态
   const AuthState.authenticated({
     String? username,
@@ -56,17 +64,17 @@ class AuthState {
     String? uid,
     String? avatarUrl,
   }) : this(
-    status: AuthStatus.authenticated, 
-    username: username,
-    realName: realName,
-    uid: uid,
-    avatarUrl: avatarUrl,
-  );
-  
+          status: AuthStatus.authenticated,
+          username: username,
+          realName: realName,
+          uid: uid,
+          avatarUrl: avatarUrl,
+        );
+
   /// 登录失败状态
-  const AuthState.error(String message) 
+  const AuthState.error(String message)
       : this(status: AuthStatus.unauthenticated, errorMessage: message);
-  
+
   /// 复制并修改状态
   AuthState copyWith({
     AuthStatus? status,
@@ -89,10 +97,11 @@ class AuthState {
       isInitialized: isInitialized ?? this.isInitialized,
     );
   }
-  
+
   @override
-  String toString() => 'AuthState(status: $status, errorMessage: $errorMessage, username: $username, realName: $realName, uid: $uid, avatarUrl: $avatarUrl)';
-  
+  String toString() =>
+      'AuthState(status: $status, errorMessage: $errorMessage, username: $username, realName: $realName, uid: $uid, avatarUrl: $avatarUrl)';
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -104,14 +113,14 @@ class AuthState {
           realName == other.realName &&
           uid == other.uid &&
           avatarUrl == other.avatarUrl;
-  
+
   @override
-  int get hashCode => 
-      status.hashCode ^ 
-      errorMessage.hashCode ^ 
-      username.hashCode ^ 
-      realName.hashCode ^ 
-      uid.hashCode ^ 
+  int get hashCode =>
+      status.hashCode ^
+      errorMessage.hashCode ^
+      username.hashCode ^
+      realName.hashCode ^
+      uid.hashCode ^
       avatarUrl.hashCode;
 
   /// 是否有本地保存的账号信息
@@ -135,17 +144,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> checkAuthStatus() async {
     _logger.i('🔍 Initializing auth status...');
-    
-    // 1. 仅清除旧 Cookie，不清除保存的用户名密码
-    await AppCookieManager().clearSsoCookies();
 
-    // 2. 读取凭据和缓存的资料
-    final storage = SecureStorageHelper();
-    final hasCreds = await storage.hasCredentials();
-    final profile = await storage.getProfileInfo();
-    final username = await storage.getUsername();
+    // 登录服务负责每次登录前清理 Cookie，这里不再重复清理。
+    // 没有保存凭据时仍单独清理，避免游客态残留旧会话。
+    // 一次读取凭据和缓存资料，减少开屏阶段的安全存储调用。
+    final snapshot = await SecureStorageHelper().readAuthSnapshot();
+    final hasCreds = snapshot.hasCredentials;
+    final profile = snapshot.profile;
+    final username = snapshot.username;
 
     if (!hasCreds) {
+      await AppCookieManager().clearSsoCookies();
       _logger.i('👋 No credentials found, stay unauthenticated');
       state = const AuthState.initial().copyWith(isInitialized: true);
       FlutterNativeSplash.remove();
@@ -158,44 +167,35 @@ class AuthNotifier extends StateNotifier<AuthState> {
       realName: profile['realName'],
       uid: profile['uid'],
       avatarUrl: profile['avatarUrl'],
-    ).copyWith(isInitialized: true);
+    ).copyWith(isInitialized: true, status: AuthStatus.authenticating);
     _logger.i('📱 Profile restored, marked as initialized');
     FlutterNativeSplash.remove();
-    
+
     // 3. 异步尝试自动登录 (不影响/阻塞初始化状态)
     try {
       state = state.copyWith(status: AuthStatus.authenticating);
-      await _ref.read(authServiceProvider).silentLogin();
-      
+      await _ref.read(authServiceProvider).silentLogin(
+            username: snapshot.username,
+            password: snapshot.password,
+          );
+
       _logger.i('✅ Auto-login success, refreshing info...');
       state = state.copyWith(status: AuthStatus.authenticated);
 
-      // ✨ 在登录成功的第一时间发起作业和通知同步
-      if (username != null) {
-        Future.microtask(() {
-          _ref.read(homeworkProvider.notifier).refresh(username);
-          _ref.read(noticeProvider.notifier).refresh();
-        });
-      }
-      
-      // 资料刷新可以异步进行
-      _refreshUserInfo();
-      
-      // ✨ 校园卡静默授权
-      Future.microtask(() => _ref.read(campusCardServiceProvider).authenticate());
-      
-      // ✨ 自动同步课表
-      _syncTimetableSilently();
-      
+      // 首帧之后再启动非认证业务，避免和登录网络抢首屏资源。
+      _schedulePostLoginWork(username, includeLibrary: false);
     } catch (e) {
       _logger.e('❌ Auto-login failed: $e');
-      
+
       // 4. 失败处理 - 保持已有资料，仅更新状态和错误信息
       String errorMsg = '登录异常: $e';
-      if (e.toString().contains('AuthException') || e.toString().contains('Unauthorized') || e.toString().contains('密码错误')) {
+      if (e.toString().contains('AuthException') ||
+          e.toString().contains('Unauthorized') ||
+          e.toString().contains('密码错误')) {
         _logger.w('Credentials invalid, clearing storage');
         errorMsg = '凭据已失效，请重新登录';
-      } else if (e.toString().contains('TimeoutException') || e.toString().contains('timeout')) {
+      } else if (e.toString().contains('TimeoutException') ||
+          e.toString().contains('timeout')) {
         _logger.w('Auto-login timeout');
         errorMsg = '登录超时(网速慢)，请尝试手动刷新';
       }
@@ -208,6 +208,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  void _schedulePostLoginWork(String? username,
+      {required bool includeLibrary}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || state.status != AuthStatus.authenticated) return;
+      if (username != null) {
+        unawaited(_ref.read(homeworkProvider.notifier).refresh(username));
+        unawaited(_ref.read(noticeProvider.notifier).refresh());
+      }
+      if (includeLibrary) {
+        unawaited(_ref.read(cachedLibraryReserveProvider.notifier).refresh());
+      }
+      unawaited(_refreshUserInfo());
+      unawaited(_ref.read(campusCardServiceProvider).authenticate());
+      unawaited(_syncTimetableSilently());
+    });
+  }
+
   /// 刷新用户资料
   Future<void> _refreshUserInfo() async {
     try {
@@ -217,7 +234,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         final username = info['username'];
         final uid = info['uid'];
         final avatarUrl = info['avatarUrl'];
-        
+
         // 更新状态
         state = state.copyWith(
           username: username,
@@ -225,7 +242,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           uid: uid,
           avatarUrl: avatarUrl,
         );
-        
+
         // 持久化到本地
         if (realName != null && uid != null) {
           await SecureStorageHelper().saveProfileInfo(
@@ -244,16 +261,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     await _ref.read(authServiceProvider).logout();
     _ref.read(noticeProvider.notifier).clear();
-    
+
     // 退出登录时删除本地课表数据 (ICS, 元数据, 以及课程列表 JSON)
     final storage = TimetableStorage();
     await storage.deleteTimetable();
     await storage.deleteMetadata();
     await storage.deleteCourseList();
-    
+
     // 退出登录时删除本地作业数据
     await _ref.read(homeworkProvider.notifier).clearAll();
-    
+
     state = const AuthState.initial();
   }
 
@@ -261,33 +278,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
   void setAuthenticating() {
     state = const AuthState.authenticating();
   }
-  
+
   /// 设置状态为已登录并保存凭据 (由 LoginScreen 调用)
   Future<void> login(String username, String password) async {
     try {
       state = state.copyWith(status: AuthStatus.authenticating);
       await _ref.read(authServiceProvider).login(username, password);
-      
+
       // 标记为已登录
       state = AuthState.authenticated(username: username).copyWith(
         isInitialized: true,
       );
-      
-      // ✨ 登录成功的第一时间发起作业、通知和图书馆预约同步
-      Future.microtask(() {
-        _ref.read(homeworkProvider.notifier).refresh(username);
-        _ref.read(noticeProvider.notifier).refresh();
-        _ref.read(cachedLibraryReserveProvider.notifier).refresh();
-      });
-      
-      // 登录成功后刷新资料 (后台异步执行，不阻塞跳转)
-      _refreshUserInfo();
 
-      // ✨ 校园卡静默授权
-      Future.microtask(() => _ref.read(campusCardServiceProvider).authenticate());
-
-      // ✨ 自动同步课表
-      _syncTimetableSilently();
+      // 首帧之后再启动非认证业务，登录页可以立即关闭。
+      _schedulePostLoginWork(username, includeLibrary: true);
     } catch (e) {
       state = AuthState.error(e.toString());
       rethrow;
@@ -298,14 +302,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
   void setAuthenticated() {
     state = state.copyWith(status: AuthStatus.authenticated);
   }
-  
+
   /// 设置状态为未登录(带错误信息)
   void setUnauthenticated([String? errorMessage]) {
-    state = errorMessage != null 
+    state = errorMessage != null
         ? AuthState.error(errorMessage)
         : const AuthState.initial();
   }
-  
+
   /// 清除错误信息
   void clearError() {
     if (state.errorMessage != null) {
@@ -323,17 +327,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final storage = TimetableStorage();
       final hasLocal = await storage.hasLocalTimetable();
-      
+
       if (hasLocal) {
         _logger.i('📅 Local timetable exists, skipping automatic sync.');
         return;
       }
 
       _logger.i('📅 No local timetable, starting background sync...');
-      
+
       await TimetableService().downloadAndSaveTimetable(
         semester: AppConstants.defaultSemester,
-        firstWeekMonday: null, 
+        firstWeekMonday: null,
       );
       _logger.i('✅ Background timetable sync success');
     } catch (e) {

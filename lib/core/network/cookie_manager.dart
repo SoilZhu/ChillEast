@@ -90,35 +90,78 @@ class AppCookieManager {
 
   /// Publish a successful, fresh HTTP session to Dio and WebView.
   /// Preserve host-only scope, path, expiry, Secure and HttpOnly attributes.
-  Future<void> saveHttpLoginCookies(Map<Uri, List<io.Cookie>> cookies) async {
+  Future<void> saveHttpLoginCookies(Map<Uri, List<io.Cookie>> cookies, {void Function(String)? onProgress}) async {
     if (!_initialized) await initialize();
     try {
+      final storageBatches = <Uri, List<io.Cookie>>{};
+      final webViewGroups = <String, List<MapEntry<Uri, io.Cookie>>>{};
+      var cookieCount = 0;
       for (final entry in cookies.entries) {
-        await _dioCookieJar.saveFromResponse(entry.key, entry.value);
+        final origin = Uri(scheme: entry.key.scheme, host: entry.key.host,
+            port: entry.key.hasPort ? entry.key.port : null, path: '/');
         for (final cookie in entry.value) {
-          final saved = await _webViewCookieManager.setCookie(
-            url: webview.WebUri(entry.key.toString()),
-            name: cookie.name,
-            value: cookie.value,
-            domain: cookie.domain,
-            path: cookie.path ?? '/',
-            expiresDate: cookie.expires?.millisecondsSinceEpoch,
-            isSecure: cookie.secure,
-            isHttpOnly: cookie.httpOnly,
-            sameSite: const {
-              io.SameSite.lax: webview.HTTPCookieSameSitePolicy.LAX,
-              io.SameSite.strict: webview.HTTPCookieSameSitePolicy.STRICT,
-              io.SameSite.none: webview.HTTPCookieSameSitePolicy.NONE,
-            }[cookie.sameSite],
-          );
-          if (!saved) throw const CookieException('同步登录 Cookie 失败');
+          // Batch by origin only after making the original default path explicit.
+          if (cookie.path == null || !cookie.path!.startsWith('/')) {
+            final slash = entry.key.path.lastIndexOf('/');
+            cookie.path = slash <= 0 ? '/' : entry.key.path.substring(0, slash);
+          }
+          storageBatches.putIfAbsent(origin, () => []).add(cookie);
+          final scope = (cookie.domain ?? entry.key.host)
+              .replaceFirst(RegExp(r'^\.'), '').toLowerCase();
+          webViewGroups.putIfAbsent(scope, () => []).add(MapEntry(entry.key, cookie));
+          cookieCount++;
         }
       }
+      final clock = Stopwatch()..start();
+      // PersistCookieJar shares its host index and domain file. Keep disk writes
+      // sequential, while reducing repeated writes for different paths of a host.
+      for (final entry in storageBatches.entries) {
+        await _dioCookieJar.saveFromResponse(entry.key, entry.value);
+      }
+      final storageMs = clock.elapsedMilliseconds;
+      clock.reset();
+      final groups = webViewGroups.values.toList();
+      for (var start = 0; start < groups.length; start += 4) {
+        final end = start + 4 < groups.length ? start + 4 : groups.length;
+        // A cookie domain is serialized; at most four independent domains run
+        // together. Wait for ALL active writers before rolling back on failure,
+        // otherwise a late write could resurrect a logged-out session.
+        await Future.wait(groups.sublist(start, end).map((group) async {
+          for (final entry in group) {
+            await _saveWebViewLoginCookie(entry.key, entry.value);
+          }
+        }), eagerError: false);
+      }
+      final message = 'HTTP Cookie 同步：cookies=$cookieCount, origins=${storageBatches.length}, '
+          'persistMs=$storageMs, webViewMs=${clock.elapsedMilliseconds}';
+      if (onProgress != null) {
+        onProgress(message);
+      } else {
+        _logger.i(message);
+      }
     } catch (_) {
-      // Do not retain a half-published login or include cookie values in logs.
       await clearSsoCookies();
       throw const CookieException('同步登录 Cookie 失败，请重新登录');
     }
+  }
+
+  Future<void> _saveWebViewLoginCookie(Uri uri, io.Cookie cookie) async {
+    final saved = await _webViewCookieManager.setCookie(
+      url: webview.WebUri(uri.toString()),
+      name: cookie.name,
+      value: cookie.value,
+      domain: cookie.domain,
+      path: cookie.path ?? '/',
+      expiresDate: cookie.expires?.millisecondsSinceEpoch,
+      isSecure: cookie.secure,
+      isHttpOnly: cookie.httpOnly,
+      sameSite: const {
+        io.SameSite.lax: webview.HTTPCookieSameSitePolicy.LAX,
+        io.SameSite.strict: webview.HTTPCookieSameSitePolicy.STRICT,
+        io.SameSite.none: webview.HTTPCookieSameSitePolicy.NONE,
+      }[cookie.sameSite],
+    );
+    if (!saved) throw const CookieException('同步登录 Cookie 失败');
   }
 
   /// 清除所有 Cookie（包括 WebVPN、CAS、教务系统等）

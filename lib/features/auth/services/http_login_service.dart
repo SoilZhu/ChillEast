@@ -7,20 +7,38 @@ import 'package:dio/dio.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/exceptions/app_exceptions.dart';
 import 'cims_login.dart';
+import 'portal_identity.dart';
+
+class HttpLoginResult {
+  const HttpLoginResult({
+    required this.cookies,
+    this.profile,
+    this.requestCount = 0,
+    this.elapsed = Duration.zero,
+  });
+
+  final Map<Uri, List<Cookie>> cookies;
+  final PortalIdentity? profile;
+  final int requestCount;
+  final Duration elapsed;
+}
 
 /// Pure HTTP CIMS/CAS login. Each invocation owns a new, empty cookie jar and
 /// obtains its own execution, signature, password token and RSA public key.
 class HttpLoginService {
   final HttpClientAdapter Function()? _adapterFactory;
   final void Function(String message)? _onProgress;
+  final bool _directPortal;
 
   HttpLoginService({
     HttpClientAdapter Function()? adapterFactory,
     void Function(String message)? onProgress,
+    bool directPortal = true,
   })  : _adapterFactory = adapterFactory,
-        _onProgress = onProgress;
+        _onProgress = onProgress,
+        _directPortal = directPortal;
 
-  Future<Map<Uri, List<Cookie>>> login(String username, String password) async {
+  Future<HttpLoginResult> login(String username, String password) async {
     if (username.isEmpty || password.isEmpty) {
       throw const AuthException('账号和密码不能为空');
     }
@@ -28,7 +46,7 @@ class HttpLoginService {
     if (_adapterFactory != null) dio.httpClientAdapter = _adapterFactory!();
     // Do not use DioClient: it has old cookies and logs signed request URLs.
     try {
-      return await _HttpLoginAttempt(dio, _onProgress)
+      return await _HttpLoginAttempt(dio, _onProgress, _directPortal)
           .login(username, password);
     } on HttpException {
       throw const AuthException('登录 Cookie 响应格式异常，未自动重试');
@@ -58,14 +76,25 @@ Dio _newLoginDio() {
 }
 
 class _HttpLoginAttempt {
-  _HttpLoginAttempt(this.dio, this.onProgress);
+  _HttpLoginAttempt(this.dio, this.onProgress, this.directPortal);
 
   final Dio dio;
   final void Function(String message)? onProgress;
+  final bool directPortal;
+  final Stopwatch _totalClock = Stopwatch();
+  final Stopwatch _stageClock = Stopwatch();
+  int _requestCount = 0;
   String _stage = '初始化 SSO';
 
   void _progress(String stage) {
+    if (_stageClock.isRunning) {
+      onProgress
+          ?.call('HTTP 登录[$_stage] stageMs=${_stageClock.elapsedMilliseconds}');
+    }
     _stage = stage;
+    _stageClock
+      ..reset()
+      ..start();
     onProgress?.call('HTTP 登录：$stage');
   }
 
@@ -78,15 +107,21 @@ class _HttpLoginAttempt {
   static final _verifyUri = Uri.parse(
     '${AppConstants.ssoBaseUrl}/portal/user/fetchCurrentUserInfo',
   );
-  static final _loginUri = Uri.parse(AppConstants.ssoLoginUrl).replace(
+  static final _ssoPortalLoginUri = Uri.parse(AppConstants.ssoLoginUrl).replace(
     queryParameters: {
       'service': '${AppConstants.ssoBaseUrl}/portal/auth/casLogin',
     },
   );
 
-  Future<Map<Uri, List<Cookie>>> login(String username, String password) async {
+  static final _fusionLoginUri = Uri.parse(AppConstants.ssoLoginUrl).replace(
+    queryParameters: {'service': '${AppConstants.portalBaseUrl}/login'},
+  );
+
+  Future<HttpLoginResult> login(String username, String password) async {
+    _totalClock.start();
     _progress('初始化 SSO');
-    final page = await _request('GET', _loginUri);
+    final page = await _request(
+        'GET', directPortal ? _fusionLoginUri : _ssoPortalLoginUri);
     final state = CimsLoginBootstrap.parse(page.data ?? '', page.realUri);
     final iframe =
         await _request('GET', state.iframeUri, referer: state.parentUri);
@@ -174,21 +209,86 @@ class _HttpLoginAttempt {
         .toList()
       ..add(MapEntry(state.signatureField, '$signed:${state.appSignature}'));
     _progress('提交 CAS 签名');
-    await _request('POST', state.postUri,
-        referer: state.parentUri, data: _encodeForm(fields));
+    late final Response<String> portal;
+    if (directPortal) {
+      // CAS gets the signed POST on the SSO origin only. Follow its result
+      // separately with GET so no POST body can reach the service or passport.
+      final submitted = await _request('POST', state.postUri,
+          referer: state.parentUri, data: _encodeForm(fields), follow: false);
+      if ([307, 308].contains(submitted.statusCode)) {
+        throw const AuthException('认证请求要求重复提交，已停止以避免重复认证');
+      }
+      final location = submitted.headers.value(HttpHeaders.locationHeader);
+      if (![301, 302, 303].contains(submitted.statusCode) ||
+          location == null ||
+          location.isEmpty) {
+        throw const AuthException('CAS 未返回有效的门户跳转，未重试认证');
+      }
+      _progress('直达融合门户授权');
+      portal = await _request('GET', state.postUri.resolve(location),
+          allowPortalRedirects: true);
+    } else {
+      // Retain the original route for comparison and compatibility testing.
+      await _request('POST', state.postUri,
+          referer: state.parentUri, data: _encodeForm(fields));
+      await _verifySso();
+      _progress('SSO 验证通过，授权融合门户');
+      portal =
+          await _request('GET', _fusionLoginUri, allowPortalRedirects: true);
+    }
+    if (portal.statusCode != 200 ||
+        portal.realUri.host != Uri.parse(AppConstants.portalBaseUrl).host ||
+        portal.realUri.path == '/login' ||
+        portal.realUri.path.contains('/cas/login') ||
+        (portal.data ?? '').contains('CIMS.init') ||
+        RegExp(r'''<input\b[^>]*type\s*=\s*["']?password''',
+                caseSensitive: false)
+            .hasMatch(portal.data ?? '')) {
+      throw const AuthException('SSO 认证成功，但融合门户授权未完成，请重新登录');
+    }
 
+    // The captured portal renders name and student ID in div.infoTxt. Compare
+    // the server-rendered identity with the account submitted in this attempt;
+    // a URL, a Cookie name or a reflected login form is not sufficient proof.
+    final profile = PortalIdentity.parse(portal.data ?? '');
+    if (profile != null && profile.username != username) {
+      throw const AuthException('门户返回的账号与本次登录账号不一致，已停止登录');
+    }
+    if (directPortal && profile == null) {
+      // If the portal layout changes, retain the old verification instead of
+      // failing open or resubmitting the password. Reuse only THIS attempt's
+      // newly obtained SSO session to authorize the verification endpoint.
+      _progress('门户资料结构未识别，使用 SSO 校验');
+      await _request('GET', _ssoPortalLoginUri);
+      await _verifySso();
+    } else if (directPortal) {
+      _progress('门户身份校验通过');
+    }
+    _progress('融合门户授权完成');
+    final cookies = <Uri, List<Cookie>>{};
+    for (final entry in _receivedCookies.values) {
+      if (_isExpired(entry.value)) continue;
+      cookies.putIfAbsent(entry.key, () => []).add(entry.value);
+    }
+    _totalClock.stop();
+    onProgress?.call(
+        'HTTP 登录完成：requests=$_requestCount, totalMs=${_totalClock.elapsedMilliseconds}');
+    return HttpLoginResult(
+        cookies: cookies,
+        profile: profile,
+        requestCount: _requestCount,
+        elapsed: _totalClock.elapsed);
+  }
+
+  Future<void> _verifySso() async {
     _progress('验证 SSO 用户信息');
-    final verified = await _request(
-      'GET',
-      _verifyUri,
-      referer: Uri.parse(AppConstants.ssoMainPage),
-      follow: false,
-    );
+    final verified = await _request('GET', _verifyUri,
+        referer: Uri.parse(AppConstants.ssoMainPage), follow: false);
     Object? user;
     try {
       user = jsonDecode(verified.data ?? '');
     } on FormatException {
-      // HTML/login redirects are never proof of authentication.
+      // HTML and login redirects are not proof of authentication.
     }
     if (verified.statusCode != 200 ||
         verified.realUri != _verifyUri ||
@@ -198,31 +298,6 @@ class _HttpLoginAttempt {
         !_hasUserId(user['data']['userId'])) {
       throw const AuthException('认证已提交，但门户用户信息接口未确认登录成功');
     }
-
-    // The reference script stops at the SSO portal. The app additionally needs
-    // portal/Chaoxing cookies for profile, notices, library and campus services.
-    _progress('SSO 验证通过，授权融合门户');
-    final portal = await _request(
-      'GET',
-      Uri.parse(AppConstants.ssoLoginUrl).replace(
-        queryParameters: {'service': '${AppConstants.portalBaseUrl}/login'},
-      ),
-      allowPortalRedirects: true,
-    );
-    if (portal.statusCode != 200 ||
-        portal.realUri.host != Uri.parse(AppConstants.portalBaseUrl).host ||
-        portal.realUri.path == '/login' ||
-        portal.realUri.path.contains('/cas/login') ||
-        (portal.data ?? '').contains('CIMS.init')) {
-      throw const AuthException('SSO 认证成功，但融合门户授权未完成，请重新登录');
-    }
-    _progress('融合门户授权完成');
-    final cookies = <Uri, List<Cookie>>{};
-    for (final entry in _receivedCookies.values) {
-      if (_isExpired(entry.value)) continue;
-      cookies.putIfAbsent(entry.key, () => []).add(entry.value);
-    }
-    return cookies;
   }
 
   static bool _hasUserId(Object? value) =>
@@ -294,6 +369,7 @@ class _HttpLoginAttempt {
           .where((c) => !_isExpired(c))
           .toList()
         ..sort((a, b) => (b.path?.length ?? 0).compareTo(a.path?.length ?? 0));
+      _requestCount++;
       final timer = Stopwatch()..start();
       onProgress?.call('HTTP 登录[$_stage] $method ${_safeOrigin(uri)} 开始请求');
       late final Response<String> response;
@@ -332,8 +408,8 @@ class _HttpLoginAttempt {
       await _saveCookies(
           uri, response.headers[HttpHeaders.setCookieHeader] ?? []);
       final status = response.statusCode ?? 0;
-      onProgress
-          ?.call('HTTP 登录[$_stage] $method ${_safeOrigin(uri)} → HTTP $status');
+      onProgress?.call(
+          'HTTP 登录[$_stage] $method ${_safeOrigin(uri)} → HTTP $status, elapsedMs=${timer.elapsedMilliseconds}');
       if (follow && [301, 302, 303, 307, 308].contains(status)) {
         final location = response.headers.value(HttpHeaders.locationHeader);
         if (location == null || location.isEmpty) {

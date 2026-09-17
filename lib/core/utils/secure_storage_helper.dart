@@ -3,21 +3,36 @@ import '../constants/app_constants.dart';
 import '../exceptions/app_exceptions.dart';
 import 'package:logger/logger.dart';
 
+class AuthStorageSnapshot {
+  const AuthStorageSnapshot(
+      {this.username, this.password, this.profile = const {}});
+
+  final String? username;
+  final String? password;
+  final Map<String, String?> profile;
+
+  bool get hasCredentials =>
+      username != null &&
+      username!.isNotEmpty &&
+      password != null &&
+      password!.isNotEmpty;
+}
+
 /// 安全存储工具类
 class SecureStorageHelper {
   static final SecureStorageHelper _instance = SecureStorageHelper._internal();
   factory SecureStorageHelper() => _instance;
-  
+
   SecureStorageHelper._internal();
-  
+
   final Logger _logger = Logger();
   late final FlutterSecureStorage _storage;
   bool _initialized = false;
-  
+
   /// 初始化
   Future<void> initialize() async {
     if (_initialized) return;
-    
+
     try {
       _storage = const FlutterSecureStorage(
         aOptions: AndroidOptions(
@@ -34,31 +49,33 @@ class SecureStorageHelper {
       throw AuthException('安全存储初始化失败: $e');
     }
   }
-  
+
   /// 保存用户名
   Future<void> saveUsername(String username) async {
     if (!_initialized) await initialize();
     try {
-      await _storage.write(key: AppConstants.storageUsernameKey, value: username);
+      await _storage.write(
+          key: AppConstants.storageUsernameKey, value: username);
       _logger.d('Username saved');
     } catch (e) {
       _logger.e('Failed to save username: $e');
       throw AuthException('保存用户名失败: $e');
     }
   }
-  
+
   /// 保存密码
   Future<void> savePassword(String password) async {
     if (!_initialized) await initialize();
     try {
-      await _storage.write(key: AppConstants.storagePasswordKey, value: password);
+      await _storage.write(
+          key: AppConstants.storagePasswordKey, value: password);
       _logger.d('Password saved');
     } catch (e) {
       _logger.e('Failed to save password: $e');
       throw AuthException('保存密码失败: $e');
     }
   }
-  
+
   /// 获取用户名
   Future<String?> getUsername() async {
     if (!_initialized) await initialize();
@@ -69,7 +86,7 @@ class SecureStorageHelper {
       return null;
     }
   }
-  
+
   /// 获取密码
   Future<String?> getPassword() async {
     if (!_initialized) await initialize();
@@ -80,7 +97,7 @@ class SecureStorageHelper {
       return null;
     }
   }
-  
+
   /// 清除凭证
   Future<void> clearCredentials() async {
     if (!_initialized) await initialize();
@@ -93,7 +110,7 @@ class SecureStorageHelper {
       throw AuthException('清除凭证失败: $e');
     }
   }
-  
+
   /// 保存 Token
   Future<void> saveToken(String token) async {
     if (!_initialized) await initialize();
@@ -105,7 +122,7 @@ class SecureStorageHelper {
       throw AuthException('保存 Token 失败: $e');
     }
   }
-  
+
   /// 获取 Token
   Future<String?> getToken() async {
     if (!_initialized) await initialize();
@@ -314,11 +331,36 @@ class SecureStorageHelper {
     }
   }
 
+  /// 一次读取启动认证所需的全部数据，避免开屏阶段重复触发多个
+  /// Android Keystore / encryptedSharedPreferences platform channel 调用。
+  Future<AuthStorageSnapshot> readAuthSnapshot() async {
+    if (!_initialized) await initialize();
+    try {
+      final values = await _storage.readAll();
+      final username = values[AppConstants.storageUsernameKey];
+      final password = values[AppConstants.storagePasswordKey];
+      return AuthStorageSnapshot(
+        username: username,
+        password: password,
+        profile: {
+          'realName': values['profile_real_name'],
+          'uid': values['profile_uid'],
+          'avatarUrl': values['profile_avatar_url'],
+        },
+      );
+    } catch (e) {
+      _logger.e('Failed to read auth snapshot: $e');
+      return const AuthStorageSnapshot();
+    }
+  }
+
   /// 检查是否有保存的凭证
   Future<bool> hasCredentials() async {
     final username = await getUsername();
     final password = await getPassword();
-    return username != null && username.isNotEmpty && 
-           password != null && password.isNotEmpty;
+    return username != null &&
+        username.isNotEmpty &&
+        password != null &&
+        password.isNotEmpty;
   }
 }
