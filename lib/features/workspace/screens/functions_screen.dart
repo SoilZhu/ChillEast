@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../sunshine/screens/sunshine_screen.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/state/auth_state.dart';
 import '../../../core/utils/route_utils.dart';
@@ -128,6 +129,11 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
       case 'empty_classroom':
         isLoggedIn 
             ? _safeNavigate(const ClassroomInquiryScreen())
+            : _showLoginDialog();
+        break;
+      case 'sunshine':
+        isLoggedIn
+            ? _safeNavigate(const SunshineScreen())
             : _showLoginDialog();
         break;
       case 'repairs':

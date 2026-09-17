@@ -69,6 +69,7 @@ class AppCookieManager {
         AppConstants.portalBaseUrl,
         'https://passport2.chaoxing.com',
         'https://passport2-api.chaoxing.com',
+        'https://sun.hunau.edu.cn',
       ];
 
       // Delete the entire host, including /cas, /authn and /portal paths.
