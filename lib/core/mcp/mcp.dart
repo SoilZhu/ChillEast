@@ -8,3 +8,5 @@ export 'tools/score_tool.dart';
 export 'tools/campus_card_tool.dart';
 export 'tools/electricity_tool.dart';
 export 'tools/notice_tool.dart';
+export 'tools/library_tool.dart';
+export 'tools/sunshine_tool.dart';

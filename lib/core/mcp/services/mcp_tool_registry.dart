@@ -8,17 +8,23 @@ import '../tools/score_tool.dart';
 import '../tools/campus_card_tool.dart';
 import '../tools/electricity_tool.dart';
 import '../tools/notice_tool.dart';
+import '../tools/library_tool.dart';
+import '../tools/sunshine_tool.dart';
 import '../../../features/workspace/services/electricity_service.dart';
 import '../../../features/workspace/services/campus_card_service.dart';
+import '../../../features/library/providers/library_provider.dart';
+import '../../../features/sunshine/services/sunshine_service.dart';
 
 /// MCP Tool Registry Provider
 final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
   final electricityService = ref.watch(electricityServiceProvider);
   final campusCardService = ref.watch(campusCardServiceProvider);
+  final libraryService = ref.watch(libraryServiceProvider);
+  final sunshineService = ref.watch(sunshineServiceProvider);
 
   final registry = McpToolRegistry();
 
-  // 注册 9 个标准 MCP 工具
+  // 注册标准 MCP 工具
   // 1. 课表查询
   registry.register(TimetableTool.create());
 
@@ -45,6 +51,18 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
 
   // 9. 通知查询
   registry.register(NoticeTool.create());
+
+  // 10. 图书馆上次座位查询
+  registry.register(LibraryLastSeatQueryTool.create(service: libraryService));
+
+  // 11. 图书馆座位预约（支持默认上次座位与强制确认）
+  registry.register(LibraryReserveTool.create(service: libraryService));
+
+  // 12. 阳光服务受理部门查询
+  registry.register(SunshineDepartmentsQueryTool.create(service: sunshineService));
+
+  // 13. 阳光服务诉求快速提交
+  registry.register(SunshineSubmitTool.create(service: sunshineService));
 
   return registry;
 });

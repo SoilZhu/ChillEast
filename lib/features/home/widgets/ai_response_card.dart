@@ -306,6 +306,8 @@ class _AiResponseCardState extends ConsumerState<AiResponseCard> {
     final quickPrompts = [
       {'icon': Icons.calendar_today_outlined, 'text': '今天有什么课？'},
       {'icon': Icons.assignment_outlined, 'text': '有哪些未完成的作业？'},
+      {'icon': Icons.local_library_outlined, 'text': '预约图书馆座位'},
+      {'icon': Icons.wb_sunny_outlined, 'text': '快速提交阳光服务'},
       {'icon': Icons.credit_card_outlined, 'text': '查询校园卡余额'},
       {'icon': Icons.flash_on_outlined, 'text': '宿舍还有多少电？'},
       {'icon': Icons.meeting_room_outlined, 'text': '查询现在的空教室'},
