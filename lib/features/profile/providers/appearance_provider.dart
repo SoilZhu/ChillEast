@@ -13,6 +13,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
   static const String _functionItemsKey = 'function_page_items';
 
   static final List<FunctionItem> _masterPool = [
+    const FunctionItem(id: 'sunshine', label: '阳光服务', icon: Icons.wb_sunny_outlined, color: Color(0xFF09C489)),
     const FunctionItem(id: 'payment_code', label: '付款码', icon: Icons.qr_code_scanner_outlined, color: Color(0xFF00C853)),
     const FunctionItem(id: 'recharge', label: '校园卡充值', icon: Icons.account_balance_wallet_outlined, color: Colors.orange),
     const FunctionItem(id: 'library', label: '图书馆', icon: Icons.library_books_outlined, color: Color(0xFF795548)),
@@ -45,7 +46,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     // 默认全选，按照指定顺序
     final functionIds = [
       'payment_code', 'recharge', 'ele_recharge', 'library', 'empty_classroom', 'repairs', 
-      'gym', 'xgxt', 'teaching_eval', 'score', 'vpn', 'campus_card', 'bus', 'cs_bus'
+      'sunshine', 'gym', 'xgxt', 'teaching_eval', 'score', 'vpn', 'campus_card', 'bus', 'cs_bus'
     ];
     return functionIds.map((id) => _masterPool.firstWhere((item) => item.id == id)).toList();
   }
