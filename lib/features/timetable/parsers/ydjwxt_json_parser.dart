@@ -57,25 +57,39 @@ class YdjwxtJsonParser {
         final classroom = item['classroomName']?.toString() ?? '';
         final dayOfWeek = int.tryParse(item['weekDay']?.toString() ?? '') ?? 0;
         
-        // 解析节次 (例如 "10304" -> Day 1, 03-04节)
+        // 解析节次 (例如 "10304" -> Day 1, 03-04节; "609101112" -> Day 6, 09-12节)
         final classTime = item['classTime']?.toString() ?? '';
         int startPeriod = 0;
         int endPeriod = 0;
         String periods = '';
 
-        if (classTime.length >= 5) {
+        if (classTime.length >= 3) {
           startPeriod = int.tryParse(classTime.substring(1, 3)) ?? 0;
-          endPeriod = int.tryParse(classTime.substring(3, 5)) ?? 0;
-          periods = '${startPeriod.toString().padLeft(2, '0')}-${endPeriod.toString().padLeft(2, '0')}';
-        } else {
-          // 备选解析方案：weekNoteDetail (例如 "103,104")
+          endPeriod = int.tryParse(classTime.substring(classTime.length - 2)) ?? startPeriod;
+        }
+
+        // 备选/校准方案：weekNoteDetail (例如 "103,104", "609,610,611,612")
+        if (startPeriod == 0 || endPeriod == 0) {
           final weekNoteDetail = item['weekNoteDetail']?.toString() ?? '';
-          final parts = weekNoteDetail.split(',');
-          if (parts.length >= 2) {
-            startPeriod = int.tryParse(parts.first.substring(1)) ?? 0;
-            endPeriod = int.tryParse(parts.last.substring(1)) ?? 0;
-            periods = '${startPeriod.toString().padLeft(2, '0')}-${endPeriod.toString().padLeft(2, '0')}';
+          final parts = weekNoteDetail
+              .split(',')
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
+          if (parts.isNotEmpty) {
+            startPeriod = int.tryParse(parts.first.length > 2 ? parts.first.substring(parts.first.length - 2) : parts.first) ?? 0;
+            endPeriod = int.tryParse(parts.last.length > 2 ? parts.last.substring(parts.last.length - 2) : parts.last) ?? startPeriod;
           }
+        }
+
+        // 兜底方案：如果存在 coursesNote (例如 4 节连上)
+        final coursesNote = int.tryParse(item['coursesNote']?.toString() ?? '') ?? 0;
+        if (startPeriod > 0 && coursesNote > 0 && endPeriod < startPeriod + coursesNote - 1) {
+          endPeriod = startPeriod + coursesNote - 1;
+        }
+
+        if (startPeriod > 0 && endPeriod > 0) {
+          periods = '${startPeriod.toString().padLeft(2, '0')}-${endPeriod.toString().padLeft(2, '0')}';
         }
 
         final weeksStr = item['classWeek']?.toString() ?? '';
