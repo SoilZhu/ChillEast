@@ -53,7 +53,7 @@ class AppCookieManager {
   /// 获取 Dio CookieJar
   PersistCookieJar get dioCookieJar {
     if (!_initialized) {
-      throw CookieException('CookieManager 未初始化,请先调用 initialize()');
+      throw const CookieException('CookieManager 未初始化,请先调用 initialize()');
     }
     return _dioCookieJar;
   }
@@ -61,40 +61,109 @@ class AppCookieManager {
   /// 清除所有 SSO 和 Portal 相关的 Cookie
   Future<void> clearSsoCookies() async {
     if (!_initialized) await initialize();
-    
+
     try {
       // 清除 Dio 中的 SSO 和 Portal Cookie
       final domains = [
         AppConstants.ssoBaseUrl,
         AppConstants.portalBaseUrl,
         'https://passport2.chaoxing.com',
+        'https://passport2-api.chaoxing.com',
       ];
-      
-      await Future.wait(domains.map((domain) async {
-        final cookies = await _dioCookieJar.loadForRequest(Uri.parse(domain));
-        final expiredCookies = cookies.map((cookie) {
-          final expired = io.Cookie(cookie.name, '');
-          expired.domain = cookie.domain ?? Uri.parse(domain).host;
-          expired.path = cookie.path ?? '/';
-          expired.expires = DateTime.now().subtract(const Duration(days: 1));
-          return expired;
-        }).toList();
-        
-        if (expiredCookies.isNotEmpty) {
-          await _dioCookieJar.saveFromResponse(Uri.parse(domain), expiredCookies);
-        }
-      }));
-      
+
+      // Delete the entire host, including /cas, /authn and /portal paths.
+      // Expiring only cookies visible at "/" leaves path-scoped TGC/session
+      // cookies behind. Sequential deletes also avoid persistence write races.
+      for (final domain in domains) {
+        await _dioCookieJar.delete(Uri.parse(domain), true);
+      }
+
       // 清除 WebView 中的所有 Cookie
       await _webViewCookieManager.deleteAllCookies();
-      
+
       _logger.i('✅ SSO and Portal cookies cleared successfully');
     } catch (e) {
       _logger.e('Failed to clear SSO cookies: $e');
       throw CookieException('清除 SSO Cookie 失败: $e');
     }
   }
-  
+
+  /// Publish a successful, fresh HTTP session to Dio and WebView.
+  /// Preserve host-only scope, path, expiry, Secure and HttpOnly attributes.
+  Future<void> saveHttpLoginCookies(Map<Uri, List<io.Cookie>> cookies, {void Function(String)? onProgress}) async {
+    if (!_initialized) await initialize();
+    try {
+      final storageBatches = <Uri, List<io.Cookie>>{};
+      final webViewGroups = <String, List<MapEntry<Uri, io.Cookie>>>{};
+      var cookieCount = 0;
+      for (final entry in cookies.entries) {
+        final origin = Uri(scheme: entry.key.scheme, host: entry.key.host,
+            port: entry.key.hasPort ? entry.key.port : null, path: '/');
+        for (final cookie in entry.value) {
+          // Batch by origin only after making the original default path explicit.
+          if (cookie.path == null || !cookie.path!.startsWith('/')) {
+            final slash = entry.key.path.lastIndexOf('/');
+            cookie.path = slash <= 0 ? '/' : entry.key.path.substring(0, slash);
+          }
+          storageBatches.putIfAbsent(origin, () => []).add(cookie);
+          final scope = (cookie.domain ?? entry.key.host)
+              .replaceFirst(RegExp(r'^\.'), '').toLowerCase();
+          webViewGroups.putIfAbsent(scope, () => []).add(MapEntry(entry.key, cookie));
+          cookieCount++;
+        }
+      }
+      final clock = Stopwatch()..start();
+      // PersistCookieJar shares its host index and domain file. Keep disk writes
+      // sequential, while reducing repeated writes for different paths of a host.
+      for (final entry in storageBatches.entries) {
+        await _dioCookieJar.saveFromResponse(entry.key, entry.value);
+      }
+      final storageMs = clock.elapsedMilliseconds;
+      clock.reset();
+      final groups = webViewGroups.values.toList();
+      for (var start = 0; start < groups.length; start += 4) {
+        final end = start + 4 < groups.length ? start + 4 : groups.length;
+        // A cookie domain is serialized; at most four independent domains run
+        // together. Wait for ALL active writers before rolling back on failure,
+        // otherwise a late write could resurrect a logged-out session.
+        await Future.wait(groups.sublist(start, end).map((group) async {
+          for (final entry in group) {
+            await _saveWebViewLoginCookie(entry.key, entry.value);
+          }
+        }), eagerError: false);
+      }
+      final message = 'HTTP Cookie 同步：cookies=$cookieCount, origins=${storageBatches.length}, '
+          'persistMs=$storageMs, webViewMs=${clock.elapsedMilliseconds}';
+      if (onProgress != null) {
+        onProgress(message);
+      } else {
+        _logger.i(message);
+      }
+    } catch (_) {
+      await clearSsoCookies();
+      throw const CookieException('同步登录 Cookie 失败，请重新登录');
+    }
+  }
+
+  Future<void> _saveWebViewLoginCookie(Uri uri, io.Cookie cookie) async {
+    final saved = await _webViewCookieManager.setCookie(
+      url: webview.WebUri(uri.toString()),
+      name: cookie.name,
+      value: cookie.value,
+      domain: cookie.domain,
+      path: cookie.path ?? '/',
+      expiresDate: cookie.expires?.millisecondsSinceEpoch,
+      isSecure: cookie.secure,
+      isHttpOnly: cookie.httpOnly,
+      sameSite: const {
+        io.SameSite.lax: webview.HTTPCookieSameSitePolicy.LAX,
+        io.SameSite.strict: webview.HTTPCookieSameSitePolicy.STRICT,
+        io.SameSite.none: webview.HTTPCookieSameSitePolicy.NONE,
+      }[cookie.sameSite],
+    );
+    if (!saved) throw const CookieException('同步登录 Cookie 失败');
+  }
+
   /// 清除所有 Cookie（包括 WebVPN、CAS、教务系统等）
   Future<void> clearAllCookies() async {
     if (!_initialized) await initialize();
@@ -130,6 +199,7 @@ class AppCookieManager {
         'https://bxpt.hunau.edu.cn/relax/', // 👈 增加带路径的探测
         'https://webvpn.hunau.edu.cn',
         'https://passport2.chaoxing.com',
+        'https://passport2-api.chaoxing.com',
         'https://notice.chaoxing.com',
         'https://mooc1.chaoxing.com',
         'https://mooc1-api.chaoxing.com',
@@ -248,6 +318,7 @@ class AppCookieManager {
       'http://chaoxing.com',
       'https://chaoxing.com',
       'https://passport2.chaoxing.com',
+      'https://passport2-api.chaoxing.com',
       'https://notice.chaoxing.com',
       'http://notice.chaoxing.com',
       'https://mooc1.chaoxing.com',
