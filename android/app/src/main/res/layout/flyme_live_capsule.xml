@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Flyme 实况通知胶囊（状态栏常驻小条），结构照抄 Flyme-Live-Notification-Demo -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/capsule_content"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="12分后上课"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:background="#09C489"
+        android:padding="6dp"
+        android:minWidth="60dp"
+        android:gravity="center" />
+
+</LinearLayout>
