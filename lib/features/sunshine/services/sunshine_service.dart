@@ -77,6 +77,19 @@ class SunshineService {
     return _rows(response).map(SunshineLetter.fromJson).toList();
   }
 
+  Future<SunshineTicketDetail> fetchTicketDetail(String id) async {
+    final response = await _dio.post(
+      '$baseUrl/AJAX/form.ashx',
+      data: {'AFlag': 'Detail', 'ID': id},
+      options: _options,
+    );
+    final rows = _rows(response);
+    if (rows.isEmpty) {
+      throw const SunshineException('未找到诉求工单详情');
+    }
+    return SunshineTicketDetail.fromJson(rows.first, id: id);
+  }
+
   String _decodeGbk(
     List<int> responseBytes,
     RequestOptions options,
