@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/route_utils.dart';
 import '../models/sunshine_models.dart';
 import '../services/sunshine_service.dart';
+import 'sunshine_detail_screen.dart';
 import 'sunshine_form_screen.dart';
 
 class SunshineScreen extends ConsumerStatefulWidget {
@@ -255,61 +256,90 @@ class _SunshineScreenState extends ConsumerState<SunshineScreen> {
           width: 1,
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              letter.title,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF222222),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: () {
+            Navigator.of(context).push(
+              createSlideUpRoute(
+                SunshineDetailScreen(
+                  id: letter.id,
+                  initialLetter: letter,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              letter.department,
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark ? Colors.white60 : Colors.black54,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              runSpacing: 4,
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        letter.title,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : const Color(0xFF222222),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 13,
+                      color: isDark ? Colors.white24 : Colors.grey[400],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 Text(
-                  letter.type,
+                  letter.department,
                   style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.white38 : Colors.grey[600],
+                    fontSize: 13,
+                    color: isDark ? Colors.white60 : Colors.black54,
                   ),
                 ),
-                Text(
-                  letter.date,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.white38 : Colors.grey[600],
-                  ),
-                ),
-                Text(
-                  letter.statusLabel,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: letter.status == '2'
-                        ? const Color(0xFF09C489)
-                        : (isDark ? Colors.white38 : Colors.grey[600]),
-                    fontWeight: letter.status == '2'
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 4,
+                  children: [
+                    Text(
+                      letter.type,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.white38 : Colors.grey[600],
+                      ),
+                    ),
+                    Text(
+                      letter.date,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.white38 : Colors.grey[600],
+                      ),
+                    ),
+                    Text(
+                      letter.statusLabel,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: letter.status == '2'
+                            ? const Color(0xFF09C489)
+                            : (isDark ? Colors.white38 : Colors.grey[600]),
+                        fontWeight: letter.status == '2'
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );

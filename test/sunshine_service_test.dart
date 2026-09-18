@@ -289,4 +289,59 @@ void main() {
       expect(requests.length, 1);
     }
   });
+
+  test('fetchTicketDetail matches HAR response and submitter only retains surname',
+      () async {
+    const harResponse =
+        '{"total":1,"rows":[{"Title":"巴士司机的驾驶素质","LinkName":"郑天塬","DepName":"后勤保障中心","CirDepName":"保卫工作部、保卫处","FinishTime":"2026-09-14","JieTime":"2026-09-16","WanTime":"2026-09-14","Status":"2","Content":"投诉9月10日11:50/11:55，修业广场偏金岸宿舍方向...","Remark":"学校保卫工作部根据校园交通车考评管理办法...","bTypeName":"咨询","cTypeName":"","dTypeName":"","Sex":""}]}';
+    respond = (_) => harResponse;
+
+    final detail = await service.fetchTicketDetail('12692');
+
+    expect(requests.single.data, {'AFlag': 'Detail', 'ID': '12692'});
+    expect(detail.id, '12692');
+    expect(detail.title, '巴士司机的驾驶素质');
+    // 注意提交人只保留到姓
+    expect(detail.submitter, '郑');
+    expect(detail.rawSubmitter, '郑天塬');
+    expect(detail.expectedDepartment, '后勤保障中心');
+    expect(detail.handlingDepartment, '保卫工作部、保卫处');
+    expect(detail.finishTime, '2026-09-14');
+    expect(detail.jieTime, '2026-09-16');
+    expect(detail.wanTime, '2026-09-14');
+    expect(detail.status, '2');
+    expect(detail.statusLabel, '已办结');
+    expect(detail.isCompleted, isTrue);
+    expect(detail.type, '咨询');
+    expect(detail.content, contains('投诉9月10日11:50/11:55'));
+    expect(detail.remark, contains('学校保卫工作部根据校园交通车考评管理办法'));
+  });
+
+  test('fetchTicketDetail throws SunshineException when ticket not found',
+      () async {
+    respond = (_) => '{"total":0,"rows":[]}';
+    await expectLater(
+      service.fetchTicketDetail('999999'),
+      throwsA(isA<SunshineException>().having(
+        (e) => e.message,
+        'message',
+        contains('未找到诉求工单详情'),
+      )),
+    );
+  });
+
+  test('extractSurname correctly extracts single and compound surnames', () {
+    expect(SunshineTicketDetail.extractSurname('郑天塬'), '郑');
+    expect(SunshineTicketDetail.extractSurname('张三'), '张');
+    expect(SunshineTicketDetail.extractSurname('李四'), '李');
+    expect(SunshineTicketDetail.extractSurname('王五'), '王');
+    expect(SunshineTicketDetail.extractSurname('欧阳修'), '欧阳');
+    expect(SunshineTicketDetail.extractSurname('诸葛孔明'), '诸葛');
+    expect(SunshineTicketDetail.extractSurname('司马光'), '司马');
+    expect(SunshineTicketDetail.extractSurname('上官婉儿'), '上官');
+    expect(SunshineTicketDetail.extractSurname('皇甫嵩'), '皇甫');
+    expect(SunshineTicketDetail.extractSurname('赵'), '赵');
+    expect(SunshineTicketDetail.extractSurname(''), '');
+    expect(SunshineTicketDetail.extractSurname('   '), '');
+  });
 }
