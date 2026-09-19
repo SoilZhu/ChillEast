@@ -42,6 +42,14 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
 
   
   @override
+  void didUpdateWidget(WeeklyCalendarView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.courses != widget.courses || oldWidget.firstWeekMonday != widget.firstWeekMonday) {
+      setState(() {});
+    }
+  }
+
+  @override
   void dispose() {
     _pageController.dispose();
     super.dispose();

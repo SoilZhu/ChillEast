@@ -99,4 +99,32 @@ class WeekParser {
     
     return '第${parts.join(',')}周';
   }
+
+  /// 将周次列表格式化为 CourseModel 使用的标准格式，例如 "1-16(周)" 或 "1-4,6-16(周)"
+  static String formatWeeksForCourse(List<int> weeks) {
+    if (weeks.isEmpty) return '';
+    final sorted = weeks.toSet().toList()..sort();
+    List<String> parts = [];
+    int i = 0;
+
+    while (i < sorted.length) {
+      int start = sorted[i];
+      int end = start;
+
+      while (i + 1 < sorted.length && sorted[i + 1] == end + 1) {
+        i++;
+        end = sorted[i];
+      }
+
+      if (start == end) {
+        parts.add('$start');
+      } else {
+        parts.add('$start-$end');
+      }
+
+      i++;
+    }
+
+    return '${parts.join(',')}(周)';
+  }
 }

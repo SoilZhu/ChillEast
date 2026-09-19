@@ -7,6 +7,7 @@ import '../../../core/services/ydjwxt_auth_service.dart';
 import '../models/course_model.dart';
 import '../parsers/ydjwxt_json_parser.dart';
 import '../services/timetable_storage.dart';
+import '../services/timetable_rule_service.dart';
 import '../utils/ics_generator.dart';
 
 class YdjwxtService {
@@ -82,22 +83,31 @@ class YdjwxtService {
       // 5. 生成并保存结果
       onProgress('正在保存到本地...');
       
-      // 生成 ICS
-      final icsContent = IcsGenerator.generate(mergedCourses, calculatedFirstWeekMonday);
-      
-      // 保存
       final storage = TimetableStorage();
+
+      // 1. 保存原始课表数据（未经规则修改的底数）
+      await storage.saveRawCourseList(mergedCourses);
+
+      // 2. 立即根据本地保存的规则修改课程
+      final ruleService = TimetableRuleService();
+      final rules = await storage.readRules();
+      final finalCourses = ruleService.applyRules(mergedCourses, rules);
+
+      // 3. 生成基于修改后课程的 ICS
+      final icsContent = IcsGenerator.generate(finalCourses, calculatedFirstWeekMonday);
+
+      // 4. 保存 ICS 及修改后的课程列表
       await storage.saveTimetable(icsContent);
-      await storage.saveCourseList(mergedCourses);
-      
+      await storage.saveCourseList(finalCourses);
+
       // 保存元数据
       await storage.saveMetadata(
         semester: AppConstants.defaultSemester,
         firstWeekMonday: calculatedFirstWeekMonday,
       );
-      
-      onProgress('同步成功！已更新 ${mergedCourses.length} 门课程');
-      _logger.i('🎉 YDJWXT Sync Completed successfully.');
+
+      onProgress('同步成功！已更新 ${finalCourses.length} 门课程');
+      _logger.i('🎉 YDJWXT Sync Completed successfully (applied ${rules.length} local rules).');
       
     } catch (e) {
       _logger.e('❌ YDJWXT sync failed: $e');
