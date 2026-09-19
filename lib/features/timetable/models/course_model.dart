@@ -47,6 +47,30 @@ class CourseModel {
     'endPeriod': endPeriod,
   };
   
+  CourseModel copyWith({
+    String? id,
+    String? name,
+    String? teacher,
+    String? classroom,
+    String? weeks,
+    String? periods,
+    int? dayOfWeek,
+    int? startPeriod,
+    int? endPeriod,
+  }) {
+    return CourseModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      teacher: teacher ?? this.teacher,
+      classroom: classroom ?? this.classroom,
+      weeks: weeks ?? this.weeks,
+      periods: periods ?? this.periods,
+      dayOfWeek: dayOfWeek ?? this.dayOfWeek,
+      startPeriod: startPeriod ?? this.startPeriod,
+      endPeriod: endPeriod ?? this.endPeriod,
+    );
+  }
+
   @override
   String toString() {
     return 'CourseModel(name: $name, teacher: $teacher, classroom: $classroom, '

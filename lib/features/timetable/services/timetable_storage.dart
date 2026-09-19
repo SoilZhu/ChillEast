@@ -2,19 +2,22 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import '../models/course_model.dart';
+import '../models/timetable_rule_model.dart';
 
 /// 课表文件存储管理
 class TimetableStorage {
   static const String _fileName = 'current_timetable.ics';
   static const String _metaFileName = 'timetable_meta.json';
   static const String _courseListFileName = 'courses.json';
-  
+  static const String _rawCourseListFileName = 'raw_courses.json';
+  static const String _rulesFileName = 'timetable_rules.json';
+
   /// 获取课表文件对象
   Future<File> _getFile() async {
     final directory = await getApplicationDocumentsDirectory();
     return File('${directory.path}/$_fileName');
   }
-  
+
   /// 检查是否存在本地课表
   Future<bool> hasLocalTimetable() async {
     try {
@@ -24,7 +27,7 @@ class TimetableStorage {
       return false;
     }
   }
-  
+
   /// 保存 ICS 文件
   Future<void> saveTimetable(String icsContent) async {
     try {
@@ -34,7 +37,7 @@ class TimetableStorage {
       throw Exception('保存课表失败: $e');
     }
   }
-  
+
   /// 读取 ICS 文件
   Future<String?> readTimetable() async {
     try {
@@ -47,7 +50,7 @@ class TimetableStorage {
       return null;
     }
   }
-  
+
   /// 删除课表文件
   Future<void> deleteTimetable() async {
     try {
@@ -59,7 +62,7 @@ class TimetableStorage {
       // 忽略删除失败
     }
   }
-  
+
   /// 获取课表文件路径（用于分享）
   Future<String?> getTimetableFilePath() async {
     try {
@@ -72,7 +75,7 @@ class TimetableStorage {
       return null;
     }
   }
-  
+
   /// 保存课表元数据（学期和第一周周一）
   Future<void> saveMetadata({
     required String semester,
@@ -81,25 +84,25 @@ class TimetableStorage {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final metaFile = File('${directory.path}/$_metaFileName');
-      
+
       final metadata = {
         'semester': semester,
         'firstWeekMonday': firstWeekMonday.toIso8601String(),
         'savedAt': DateTime.now().toIso8601String(),
       };
-      
+
       await metaFile.writeAsString(jsonEncode(metadata));
     } catch (e) {
       throw Exception('保存课表元数据失败: $e');
     }
   }
-  
+
   /// 读取课表元数据
   Future<Map<String, dynamic>?> readMetadata() async {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final metaFile = File('${directory.path}/$_metaFileName');
-      
+
       if (await metaFile.exists()) {
         final content = await metaFile.readAsString();
         return jsonDecode(content) as Map<String, dynamic>;
@@ -109,13 +112,13 @@ class TimetableStorage {
       return null;
     }
   }
-  
+
   /// 删除课表元数据
   Future<void> deleteMetadata() async {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final metaFile = File('${directory.path}/$_metaFileName');
-      
+
       if (await metaFile.exists()) {
         await metaFile.delete();
       }
@@ -144,7 +147,9 @@ class TimetableStorage {
       if (await file.exists()) {
         final content = await file.readAsString();
         final List<dynamic> jsonList = jsonDecode(content);
-        return jsonList.map((j) => CourseModel.fromJson(j as Map<String, dynamic>)).toList();
+        return jsonList
+            .map((j) => CourseModel.fromJson(j as Map<String, dynamic>))
+            .toList();
       }
       return [];
     } catch (e) {
@@ -157,6 +162,105 @@ class TimetableStorage {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final file = File('${directory.path}/$_courseListFileName');
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (e) {
+      // 忽略
+    }
+  }
+
+  /// 保存原始课程列表（未应用规则的教务原始数据）
+  Future<void> saveRawCourseList(List<CourseModel> courses) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$_rawCourseListFileName');
+      final jsonList = courses.map((c) => c.toJson()).toList();
+      await file.writeAsString(jsonEncode(jsonList));
+    } catch (e) {
+      throw Exception('保存原始课程列表失败: $e');
+    }
+  }
+
+  /// 是否存在原始课程列表文件（未应用规则的教务原始数据）
+  Future<bool> hasRawCourseList() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$_rawCourseListFileName');
+      return file.exists();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// 读取原始课程列表（未应用规则的原始数据）
+  /// 注意：仅返回 raw_courses.json 的内容，不做任何回退。
+  /// 调用方需要自行决定缺失时的迁移策略，避免把已应用规则的数据写回基准。
+  Future<List<CourseModel>> readRawCourseList() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$_rawCourseListFileName');
+      if (await file.exists()) {
+        final content = await file.readAsString();
+        final List<dynamic> jsonList = jsonDecode(content);
+        return jsonList
+            .map((j) => CourseModel.fromJson(j as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// 删除原始课程列表
+  Future<void> deleteRawCourseList() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$_rawCourseListFileName');
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (e) {
+      // 忽略
+    }
+  }
+
+  /// 保存规则列表
+  Future<void> saveRules(List<TimetableRule> rules) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$_rulesFileName');
+      final jsonList = rules.map((r) => r.toJson()).toList();
+      await file.writeAsString(jsonEncode(jsonList));
+    } catch (e) {
+      throw Exception('保存课表规则失败: $e');
+    }
+  }
+
+  /// 读取规则列表
+  Future<List<TimetableRule>> readRules() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$_rulesFileName');
+      if (await file.exists()) {
+        final content = await file.readAsString();
+        final List<dynamic> jsonList = jsonDecode(content);
+        return jsonList
+            .map((j) => TimetableRule.fromJson(j as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// 删除规则文件
+  Future<void> deleteRules() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$_rulesFileName');
       if (await file.exists()) {
         await file.delete();
       }

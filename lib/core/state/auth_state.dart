@@ -262,11 +262,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await _ref.read(authServiceProvider).logout();
     _ref.read(noticeProvider.notifier).clear();
 
-    // 退出登录时删除本地课表数据 (ICS, 元数据, 以及课程列表 JSON)
+    // 退出登录时删除本地课表数据 (ICS, 元数据, 原始课程列表, 规则以及课程列表 JSON)
     final storage = TimetableStorage();
     await storage.deleteTimetable();
     await storage.deleteMetadata();
     await storage.deleteCourseList();
+    await storage.deleteRawCourseList();
+    await storage.deleteRules();
 
     // 退出登录时删除本地作业数据
     await _ref.read(homeworkProvider.notifier).clearAll();

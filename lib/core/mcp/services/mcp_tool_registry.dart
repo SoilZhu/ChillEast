@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/mcp_protocol.dart';
 import '../models/mcp_tool.dart';
 import '../tools/timetable_tool.dart';
+import '../tools/timetable_rule_tool.dart';
 import '../tools/homework_tools.dart';
 import '../tools/classroom_tool.dart';
 import '../tools/score_tool.dart';
@@ -27,6 +28,9 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
   // 注册标准 MCP 工具
   // 1. 课表查询
   registry.register(TimetableTool.create());
+
+  // 1.1 课表规则管理（调休、停课、手动添加课程、删除规则）
+  registry.register(TimetableRuleTool.create());
 
   // 2. 作业查询
   registry.register(HomeworkQueryTool.create());
