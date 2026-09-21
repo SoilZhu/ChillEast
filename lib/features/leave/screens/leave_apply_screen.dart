@@ -642,7 +642,7 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('提交申请',
+                            : const Text('提交',
                                 style: TextStyle(fontSize: 15)),
                       ),
                     ),

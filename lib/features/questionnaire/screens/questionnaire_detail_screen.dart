@@ -264,7 +264,7 @@ class _QuestionnaireDetailScreenState
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('提交问卷',
+                            : const Text('提交',
                                 style: TextStyle(fontSize: 15)),
                       ),
                     ),
