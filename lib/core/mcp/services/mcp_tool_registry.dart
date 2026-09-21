@@ -11,10 +11,12 @@ import '../tools/electricity_tool.dart';
 import '../tools/notice_tool.dart';
 import '../tools/library_tool.dart';
 import '../tools/sunshine_tool.dart';
+import '../tools/questionnaire_tool.dart';
 import '../../../features/workspace/services/electricity_service.dart';
 import '../../../features/workspace/services/campus_card_service.dart';
 import '../../../features/library/providers/library_provider.dart';
 import '../../../features/sunshine/services/sunshine_service.dart';
+import '../../../features/questionnaire/services/questionnaire_service.dart';
 
 /// MCP Tool Registry Provider
 final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
@@ -22,6 +24,7 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
   final campusCardService = ref.watch(campusCardServiceProvider);
   final libraryService = ref.watch(libraryServiceProvider);
   final sunshineService = ref.watch(sunshineServiceProvider);
+  final questionnaireService = ref.watch(questionnaireServiceProvider);
 
   final registry = McpToolRegistry();
 
@@ -67,6 +70,15 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
 
   // 13. 阳光服务诉求快速提交
   registry.register(SunshineSubmitTool.create(service: sunshineService));
+
+  // 14. 学工问卷列表查询
+  registry.register(QuestionnaireListTool.create(service: questionnaireService));
+
+  // 15. 学工问卷题目查询
+  registry.register(QuestionnaireDetailTool.create(service: questionnaireService));
+
+  // 16. 学工问卷代填提交（需用户确认）
+  registry.register(QuestionnaireSubmitTool.create(service: questionnaireService));
 
   return registry;
 });
