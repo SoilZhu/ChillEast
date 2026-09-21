@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../sunshine/screens/sunshine_screen.dart';
+import '../../questionnaire/screens/questionnaire_list_screen.dart';
+import '../../leave/screens/leave_list_screen.dart';
 import '../../../core/state/auth_state.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../timetable/services/timetable_storage.dart';
@@ -238,6 +240,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 'sunshine':
         isLoggedIn
             ? Navigator.push(context, createSlideUpRoute(const SunshineScreen()))
+            : _showLoginDialog(context);
+        break;
+      case 'questionnaire':
+        isLoggedIn
+            ? Navigator.push(context, createSlideUpRoute(const QuestionnaireListScreen()))
+            : _showLoginDialog(context);
+        break;
+      case 'leave':
+        isLoggedIn
+            ? Navigator.push(context, createSlideUpRoute(const LeaveListScreen()))
             : _showLoginDialog(context);
         break;
       case 'repairs':
