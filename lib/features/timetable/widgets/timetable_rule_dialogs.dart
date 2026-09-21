@@ -196,7 +196,7 @@ class TimetableRuleDialogs {
     int wholeSourceDayOfWeek = 5; // 周五
     int wholeTargetWeek = currentWeek;
     int wholeTargetDayOfWeek = 7; // 周日
-    bool isSwap = false;
+    String wholeDayAction = 'move'; // 'copy', 'move', 'swap'
 
     final weekdayNames = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     final periodChoiceNames = {
@@ -646,15 +646,49 @@ class TimetableRuleDialogs {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title:
-                            const Text('两天对调', style: TextStyle(fontSize: 14)),
-                        subtitle: Text(isSwap ? '两天的课互换' : '只把课挪过去',
-                            style: const TextStyle(fontSize: 12)),
-                        value: isSwap,
-                        onChanged: (v) => setState(() => isSwap = v),
+                      const SizedBox(height: 14),
+                      const Text('调课方式',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _buildModeOption(
+                            context: context,
+                            selected: wholeDayAction == 'copy',
+                            label: '复制',
+                            onTap: () =>
+                                setState(() => wholeDayAction = 'copy'),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildModeOption(
+                            context: context,
+                            selected: wholeDayAction == 'move',
+                            label: '平移',
+                            onTap: () =>
+                                setState(() => wholeDayAction = 'move'),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildModeOption(
+                            context: context,
+                            selected: wholeDayAction == 'swap',
+                            label: '对调',
+                            onTap: () =>
+                                setState(() => wholeDayAction = 'swap'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        wholeDayAction == 'copy'
+                            ? '原日期的课保留，目标日原本的课会被覆盖'
+                            : (wholeDayAction == 'swap'
+                                ? '两天的课程互相交换'
+                                : '只把课挪过去，原日期的课不保留，目标日原本的课会被覆盖'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).textTheme.bodySmall?.color ??
+                              Colors.grey,
+                        ),
                       ),
                     ],
                   ],
@@ -744,7 +778,8 @@ class TimetableRuleDialogs {
                         targetWeek: wholeTargetWeek,
                         targetDayOfWeek: wholeTargetDayOfWeek,
                         courseName: null,
-                        isSwap: isSwap,
+                        action: wholeDayAction,
+                        isSwap: wholeDayAction == 'swap',
                       );
                       await TimetableRuleService().addRule(rule);
                       onRuleApplied();

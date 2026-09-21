@@ -75,6 +75,11 @@ class TimetableRuleTool {
             'type': 'boolean',
             'description': '调休时是否为双向互换。默认为 false (移动/单向补课模式)。',
           },
+          'mode': {
+            'type': 'string',
+            'description': '调课方式：copy (复制), move (平移，默认), swap (对调)。',
+            'enum': ['copy', 'move', 'swap'],
+          },
           'sourceStartPeriod': {
             'type': 'integer',
             'description': '调课源节次起始 (1-12，可选；单门调课时建议提供以精确定位)。',
@@ -206,6 +211,8 @@ class TimetableRuleTool {
             final targetEndPeriod = asInt(arguments['targetEndPeriod']);
             final courseName = arguments['courseName'] as String?;
             final isSwap = arguments['isSwap'] as bool? ?? false;
+            final mode = (arguments['mode'] as String?) ??
+                (arguments['rescheduleMode'] as String?);
 
             if (sourceWeek == null ||
                 sourceDayOfWeek == null ||
@@ -226,6 +233,7 @@ class TimetableRuleTool {
               targetStartPeriod: targetStartPeriod,
               targetEndPeriod: targetEndPeriod,
               isSwap: isSwap,
+              action: mode,
             );
 
             await ruleService.addRule(rule);

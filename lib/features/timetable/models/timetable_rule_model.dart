@@ -41,9 +41,12 @@ class TimetableRule {
     int? targetStartPeriod,
     int? targetEndPeriod,
     bool isSwap = false,
+    String? action,
   }) {
     final ruleId =
         id ?? 'rule_reschedule_${DateTime.now().millisecondsSinceEpoch}';
+    final effectiveAction = action ?? (isSwap ? 'swap' : 'move');
+    final effectiveIsSwap = effectiveAction == 'swap' || isSwap;
     final weekdayNames = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     final sourceStr = '第$sourceWeek周${weekdayNames[sourceDayOfWeek]}';
     final targetStr = '第$targetWeek周${weekdayNames[targetDayOfWeek]}';
@@ -59,7 +62,14 @@ class TimetableRule {
       final tPeriodStr = '$targetStartPeriod-$targetEndPeriod节';
       desc = '$courseStr$sourceStr$sPeriodStr → $targetStr$tPeriodStr';
     } else {
-      final modeStr = isSwap ? '（对调）' : '（补课）';
+      final String modeStr;
+      if (effectiveAction == 'copy') {
+        modeStr = '（复制）';
+      } else if (effectiveAction == 'swap') {
+        modeStr = '（对调）';
+      } else {
+        modeStr = '（平移）';
+      }
       desc = '$courseStr$sourceStr → $targetStr$modeStr';
     }
 
@@ -78,7 +88,8 @@ class TimetableRule {
         'sourceEndPeriod': sourceEndPeriod,
         'targetStartPeriod': targetStartPeriod,
         'targetEndPeriod': targetEndPeriod,
-        'isSwap': isSwap,
+        'isSwap': effectiveIsSwap,
+        'action': effectiveAction,
       },
     );
   }

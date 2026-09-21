@@ -67,6 +67,30 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('调一节'), findsOneWidget);
       expect(find.text('调一天'), findsOneWidget);
+
+      // 切换到“调一天”模式
+      await tester.tap(find.text('调一天'));
+      await tester.pumpAndSettle();
+
+      // 验证包含《复制》《平移》《对调》三个选项，且不再有旧开关“两天对调”
+      expect(find.text('两天对调'), findsNothing);
+      expect(find.text('复制'), findsOneWidget);
+      expect(find.text('平移'), findsOneWidget);
+      expect(find.text('对调'), findsOneWidget);
+
+      // 默认平移
+      expect(find.text('只把课挪过去，原日期的课不保留，目标日原本的课会被覆盖'), findsOneWidget);
+
+      // 切换到复制
+      await tester.tap(find.text('复制'));
+      await tester.pumpAndSettle();
+      expect(find.text('原日期的课保留，目标日原本的课会被覆盖'), findsOneWidget);
+
+      // 切换到对调
+      await tester.tap(find.text('对调'));
+      await tester.pumpAndSettle();
+      expect(find.text('两天的课程互相交换'), findsOneWidget);
+
       await tester.tap(find.text('取消'));
       await tester.pumpAndSettle();
 

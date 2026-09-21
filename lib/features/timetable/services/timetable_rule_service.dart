@@ -140,6 +140,10 @@ class TimetableRuleService {
     final targetDayOfWeek = rule.data['targetDayOfWeek'] as int;
     final courseName = (rule.data['courseName'] as String?)?.trim();
     final isSwap = rule.data['isSwap'] as bool? ?? false;
+    final action =
+        (rule.data['action'] as String?) ?? (isSwap ? 'swap' : 'move');
+    final isCopy = action == 'copy';
+    final effectiveIsSwap = action == 'swap' || isSwap;
     final sourceStartPeriod = rule.data['sourceStartPeriod'] as int?;
     final sourceEndPeriod = rule.data['sourceEndPeriod'] as int?;
     final targetStartPeriod = rule.data['targetStartPeriod'] as int?;
@@ -167,7 +171,7 @@ class TimetableRuleService {
     final sourceMatches = sourceMatchedIdx.map((i) => courses[i]).toList();
 
     _logger.i(
-        'Reschedule: looking for w:$sourceWeek d:$sourceDayOfWeek c:$courseName p:$sourceStartPeriod-$sourceEndPeriod => matched ${sourceMatches.length} courses');
+        'Reschedule: action:$action looking for w:$sourceWeek d:$sourceDayOfWeek c:$courseName p:$sourceStartPeriod-$sourceEndPeriod => matched ${sourceMatches.length} courses');
     if (sourceMatches.isEmpty) {
       _logger.w(
           '⚠️ Reschedule rule matched 0 courses! Source week:$sourceWeek day:$sourceDayOfWeek course:$courseName');
@@ -175,7 +179,7 @@ class TimetableRuleService {
 
     // 2. 若是互换模式，查找目标日期需要移动的课程
     final targetMatchedIdx = <int>{};
-    if (isSwap) {
+    if (effectiveIsSwap) {
       for (var i = 0; i < courses.length; i++) {
         final c = courses[i];
         if (c.dayOfWeek != targetDayOfWeek) continue;
@@ -195,20 +199,22 @@ class TimetableRuleService {
       final course = courses[i];
       var currentCourse = course;
 
-      // 如果是源日期的匹配课程，移除 sourceWeek
+      // 如果是源日期的匹配课程，非复制模式下移除 sourceWeek
       if (sourceMatchedIdx.contains(i)) {
-        final weeks = WeekParser.parseWeeks(currentCourse.weeks);
-        weeks.remove(sourceWeek);
-        if (weeks.isEmpty) {
-          continue; // 原时段不再有这门课
+        if (!isCopy) {
+          final weeks = WeekParser.parseWeeks(currentCourse.weeks);
+          weeks.remove(sourceWeek);
+          if (weeks.isEmpty) {
+            continue; // 原时段不再有这门课
+          }
+          currentCourse = currentCourse.copyWith(
+            weeks: WeekParser.formatWeeksForCourse(weeks),
+          );
         }
-        currentCourse = currentCourse.copyWith(
-          weeks: WeekParser.formatWeeksForCourse(weeks),
-        );
       }
 
       // 处理目标日期原有的课：如果不是互换且源日期有课移过去，目标日期当前周被冲突课程应当被冲掉/替换
-      if (!isSwap &&
+      if (!effectiveIsSwap &&
           sourceMatches.isNotEmpty &&
           currentCourse.dayOfWeek == targetDayOfWeek) {
         final weeks = WeekParser.parseWeeks(currentCourse.weeks);
@@ -243,7 +249,7 @@ class TimetableRuleService {
             );
           }
         }
-      } else if (isSwap && targetMatchedIdx.contains(i)) {
+      } else if (effectiveIsSwap && targetMatchedIdx.contains(i)) {
         // 互换模式下，目标课程移除 targetWeek
         final weeks = WeekParser.parseWeeks(currentCourse.weeks);
         weeks.remove(targetWeek);
@@ -277,7 +283,7 @@ class TimetableRuleService {
     }
 
     // 4. 若为互换模式，将目标课程放置到源日期 (sourceWeek, sourceDayOfWeek)
-    if (isSwap) {
+    if (effectiveIsSwap) {
       for (final tc in targetMatches) {
         updated.add(CourseModel(
           id: '${tc.id}_rescheduled_to_${sourceWeek}_$sourceDayOfWeek',
