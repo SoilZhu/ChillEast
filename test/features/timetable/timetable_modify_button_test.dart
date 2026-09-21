@@ -91,6 +91,25 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('两天的课程互相交换'), findsOneWidget);
 
+      // 测试周次选择后再选择星期，周次不会跳回
+      // 1. 打开原周次下拉菜单并选择第5周
+      await tester.tap(find.widgetWithText(DropdownButtonFormField<int>, '原周次'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('第5周').last);
+      await tester.pumpAndSettle();
+
+      // 2. 打开原星期下拉菜单并选择周二
+      await tester.tap(find.widgetWithText(DropdownButtonFormField<int>, '原星期'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('周二').last);
+      await tester.pumpAndSettle();
+
+      // 3. 验证原周次仍然保持为第5周，没有跳回去
+      final sourceWeekDropdown = tester.widget<DropdownButtonFormField<int>>(
+        find.widgetWithText(DropdownButtonFormField<int>, '原周次'),
+      );
+      expect(sourceWeekDropdown.initialValue, equals(5));
+
       await tester.tap(find.text('取消'));
       await tester.pumpAndSettle();
 

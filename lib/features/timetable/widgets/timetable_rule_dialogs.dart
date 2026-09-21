@@ -253,20 +253,8 @@ class TimetableRuleDialogs {
                 ? slotEndP
                 : (singleTargetPeriodChoice + 1);
 
-            // 整天调休计算：原周次只列出当天有课的周
-            final wholeWeekOptions = (() {
-              final s = <int>{};
-              for (final c in currentCourses) {
-                if (c.dayOfWeek != wholeSourceDayOfWeek) continue;
-                s.addAll(WeekParser.parseWeeks(c.weeks));
-              }
-              final list = s.toList()..sort();
-              return list.isNotEmpty ? list : <int>[wholeSourceWeek];
-            })();
-            final effWholeSourceWeek =
-                wholeWeekOptions.contains(wholeSourceWeek)
-                    ? wholeSourceWeek
-                    : wholeWeekOptions.first;
+            // 整天调休计算
+            final effWholeSourceWeek = wholeSourceWeek.clamp(1, 25);
             final wholeSourceCourses = currentCourses.where((c) {
               if (c.dayOfWeek != wholeSourceDayOfWeek) return false;
               return WeekParser.parseWeeks(c.weeks)
@@ -549,12 +537,12 @@ class TimetableRuleDialogs {
                                   labelText: '原周次',
                                   filled: false,
                                   border: OutlineInputBorder()),
-                              items: wholeWeekOptions
-                                  .map((w) => DropdownMenuItem(
-                                      value: w,
+                              items: List.generate(
+                                  25,
+                                  (i) => DropdownMenuItem(
+                                      value: i + 1,
                                       child: Text(
-                                          '第$w周${w == currentWeek ? ' (本周)' : ''}')))
-                                  .toList(),
+                                          '第${i + 1}周${i + 1 == currentWeek ? ' (本周)' : ''}'))),
                               onChanged: (v) => setState(() =>
                                   wholeSourceWeek = v ?? effWholeSourceWeek),
                             ),
@@ -573,24 +561,8 @@ class TimetableRuleDialogs {
                                   (i) => DropdownMenuItem(
                                       value: i + 1,
                                       child: Text(weekdayNames[i + 1]))),
-                              onChanged: (v) {
-                                setState(() {
-                                  wholeSourceDayOfWeek = v ?? 5;
-                                  final s = <int>{};
-                                  for (final c in currentCourses) {
-                                    if (c.dayOfWeek != wholeSourceDayOfWeek) {
-                                      continue;
-                                    }
-                                    s.addAll(WeekParser.parseWeeks(c.weeks));
-                                  }
-                                  final list = s.toList()..sort();
-                                  wholeSourceWeek = list.contains(currentWeek)
-                                      ? currentWeek
-                                      : (list.isNotEmpty
-                                          ? list.first
-                                          : wholeSourceWeek);
-                                });
-                              },
+                              onChanged: (v) =>
+                                  setState(() => wholeSourceDayOfWeek = v ?? 5),
                             ),
                           ),
                         ],
