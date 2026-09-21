@@ -89,15 +89,63 @@ void main() {
       expect(WeekParser.parseWeeks(math.weeks).contains(5), isTrue);
     });
 
-    test('Reschedule rule moves Friday courses of week 5 to Sunday of week 6', () {
+    test('Suspension rule with startDayOfWeek and endDayOfWeek spans continuous date range across weeks', () {
+      // 从第 5 周周四 到 第 6 周周二 连续停课（如放假）
+      final rule = TimetableRule.createSuspension(
+        startWeek: 5,
+        startDayOfWeek: 4, // 周四
+        endWeek: 6,
+        endDayOfWeek: 2,   // 周二
+      );
+
+      expect(rule.description, equals('第5周周四至第6周周二停课'));
+
+      final result = service.applyRules(testCourses, [rule]);
+
+      final math = result.firstWhere((c) => c.name == '高等数学');
+      final mathWeeks = WeekParser.parseWeeks(math.weeks);
+      // 第5周周一不在范围内，不应停课
+      expect(mathWeeks.contains(5), isTrue);
+      // 第6周周一在范围内（周四至次周周二包含第6周周一），停课
+      expect(mathWeeks.contains(6), isFalse);
+
+      final english = result.firstWhere((c) => c.name == '大学英语');
+      final englishWeeks = WeekParser.parseWeeks(english.weeks);
+      // 第5周周五在范围内，停课
+      expect(englishWeeks.contains(5), isFalse);
+      // 第6周周五在范围外，不停课
+      expect(englishWeeks.contains(6), isTrue);
+    });
+
+    test('Suspension rule with same start and end day suspends only that specific day', () {
+      final rule = TimetableRule.createSuspension(
+        startWeek: 5,
+        startDayOfWeek: 5,
+        endWeek: 5,
+        endDayOfWeek: 5,
+      );
+
+      expect(rule.description, equals('第5周周五停课'));
+
+      final result = service.applyRules(testCourses, [rule]);
+      final math = result.firstWhere((c) => c.name == '高等数学');
+      expect(WeekParser.parseWeeks(math.weeks).contains(5), isTrue);
+
+      final english = result.firstWhere((c) => c.name == '大学英语');
+      expect(WeekParser.parseWeeks(english.weeks).contains(5), isFalse);
+      expect(WeekParser.parseWeeks(english.weeks).contains(6), isTrue);
+    });
+
+    test('Reschedule rule moves Friday courses of week 5 to Sunday of week 6 (move / shift)', () {
       // 节假日调休：第 6 周周日 补 第 5 周周五 的课
       final rule = TimetableRule.createReschedule(
         sourceWeek: 5,
         sourceDayOfWeek: 5,
         targetWeek: 6,
         targetDayOfWeek: 7,
-        isSwap: false,
+        action: 'move',
       );
+      expect(rule.description, contains('（平移）'));
 
       final result = service.applyRules(testCourses, [rule]);
 
@@ -116,6 +164,116 @@ void main() {
       final sundayPhysics = result.where((c) => c.name == '大学物理' && c.dayOfWeek == 7).toList();
       expect(sundayPhysics.isNotEmpty, isTrue);
       expect(WeekParser.parseWeeks(sundayPhysics.first.weeks), contains(6));
+    });
+
+    test('Reschedule rule with action copy copies courses while preserving source courses', () {
+      final rule = TimetableRule.createReschedule(
+        sourceWeek: 5,
+        sourceDayOfWeek: 5,
+        targetWeek: 6,
+        targetDayOfWeek: 7,
+        action: 'copy',
+      );
+      expect(rule.description, contains('（复制）'));
+
+      final result = service.applyRules(testCourses, [rule]);
+
+      // 验证第 5 周周五原课程依然保留！
+      final fridayEnglish = result.where((c) => c.name == '大学英语' && c.dayOfWeek == 5).first;
+      expect(WeekParser.parseWeeks(fridayEnglish.weeks).contains(5), isTrue);
+
+      final fridayPhysics = result.where((c) => c.name == '大学物理' && c.dayOfWeek == 5).first;
+      expect(WeekParser.parseWeeks(fridayPhysics.weeks).contains(5), isTrue);
+
+      // 验证在周日同样生成了对应的副本
+      final sundayEnglish = result.where((c) => c.name == '大学英语' && c.dayOfWeek == 7).toList();
+      expect(sundayEnglish.isNotEmpty, isTrue);
+      expect(WeekParser.parseWeeks(sundayEnglish.first.weeks), contains(6));
+
+      final sundayPhysics = result.where((c) => c.name == '大学物理' && c.dayOfWeek == 7).toList();
+      expect(sundayPhysics.isNotEmpty, isTrue);
+      expect(WeekParser.parseWeeks(sundayPhysics.first.weeks), contains(6));
+    });
+
+    test('Reschedule rule with action swap swaps courses between source and target days', () {
+      final rule = TimetableRule.createReschedule(
+        sourceWeek: 5,
+        sourceDayOfWeek: 1, // 周一高等数学
+        targetWeek: 5,
+        targetDayOfWeek: 5, // 周五大学英语+大学物理
+        action: 'swap',
+      );
+      expect(rule.description, contains('（对调）'));
+
+      final result = service.applyRules(testCourses, [rule]);
+
+      // 验证周一有了周五的课，且不再有高数
+      final mondayMath = result.where((c) => c.name == '高等数学' && c.dayOfWeek == 1).first;
+      expect(WeekParser.parseWeeks(mondayMath.weeks).contains(5), isFalse);
+
+      final mondayEnglish = result.where((c) => c.name == '大学英语' && c.dayOfWeek == 1).toList();
+      expect(mondayEnglish.isNotEmpty, isTrue);
+      expect(WeekParser.parseWeeks(mondayEnglish.first.weeks), contains(5));
+
+      // 验证周五有了周一的高数，且不再有原本的英语和物理
+      final fridayMath = result.where((c) => c.name == '高等数学' && c.dayOfWeek == 5).toList();
+      expect(fridayMath.isNotEmpty, isTrue);
+      expect(WeekParser.parseWeeks(fridayMath.first.weeks), contains(5));
+
+      final fridayEnglish = result.where((c) => c.name == '大学英语' && c.dayOfWeek == 5).first;
+      expect(WeekParser.parseWeeks(fridayEnglish.weeks).contains(5), isFalse);
+    });
+
+    test('In copy and move modes, target day original courses are overwritten', () {
+      // 1. 复制模式：把周一高数复制到周五（第 5 周）
+      final copyRule = TimetableRule.createReschedule(
+        sourceWeek: 5,
+        sourceDayOfWeek: 1, // 周一高等数学
+        targetWeek: 5,
+        targetDayOfWeek: 5, // 周五大学英语+大学物理
+        action: 'copy',
+      );
+      final copyResult = service.applyRules(testCourses, [copyRule]);
+
+      // 源日期周一高数依然保留（复制特性）
+      final mondayMathCopy = copyResult.where((c) => c.name == '高等数学' && c.dayOfWeek == 1).first;
+      expect(WeekParser.parseWeeks(mondayMathCopy.weeks).contains(5), isTrue);
+
+      // 目标日周五原本的英语和物理被覆盖（不包含第 5 周）
+      final fridayEnglishCopy = copyResult.where((c) => c.name == '大学英语' && c.dayOfWeek == 5).first;
+      expect(WeekParser.parseWeeks(fridayEnglishCopy.weeks).contains(5), isFalse);
+      final fridayPhysicsCopy = copyResult.where((c) => c.name == '大学物理' && c.dayOfWeek == 5).first;
+      expect(WeekParser.parseWeeks(fridayPhysicsCopy.weeks).contains(5), isFalse);
+
+      // 目标日周五排上了高数
+      final fridayMathCopy = copyResult.where((c) => c.name == '高等数学' && c.dayOfWeek == 5).toList();
+      expect(fridayMathCopy.isNotEmpty, isTrue);
+      expect(WeekParser.parseWeeks(fridayMathCopy.first.weeks), contains(5));
+
+      // 2. 平移模式：把周一高数平移到周五（第 5 周）
+      final moveRule = TimetableRule.createReschedule(
+        sourceWeek: 5,
+        sourceDayOfWeek: 1,
+        targetWeek: 5,
+        targetDayOfWeek: 5,
+        action: 'move',
+      );
+      final moveResult = service.applyRules(testCourses, [moveRule]);
+
+      // 源日期周一高数被移走（平移特性）
+      final mondayMathMove = moveResult.where((c) => c.name == '高等数学' && c.dayOfWeek == 1).first;
+      expect(WeekParser.parseWeeks(mondayMathMove.weeks).contains(5), isFalse);
+
+      // 目标日周五原本的英语和物理被覆盖（不包含第 5 周）
+      final fridayEnglishMove = moveResult.where((c) => c.name == '大学英语' && c.dayOfWeek == 5).first;
+      expect(WeekParser.parseWeeks(fridayEnglishMove.weeks).contains(5), isFalse);
+      final fridayPhysicsMove = moveResult.where((c) => c.name == '大学物理' && c.dayOfWeek == 5).first;
+      expect(WeekParser.parseWeeks(fridayPhysicsMove.weeks).contains(5), isFalse);
+
+      // 目标日周五排上了高数
+      final fridayMathMove = moveResult.where((c) => c.name == '高等数学' && c.dayOfWeek == 5).toList();
+      expect(fridayMathMove.isNotEmpty, isTrue);
+      expect(WeekParser.parseWeeks(fridayMathMove.first.weeks), contains(5));
     });
 
     test('Custom course rule adds new course successfully', () {

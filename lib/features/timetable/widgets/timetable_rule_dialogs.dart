@@ -196,7 +196,7 @@ class TimetableRuleDialogs {
     int wholeSourceDayOfWeek = 5; // 周五
     int wholeTargetWeek = currentWeek;
     int wholeTargetDayOfWeek = 7; // 周日
-    bool isSwap = false;
+    String wholeDayAction = 'move'; // 'copy', 'move', 'swap'
 
     final weekdayNames = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     final periodChoiceNames = {
@@ -253,20 +253,8 @@ class TimetableRuleDialogs {
                 ? slotEndP
                 : (singleTargetPeriodChoice + 1);
 
-            // 整天调休计算：原周次只列出当天有课的周
-            final wholeWeekOptions = (() {
-              final s = <int>{};
-              for (final c in currentCourses) {
-                if (c.dayOfWeek != wholeSourceDayOfWeek) continue;
-                s.addAll(WeekParser.parseWeeks(c.weeks));
-              }
-              final list = s.toList()..sort();
-              return list.isNotEmpty ? list : <int>[wholeSourceWeek];
-            })();
-            final effWholeSourceWeek =
-                wholeWeekOptions.contains(wholeSourceWeek)
-                    ? wholeSourceWeek
-                    : wholeWeekOptions.first;
+            // 整天调休计算
+            final effWholeSourceWeek = wholeSourceWeek.clamp(1, 25);
             final wholeSourceCourses = currentCourses.where((c) {
               if (c.dayOfWeek != wholeSourceDayOfWeek) return false;
               return WeekParser.parseWeeks(c.weeks)
@@ -285,8 +273,10 @@ class TimetableRuleDialogs {
                   ),
                 ],
               ),
-              content: SingleChildScrollView(
-                child: Column(
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -549,12 +539,12 @@ class TimetableRuleDialogs {
                                   labelText: '原周次',
                                   filled: false,
                                   border: OutlineInputBorder()),
-                              items: wholeWeekOptions
-                                  .map((w) => DropdownMenuItem(
-                                      value: w,
+                              items: List.generate(
+                                  25,
+                                  (i) => DropdownMenuItem(
+                                      value: i + 1,
                                       child: Text(
-                                          '第$w周${w == currentWeek ? ' (本周)' : ''}')))
-                                  .toList(),
+                                          '第${i + 1}周${i + 1 == currentWeek ? ' (本周)' : ''}'))),
                               onChanged: (v) => setState(() =>
                                   wholeSourceWeek = v ?? effWholeSourceWeek),
                             ),
@@ -573,24 +563,8 @@ class TimetableRuleDialogs {
                                   (i) => DropdownMenuItem(
                                       value: i + 1,
                                       child: Text(weekdayNames[i + 1]))),
-                              onChanged: (v) {
-                                setState(() {
-                                  wholeSourceDayOfWeek = v ?? 5;
-                                  final s = <int>{};
-                                  for (final c in currentCourses) {
-                                    if (c.dayOfWeek != wholeSourceDayOfWeek) {
-                                      continue;
-                                    }
-                                    s.addAll(WeekParser.parseWeeks(c.weeks));
-                                  }
-                                  final list = s.toList()..sort();
-                                  wholeSourceWeek = list.contains(currentWeek)
-                                      ? currentWeek
-                                      : (list.isNotEmpty
-                                          ? list.first
-                                          : wholeSourceWeek);
-                                });
-                              },
+                              onChanged: (v) =>
+                                  setState(() => wholeSourceDayOfWeek = v ?? 5),
                             ),
                           ),
                         ],
@@ -646,21 +620,56 @@ class TimetableRuleDialogs {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title:
-                            const Text('两天对调', style: TextStyle(fontSize: 14)),
-                        subtitle: Text(isSwap ? '两天的课互换' : '只把课挪过去',
-                            style: const TextStyle(fontSize: 12)),
-                        value: isSwap,
-                        onChanged: (v) => setState(() => isSwap = v),
+                      const SizedBox(height: 14),
+                      const Text('调课方式',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _buildModeOption(
+                            context: context,
+                            selected: wholeDayAction == 'copy',
+                            label: '复制',
+                            onTap: () =>
+                                setState(() => wholeDayAction = 'copy'),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildModeOption(
+                            context: context,
+                            selected: wholeDayAction == 'move',
+                            label: '平移',
+                            onTap: () =>
+                                setState(() => wholeDayAction = 'move'),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildModeOption(
+                            context: context,
+                            selected: wholeDayAction == 'swap',
+                            label: '对调',
+                            onTap: () =>
+                                setState(() => wholeDayAction = 'swap'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        wholeDayAction == 'copy'
+                            ? '原日期的课保留，目标日原本的课会被覆盖'
+                            : (wholeDayAction == 'swap'
+                                ? '两天的课程互相交换'
+                                : '只把课挪过去，原日期的课不保留，目标日原本的课会被覆盖'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).textTheme.bodySmall?.color ??
+                              Colors.grey,
+                        ),
                       ),
                     ],
                   ],
                 ),
               ),
-              actions: [
+            ),
+            actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('取消'),
@@ -744,7 +753,8 @@ class TimetableRuleDialogs {
                         targetWeek: wholeTargetWeek,
                         targetDayOfWeek: wholeTargetDayOfWeek,
                         courseName: null,
-                        isSwap: isSwap,
+                        action: wholeDayAction,
+                        isSwap: wholeDayAction == 'swap',
                       );
                       await TimetableRuleService().addRule(rule);
                       onRuleApplied();
@@ -775,8 +785,9 @@ class TimetableRuleDialogs {
     required VoidCallback onRuleApplied,
   }) async {
     int startWeek = currentWeek;
+    int startDayOfWeek = 1;
     int endWeek = currentWeek;
-    int? dayOfWeek; // null 代表不限
+    int endDayOfWeek = 7;
     String? selectedCourseName; // null 代表全部
     bool limitPeriod = false;
     int startPeriod = 1;
@@ -796,13 +807,17 @@ class TimetableRuleDialogs {
                 children: [
                   Icon(Icons.event_busy_rounded, color: Colors.orange),
                   SizedBox(width: 8),
-                  Text('停课',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Expanded(
+                    child: Text('停课',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                  ),
                 ],
               ),
-              content: SingleChildScrollView(
-                child: Column(
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -819,16 +834,54 @@ class TimetableRuleDialogs {
                             items: List.generate(
                                 25,
                                 (i) => DropdownMenuItem(
-                                    value: i + 1, child: Text('第${i + 1}周'))),
+                                    value: i + 1,
+                                    child: Text(
+                                        '第${i + 1}周${i + 1 == currentWeek ? ' (本周)' : ''}'))),
                             onChanged: (v) {
+                              if (v == null) return;
                               setState(() {
-                                startWeek = v ?? 1;
-                                if (endWeek < startWeek) endWeek = startWeek;
+                                startWeek = v;
+                                if (startWeek * 7 + startDayOfWeek >
+                                    endWeek * 7 + endDayOfWeek) {
+                                  endWeek = startWeek;
+                                  endDayOfWeek = startDayOfWeek;
+                                }
                               });
                             },
                           ),
                         ),
                         const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButtonFormField<int>(
+                            isExpanded: true,
+                            value: startDayOfWeek,
+                            decoration: const InputDecoration(
+                                labelText: '星期',
+                                filled: false,
+                                border: OutlineInputBorder()),
+                            items: List.generate(
+                                7,
+                                (i) => DropdownMenuItem(
+                                    value: i + 1,
+                                    child: Text(weekdayNames[i + 1]))),
+                            onChanged: (v) {
+                              if (v == null) return;
+                              setState(() {
+                                startDayOfWeek = v;
+                                if (startWeek * 7 + startDayOfWeek >
+                                    endWeek * 7 + endDayOfWeek) {
+                                  endWeek = startWeek;
+                                  endDayOfWeek = startDayOfWeek;
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
                         Expanded(
                           child: DropdownButtonFormField<int>(
                             isExpanded: true,
@@ -840,34 +893,50 @@ class TimetableRuleDialogs {
                             items: List.generate(
                                 25,
                                 (i) => DropdownMenuItem(
-                                    value: i + 1, child: Text('第${i + 1}周'))),
+                                    value: i + 1,
+                                    child: Text(
+                                        '第${i + 1}周${i + 1 == currentWeek ? ' (本周)' : ''}'))),
                             onChanged: (v) {
+                              if (v == null) return;
                               setState(() {
-                                endWeek = v ?? startWeek;
-                                if (endWeek < startWeek) startWeek = endWeek;
+                                endWeek = v;
+                                if (endWeek * 7 + endDayOfWeek <
+                                    startWeek * 7 + startDayOfWeek) {
+                                  startWeek = endWeek;
+                                  startDayOfWeek = endDayOfWeek;
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButtonFormField<int>(
+                            isExpanded: true,
+                            value: endDayOfWeek,
+                            decoration: const InputDecoration(
+                                labelText: '星期',
+                                filled: false,
+                                border: OutlineInputBorder()),
+                            items: List.generate(
+                                7,
+                                (i) => DropdownMenuItem(
+                                    value: i + 1,
+                                    child: Text(weekdayNames[i + 1]))),
+                            onChanged: (v) {
+                              if (v == null) return;
+                              setState(() {
+                                endDayOfWeek = v;
+                                if (endWeek * 7 + endDayOfWeek <
+                                    startWeek * 7 + startDayOfWeek) {
+                                  startWeek = endWeek;
+                                  startDayOfWeek = endDayOfWeek;
+                                }
                               });
                             },
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<int?>(
-                      isExpanded: true,
-                      value: dayOfWeek,
-                      decoration: const InputDecoration(
-                          labelText: '星期',
-                          filled: false,
-                          border: OutlineInputBorder()),
-                      items: [
-                        const DropdownMenuItem(value: null, child: Text('整周')),
-                        ...List.generate(
-                            7,
-                            (i) => DropdownMenuItem(
-                                value: i + 1,
-                                child: Text(weekdayNames[i + 1]))),
-                      ],
-                      onChanged: (v) => setState(() => dayOfWeek = v),
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String?>(
@@ -909,8 +978,14 @@ class TimetableRuleDialogs {
                                   12,
                                   (i) => DropdownMenuItem(
                                       value: i + 1, child: Text('第${i + 1}节'))),
-                              onChanged: (v) =>
-                                  setState(() => startPeriod = v ?? 1),
+                              onChanged: (v) {
+                                setState(() {
+                                  startPeriod = v ?? 1;
+                                  if (startPeriod > endPeriod) {
+                                    endPeriod = startPeriod;
+                                  }
+                                });
+                              },
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -926,8 +1001,14 @@ class TimetableRuleDialogs {
                                   12,
                                   (i) => DropdownMenuItem(
                                       value: i + 1, child: Text('第${i + 1}节'))),
-                              onChanged: (v) =>
-                                  setState(() => endPeriod = v ?? 2),
+                              onChanged: (v) {
+                                setState(() {
+                                  endPeriod = v ?? 2;
+                                  if (endPeriod < startPeriod) {
+                                    startPeriod = endPeriod;
+                                  }
+                                });
+                              },
                             ),
                           ),
                         ],
@@ -936,7 +1017,8 @@ class TimetableRuleDialogs {
                   ],
                 ),
               ),
-              actions: [
+            ),
+            actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('取消'),
@@ -951,7 +1033,8 @@ class TimetableRuleDialogs {
                     final rule = TimetableRule.createSuspension(
                       startWeek: startWeek,
                       endWeek: endWeek,
-                      dayOfWeek: dayOfWeek,
+                      startDayOfWeek: startDayOfWeek,
+                      endDayOfWeek: endDayOfWeek,
                       courseName: selectedCourseName,
                       startPeriod: limitPeriod ? startPeriod : null,
                       endPeriod: limitPeriod ? endPeriod : null,
@@ -1003,13 +1086,17 @@ class TimetableRuleDialogs {
                 children: [
                   Icon(Icons.add_circle_outline_rounded, color: Colors.green),
                   SizedBox(width: 8),
-                  Text('添加课程',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Expanded(
+                    child: Text('添加课程',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                  ),
                 ],
               ),
-              content: SingleChildScrollView(
-                child: Column(
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
@@ -1137,7 +1224,8 @@ class TimetableRuleDialogs {
                   ],
                 ),
               ),
-              actions: [
+            ),
+            actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('取消'),
