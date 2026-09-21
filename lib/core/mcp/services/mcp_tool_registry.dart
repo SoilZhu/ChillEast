@@ -13,8 +13,10 @@ import '../tools/library_tool.dart';
 import '../tools/sunshine_tool.dart';
 import '../tools/questionnaire_tool.dart';
 import '../tools/leave_tool.dart';
+import '../tools/transaction_tool.dart';
 import '../../../features/workspace/services/electricity_service.dart';
 import '../../../features/workspace/services/campus_card_service.dart';
+import '../../../features/workspace/services/transaction_service.dart';
 import '../../../features/library/providers/library_provider.dart';
 import '../../../features/sunshine/services/sunshine_service.dart';
 import '../../../features/questionnaire/services/questionnaire_service.dart';
@@ -28,6 +30,7 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
   final sunshineService = ref.watch(sunshineServiceProvider);
   final questionnaireService = ref.watch(questionnaireServiceProvider);
   final leaveService = ref.watch(leaveServiceProvider);
+  final transactionService = ref.watch(transactionServiceProvider);
 
   final registry = McpToolRegistry();
 
@@ -92,6 +95,10 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
 
   // 19. 请假代提交（需用户确认）
   registry.register(LeaveSubmitTool.create(service: leaveService));
+
+  // 20. 校园卡账单查询 (同时注册 query_card_transactions 与 query_bill 别名)
+  registry.register(TransactionTool.create(service: transactionService));
+  registry.register(TransactionTool.create(service: transactionService, toolName: 'query_bill'));
 
   return registry;
 });
