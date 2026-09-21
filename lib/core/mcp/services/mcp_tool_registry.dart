@@ -12,11 +12,13 @@ import '../tools/notice_tool.dart';
 import '../tools/library_tool.dart';
 import '../tools/sunshine_tool.dart';
 import '../tools/questionnaire_tool.dart';
+import '../tools/leave_tool.dart';
 import '../../../features/workspace/services/electricity_service.dart';
 import '../../../features/workspace/services/campus_card_service.dart';
 import '../../../features/library/providers/library_provider.dart';
 import '../../../features/sunshine/services/sunshine_service.dart';
 import '../../../features/questionnaire/services/questionnaire_service.dart';
+import '../../../features/leave/services/leave_service.dart';
 
 /// MCP Tool Registry Provider
 final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
@@ -25,6 +27,7 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
   final libraryService = ref.watch(libraryServiceProvider);
   final sunshineService = ref.watch(sunshineServiceProvider);
   final questionnaireService = ref.watch(questionnaireServiceProvider);
+  final leaveService = ref.watch(leaveServiceProvider);
 
   final registry = McpToolRegistry();
 
@@ -79,6 +82,15 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
 
   // 16. 学工问卷代填提交（需用户确认）
   registry.register(QuestionnaireSubmitTool.create(service: questionnaireService));
+
+  // 17. 请假记录查询
+  registry.register(LeaveListTool.create(service: leaveService));
+
+  // 18. 请假单详情查询
+  registry.register(LeaveDetailTool.create(service: leaveService));
+
+  // 19. 请假代提交（需用户确认）
+  registry.register(LeaveSubmitTool.create(service: leaveService));
 
   return registry;
 });
