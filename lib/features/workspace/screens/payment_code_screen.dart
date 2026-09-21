@@ -9,6 +9,7 @@ import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/route_utils.dart';
 import 'payment_result_screen.dart';
 import 'campus_card_recharge_screen.dart';
+import 'transaction_history_screen.dart';
 
 class PaymentCodeScreen extends ConsumerStatefulWidget {
   const PaymentCodeScreen({super.key});
@@ -334,7 +335,58 @@ class _PaymentCodeScreenState extends ConsumerState<PaymentCodeScreen> with Widg
                     ],
                   ),
                 ),
-                
+
+                const SizedBox(height: 24),
+
+                // 独立账单入口 (阳光「填写诉求」条目样式)
+                InkWell(
+                  onTap: () => Navigator.push(context, createSlideUpRoute(const TransactionHistoryScreen())),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF1E1E1E)
+                          : Colors.white,
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withOpacity(0.12)
+                            : Colors.grey.withOpacity(0.3),
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.receipt_long_outlined,
+                          size: 20,
+                          color: Color(0xFF1677FF),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          '账单',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF202124),
+                          ),
+                        ),
+                        const Spacer(),
+                        Icon(
+                          Icons.chevron_right,
+                          size: 20,
+                          color:
+                              isDark ? Colors.white38 : Colors.grey,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 24),
                 
                 // 提示语 (左对齐)
