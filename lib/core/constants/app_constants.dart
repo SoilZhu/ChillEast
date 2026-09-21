@@ -23,6 +23,13 @@ class AppConstants {
   static const String xgxtBaseUrl = 'https://xgxt.hunau.edu.cn';
   static const String xgxtCasUrl = '$xgxtBaseUrl/cas';
   static const String xgxtWapUrl = '$xgxtBaseUrl/wap/main/welcome';
+  // 学工问卷 (来自问卷 HAR: xs_wjdc 列表 / ks_sj 详情与提交)
+  static const String xgxtQuestionnaireListUrl =
+      '$xgxtBaseUrl/content/tabledata/fwk/wjdc/stu/xs_wjdc';
+  static const String xgxtQuestionnaireDetailUrl =
+      '$xgxtBaseUrl/content/json/fwk/wjdc/stu/ks_sj/sjvo';
+  static const String xgxtQuestionnaireSubmitUrl =
+      '$xgxtBaseUrl/content/fwk/wjdc/stu/ks_sj/submit';
   
   // 教务系统 (TODO: 暂时保留，等待后续重构)
   static const String jwxtBaseUrl = 'http://jwxt.hunau.edu.cn';
