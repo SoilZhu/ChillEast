@@ -15,6 +15,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
   static final List<FunctionItem> _masterPool = [
     const FunctionItem(id: 'sunshine', label: '阳光服务', icon: Icons.wb_sunny_outlined, color: Color(0xFF09C489)),
     const FunctionItem(id: 'questionnaire', label: '学工问卷', icon: Icons.assignment_outlined, color: Color(0xFF3476E6)),
+    const FunctionItem(id: 'leave', label: '请假申请', icon: Icons.event_note_outlined, color: Color(0xFF009688)),
     const FunctionItem(id: 'payment_code', label: '付款码', icon: Icons.qr_code_scanner_outlined, color: Color(0xFF00C853)),
     const FunctionItem(id: 'recharge', label: '校园卡充值', icon: Icons.account_balance_wallet_outlined, color: Colors.orange),
     const FunctionItem(id: 'library', label: '图书馆', icon: Icons.library_books_outlined, color: Color(0xFF795548)),
@@ -51,7 +52,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     // 默认全选，按照指定顺序
     final functionIds = [
       'payment_code', 'recharge', 'ele_recharge', 'library', 'empty_classroom', 'repairs', 
-      'sunshine', 'questionnaire', 'gym', 'xgxt', 'teaching_eval', 'score', 'vpn', 'campus_card', 'bus', 'cs_bus'
+      'sunshine', 'questionnaire', 'leave', 'gym', 'xgxt', 'teaching_eval', 'score', 'vpn', 'campus_card', 'bus', 'cs_bus'
     ];
     final items = functionIds.map((id) => _masterPool.firstWhere((item) => item.id == id)).toList();
     // 兜底：只加了 _masterPool 忘记加 functionIds 的新功能，自动追加为可见，避免新装用户丢失

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../sunshine/screens/sunshine_screen.dart';
 import '../../questionnaire/screens/questionnaire_list_screen.dart';
+import '../../leave/screens/leave_list_screen.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/state/auth_state.dart';
 import '../../../core/utils/route_utils.dart';
@@ -140,6 +141,11 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
       case 'questionnaire':
         isLoggedIn
             ? _safeNavigate(const QuestionnaireListScreen())
+            : _showLoginDialog();
+        break;
+      case 'leave':
+        isLoggedIn
+            ? _safeNavigate(const LeaveListScreen())
             : _showLoginDialog();
         break;
       case 'repairs':
