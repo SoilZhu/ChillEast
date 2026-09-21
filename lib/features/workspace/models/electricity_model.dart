@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 class ElectricityArea {
   final String id;
   final String name;
@@ -55,13 +53,38 @@ class ElectricityRoom {
 class ElectricityBalanceInfo {
   final String balance;
   final String? detail;
+  final String? accname;
+  final int? elestatus;
 
-  ElectricityBalanceInfo({required this.balance, this.detail});
+  ElectricityBalanceInfo({
+    required this.balance,
+    this.detail,
+    this.accname,
+    this.elestatus,
+  });
 
   factory ElectricityBalanceInfo.fromJson(Map<String, dynamic> json) {
+    final balanceVal = json['eledetail'] ??
+        json['balance'] ??
+        json['elebalance'] ??
+        json['syje'] ??
+        json['ye'] ??
+        json['remainElec'] ??
+        json['remainelec'] ??
+        json['restmoney'] ??
+        json['elec_balance'] ??
+        '0.00';
+    final accnameVal = (json['accname'] ?? json['roomname'] ?? json['roomdesc'])?.toString();
+    final detailVal = (json['eleaccdetail'] ?? json['detail'] ?? accnameVal)?.toString();
+    final statusVal = json['elestatus'] is int
+        ? json['elestatus'] as int
+        : int.tryParse(json['elestatus']?.toString() ?? '');
+
     return ElectricityBalanceInfo(
-      balance: (json['balance'] ?? json['elebalance'] ?? '0.00').toString(),
-      detail: json['eleaccdetail']?.toString(),
+      balance: balanceVal.toString(),
+      detail: detailVal,
+      accname: accnameVal,
+      elestatus: statusVal,
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:ChillEast/core/mcp/tools/library_tool.dart';
 import 'package:ChillEast/core/mcp/tools/sunshine_tool.dart';
 import 'package:ChillEast/features/library/models/library_models.dart';
 import 'package:ChillEast/features/library/services/library_service.dart';
+import 'package:ChillEast/features/library/utils/library_time_utils.dart';
 import 'package:ChillEast/features/sunshine/models/sunshine_models.dart';
 import 'package:ChillEast/features/sunshine/services/sunshine_service.dart';
 
@@ -131,11 +132,11 @@ void main() {
       final fakeService = FakeLibraryService(indexData: mockIndexData);
       final tool = LibraryReserveTool.create(service: fakeService);
 
-      // 用户同意后传入 confirmed=true
+      final reserveDay = LibraryTimeUtils.availableReserveDays().last;
       final result = await tool.execute({
         'roomId': 301,
         'seatNum': '042',
-        'day': '2026-09-18',
+        'day': reserveDay,
         'startTime': '08:00',
         'endTime': '10:00',
         'confirmed': true,

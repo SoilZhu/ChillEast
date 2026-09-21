@@ -36,6 +36,9 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
   final List<double> _presetAmounts = [10, 20, 50, 100];
   CampusCardInfo? _cardInfo;
   bool _isPaying = false;
+  bool _isLoadingBalance = false;
+  ElectricityBalanceInfo? _balanceInfo;
+  String? _balanceError;
 
   @override
   void initState() {
@@ -101,6 +104,9 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
         setState(() {
           _isLoading = false;
         });
+        if (_selectedRoom != null) {
+          _loadBalance();
+        }
       }
     } catch (e) {
       _logger.e('Failed to init electricity data: $e');
@@ -108,6 +114,50 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
         setState(() {
           _error = '加载列表失败，请重试';
           _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadBalance() async {
+    if (_selectedArea == null || _selectedBuilding == null || _selectedRoom == null) {
+      if (mounted) {
+        setState(() {
+          _balanceInfo = null;
+          _balanceError = null;
+          _isLoadingBalance = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoadingBalance = true;
+        _balanceError = null;
+      });
+    }
+
+    try {
+      final service = ref.read(electricityServiceProvider);
+      final info = await service.getBalance(
+        areaName: _selectedArea!.name,
+        buildingName: _selectedBuilding!.name,
+        roomId: _selectedRoom!.id,
+        mertype: _selectedRoom!.mertype,
+      );
+      if (mounted) {
+        setState(() {
+          _balanceInfo = info;
+          _isLoadingBalance = false;
+        });
+      }
+    } catch (e) {
+      _logger.w('Failed to load electricity balance: $e');
+      if (mounted) {
+        setState(() {
+          _balanceError = e.toString();
+          _isLoadingBalance = false;
         });
       }
     }
@@ -137,6 +187,8 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
           _selectedBuilding = buildings.isNotEmpty ? buildings.first : null;
           _rooms = [];
           _selectedRoom = null;
+          _balanceInfo = null;
+          _balanceError = null;
         });
         if (_selectedBuilding != null) {
           await _loadRooms(areaName, _selectedBuilding!.name);
@@ -157,6 +209,9 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
           _selectedRoom = rooms.isNotEmpty ? rooms.first : null;
         });
         _saveCurrentSelection();
+        if (_selectedRoom != null) {
+          _loadBalance();
+        }
       }
     } catch (e) {
       _logger.w('Failed to load rooms: $e');
@@ -211,6 +266,7 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
         areaName: _selectedArea!.name,
         buildingName: _selectedBuilding!.name,
         roomId: _selectedRoom!.id,
+        roomName: _selectedRoom!.name,
         mertype: _selectedRoom!.mertype,
         amount: amount.toDouble(),
       );
@@ -229,6 +285,7 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
             ),
           );
           ref.read(campusCardServiceProvider).fetchRechargeInfo();
+          _loadBalance();
         } else {
           showModalBottomSheet(
             context: context,
@@ -320,6 +377,7 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
             areaName: _selectedArea!.name,
             buildingName: _selectedBuilding!.name,
             roomId: _selectedRoom!.id,
+            roomName: _selectedRoom!.name,
             mertype: _selectedRoom!.mertype,
             amount: amount.toDouble(),
           );
@@ -331,6 +389,7 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
     ).then((_) {
       if (mounted) {
         ref.read(campusCardServiceProvider).fetchRechargeInfo();
+        _loadBalance();
       }
     });
   }
@@ -338,8 +397,8 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final themeColor = const Color(AppConstants.primaryColorValue);
-    final amberColor = const Color(0xFFFFC107);
+    const themeColor = Color(AppConstants.primaryColorValue);
+    const amberColor = Color(0xFFFFC107);
     
     return Scaffold(
       appBar: AppBar(
@@ -372,25 +431,105 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Flat Header (Amber)
-                    Container(
+                  Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isDark ? themeColor.withOpacity(0.1) : amberColor.withOpacity(0.05),
+                      color: isDark ? themeColor.withValues(alpha: 0.1) : amberColor.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: isDark ? themeColor.withOpacity(0.2) : amberColor.withOpacity(0.2)),
+                      border: Border.all(color: isDark ? themeColor.withValues(alpha: 0.2) : amberColor.withValues(alpha: 0.2)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('当前充值房间', style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.black54, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '当前充值房间',
+                              style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.black54, fontWeight: FontWeight.bold),
+                            ),
+                            if (_selectedRoom != null)
+                              InkWell(
+                                onTap: _isLoadingBalance ? null : _loadBalance,
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (_isLoadingBalance)
+                                        SizedBox(
+                                          width: 11,
+                                          height: 11,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 1.5,
+                                            color: isDark ? Colors.white70 : Colors.black54,
+                                          ),
+                                        )
+                                      else
+                                        Icon(
+                                          Icons.refresh,
+                                          size: 13,
+                                          color: isDark ? Colors.white54 : Colors.black54,
+                                        ),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        _isLoadingBalance ? '刷新中' : '刷新余额',
+                                        style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : Colors.black54),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
                         Text(
                           _selectedRoom != null 
                             ? '${_selectedArea?.name} - ${_selectedBuilding?.name} - ${_selectedRoom?.name}'
                             : '尚未选择房间',
-                          style: TextStyle(fontSize: 15, color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.w500),
+                          style: TextStyle(fontSize: 15, color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.w600),
                         ),
+                        const SizedBox(height: 12),
+                        Text(
+                          '电费余额',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? Colors.white54 : Colors.black54,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (_balanceError != null && _balanceInfo == null)
+                          InkWell(
+                            onTap: _loadBalance,
+                            child: Row(
+                              children: [
+                                Text(
+                                  '获取失败，点击重试',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.red.shade400,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(Icons.refresh, size: 13, color: Colors.red.shade400),
+                              ],
+                            ),
+                          )
+                        else
+                          Text(
+                            _balanceInfo != null
+                                ? '${_balanceInfo!.balance} 元'
+                                : (_isLoadingBalance ? '查询中...' : '0.00 元'),
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: isDark ? Colors.white : Colors.black87,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -414,6 +553,7 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
                     final room = _rooms.firstWhere((e) => e.name == val);
                     setState(() => _selectedRoom = room);
                     _saveCurrentSelection();
+                    _loadBalance();
                   }),
                   
                   const SizedBox(height: 32),
@@ -482,94 +622,99 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
                   // 底部支付操作按钮 (校园卡支付、微信支付、支付宝支付)
                   Align(
                     alignment: Alignment.centerRight,
-                    child: Wrap(
-                      alignment: WrapAlignment.end,
-                      spacing: 8,
-                      runSpacing: 10,
-                      children: [
-                        // 校园卡支付
-                        SizedBox(
-                          height: 42,
-                          child: ElevatedButton(
-                            onPressed: _isPaying ? null : _handleCampusCardRecharge,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: themeColor,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                            ),
-                            child: _isPaying 
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                )
-                              : const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.credit_card, size: 18),
-                                    SizedBox(width: 6),
-                                    Text('校园卡支付', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                  ],
-                                ),
-                          ),
-                        ),
-                        // 微信支付
-                        SizedBox(
-                          height: 42,
-                          child: ElevatedButton(
-                            onPressed: _isPaying ? null : () => _handleThirdPartyRecharge(PaymentMethod.wechat),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF07C160),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SvgPicture.string(
-                                  kWechatSvg,
-                                  width: 18,
-                                  height: 18,
-                                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                                ),
-                                const SizedBox(width: 6),
-                                const Text('微信支付', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                              ],
+                    child: IntrinsicWidth(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // 校园卡支付
+                          SizedBox(
+                            width: 125,
+                            height: 42,
+                            child: ElevatedButton(
+                              onPressed: _isPaying ? null : _handleCampusCardRecharge,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: themeColor,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                              ),
+                              child: _isPaying 
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  )
+                                : const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.credit_card, size: 18),
+                                      SizedBox(width: 6),
+                                      Text('校园卡支付', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                    ],
+                                  ),
                             ),
                           ),
-                        ),
-                        // 支付宝支付
-                        SizedBox(
-                          height: 42,
-                          child: ElevatedButton(
-                            onPressed: _isPaying ? null : () => _handleThirdPartyRecharge(PaymentMethod.alipay),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1677FF),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SvgPicture.string(
-                                  kAlipaySvg,
-                                  width: 18,
-                                  height: 18,
-                                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                                ),
-                                const SizedBox(width: 6),
-                                const Text('支付宝支付', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                              ],
+                          const SizedBox(height: 10),
+                          // 微信支付
+                          SizedBox(
+                            width: 125,
+                            height: 42,
+                            child: ElevatedButton(
+                              onPressed: _isPaying ? null : () => _handleThirdPartyRecharge(PaymentMethod.wechat),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF07C160),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SvgPicture.string(
+                                    kWechatSvg,
+                                    width: 18,
+                                    height: 18,
+                                    colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Text('微信支付', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 10),
+                          // 支付宝支付
+                          SizedBox(
+                            width: 125,
+                            height: 42,
+                            child: ElevatedButton(
+                              onPressed: _isPaying ? null : () => _handleThirdPartyRecharge(PaymentMethod.alipay),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1677FF),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SvgPicture.string(
+                                    kAlipaySvg,
+                                    width: 18,
+                                    height: 18,
+                                    colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Text('支付宝支付', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   
