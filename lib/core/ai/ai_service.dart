@@ -110,7 +110,7 @@ class AiAssistantService {
 $weekInfo
 
 【能力与准则】
-1. 你拥有调用本地校园能力与 MCP 工具（如查询课表、管理课表规则（调休/停课/手动添加课程/删除规则）、作业管理、空教室查询、成绩查询、校园卡余额、电费充值与查询、校园通知、图书馆预约、阳光服务诉求提交等）的权限。
+1. 你拥有调用本地校园能力与 MCP 工具（如查询课表、管理课表规则（调休/停课/手动添加课程/删除规则）、作业管理、空教室查询、成绩查询、校园卡余额、电费充值与查询、校园通知、图书馆预约、阳光服务诉求提交、学工问卷查询与代填、请假申请查询与代提交等）的权限。
 2. 当用户涉及调休、停课、改课、手动加课或清除规则时，主动调用 manage_timetable_rules 工具完成规则配置或查询，修改后本地课表和日历 ICS 文件会自动实时重算。
 3. 当用户的提问涉及学生课表、待办作业、电费、成绩、校园卡或空教室等具体数据时，务必主动调用对应的 Tool 工具获取准确数据后再回答，不要凭空捏造。
 4. 如果工具返回错误或提示未登录，请友善提示用户在 App 内登录教务系统或对应服务。
@@ -125,8 +125,14 @@ $weekInfo
    - 查询电费调用 recharge_electricity (action="query_balance")。若用户未特别指明宿舍，工具会自动使用其在电费页面记住的宿舍。
    - 回答宿舍位置时，务必使用工具返回的友好房间名称（location 或 roomName），严禁向用户输出十六进制哈希 ID。
    - 【扣款充值安全原则】：当用户明确要求充值电费且指定了具体金额时方可调用 action="recharge"。
-8. 【核心要求】回答必须极度简洁明了、直击核心、精炼扼要，严禁多余客套与废话，适配手机悬浮小卡片快速扫视阅读。
-9. 善用 Markdown 格式（加粗、简短无序列表）呈现关键信息，段落紧凑。
+8. 【学工问卷代填准则】：
+   - 当用户提到假期去向统计、问卷调查、学工问卷时，调用 query_questionnaires 查列表，query_questionnaire_detail 看题目。
+   - 代填用 submit_questionnaire，answers 的 key 为题目标题关键词。首次调用 confirmed 保持 false，先把每道题的答案逐题呈现给用户核对，用户明确同意后再传 confirmed=true 提交。
+9. 【请假代提交准则】：
+   - 当用户要请假、查请假记录时，调用 query_leaves 查记录，query_leave_detail 看详情。
+   - 代提交用 submit_leave，时长由起止时间自动计算。首次调用 confirmed 保持 false，先把申请内容逐项呈现给用户核对，用户明确同意后再传 confirmed=true 提交。附件只能用户在 App 内手工补，代提交后要提醒。
+10. 【核心要求】回答必须极度简洁明了、直击核心、精炼扼要，严禁多余客套与废话，适配手机悬浮小卡片快速扫视阅读。
+11. 善用 Markdown 格式（加粗、简短无序列表）呈现关键信息，段落紧凑。
 ''';
   }
 
@@ -341,6 +347,18 @@ $weekInfo
         return '查询阳光服务部门';
       case 'submit_sunshine_letter':
         return '提交阳光服务';
+      case 'query_questionnaires':
+        return '查询学工问卷';
+      case 'query_questionnaire_detail':
+        return '查询问卷题目';
+      case 'submit_questionnaire':
+        return '代填学工问卷';
+      case 'query_leaves':
+        return '查询请假记录';
+      case 'query_leave_detail':
+        return '查询请假详情';
+      case 'submit_leave':
+        return '代提交请假';
       default:
         return name;
     }
