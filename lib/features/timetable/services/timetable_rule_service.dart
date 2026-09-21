@@ -83,24 +83,24 @@ class TimetableRuleService {
     final startWeek = rule.data['startWeek'] as int? ?? 1;
     final endWeek = rule.data['endWeek'] as int? ?? 25;
     final dayOfWeek = rule.data['dayOfWeek'] as int?;
+    final startDayOfWeek = rule.data['startDayOfWeek'] as int?;
+    final endDayOfWeek = rule.data['endDayOfWeek'] as int?;
     final courseName = (rule.data['courseName'] as String?)?.trim();
     final startPeriod = rule.data['startPeriod'] as int?;
     final endPeriod = rule.data['endPeriod'] as int?;
 
     final updated = <CourseModel>[];
 
+    final hasRangeDays = startDayOfWeek != null || endDayOfWeek != null;
+    final effStartDay = startDayOfWeek ?? dayOfWeek ?? 1;
+    final effEndDay = endDayOfWeek ?? dayOfWeek ?? 7;
+    final startKey = startWeek * 7 + effStartDay;
+    final endKey = endWeek * 7 + effEndDay;
+
     for (final course in courses) {
       // 课程名称过滤
       if (courseName != null && courseName.isNotEmpty) {
         if (!course.name.toLowerCase().contains(courseName.toLowerCase())) {
-          updated.add(course);
-          continue;
-        }
-      }
-
-      // 星期过滤
-      if (dayOfWeek != null && dayOfWeek > 0) {
-        if (course.dayOfWeek != dayOfWeek) {
           updated.add(course);
           continue;
         }
@@ -116,16 +116,35 @@ class TimetableRuleService {
         }
       }
 
-      // 剔除指定周次
+      // 如果是旧格式规则（未包含 startDayOfWeek/endDayOfWeek，但指定了特定的 dayOfWeek）
+      if (!hasRangeDays && dayOfWeek != null && dayOfWeek > 0) {
+        if (course.dayOfWeek != dayOfWeek) {
+          updated.add(course);
+          continue;
+        }
+        final weeks = WeekParser.parseWeeks(course.weeks);
+        weeks.removeWhere((w) => w >= startWeek && w <= endWeek);
+        if (weeks.isNotEmpty) {
+          updated.add(course.copyWith(
+            weeks: WeekParser.formatWeeksForCourse(weeks),
+          ));
+        }
+        continue;
+      }
+
+      // 剔除日期范围内的周次 (course.dayOfWeek 与周次组成的连续天)
       final weeks = WeekParser.parseWeeks(course.weeks);
-      weeks.removeWhere((w) => w >= startWeek && w <= endWeek);
+      weeks.removeWhere((w) {
+        final currentKey = w * 7 + course.dayOfWeek;
+        return currentKey >= startKey && currentKey <= endKey;
+      });
 
       if (weeks.isNotEmpty) {
         updated.add(course.copyWith(
           weeks: WeekParser.formatWeeksForCourse(weeks),
         ));
       }
-      // weeks.isEmpty 时直接不添加到 updated，表示该课完全停课
+      // weeks.isEmpty 时直接不添加到 updated，表示该课在该时段完全停课
     }
 
     return updated;

@@ -89,6 +89,53 @@ void main() {
       expect(WeekParser.parseWeeks(math.weeks).contains(5), isTrue);
     });
 
+    test('Suspension rule with startDayOfWeek and endDayOfWeek spans continuous date range across weeks', () {
+      // 从第 5 周周四 到 第 6 周周二 连续停课（如放假）
+      final rule = TimetableRule.createSuspension(
+        startWeek: 5,
+        startDayOfWeek: 4, // 周四
+        endWeek: 6,
+        endDayOfWeek: 2,   // 周二
+      );
+
+      expect(rule.description, equals('第5周周四至第6周周二停课'));
+
+      final result = service.applyRules(testCourses, [rule]);
+
+      final math = result.firstWhere((c) => c.name == '高等数学');
+      final mathWeeks = WeekParser.parseWeeks(math.weeks);
+      // 第5周周一不在范围内，不应停课
+      expect(mathWeeks.contains(5), isTrue);
+      // 第6周周一在范围内（周四至次周周二包含第6周周一），停课
+      expect(mathWeeks.contains(6), isFalse);
+
+      final english = result.firstWhere((c) => c.name == '大学英语');
+      final englishWeeks = WeekParser.parseWeeks(english.weeks);
+      // 第5周周五在范围内，停课
+      expect(englishWeeks.contains(5), isFalse);
+      // 第6周周五在范围外，不停课
+      expect(englishWeeks.contains(6), isTrue);
+    });
+
+    test('Suspension rule with same start and end day suspends only that specific day', () {
+      final rule = TimetableRule.createSuspension(
+        startWeek: 5,
+        startDayOfWeek: 5,
+        endWeek: 5,
+        endDayOfWeek: 5,
+      );
+
+      expect(rule.description, equals('第5周周五停课'));
+
+      final result = service.applyRules(testCourses, [rule]);
+      final math = result.firstWhere((c) => c.name == '高等数学');
+      expect(WeekParser.parseWeeks(math.weeks).contains(5), isTrue);
+
+      final english = result.firstWhere((c) => c.name == '大学英语');
+      expect(WeekParser.parseWeeks(english.weeks).contains(5), isFalse);
+      expect(WeekParser.parseWeeks(english.weeks).contains(6), isTrue);
+    });
+
     test('Reschedule rule moves Friday courses of week 5 to Sunday of week 6 (move / shift)', () {
       // 节假日调休：第 6 周周日 补 第 5 周周五 的课
       final rule = TimetableRule.createReschedule(

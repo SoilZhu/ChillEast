@@ -785,8 +785,9 @@ class TimetableRuleDialogs {
     required VoidCallback onRuleApplied,
   }) async {
     int startWeek = currentWeek;
+    int startDayOfWeek = 1;
     int endWeek = currentWeek;
-    int? dayOfWeek; // null 代表不限
+    int endDayOfWeek = 7;
     String? selectedCourseName; // null 代表全部
     bool limitPeriod = false;
     int startPeriod = 1;
@@ -833,16 +834,54 @@ class TimetableRuleDialogs {
                             items: List.generate(
                                 25,
                                 (i) => DropdownMenuItem(
-                                    value: i + 1, child: Text('第${i + 1}周'))),
+                                    value: i + 1,
+                                    child: Text(
+                                        '第${i + 1}周${i + 1 == currentWeek ? ' (本周)' : ''}'))),
                             onChanged: (v) {
+                              if (v == null) return;
                               setState(() {
-                                startWeek = v ?? 1;
-                                if (endWeek < startWeek) endWeek = startWeek;
+                                startWeek = v;
+                                if (startWeek * 7 + startDayOfWeek >
+                                    endWeek * 7 + endDayOfWeek) {
+                                  endWeek = startWeek;
+                                  endDayOfWeek = startDayOfWeek;
+                                }
                               });
                             },
                           ),
                         ),
                         const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButtonFormField<int>(
+                            isExpanded: true,
+                            value: startDayOfWeek,
+                            decoration: const InputDecoration(
+                                labelText: '星期',
+                                filled: false,
+                                border: OutlineInputBorder()),
+                            items: List.generate(
+                                7,
+                                (i) => DropdownMenuItem(
+                                    value: i + 1,
+                                    child: Text(weekdayNames[i + 1]))),
+                            onChanged: (v) {
+                              if (v == null) return;
+                              setState(() {
+                                startDayOfWeek = v;
+                                if (startWeek * 7 + startDayOfWeek >
+                                    endWeek * 7 + endDayOfWeek) {
+                                  endWeek = startWeek;
+                                  endDayOfWeek = startDayOfWeek;
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
                         Expanded(
                           child: DropdownButtonFormField<int>(
                             isExpanded: true,
@@ -854,34 +893,50 @@ class TimetableRuleDialogs {
                             items: List.generate(
                                 25,
                                 (i) => DropdownMenuItem(
-                                    value: i + 1, child: Text('第${i + 1}周'))),
+                                    value: i + 1,
+                                    child: Text(
+                                        '第${i + 1}周${i + 1 == currentWeek ? ' (本周)' : ''}'))),
                             onChanged: (v) {
+                              if (v == null) return;
                               setState(() {
-                                endWeek = v ?? startWeek;
-                                if (endWeek < startWeek) startWeek = endWeek;
+                                endWeek = v;
+                                if (endWeek * 7 + endDayOfWeek <
+                                    startWeek * 7 + startDayOfWeek) {
+                                  startWeek = endWeek;
+                                  startDayOfWeek = endDayOfWeek;
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButtonFormField<int>(
+                            isExpanded: true,
+                            value: endDayOfWeek,
+                            decoration: const InputDecoration(
+                                labelText: '星期',
+                                filled: false,
+                                border: OutlineInputBorder()),
+                            items: List.generate(
+                                7,
+                                (i) => DropdownMenuItem(
+                                    value: i + 1,
+                                    child: Text(weekdayNames[i + 1]))),
+                            onChanged: (v) {
+                              if (v == null) return;
+                              setState(() {
+                                endDayOfWeek = v;
+                                if (endWeek * 7 + endDayOfWeek <
+                                    startWeek * 7 + startDayOfWeek) {
+                                  startWeek = endWeek;
+                                  startDayOfWeek = endDayOfWeek;
+                                }
                               });
                             },
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<int?>(
-                      isExpanded: true,
-                      value: dayOfWeek,
-                      decoration: const InputDecoration(
-                          labelText: '星期',
-                          filled: false,
-                          border: OutlineInputBorder()),
-                      items: [
-                        const DropdownMenuItem(value: null, child: Text('整周')),
-                        ...List.generate(
-                            7,
-                            (i) => DropdownMenuItem(
-                                value: i + 1,
-                                child: Text(weekdayNames[i + 1]))),
-                      ],
-                      onChanged: (v) => setState(() => dayOfWeek = v),
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String?>(
@@ -923,8 +978,14 @@ class TimetableRuleDialogs {
                                   12,
                                   (i) => DropdownMenuItem(
                                       value: i + 1, child: Text('第${i + 1}节'))),
-                              onChanged: (v) =>
-                                  setState(() => startPeriod = v ?? 1),
+                              onChanged: (v) {
+                                setState(() {
+                                  startPeriod = v ?? 1;
+                                  if (startPeriod > endPeriod) {
+                                    endPeriod = startPeriod;
+                                  }
+                                });
+                              },
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -940,8 +1001,14 @@ class TimetableRuleDialogs {
                                   12,
                                   (i) => DropdownMenuItem(
                                       value: i + 1, child: Text('第${i + 1}节'))),
-                              onChanged: (v) =>
-                                  setState(() => endPeriod = v ?? 2),
+                              onChanged: (v) {
+                                setState(() {
+                                  endPeriod = v ?? 2;
+                                  if (endPeriod < startPeriod) {
+                                    startPeriod = endPeriod;
+                                  }
+                                });
+                              },
                             ),
                           ),
                         ],
@@ -966,7 +1033,8 @@ class TimetableRuleDialogs {
                     final rule = TimetableRule.createSuspension(
                       startWeek: startWeek,
                       endWeek: endWeek,
-                      dayOfWeek: dayOfWeek,
+                      startDayOfWeek: startDayOfWeek,
+                      endDayOfWeek: endDayOfWeek,
                       courseName: selectedCourseName,
                       startPeriod: limitPeriod ? startPeriod : null,
                       endPeriod: limitPeriod ? endPeriod : null,

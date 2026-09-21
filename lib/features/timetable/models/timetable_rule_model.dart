@@ -100,6 +100,8 @@ class TimetableRule {
     required int startWeek,
     required int endWeek,
     int? dayOfWeek,
+    int? startDayOfWeek,
+    int? endDayOfWeek,
     String? courseName,
     int? startPeriod,
     int? endPeriod,
@@ -107,18 +109,30 @@ class TimetableRule {
     final ruleId =
         id ?? 'rule_suspension_${DateTime.now().millisecondsSinceEpoch}';
     final weekdayNames = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-    final weekStr =
-        startWeek == endWeek ? '第$startWeek周' : '第$startWeek-$endWeek周';
-    final dayStr = (dayOfWeek != null && dayOfWeek >= 1 && dayOfWeek <= 7)
-        ? weekdayNames[dayOfWeek]
-        : '';
+
+    final sDay = startDayOfWeek ?? dayOfWeek ?? 1;
+    final eDay = endDayOfWeek ?? dayOfWeek ?? 7;
+
+    final String rangeStr;
+    if (sDay == 1 && eDay == 7) {
+      rangeStr =
+          startWeek == endWeek ? '第$startWeek周' : '第$startWeek-$endWeek周';
+    } else if (startWeek == endWeek && sDay == eDay) {
+      rangeStr = '第$startWeek周${weekdayNames[sDay]}';
+    } else if (startWeek == endWeek) {
+      rangeStr = '第$startWeek周${weekdayNames[sDay]}至${weekdayNames[eDay]}';
+    } else {
+      rangeStr =
+          '第$startWeek周${weekdayNames[sDay]}至第$endWeek周${weekdayNames[eDay]}';
+    }
+
     final courseStr = (courseName != null && courseName.trim().isNotEmpty)
         ? '《${courseName.trim()}》'
         : '';
     final periodStr = (startPeriod != null && endPeriod != null)
         ? ' $startPeriod-$endPeriod节'
         : '';
-    final desc = '$courseStr$weekStr$dayStr$periodStr停课';
+    final desc = '$courseStr$rangeStr$periodStr停课';
 
     return TimetableRule(
       id: ruleId,
@@ -128,7 +142,9 @@ class TimetableRule {
       data: {
         'startWeek': startWeek,
         'endWeek': endWeek,
-        'dayOfWeek': dayOfWeek,
+        'dayOfWeek': dayOfWeek ?? (sDay == eDay ? sDay : null),
+        'startDayOfWeek': sDay,
+        'endDayOfWeek': eDay,
         'courseName': courseName,
         'startPeriod': startPeriod,
         'endPeriod': endPeriod,

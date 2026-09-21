@@ -118,7 +118,19 @@ class TimetableRuleTool {
           },
           'dayOfWeek': {
             'type': 'integer',
-            'description': '停课星期几 (1-7，可选)。',
+            'description': '停课星期几 (1-7，可选，兼容旧格式)。',
+            'minimum': 1,
+            'maximum': 7,
+          },
+          'startDayOfWeek': {
+            'type': 'integer',
+            'description': '停课起始星期几 (1-7，可选；默认1周一)。',
+            'minimum': 1,
+            'maximum': 7,
+          },
+          'endDayOfWeek': {
+            'type': 'integer',
+            'description': '停课结束星期几 (1-7，可选；默认7周日)。',
             'minimum': 1,
             'maximum': 7,
           },
@@ -247,6 +259,8 @@ class TimetableRuleTool {
             final startWeek = asInt(arguments['startWeek']);
             final endWeek = asInt(arguments['endWeek']) ?? startWeek;
             final dayOfWeek = asInt(arguments['dayOfWeek']);
+            final startDayOfWeek = asInt(arguments['startDayOfWeek']);
+            final endDayOfWeek = asInt(arguments['endDayOfWeek']);
             final courseName = arguments['courseName'] as String?;
             final startPeriod = asInt(arguments['startPeriod']);
             final endPeriod = asInt(arguments['endPeriod']);
@@ -259,6 +273,8 @@ class TimetableRuleTool {
               startWeek: startWeek,
               endWeek: endWeek!,
               dayOfWeek: dayOfWeek,
+              startDayOfWeek: startDayOfWeek,
+              endDayOfWeek: endDayOfWeek,
               courseName: courseName,
               startPeriod: startPeriod,
               endPeriod: endPeriod,

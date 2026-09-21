@@ -138,6 +138,9 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('停课'));
       await tester.pumpAndSettle();
+      expect(find.widgetWithText(DropdownButtonFormField<int>, '起始周'), findsOneWidget);
+      expect(find.widgetWithText(DropdownButtonFormField<int>, '结束周'), findsOneWidget);
+      expect(find.widgetWithText(DropdownButtonFormField<int>, '星期'), findsNWidgets(2));
       expect(find.text('指定节次'), findsOneWidget);
       await tester.tap(find.text('取消'));
       await tester.pumpAndSettle();
