@@ -211,6 +211,7 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
         areaName: _selectedArea!.name,
         buildingName: _selectedBuilding!.name,
         roomId: _selectedRoom!.id,
+        roomName: _selectedRoom!.name,
         mertype: _selectedRoom!.mertype,
         amount: amount.toDouble(),
       );
@@ -320,6 +321,7 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
             areaName: _selectedArea!.name,
             buildingName: _selectedBuilding!.name,
             roomId: _selectedRoom!.id,
+            roomName: _selectedRoom!.name,
             mertype: _selectedRoom!.mertype,
             amount: amount.toDouble(),
           );

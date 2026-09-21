@@ -50,8 +50,9 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
   // 7. 校园卡余额查询
   registry.register(CampusCardTool.create(service: campusCardService));
 
-  // 8. 电费充值与查询
+  // 8. 电费充值与查询 (同时注册 recharge_electricity 与 query_electricity 别名以提高模型兼容度)
   registry.register(ElectricityTool.create(service: electricityService));
+  registry.register(ElectricityTool.create(service: electricityService, toolName: 'query_electricity'));
 
   // 9. 通知查询
   registry.register(NoticeTool.create());

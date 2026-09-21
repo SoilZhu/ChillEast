@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ChillEast/core/utils/dkyw_crypto.dart';
+import 'package:ChillEast/features/workspace/models/electricity_model.dart';
 
 void main() {
   test('decrypt real datajson from server', () {
@@ -34,5 +35,21 @@ void main() {
     expect(res['success'], true);
     expect(res['message'], '成功');
     expect(res['resultData']['paytxamt'], '100');
+  });
+
+  test('parse real queryEleAccDetail response from HAR', () {
+    const rawData = {
+      'message': 'CORE10008',
+      'resultData': {
+        'elestatus': 1,
+        'eledetail': 38.52,
+        'accname': 'XS-JA-1-629(学生公寓空调.金岸1栋.629)'
+      },
+      'success': true
+    };
+    final info = ElectricityBalanceInfo.fromJson(rawData['resultData'] as Map<String, dynamic>);
+    expect(info.balance, '38.52');
+    expect(info.accname, 'XS-JA-1-629(学生公寓空调.金岸1栋.629)');
+    expect(info.elestatus, 1);
   });
 }

@@ -195,6 +195,7 @@ class FakeElectricityService implements ElectricityService {
     required String areaName,
     required String buildingName,
     required String roomId,
+    String? roomName,
     required String mertype,
     required double amount,
   }) async {
@@ -202,7 +203,7 @@ class FakeElectricityService implements ElectricityService {
       areaName: areaName,
       buildingName: buildingName,
       roomId: roomId,
-      roomName: roomId,
+      roomName: roomName ?? roomId,
       mertype: mertype,
     );
     return true;

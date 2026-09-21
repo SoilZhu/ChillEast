@@ -21,9 +21,9 @@ class ElectricityService {
   CampusCardService get _cardService => _ref.read(campusCardServiceProvider);
 
   /// 初始化电费环境 (确保 OpenID 和 Cookie)
-  Future<String?> _ensureAuthenticated() async {
-    if (_cardService.openid == null || _cardService.cachedInfo == null) {
-      await _cardService.fetchRechargeInfo();
+  Future<String?> _ensureAuthenticated({bool force = false}) async {
+    if (force || _cardService.openid == null || _cardService.cachedInfo == null) {
+      await _cardService.fetchRechargeInfo(isRetry: force);
     }
     
     final openid = _cardService.openid;
@@ -51,7 +51,10 @@ class ElectricityService {
   }
 
   /// 发送带 DKYW 动态 AES 加解密的 POST 请求
-  Future<dynamic> _post(String url, Map<String, dynamic> payload) async {
+  Future<dynamic> _post(String url, Map<String, dynamic> payload, {bool isRetry = false}) async {
+    if (_cardService.openid == null) {
+      await _ensureAuthenticated();
+    }
     final openid = _cardService.openid;
     if (openid == null) throw Exception('未授权');
 
@@ -77,6 +80,17 @@ class ElectricityService {
 
     final resData = DkywCrypto.decryptServerResponse(response.data);
     _logger.d('📥 _post ($url) decrypted: $resData');
+
+    // 检查是否 session 过期或 openid 无效
+    if (resData is Map) {
+      final msg = (resData['message'] ?? resData['msg'] ?? '').toString();
+      if (!isRetry && (msg.contains('openid无效') || msg.contains('页面丢失') || msg.contains('未登录') || msg.contains('会话过期') || msg.contains('资源受限'))) {
+        _logger.w('⚠️ Token/OpenID expired in _post, re-authenticating...');
+        await _ensureAuthenticated(force: true);
+        return _post(url, payload, isRetry: true);
+      }
+    }
+
     return resData;
   }
 
@@ -224,6 +238,11 @@ class ElectricityService {
       );
 
       if (data != null) {
+        if (data is Map && data['success'] == false) {
+          final msg = data['message'] ?? data['msg'] ?? '获取电费余额失败';
+          throw Exception(msg);
+        }
+
         final Map<String, dynamic> result;
         if (data is Map && data.containsKey('resultData') && data['resultData'] is Map) {
           result = Map<String, dynamic>.from(data['resultData']);
@@ -248,6 +267,7 @@ class ElectricityService {
     required String areaName,
     required String buildingName,
     required String roomId,
+    String? roomName,
     required String mertype,
     required double amount,
   }) async {
@@ -299,12 +319,21 @@ class ElectricityService {
             (data.containsKey('resultData') && data['resultData'] != null);
         _logger.i('⚡ recharge evaluated success: $success');
         if (success) {
+          String effectiveRoomName = (roomName != null && roomName.isNotEmpty) ? roomName : '';
+          if (effectiveRoomName.isEmpty) {
+            final oldSaved = await getSavedRoom();
+            if (oldSaved != null && oldSaved.roomId == roomId && oldSaved.roomName.isNotEmpty && oldSaved.roomName != roomId) {
+              effectiveRoomName = oldSaved.roomName;
+            } else {
+              effectiveRoomName = roomId;
+            }
+          }
           await saveSavedRoom(
             SavedElectricityRoom(
               areaName: areaName,
               buildingName: buildingName,
               roomId: roomId,
-              roomName: roomId,
+              roomName: effectiveRoomName,
               mertype: mertype,
             ),
           );
