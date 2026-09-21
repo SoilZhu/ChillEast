@@ -273,8 +273,10 @@ class TimetableRuleDialogs {
                   ),
                 ],
               ),
-              content: SingleChildScrollView(
-                child: Column(
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -666,7 +668,8 @@ class TimetableRuleDialogs {
                   ],
                 ),
               ),
-              actions: [
+            ),
+            actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('取消'),
@@ -803,13 +806,17 @@ class TimetableRuleDialogs {
                 children: [
                   Icon(Icons.event_busy_rounded, color: Colors.orange),
                   SizedBox(width: 8),
-                  Text('停课',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Expanded(
+                    child: Text('停课',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                  ),
                 ],
               ),
-              content: SingleChildScrollView(
-                child: Column(
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -943,7 +950,8 @@ class TimetableRuleDialogs {
                   ],
                 ),
               ),
-              actions: [
+            ),
+            actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('取消'),
@@ -1010,13 +1018,17 @@ class TimetableRuleDialogs {
                 children: [
                   Icon(Icons.add_circle_outline_rounded, color: Colors.green),
                   SizedBox(width: 8),
-                  Text('添加课程',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Expanded(
+                    child: Text('添加课程',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                  ),
                 ],
               ),
-              content: SingleChildScrollView(
-                child: Column(
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
@@ -1144,7 +1156,8 @@ class TimetableRuleDialogs {
                   ],
                 ),
               ),
-              actions: [
+            ),
+            actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('取消'),
