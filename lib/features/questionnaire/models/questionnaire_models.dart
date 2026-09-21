@@ -94,6 +94,7 @@ class QuestionnaireQuestion {
   final String txType;
   final bool required;
   final List<QuestionnaireOption> options;
+  final String answer;
 
   const QuestionnaireQuestion({
     required this.dm,
@@ -103,6 +104,7 @@ class QuestionnaireQuestion {
     this.txType = '',
     this.required = false,
     this.options = const [],
+    this.answer = '',
   });
 
   factory QuestionnaireQuestion.fromJson(Map<String, dynamic> json) {
@@ -114,6 +116,7 @@ class QuestionnaireQuestion {
       stType: (json['stType'] ?? '').toString(),
       txType: (json['txType'] ?? '').toString(),
       required: (json['btInd'] ?? '').toString() == '1',
+      answer: (json['jg'] ?? '').toString(),
       options: rawOptions is List
           ? rawOptions
               .whereType<Map<String, dynamic>>()

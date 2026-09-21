@@ -160,7 +160,7 @@ class QuestionnaireSubmitTool {
           '单选题 value 传选项名（支持模糊，如“是”）；多选题 value 传选项名数组；'
           '填空/电话题传文本；日期题传 YYYY-MM-DD。'
           '【重要】：首次调用保持 confirmed=false，工具返回待确认的问卷与答案预览；'
-          '向用户逐题核对后，征得明确同意再传 confirmed=true 真正提交。已提交过的问卷重复提交可能被覆盖或拒绝。',
+          '向用户逐题核对后，征得明确同意再传 confirmed=true 真正提交。已提交过的问卷允许重复提交，新答案将覆盖之前的提交。',
       inputSchema: {
         'type': 'object',
         'properties': {
@@ -208,9 +208,9 @@ class QuestionnaireSubmitTool {
           return McpToolResult.error('读取问卷失败，请检查登录状态或稍后重试: $e');
         }
 
-        if (!detail.canSubmit || matched.isSubmitted) {
+        if (!detail.canSubmit) {
           return McpToolResult.error(
-              '问卷《${detail.title}》已提交或不可提交，重复提交可能被覆盖或拒绝。');
+              '问卷《${detail.title}》当前不可提交（可能已截止）。');
         }
 
         // 2. 按题目逐一把用户答案映射为提交载荷（key 均为题目 dm）
@@ -257,8 +257,10 @@ class QuestionnaireSubmitTool {
             'status': 'requires_confirmation',
             'needsUserConsent': true,
             'message': '学工问卷已就绪。【重要】：请向用户逐题呈现以下待提交答案并征得明确同意，'
-                '用户确认后传入 confirmed=true 重新调用本工具正式提交。',
+                '用户确认后传入 confirmed=true 重新调用本工具正式提交。'
+                '${matched.isSubmitted ? '注意：该问卷已提交过，本次提交将覆盖之前的答案。' : ''}',
             'questionnaire': detail.title,
+            'isResubmit': matched.isSubmitted,
             'answersPreview': preview,
           });
         }

@@ -49,10 +49,42 @@ class _QuestionnaireDetailScreenState
       final detail = await service.fetchDetail(widget.item);
       if (!mounted) return;
       setState(() => _detail = detail);
+      // 已提交过的问卷：用服务端返回的上次答案(jg)回填，还原提交时的样子。
       for (final question in detail.questions) {
-        if (!question.isChoice && !question.isDate) {
-          _controllers.putIfAbsent(
+        final saved = question.answer.trim();
+        if (question.isChoice) {
+          if (saved.isEmpty) continue;
+          String? toDm(String text) {
+            for (final option in question.options) {
+              if (option.dm == text || option.name == text) return option.dm;
+            }
+            for (final option in question.options) {
+              if (option.name.contains(text) || text.contains(option.name)) {
+                return option.dm;
+              }
+            }
+            return null;
+          }
+
+          if (question.isMultiChoice) {
+            final dms = saved
+                .split(RegExp(r'[,，、;；]'))
+                .map((e) => toDm(e.trim()))
+                .whereType<String>()
+                .toList();
+            if (dms.isNotEmpty) _answers[question.dm] = dms;
+          } else {
+            final dm = toDm(saved);
+            if (dm != null) _answers[question.dm] = dm;
+          }
+        } else if (question.isDate) {
+          if (saved.isNotEmpty) _answers[question.dm] = saved;
+        } else {
+          final controller = _controllers.putIfAbsent(
               question.dm, () => TextEditingController());
+          if (controller.text.isEmpty && saved.isNotEmpty) {
+            controller.text = saved;
+          }
         }
       }
     } catch (e) {
@@ -99,10 +131,10 @@ class _QuestionnaireDetailScreenState
   Future<void> _submit() async {
     final detail = _detail;
     if (detail == null || _submitting) return;
-    if (!detail.canSubmit || widget.item.isSubmitted) {
+    if (!detail.canSubmit) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('该问卷已提交或不可提交'),
+          content: Text('该问卷当前不可提交'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -118,25 +150,6 @@ class _QuestionnaireDetailScreenState
       );
       return;
     }
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('确认提交?'),
-        content: const Text('提交后可能无法修改,请确认内容无误。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('提交'),
-          ),
-        ],
-      ),
-    );
-    if (confirm != true) return;
-
     setState(() => _submitting = true);
     try {
       await ref.read(questionnaireServiceProvider).submit(
