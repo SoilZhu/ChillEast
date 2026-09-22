@@ -920,7 +920,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiSettingsResetDefaults.
   ///
   /// In zh, this message translates to:
-  /// **'已恢复默认配置（硅基流动 + Qwen/Qwen3.5-4B）'**
+  /// **'已恢复默认配置'**
   String get aiSettingsResetDefaults;
 
   /// No description provided for @aiApiUrl.
@@ -932,7 +932,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiApiUrlHint.
   ///
   /// In zh, this message translates to:
-  /// **'默认 https://api.siliconflow.cn/v1'**
+  /// **'默认中转服务'**
   String get aiApiUrlHint;
 
   /// No description provided for @aiModelName.
@@ -944,7 +944,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelNameHint.
   ///
   /// In zh, this message translates to:
-  /// **'默认 Qwen/Qwen3.5-4B'**
+  /// **'默认 soilzhu-latest'**
   String get aiModelNameHint;
 
   /// No description provided for @aiApiKeyCustom.

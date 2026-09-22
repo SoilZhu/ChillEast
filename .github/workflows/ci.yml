@@ -73,7 +73,7 @@ jobs:
           git diff --exit-code -- pubspec.lock
 
       - name: Build debug APK
-        run: flutter build apk --debug --no-pub --dart-define=DEFAULT_AI_API_KEY="${{ secrets.DEFAULT_AI_API_KEY }}"
+        run: flutter build apk --debug --no-pub --dart-define=DEFAULT_AI_API_KEY="${{ secrets.DEFAULT_AI_API_KEY }}" --dart-define=DEFAULT_AI_API_URL="${{ secrets.DEFAULT_AI_API_URL }}" --dart-define=DEFAULT_AI_MODEL="${{ secrets.DEFAULT_AI_MODEL }}"
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v7

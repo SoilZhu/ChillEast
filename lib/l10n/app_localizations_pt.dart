@@ -435,20 +435,19 @@ class AppLocalizationsPt extends AppLocalizations {
   String get aiSettingsSaved => '✅ Configurações do Assistente salvas';
 
   @override
-  String get aiSettingsResetDefaults =>
-      'Restaurado para as configurações padrão (SiliconFlow + Qwen/Qwen3.5-4B)';
+  String get aiSettingsResetDefaults => 'Padrões restaurados';
 
   @override
   String get aiApiUrl => 'URL Base da API';
 
   @override
-  String get aiApiUrlHint => 'Padrão: https://api.siliconflow.cn/v1';
+  String get aiApiUrlHint => 'Serviço de relé padrão';
 
   @override
   String get aiModelName => 'Nome do Modelo';
 
   @override
-  String get aiModelNameHint => 'Padrão: Qwen/Qwen3.5-4B';
+  String get aiModelNameHint => 'Padrão: soilzhu-latest';
 
   @override
   String get aiApiKeyCustom => 'Chave de API (Personalizada)';

@@ -77,3 +77,10 @@ debug
 .env
 .env.*
 .env.json
+
+# Cloudflare Worker (relay)
+worker/node_modules/
+worker/.dev.vars
+worker/.wrangler/
+worker/worker-configuration.d.ts
+worker

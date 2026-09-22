@@ -420,19 +420,19 @@ class AppLocalizationsWuu extends AppLocalizations {
   String get aiSettingsSaved => '✅ Agent 配置已保存';
 
   @override
-  String get aiSettingsResetDefaults => '已恢复默认配置（硅基流动 + Qwen/Qwen3.5-4B）';
+  String get aiSettingsResetDefaults => '已恢复默认配置';
 
   @override
   String get aiApiUrl => 'API 接口地址 (Base URL)';
 
   @override
-  String get aiApiUrlHint => '默认 https://api.siliconflow.cn/v1';
+  String get aiApiUrlHint => '默认中转服务';
 
   @override
   String get aiModelName => '模型名称 (Model Name)';
 
   @override
-  String get aiModelNameHint => '默认 Qwen/Qwen3.5-4B';
+  String get aiModelNameHint => '默认 soilzhu-latest';
 
   @override
   String get aiApiKeyCustom => 'API Key (已使用自定义)';
