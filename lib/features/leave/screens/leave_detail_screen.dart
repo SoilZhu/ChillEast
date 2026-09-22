@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../models/leave_models.dart';
 import '../services/leave_service.dart';
 
@@ -25,6 +26,15 @@ class _LeaveDetailScreenState extends ConsumerState<LeaveDetailScreen> {
     _load();
   }
 
+  String _getErrorMessage(dynamic e) {
+    if (e is LeaveException) {
+      if (e.message.contains('统一认证已过期')) return context.l10n.ssoExpiredRelogin;
+      if (e.message.contains('登录已失效')) return context.l10n.studentSystemSessionExpired;
+      return e.message;
+    }
+    return context.l10n.loadFailedCheckNetwork;
+  }
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -37,8 +47,7 @@ class _LeaveDetailScreenState extends ConsumerState<LeaveDetailScreen> {
       setState(() => _detail = detail);
     } catch (e) {
       if (!mounted) return;
-      setState(() =>
-          _error = e is LeaveException ? e.message : '加载失败,请检查网络后重试');
+      setState(() => _error = _getErrorMessage(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -55,17 +64,19 @@ class _LeaveDetailScreenState extends ConsumerState<LeaveDetailScreen> {
             useMaterial3: false,
           ),
           child: AlertDialog(
-            title: const Text('撤销请假?'),
-            content: const Text('确定撤销这条请假申请吗？'),
+            title: Text(context.l10n.cancelLeavePromptTitle),
+            content: Text(context.l10n.cancelLeavePromptContent),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('取消'),
+                child: Text(context.l10n.cancel),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('撤销',
-                    style: TextStyle(color: Colors.red)),
+                child: Text(
+                  context.l10n.revoke,
+                  style: const TextStyle(color: Colors.red),
+                ),
               ),
             ],
           ),
@@ -78,14 +89,17 @@ class _LeaveDetailScreenState extends ConsumerState<LeaveDetailScreen> {
       await ref.read(leaveServiceProvider).delete(widget.item.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('已撤销'), behavior: SnackBarBehavior.floating),
+        SnackBar(
+          content: Text(context.l10n.revokedSuccess),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e is LeaveException ? e.message : '撤销失败,请稍后重试'),
+          content: Text(e is LeaveException ? e.message : context.l10n.revokeFailedRetry),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -118,17 +132,20 @@ class _LeaveDetailScreenState extends ConsumerState<LeaveDetailScreen> {
     return value.toString();
   }
 
-  String _switchLabel(String key) => _str(key) == '1' ? '是' : '否';
+  String _switchLabel(String key) =>
+      _str(key) == '1' ? context.l10n.yes : context.l10n.no;
 
   String _durationText() {
-    final ts = _str('ts');
-    final hour = _str('hour');
-    if (ts.isEmpty && hour.isEmpty) return widget.item.durationLabel;
+    final tsStr = _str('ts');
+    final hourStr = _str('hour');
+    final ts = int.tryParse(tsStr) ?? 0;
+    final hour = int.tryParse(hourStr) ?? 0;
+    if (ts == 0 && hour == 0) return widget.item.getLocalizedDuration(context);
     final parts = <String>[];
-    if (ts.isNotEmpty && ts != '0') parts.add('$ts天');
-    if (hour.isNotEmpty && hour != '0') parts.add('$hour小时');
-    final text = parts.join('');
-    return text.isEmpty ? widget.item.durationLabel : text;
+    if (ts > 0) parts.add(context.l10n.durationDays(ts.toString()));
+    if (hour > 0) parts.add(context.l10n.durationHours(hour.toString()));
+    final text = parts.join(' ');
+    return text.isEmpty ? widget.item.getLocalizedDuration(context) : text;
   }
 
   @override
@@ -138,30 +155,32 @@ class _LeaveDetailScreenState extends ConsumerState<LeaveDetailScreen> {
     final item = widget.item;
 
     final rows = <MapEntry<String, String>>[
-      MapEntry('请假类别', _str('qjlx').isEmpty ? item.typeName : _str('qjlx')),
-      MapEntry('开始时间', _str('kssj').isEmpty ? item.startTime : _str('kssj')),
-      MapEntry('结束时间', _str('jssj').isEmpty ? item.endTime : _str('jssj')),
-      MapEntry('请假时长', _durationText()),
-      MapEntry('请假事由', _str('qjsy').isEmpty ? item.reason : _str('qjsy')),
-      MapEntry('紧急联系人', _str('lxr')),
-      MapEntry('联系人电话', _str('lxrdh')),
-      MapEntry('同行人员', _str('txry')),
-      MapEntry('是否离校', _switchLabel('lxInd')),
-      MapEntry('离校去向', _str('lxqx')),
-      MapEntry('详细地址', _str('lxMdd')),
-      MapEntry('回宿舍', _switchLabel('huisusheInd')),
-      MapEntry('备注', _str('lxBz')),
-      MapEntry('出市', _switchLabel('chushiInd')),
-      MapEntry('出省', _switchLabel('chushengInd')),
-      MapEntry('实践指导老师', _str('sjhdlsM')),
-      MapEntry('附件', _str('fileList')),
-      MapEntry('审核状态', item.statusLabel),
+      MapEntry(context.l10n.leaveType, _str('qjlx').isEmpty ? item.typeName : _str('qjlx')),
+      MapEntry(context.l10n.startTime, _str('kssj').isEmpty ? item.startTime : _str('kssj')),
+      MapEntry(context.l10n.endTime, _str('jssj').isEmpty ? item.endTime : _str('jssj')),
+      MapEntry(context.l10n.leaveDuration, _durationText()),
+      MapEntry(context.l10n.leaveReason, _str('qjsy').isEmpty ? item.reason : _str('qjsy')),
+      MapEntry(context.l10n.emergencyContact, _str('lxr')),
+      MapEntry(context.l10n.contactPhone, _str('lxrdh')),
+      MapEntry(context.l10n.accompanyingPersons, _str('txry')),
+      MapEntry(context.l10n.isLeavingCampus, _switchLabel('lxInd')),
+      MapEntry(context.l10n.leaveDestination, _str('lxqx')),
+      MapEntry(context.l10n.detailedAddress, _str('lxMdd')),
+      MapEntry(context.l10n.returnToDormitory, _switchLabel('huisusheInd')),
+      MapEntry(context.l10n.remark, _str('lxBz')),
+      MapEntry(context.l10n.leaveCity, _switchLabel('chushiInd')),
+      MapEntry(context.l10n.leaveProvince, _switchLabel('chushengInd')),
+      MapEntry(context.l10n.practiceInstructor, _str('sjhdlsM')),
+      MapEntry(context.l10n.attachment, _str('fileList')),
+      MapEntry(context.l10n.auditStatus, item.getLocalizedStatus(context)),
     ].where((e) => e.value.trim().isNotEmpty).toList();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(item.typeName.isEmpty ? '请假详情' : '${item.typeName}详情'),
+        title: Text(item.typeName.isEmpty
+            ? context.l10n.leaveDetails
+            : context.l10n.leaveTypeDetails(item.typeName)),
         backgroundColor: theme.scaffoldBackgroundColor,
         surfaceTintColor: theme.scaffoldBackgroundColor,
         foregroundColor: isDark ? Colors.white : Colors.black87,
@@ -182,7 +201,7 @@ class _LeaveDetailScreenState extends ConsumerState<LeaveDetailScreen> {
                         const SizedBox(height: 12),
                         FilledButton(
                           onPressed: _load,
-                          child: const Text('重试'),
+                          child: Text(context.l10n.retry),
                         ),
                       ],
                     ),
@@ -241,8 +260,8 @@ class _LeaveDetailScreenState extends ConsumerState<LeaveDetailScreen> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text('撤销申请',
-                                  style: TextStyle(fontSize: 15)),
+                              : Text(context.l10n.revokeApplication,
+                                  style: const TextStyle(fontSize: 15)),
                         ),
                       ),
                   ],

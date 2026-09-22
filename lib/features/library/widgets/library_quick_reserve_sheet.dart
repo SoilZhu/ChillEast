@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../models/library_models.dart';
 import '../utils/library_time_utils.dart';
 
@@ -131,8 +132,8 @@ class _LibraryQuickReserveSheetState extends State<LibraryQuickReserveSheet> {
     });
   }
 
-  String _formatDayLabel(String dayStr) {
-    return LibraryTimeUtils.formatDayLabel(dayStr);
+  String _formatDayLabel(BuildContext context, String dayStr) {
+    return LibraryTimeUtils.formatDayLabelLocalized(context, dayStr);
   }
 
   @override
@@ -167,7 +168,7 @@ class _LibraryQuickReserveSheetState extends State<LibraryQuickReserveSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '快速预约',
+                context.l10n.quickReserve,
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
@@ -209,7 +210,7 @@ class _LibraryQuickReserveSheetState extends State<LibraryQuickReserveSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${widget.item.seatNum} 号座位',
+                        context.l10n.seatWithNumber(widget.item.seatNum),
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -237,7 +238,7 @@ class _LibraryQuickReserveSheetState extends State<LibraryQuickReserveSheet> {
 
           // 1. 选择日期
           Text(
-            '选择日期',
+            context.l10n.selectDate,
             style: TextStyle(
               fontSize: 13,
               color: isDark ? Colors.white60 : Colors.grey[700],
@@ -253,7 +254,7 @@ class _LibraryQuickReserveSheetState extends State<LibraryQuickReserveSheet> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
-                    label: Text(_formatDayLabel(day)),
+                    label: Text(_formatDayLabel(context, day)),
                     selected: isSelected,
                     selectedColor:
                         const Color(0xFF09C489).withValues(alpha: 0.15),
@@ -288,7 +289,7 @@ class _LibraryQuickReserveSheetState extends State<LibraryQuickReserveSheet> {
 
           // 2. 开始时间
           Text(
-            '开始时间',
+            context.l10n.startTime,
             style: TextStyle(
               fontSize: 13,
               color: isDark ? Colors.white60 : Colors.grey[700],
@@ -300,7 +301,7 @@ class _LibraryQuickReserveSheetState extends State<LibraryQuickReserveSheet> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Text(
-                '该日期已无可用预约时段，请选择其他日期。',
+                context.l10n.noAvailableSlotsForDate,
                 style: TextStyle(
                   fontSize: 12,
                   color: isDark ? Colors.orange[300] : Colors.orange[800],
@@ -361,7 +362,7 @@ class _LibraryQuickReserveSheetState extends State<LibraryQuickReserveSheet> {
 
           // 3. 结束时间
           Text(
-            '结束时间',
+            context.l10n.endTime,
             style: TextStyle(
               fontSize: 13,
               color: isDark ? Colors.white60 : Colors.grey[700],
@@ -445,8 +446,12 @@ class _LibraryQuickReserveSheetState extends State<LibraryQuickReserveSheet> {
                   : null,
               child: Text(
                 canConfirm
-                    ? '确认预约 ($_selectedDay $_selectedStartTime - $_selectedEndTime)'
-                    : '请选择有效时段',
+                    ? context.l10n.confirmReservationPeriod(
+                        _selectedDay,
+                        _selectedStartTime!,
+                        _selectedEndTime!,
+                      )
+                    : context.l10n.pleaseSelectValidPeriod,
                 style:
                     const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),

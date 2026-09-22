@@ -5,6 +5,7 @@ import '../providers/notice_provider.dart'; // ✅ 导入新 Provider
 import 'notice_detail_screen.dart';
 import '../../../core/state/auth_state.dart';
 import '../../../core/widgets/login_required_placeholder.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../../auth/screens/login_screen.dart';
 import 'package:logger/logger.dart';
 
@@ -57,21 +58,21 @@ class _NoticeListScreenState extends ConsumerState<NoticeListScreen> with Automa
   Widget _buildBody(AuthState authState, NoticeState noticeState) {
     // 只有在完全没有本地账号信息时，才显示登录占位符
     if (authState.status == AuthStatus.unauthenticated && !authState.hasAccount) {
-      return const LoginRequiredPlaceholder(
-        title: '需要登录以接收通知',
-        message: '登录后即可向您推送学校的最新通知公告',
+      return LoginRequiredPlaceholder(
+        title: context.l10n.noticeLoginTitle,
+        message: context.l10n.noticeLoginMessage,
         icon: Icons.notifications_paused_outlined,
       );
     }
     
     if (noticeState.isLoading && noticeState.messages.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('正在加载通知...'),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(context.l10n.loadingNotices),
           ],
         ),
       );
@@ -85,7 +86,7 @@ class _NoticeListScreenState extends ConsumerState<NoticeListScreen> with Automa
             const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             Text(
-              '加载失败',
+              context.l10n.loadFailed,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
@@ -103,7 +104,7 @@ class _NoticeListScreenState extends ConsumerState<NoticeListScreen> with Automa
             ElevatedButton.icon(
               onPressed: () => ref.read(noticeProvider.notifier).refresh(),
               icon: const Icon(Icons.refresh),
-              label: const Text('重试'),
+              label: Text(context.l10n.retry),
             ),
           ],
         ),
@@ -118,14 +119,14 @@ class _NoticeListScreenState extends ConsumerState<NoticeListScreen> with Automa
             Icon(Icons.notifications_none, size: 80, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
-              '暂无通知',
+              context.l10n.noNotices,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: Colors.grey[600],
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              '有新消息时会在这里显示',
+              context.l10n.noNoticesSubtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).brightness == Brightness.dark ? Colors.white38 : Colors.grey[600],
               ),
@@ -159,21 +160,21 @@ class _NoticeListScreenState extends ConsumerState<NoticeListScreen> with Automa
       padding: const EdgeInsets.all(16.0),
       child: Center(
         child: noticeState.isLoadingMore
-            ? const Row(
+            ? Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                  SizedBox(width: 12),
-                  Text('正在加载更多...', style: TextStyle(color: Colors.grey)),
+                  const SizedBox(width: 12),
+                  Text(context.l10n.loadingMore, style: const TextStyle(color: Colors.grey)),
                 ],
               )
             : noticeState.hasMore 
                 ? const SizedBox.shrink()
-                : const Text('没有更多通知了', style: TextStyle(color: Colors.grey)),
+                : Text(context.l10n.noMoreNotices, style: const TextStyle(color: Colors.grey)),
       ),
     );
   }
@@ -193,7 +194,7 @@ class _NoticeListScreenState extends ConsumerState<NoticeListScreen> with Automa
     } catch (_) {}
 
     // 获取发送者首字母用于头像
-    String initial = '通';
+    String initial = context.l10n.noticeTagNotice;
     if (message.createrName.isNotEmpty) {
       initial = message.createrName[0];
     }
@@ -257,7 +258,7 @@ class _NoticeListScreenState extends ConsumerState<NoticeListScreen> with Automa
                         children: [
                           Expanded(
                             child: Text(
-                              message.createrName.isEmpty ? '系统通知' : message.createrName,
+                              message.createrName.isEmpty ? context.l10n.systemNotice : message.createrName,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: message.isRead ? FontWeight.normal : FontWeight.bold,

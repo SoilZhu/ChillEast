@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 class OssLicensesScreen extends StatelessWidget {
   const OssLicensesScreen({super.key});
@@ -10,7 +11,7 @@ class OssLicensesScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('开源声明', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        title: Text(context.l10n.openSourceLicenses, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: false,
@@ -26,9 +27,9 @@ class OssLicensesScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          const Text(
-            '自在东湖 是基于开源社区的各种优秀组件构建而成的。我们尊重并感谢每一位开发者的贡献。',
-            style: TextStyle(
+          Text(
+            context.l10n.ossDescription,
+            style: const TextStyle(
               fontSize: 15,
               height: 1.6,
               color: Colors.grey,

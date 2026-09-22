@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../models/classroom_model.dart';
 import '../services/classroom_service.dart';
 
@@ -81,7 +82,7 @@ class _ClassroomInquiryScreenState extends ConsumerState<ClassroomInquiryScreen>
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('空教室查询'),
+        title: Text(context.l10n.classroomInquiry),
         elevation: 0,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
@@ -110,19 +111,19 @@ class _ClassroomInquiryScreenState extends ConsumerState<ClassroomInquiryScreen>
         children: [
           Row(
             children: [
-              Expanded(child: _buildPlainDropdown('教学楼', _options!.buildings, _selectedBuilding, (val) => setState(() => _selectedBuilding = val))),
+              Expanded(child: _buildPlainDropdown(context.l10n.building, _options!.buildings, _selectedBuilding, (val) => setState(() => _selectedBuilding = val))),
               const SizedBox(width: 12),
-              Expanded(child: _buildPlainDropdown('周次', _options!.weeks, _selectedWeek, (val) => setState(() => _selectedWeek = val))),
+              Expanded(child: _buildPlainDropdown(context.l10n.weeksLabel, _options!.weeks, _selectedWeek, (val) => setState(() => _selectedWeek = val))),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _buildPlainDropdown('节次', _options!.sections, _selectedSection, (val) => setState(() => _selectedSection = val))),
+              Expanded(child: _buildPlainDropdown(context.l10n.periodSlot, _options!.sections, _selectedSection, (val) => setState(() => _selectedSection = val))),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildPlainDropdown(
-                  '星期', 
+                  context.l10n.weekday, 
                   _options!.days.map((e) => e['label']!).toList(), 
                   _options!.days.firstWhere((e) => e['value'] == _selectedDay, orElse: () => _options!.days.first)['label'],
                   (label) {
@@ -141,7 +142,7 @@ class _ClassroomInquiryScreenState extends ConsumerState<ClassroomInquiryScreen>
               child: ElevatedButton.icon(
                 onPressed: _search,
                 icon: const Icon(Icons.search, size: 18),
-                label: const Text('查询'),
+                label: Text(context.l10n.query),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF09C489),
                   foregroundColor: Colors.white,
@@ -189,7 +190,7 @@ class _ClassroomInquiryScreenState extends ConsumerState<ClassroomInquiryScreen>
     if (_classrooms.isEmpty) {
       if (!_searching && _options != null) {
         return Center(
-          child: Text('没有数据', style: TextStyle(color: Colors.grey[400])),
+          child: Text(context.l10n.noData, style: TextStyle(color: Colors.grey[400])),
         );
       }
       return const SizedBox();
@@ -215,7 +216,7 @@ class _ClassroomInquiryScreenState extends ConsumerState<ClassroomInquiryScreen>
               ),
               const SizedBox(height: 6),
               Text(
-                '容纳人数: ${room.zws}',
+                context.l10n.capacityCount(room.zws),
                 style: TextStyle(
                   fontSize: 14, 
                   color: Colors.grey[600],

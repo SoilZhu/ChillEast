@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/utils/route_utils.dart';
+import '../../../core/utils/l10n_extension.dart';
 import 'button_reorder_screen.dart';
 
 class AppearanceSettingsScreen extends StatelessWidget {
@@ -8,11 +9,12 @@ class AppearanceSettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
     
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('外观设置'),
+        title: Text(l10n.appearanceSettings),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: false,
@@ -30,12 +32,12 @@ class AppearanceSettingsScreen extends StatelessWidget {
           _buildSettingItem(
             context,
             icon: Icons.home_outlined,
-            title: '首页按钮排序与隐藏',
+            title: l10n.homeButtonsSetting,
             onTap: () {
               Navigator.push(
                 context,
-                createSlideUpRoute(const ButtonReorderScreen(
-                  title: '首页按钮设置',
+                createSlideUpRoute(ButtonReorderScreen(
+                  title: l10n.homeButtonsTitle,
                   listType: 'home',
                 )),
               );
@@ -44,12 +46,12 @@ class AppearanceSettingsScreen extends StatelessWidget {
           _buildSettingItem(
             context,
             icon: Icons.grid_view_outlined,
-            title: '功能页按钮排序与隐藏',
+            title: l10n.functionsButtonsSetting,
             onTap: () {
               Navigator.push(
                 context,
-                createSlideUpRoute(const ButtonReorderScreen(
-                  title: '功能页按钮设置',
+                createSlideUpRoute(ButtonReorderScreen(
+                  title: l10n.functionsButtonsTitle,
                   listType: 'functions',
                 )),
               );

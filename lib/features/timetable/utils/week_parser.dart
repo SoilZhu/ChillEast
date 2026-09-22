@@ -1,3 +1,6 @@
+import 'package:flutter/widgets.dart';
+import '../../../core/utils/l10n_extension.dart';
+
 /// 周次解析工具类
 class WeekParser {
   /// 解析周次字符串为周次列表
@@ -66,6 +69,40 @@ class WeekParser {
     return weeks;
   }
   
+  /// 将周次列表格式化为本地化显示字符串
+  static String formatWeeksLocalized(BuildContext context, List<int> weeks) {
+    if (weeks.isEmpty) return '';
+
+    if (weeks.length == 1) {
+      return context.l10n.weekNumber(weeks[0]);
+    }
+
+    // 尝试合并连续周次
+    List<String> parts = [];
+    int i = 0;
+
+    while (i < weeks.length) {
+      int start = weeks[i];
+      int end = start;
+
+      // 查找连续序列
+      while (i + 1 < weeks.length && weeks[i + 1] == end + 1) {
+        i++;
+        end = weeks[i];
+      }
+
+      if (start == end) {
+        parts.add('$start');
+      } else {
+        parts.add('$start-$end');
+      }
+
+      i++;
+    }
+
+    return context.l10n.weeksRange(parts.join(','));
+  }
+
   /// 将周次列表格式化为显示字符串
   static String formatWeeks(List<int> weeks) {
     if (weeks.isEmpty) return '';

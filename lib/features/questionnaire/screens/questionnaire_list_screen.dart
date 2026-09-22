@@ -1,9 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/route_utils.dart';
 import '../models/questionnaire_models.dart';
 import '../services/questionnaire_service.dart';
 import 'questionnaire_detail_screen.dart';
+
+enum QuestionnaireFilter {
+  all,
+  pending,
+  submitted;
+
+  String getLocalizedLabel(BuildContext context) => switch (this) {
+        QuestionnaireFilter.all => context.l10n.all,
+        QuestionnaireFilter.pending => context.l10n.statusPendingFill,
+        QuestionnaireFilter.submitted => context.l10n.statusSubmitted,
+      };
+
+  bool matches(QuestionnaireItem item) => switch (this) {
+        QuestionnaireFilter.all => true,
+        QuestionnaireFilter.pending => !item.isSubmitted && !item.isExpired,
+        QuestionnaireFilter.submitted => item.isSubmitted,
+      };
+}
 
 /// 学工问卷 - 功能页
 class QuestionnaireListScreen extends ConsumerStatefulWidget {
@@ -19,12 +38,24 @@ class _QuestionnaireListScreenState
   List<QuestionnaireItem> _items = [];
   bool _loading = true;
   String? _error;
-  String _filter = '全部';
+  QuestionnaireFilter _filter = QuestionnaireFilter.all;
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  String _getErrorMessage(dynamic e) {
+    if (e is QuestionnaireException) {
+      if (e.message.contains('统一认证已过期')) return context.l10n.ssoExpiredRelogin;
+      if (e.message.contains('登录已失效')) return context.l10n.studentSystemSessionExpired;
+      if (e.message.contains('未能读取')) return context.l10n.readQuestionnaireDataFailed;
+      if (e.message.contains('格式异常')) return context.l10n.questionnaireListFormatError;
+      if (e.message.contains('缺少任务标识')) return context.l10n.questionnaireMissingTaskId;
+      return e.message;
+    }
+    return context.l10n.loadFailedCheckNetwork;
   }
 
   Future<void> _load() async {
@@ -39,8 +70,7 @@ class _QuestionnaireListScreenState
       setState(() => _items = items);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error =
-          e is QuestionnaireException ? e.message : '加载失败,请检查网络后重试');
+      setState(() => _error = _getErrorMessage(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -50,23 +80,19 @@ class _QuestionnaireListScreenState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final filtered = _items.where((item) {
-      if (_filter == '待填写') return !item.isSubmitted && !item.isExpired;
-      if (_filter == '已提交') return item.isSubmitted;
-      return true;
-    }).toList();
+    final filtered = _items.where((item) => _filter.matches(item)).toList();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('学工问卷'),
+        title: Text(context.l10n.studentWorkQuestionnaire),
         backgroundColor: theme.scaffoldBackgroundColor,
         surfaceTintColor: theme.scaffoldBackgroundColor,
         foregroundColor: isDark ? Colors.white : Colors.black87,
         elevation: 0,
         actions: [
           IconButton(
-            tooltip: '刷新',
+            tooltip: context.l10n.refresh,
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh),
           ),
@@ -104,7 +130,7 @@ class _QuestionnaireListScreenState
                             const SizedBox(height: 8),
                             TextButton(
                               onPressed: _load,
-                              child: const Text('重试'),
+                              child: Text(context.l10n.retry),
                             ),
                           ],
                         ),
@@ -112,8 +138,8 @@ class _QuestionnaireListScreenState
                     ),
                   Wrap(
                     spacing: 8,
-                    children: ['全部', '待填写', '已提交']
-                        .map((label) => _buildFilterChip(label, isDark))
+                    children: QuestionnaireFilter.values
+                        .map((filter) => _buildFilterChip(filter, isDark))
                         .toList(),
                   ),
                   const SizedBox(height: 12),
@@ -122,7 +148,7 @@ class _QuestionnaireListScreenState
                       padding: const EdgeInsets.symmetric(vertical: 36),
                       child: Center(
                         child: Text(
-                          '暂无符合条件的问卷',
+                          context.l10n.noQuestionnairesFound,
                           style: TextStyle(
                             fontSize: 14,
                             color: isDark ? Colors.white38 : Colors.grey,
@@ -137,12 +163,12 @@ class _QuestionnaireListScreenState
     );
   }
 
-  Widget _buildFilterChip(String label, bool isDark) {
-    final isSelected = _filter == label;
+  Widget _buildFilterChip(QuestionnaireFilter filter, bool isDark) {
+    final isSelected = _filter == filter;
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => setState(() => _filter = label),
+        onTap: () => setState(() => _filter = filter),
         borderRadius: BorderRadius.circular(6),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
@@ -155,7 +181,7 @@ class _QuestionnaireListScreenState
             ),
           ),
           child: Text(
-            label,
+            filter.getLocalizedLabel(context),
             style: TextStyle(
               fontSize: 13,
               color: isSelected
@@ -204,7 +230,7 @@ class _QuestionnaireListScreenState
                   children: [
                     Expanded(
                       child: Text(
-                        item.title.isEmpty ? '未命名问卷' : item.title,
+                        item.title.isEmpty ? context.l10n.unnamedQuestionnaire : item.title,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -232,7 +258,7 @@ class _QuestionnaireListScreenState
                 ],
                 const SizedBox(height: 8),
                 Text(
-                  item.statusLabel,
+                  item.getLocalizedStatus(context),
                   style: TextStyle(
                     fontSize: 12,
                     color: statusColor,

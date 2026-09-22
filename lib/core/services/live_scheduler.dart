@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../l10n/app_localizations.dart';
 import '../../features/timetable/models/course_model.dart';
 import '../../features/timetable/services/timetable_storage.dart';
 import '../../features/timetable/utils/date_calculator.dart';
@@ -52,6 +53,22 @@ class LiveScheduler {
   static const String _kFlymeLive = 'flyme_live_enabled';
   static const String _kReminder = 'course_reminder_minutes';
   static const String _kLibReminder = 'library_reminder_minutes';
+
+  Future<AppLocalizations> _getL10n() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final code = prefs.getString('app_language_code');
+      if (code != null && code != 'system') {
+        return lookupAppLocalizations(Locale(code));
+      }
+    } catch (_) {}
+    try {
+      final platformLocale = WidgetsBinding.instance.platformDispatcher.locale;
+      return lookupAppLocalizations(platformLocale);
+    } catch (_) {
+      return lookupAppLocalizations(const Locale('zh'));
+    }
+  }
 
   bool _started = false;
   _ResumeObserver? _observer;
@@ -199,6 +216,7 @@ class LiveScheduler {
 
     if (libMin > 0) {
       try {
+        final l10n = await _getL10n();
         final reserves = await LibraryStorage.getCachedReserves();
         for (final r in reserves) {
           final start = r.startTime;
@@ -210,7 +228,7 @@ class LiveScheduler {
           windows.add(LiveWindow(
             id: id,
             kind: 'library',
-            name: '${r.seatNum}号座位',
+            name: l10n.seatWithNumber(r.seatNum),
             location: r.fullRoomName,
             start: start,
             leadMin: libMin,
@@ -331,35 +349,49 @@ class LiveScheduler {
             .clamp(1, w.leadMin);
     final hh = w.start.hour.toString().padLeft(2, '0');
     final mm = w.start.minute.toString().padLeft(2, '0');
+    final l10n = await _getL10n();
+
     if (w.kind == 'library') {
       final title = '${w.name} · ${w.location}';
-      final text = '还有 $remaining 分钟开始 · 请按时签到';
+      final text = l10n.liveMinutesRemainingSeat(remaining);
       if (channel == 'flyme') {
         await FlymeLiveService().upsert(
-          id: w.id, title: title, text: text,
-          capsuleText: w.location, timeText: '$hh:$mm开始',
+          id: w.id,
+          title: title,
+          text: text,
+          capsuleText: w.location,
+          timeText: l10n.liveSeatStartingTime('$hh:$mm'),
         );
       } else {
         await CourseLiveService().upsert(
-          id: w.id, title: title, text: text,
+          id: w.id,
+          title: title,
+          text: text,
           shortText: w.location,
-          progress: w.leadMin - remaining, total: w.leadMin,
+          progress: w.leadMin - remaining,
+          total: w.leadMin,
           whenMs: w.start.millisecondsSinceEpoch,
         );
       }
     } else {
       final title = '${w.name} · ${w.location}';
-      final text = '还有 $remaining 分钟上课';
+      final text = l10n.liveMinutesRemainingClass(remaining);
       if (channel == 'flyme') {
         await FlymeLiveService().upsert(
-          id: w.id, title: title, text: text,
-          capsuleText: w.location, timeText: '$hh:$mm开课',
+          id: w.id,
+          title: title,
+          text: text,
+          capsuleText: w.location,
+          timeText: l10n.liveClassStartingTime('$hh:$mm'),
         );
       } else {
         await CourseLiveService().upsert(
-          id: w.id, title: title, text: text,
+          id: w.id,
+          title: title,
+          text: text,
           shortText: w.location,
-          progress: w.leadMin - remaining, total: w.leadMin,
+          progress: w.leadMin - remaining,
+          total: w.leadMin,
           whenMs: w.start.millisecondsSinceEpoch,
         );
       }

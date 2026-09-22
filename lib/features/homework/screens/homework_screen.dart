@@ -9,6 +9,7 @@ import 'package:logger/logger.dart';
 import '../../workspace/screens/webview_detail_screen.dart';
 import '../../../core/network/cookie_manager.dart';
 import '../../../core/utils/route_utils.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 
 class HomeworkScreen extends ConsumerStatefulWidget {
@@ -87,9 +88,9 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
 
                 // 如果显示列表为空，且处于未登录状态，显示登录占位
                 if (displayList.isEmpty && authState.status == AuthStatus.unauthenticated) {
-                   return const LoginRequiredPlaceholder(
-                    title: '需要登录以同步作业',
-                    message: '登录后即可从超星平台实时同步您的课程作业，您也可以直接点击右下角手动添加',
+                   return LoginRequiredPlaceholder(
+                    title: context.l10n.homeworkLoginTitle,
+                    message: context.l10n.homeworkLoginMessage,
                     icon: Icons.assignment_late_outlined,
                   );
                 }
@@ -102,9 +103,9 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
                 return TabBarView(
                   controller: _tabController,
                   children: [
-                    _buildRefreshableList(archiveList, Icons.inventory_2_outlined, '存档里空空如也', authState.username, isPending: false),
-                    _buildRefreshableList(completedList, Icons.task_alt, '还没完成过作业哦', authState.username, isPending: false),
-                    _buildRefreshableList(pendingList, Icons.assignment_outlined, '暂时没有待办作业', authState.username, isPending: true),
+                    _buildRefreshableList(archiveList, Icons.inventory_2_outlined, context.l10n.homeworkEmptyArchived, authState.username, isPending: false),
+                    _buildRefreshableList(completedList, Icons.task_alt, context.l10n.homeworkEmptyCompleted, authState.username, isPending: false),
+                    _buildRefreshableList(pendingList, Icons.assignment_outlined, context.l10n.homeworkEmptyPending, authState.username, isPending: true),
                   ],
                 );
               },
@@ -115,11 +116,11 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
                   children: [
                     Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
                     const SizedBox(height: 16),
-                    Text('作业加载失败: $err', style: TextStyle(color: Colors.grey[600])),
+                    Text(context.l10n.homeworkLoadFailed(err.toString()), style: TextStyle(color: Colors.grey[600])),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () => ref.read(homeworkProvider.notifier).refresh(authState.username ?? ''),
-                      child: const Text('重试'),
+                      child: Text(context.l10n.retry),
                     ),
                   ],
                 ),
@@ -162,9 +163,9 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
           insets: const EdgeInsets.symmetric(horizontal: 4),
         ),
         tabs: [
-          _buildDynamicTab(index: 0, icon: Icons.inventory_2_outlined, label: '存档'),
-          _buildDynamicTab(index: 1, icon: Icons.task_alt, label: '已完成'),
-          _buildDynamicTab(index: 2, icon: Icons.assignment_outlined, label: '未完成'),
+          _buildDynamicTab(index: 0, icon: Icons.inventory_2_outlined, label: context.l10n.homeworkTabArchived),
+          _buildDynamicTab(index: 1, icon: Icons.task_alt, label: context.l10n.homeworkTabCompleted),
+          _buildDynamicTab(index: 2, icon: Icons.assignment_outlined, label: context.l10n.homeworkTabPending),
         ],
       ),
     );
@@ -234,9 +235,10 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
     final noTime = items.where((e) => e.endTime == null).toList();
 
     // 2. 按日期对有时间的进行分组
+    final locale = Localizations.localeOf(context).toString();
     final Map<String, List<HomeworkModel>> grouped = {};
     for (var item in withTime) {
-      final dateKey = DateFormat('M月d日').format(item.endTime!);
+      final dateKey = DateFormat.MMMd(locale).format(item.endTime!);
       grouped.putIfAbsent(dateKey, () => []).add(item);
     }
 
@@ -262,11 +264,11 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
         ],
         
         if (noTime.isNotEmpty) ...[
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
             child: Text(
-              '无截止时间作业',
-              style: TextStyle(
+              context.l10n.noDeadlineHomework,
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: Colors.grey,
@@ -296,8 +298,9 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
 
   Widget _buildHomeworkItem(HomeworkModel item, {bool showDate = true}) {
     final bool hasTime = item.endTime != null;
+    final locale = Localizations.localeOf(context).toString();
     final String timeDisplay = hasTime 
-        ? (showDate ? DateFormat('M月d日 HH:mm').format(item.endTime!) : DateFormat('HH:mm').format(item.endTime!))
+        ? (showDate ? DateFormat.MMMd(locale).add_Hm().format(item.endTime!) : DateFormat.Hm(locale).format(item.endTime!))
         : '';
     
     final bool isCompleted = item.status == HomeworkStatus.completed;
@@ -312,7 +315,7 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
            if (auth.status == AuthStatus.authenticating) {
              if (context.mounted) {
                ScaffoldMessenger.of(context).showSnackBar(
-                 const SnackBar(content: Text('⏳ 正在登录中，请稍后...'), duration: Duration(seconds: 2)),
+                 SnackBar(content: Text(context.l10n.homeworkLoggingInWait), duration: const Duration(seconds: 2)),
                );
              }
              return;
@@ -321,7 +324,7 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
            _logger.i('Opening homework detail: ${item.dataUrl}');
            await AppCookieManager().injectAllChaoxingCookies();
            if (context.mounted) {
-             Navigator.push(context, createSlideUpRoute(WebViewDetailScreen(title: '作业详情', url: item.dataUrl)));
+             Navigator.push(context, createSlideUpRoute(WebViewDetailScreen(title: context.l10n.homeworkDetail, url: item.dataUrl)));
            }
         }
       },
@@ -379,11 +382,11 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
                       if (!item.isManual && item.dataUrl.contains('chaoxing.com')) ...[
                         Icon(Icons.open_in_new_rounded, size: 12, color: Colors.grey[400]),
                         const SizedBox(width: 4),
-                        Text('在学习通里完成', style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                        Text(context.l10n.completeInChaoXing, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
                       ] else if (item.isManual) ...[
                         Icon(Icons.edit_note_rounded, size: 14, color: Colors.grey[400]),
                         const SizedBox(width: 4),
-                        Text('手动添加', style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                        Text(context.l10n.manualAdd, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
                       ],
                     ],
                   ),
@@ -405,17 +408,17 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
             // 左滑：存档/撤销存档
             final isArchiving = item.status != HomeworkStatus.archived;
             ref.read(homeworkProvider.notifier).setArchived(item.id, isArchiving);
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isArchiving ? '已移至存档' : '已移出存档'), duration: const Duration(seconds: 2)));
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isArchiving ? context.l10n.movedToArchive : context.l10n.movedOutOfArchive), duration: const Duration(seconds: 2)));
           } else {
             // 右滑：删除
             final oldList = ref.read(homeworkProvider).value ?? [];
             ref.read(homeworkProvider.notifier).deleteHomework(item.id);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('已删除作业'),
+                content: Text(context.l10n.homeworkDeleted),
                 duration: const Duration(seconds: 5),
                 action: SnackBarAction(
-                  label: '撤销',
+                  label: context.l10n.undo,
                   onPressed: () => ref.read(homeworkProvider.notifier).restoreList(oldList),
                 ),
               ),
@@ -464,10 +467,10 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
                 child: TextField(
                   autofocus: true,
-                  decoration: const InputDecoration(
-                    hintText: '准备做什么？', 
+                  decoration: InputDecoration(
+                    hintText: context.l10n.homeworkTitleHint, 
                     border: InputBorder.none, 
-                    hintStyle: TextStyle(fontSize: 18),
+                    hintStyle: const TextStyle(fontSize: 18),
                     fillColor: Colors.white,
                   ),
                   style: const TextStyle(fontSize: 18),
@@ -488,7 +491,7 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
                         if (course.isNotEmpty) {
                           setSheetState(() => course = '');
                         } else {
-                          final val = await _showInputDialog('课程名称', '输入所属课程');
+                          final val = await _showInputDialog(context.l10n.courseName, context.l10n.inputCourseHint);
                           if (val != null && val.trim().isNotEmpty) setSheetState(() => course = val);
                         }
                       },
@@ -526,7 +529,7 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
                         if (remarks.isNotEmpty) {
                           setSheetState(() => remarks = '');
                         } else {
-                          final val = await _showInputDialog('备注', '添加备注信息');
+                          final val = await _showInputDialog(context.l10n.remark, context.l10n.addRemarkHint);
                           if (val != null && val.trim().isNotEmpty) setSheetState(() => remarks = val);
                         }
                       },
@@ -539,7 +542,7 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
                           Navigator.pop(context);
                         }
                       },
-                      child: const Text('保存', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF00E676))),
+                      child: Text(context.l10n.save, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF00E676))),
                     ),
                   ],
                 ),
@@ -560,8 +563,8 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
         title: Text(title),
         content: TextField(autofocus: true, decoration: InputDecoration(hintText: hint), onChanged: (v) => val = v),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
-          TextButton(onPressed: () => Navigator.pop(context, val), child: const Text('确定')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(context.l10n.cancel)),
+          TextButton(onPressed: () => Navigator.pop(context, val), child: Text(context.l10n.confirm)),
         ],
       ),
     );
@@ -578,23 +581,23 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (item.courseName.isNotEmpty) ...[
-              const Text('所属课程', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(context.l10n.courseLabel, style: const TextStyle(fontSize: 12, color: Colors.grey)),
               Text(item.courseName, style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 16),
             ],
             if (item.endTime != null) ...[
-              const Text('截止时间', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(context.l10n.deadlinePrefix, style: const TextStyle(fontSize: 12, color: Colors.grey)),
               Text(DateFormat('yyyy-MM-dd HH:mm').format(item.endTime!), style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 16),
             ],
             if (item.remarks.isNotEmpty) ...[
-              const Text('备注', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(context.l10n.remark, style: const TextStyle(fontSize: 12, color: Colors.grey)),
               Text(item.remarks, style: const TextStyle(fontSize: 16)),
             ],
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('关闭')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(context.l10n.close)),
         ],
       ),
     );

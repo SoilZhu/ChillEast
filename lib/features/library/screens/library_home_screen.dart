@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/exceptions/app_exceptions.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/route_utils.dart';
 import '../models/library_models.dart';
 import '../providers/library_provider.dart';
@@ -26,22 +27,22 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
           .signInSeat(reserve);
       if (mounted && success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('签到成功！祝您学习愉快。'),
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(context.l10n.checkInSuccessEnjoy),
               ],
             ),
-            backgroundColor: Color(0xFF09C489),
+            backgroundColor: const Color(0xFF09C489),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('签到失败: ${_errorMessage(e)}')),
+          SnackBar(content: Text(context.l10n.checkInFailedWithReason(_errorMessage(e)))),
         );
       }
     } finally {
@@ -57,10 +58,10 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        title: const Text('确认退座？',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        title: Text(context.l10n.confirmCheckOutTitle,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         content: Text(
-          '确定结束在【${reserve.thirdLevelName}】的 ${reserve.seatNum} 号座位使用吗？',
+          context.l10n.confirmCheckOutMessage(reserve.thirdLevelName, reserve.seatNum),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
@@ -70,7 +71,7 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             ),
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('我再想想', style: TextStyle(fontSize: 14)),
+            child: Text(context.l10n.thinkAgain, style: const TextStyle(fontSize: 14)),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
@@ -84,8 +85,8 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
                   borderRadius: BorderRadius.circular(6)),
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('确认退座',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            child: Text(context.l10n.confirmCheckOut,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -99,13 +100,13 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
           await ref.read(libraryIndexProvider.notifier).signBackSeat(reserve);
       if (mounted && success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('退座成功')),
+          SnackBar(content: Text(context.l10n.checkOutSuccess)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('退座失败: ${_errorMessage(e)}')),
+          SnackBar(content: Text(context.l10n.checkOutFailedWithReason(_errorMessage(e)))),
         );
       }
     } finally {
@@ -116,8 +117,18 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
   }
 
   String _errorMessage(Object error) {
-    return error
-        .toString()
+    final raw = error.toString();
+    if (raw.contains('统一认证已过期') ||
+        raw.contains('登录会话已过期') ||
+        raw.contains('登录已失效')) {
+      return context.l10n.ssoExpiredRelogin;
+    }
+    if (raw.contains('NO_VALID_RESERVATION') ||
+        raw.contains('服务器未返回') ||
+        raw.contains('未返回有效')) {
+      return context.l10n.reservationFailed;
+    }
+    return raw
         .replaceAll(RegExp(r'^.*?: '), '')
         .replaceAll(RegExp(r'\s*\(code:.*\)$'), '')
         .trim();
@@ -129,10 +140,10 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        title: const Text('确认取消预约？',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        title: Text(context.l10n.confirmCancelReservationTitle,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         content: Text(
-            '确定取消在【${reserve.thirdLevelName}】的 ${reserve.seatNum} 号座位预约吗？'),
+            context.l10n.confirmCancelReservationMessage(reserve.thirdLevelName, reserve.seatNum)),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           TextButton(
@@ -143,7 +154,7 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             ),
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('我再想想', style: TextStyle(fontSize: 14)),
+            child: Text(context.l10n.thinkAgain, style: const TextStyle(fontSize: 14)),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
@@ -159,9 +170,9 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
               ),
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              '确认取消',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            child: Text(
+              context.l10n.confirmCancel,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -176,7 +187,7 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
             .cancelReservation(reserve.id);
         if (mounted && success) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('已成功取消该预约')),
+            SnackBar(content: Text(context.l10n.reservationCancelledSuccess)),
           );
         }
       } catch (e) {
@@ -184,7 +195,7 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text(
-                    '取消失败: ${e.toString().replaceAll('Exception:', '').trim()}')),
+                    context.l10n.cancelReservationFailedWithReason(e.toString().replaceAll('Exception:', '').trim()))),
           );
         }
       } finally {
@@ -212,11 +223,11 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
         child: AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          content: const Row(
+          content: Row(
             children: [
-              CircularProgressIndicator(color: Color(0xFF09C489)),
-              SizedBox(width: 16),
-              Text('正在提交预约...'),
+              const CircularProgressIndicator(color: Color(0xFF09C489)),
+              const SizedBox(width: 16),
+              Text(context.l10n.submittingReservation),
             ],
           ),
         ),
@@ -234,7 +245,7 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
       );
 
       if (result.id <= 0 && result.seatNum.isEmpty) {
-        throw const AppException('服务器未返回有效的预约信息');
+        throw const AppException('NO_VALID_RESERVATION');
       }
 
       // 刷新全局状态与本地缓存
@@ -252,31 +263,31 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
           builder: (ctx) => AlertDialog(
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            title: const Row(
+            title: Row(
               children: [
-                Icon(Icons.check_circle, color: Color(0xFF09C489)),
-                SizedBox(width: 8),
-                Text('预约成功',
+                const Icon(Icons.check_circle, color: Color(0xFF09C489)),
+                const SizedBox(width: 8),
+                Text(context.l10n.reservationSuccess,
                     style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('阅览室：${item.fullRoomName}'),
+                Text(context.l10n.readingRoomLabel(item.fullRoomName)),
                 const SizedBox(height: 4),
-                Text(
-                    '座位号：${result.seatNum.isNotEmpty ? result.seatNum : item.seatNum} 号'),
+                Text(context.l10n.seatNumberLabel(
+                    result.seatNum.isNotEmpty ? result.seatNum : item.seatNum)),
                 const SizedBox(height: 4),
-                Text('日期：${selection.day}'),
+                Text(context.l10n.dateLabel(selection.day)),
                 const SizedBox(height: 4),
-                Text('时间：${selection.startTime} ~ ${selection.endTime}'),
+                Text(context.l10n.timeValueLabel('${selection.startTime} ~ ${selection.endTime}')),
                 const SizedBox(height: 12),
-                const Text(
-                  '请在规定时间内完成签到，超时未签到将视为违规。',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                Text(
+                  context.l10n.reservationNotice,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
@@ -292,8 +303,8 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
                       borderRadius: BorderRadius.circular(6)),
                 ),
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('完成',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(context.l10n.done,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -309,17 +320,17 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
           builder: (ctx) => AlertDialog(
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            title: const Row(
+            title: Row(
               children: [
-                Icon(Icons.error_outline, color: Colors.red),
-                SizedBox(width: 8),
-                Text('预约失败',
+                const Icon(Icons.error_outline, color: Colors.red),
+                const SizedBox(width: 8),
+                Text(context.l10n.reservationFailed,
                     style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
             content: Text(
-              errorMsg.isNotEmpty ? errorMsg : '预约失败，服务器未返回成功预约结果',
+              errorMsg.isNotEmpty ? errorMsg : context.l10n.reservationFailed,
             ),
             actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             actions: [
@@ -333,8 +344,8 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
                       borderRadius: BorderRadius.circular(6)),
                 ),
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('我知道了',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(context.l10n.iUnderstand,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -355,7 +366,7 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('图书馆'),
+        title: Text(context.l10n.library),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
         foregroundColor: isDark ? Colors.white : Colors.black87,
@@ -363,7 +374,7 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: '刷新',
+            tooltip: context.l10n.refresh,
             onPressed: () => ref.read(libraryIndexProvider.notifier).refresh(),
           ),
         ],
@@ -392,7 +403,7 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
                 ),
                 onPressed: () =>
                     ref.read(libraryIndexProvider.notifier).refresh(),
-                child: const Text('重试'),
+                child: Text(context.l10n.retry),
               ),
             ],
           ),
@@ -466,7 +477,7 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
         children: [
           // 座位号
           Text(
-            '${reserve.seatNum} 号座位',
+            context.l10n.seatWithNumber(reserve.seatNum),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -519,7 +530,7 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
                   onPressed: _isProcessingAction
                       ? null
                       : () => _handleCancelReservation(reserve),
-                  child: const Text('取消预约', style: TextStyle(fontSize: 13)),
+                  child: Text(context.l10n.cancelReservation, style: const TextStyle(fontSize: 13)),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
@@ -537,9 +548,9 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
                     Icons.check_circle_outline_rounded,
                     size: 16,
                   ),
-                  label: const Text(
-                    '签到',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  label: Text(
+                    context.l10n.checkIn,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                   onPressed: _isProcessingAction
                       ? null
@@ -558,9 +569,9 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
                     minimumSize: const Size(0, 36),
                   ),
                   icon: const Icon(Icons.logout_rounded, size: 16),
-                  label: const Text('退座',
+                  label: Text(context.l10n.checkOut,
                       style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                          const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                   onPressed: _isProcessingAction
                       ? null
                       : () => _handleSignBack(reserve),
@@ -605,7 +616,7 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '预约选座',
+                  context.l10n.reserveSeat,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -629,7 +640,7 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
   Widget _buildRecentReservationsHeader() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Text(
-      '近期预约记录',
+      context.l10n.recentReservations,
       style: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.bold,
@@ -645,7 +656,7 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
       child: Align(
         alignment: Alignment.centerLeft,
         child: Text(
-          '暂无历史预约记录',
+          context.l10n.noReservationRecords,
           style: TextStyle(
               fontSize: 14, color: isDark ? Colors.white38 : Colors.grey),
         ),
@@ -721,9 +732,9 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
               onPressed: _isProcessingAction
                   ? null
                   : () => _handleQuickReserve(item),
-              child: const Text(
-                '预约',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              child: Text(
+                context.l10n.reserve,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               ),
             ),
           ],

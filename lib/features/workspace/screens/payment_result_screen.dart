@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 enum PaymentResultType {
   success,
@@ -40,22 +41,22 @@ class PaymentResultSheet extends StatelessWidget {
       case PaymentResultType.success:
         themeColor = const Color(0xFF1677FF);
         statusIcon = Icons.check_circle_outline;
-        statusTitle = '支付成功';
+        statusTitle = context.l10n.paymentSuccess;
         break;
       case PaymentResultType.failure:
         themeColor = Colors.red;
         statusIcon = Icons.cancel_outlined;
-        statusTitle = '支付失败';
+        statusTitle = context.l10n.paymentFailed;
         break;
       case PaymentResultType.notice:
         themeColor = Colors.orange;
         statusIcon = Icons.info_outline;
-        statusTitle = '付款提示';
+        statusTitle = context.l10n.paymentNotice;
         break;
       case PaymentResultType.confirm:
         themeColor = const Color(0xFF09C489); // Theme Green
         statusIcon = Icons.payment_outlined;
-        statusTitle = '支付确认';
+        statusTitle = context.l10n.paymentConfirmation;
         break;
     }
 
@@ -138,7 +139,7 @@ class PaymentResultSheet extends StatelessWidget {
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: Text(
-                    '取消',
+                    context.l10n.cancel,
                     style: TextStyle(fontSize: 15, color: isDark ? Colors.white70 : Colors.black54),
                   ),
                 ),
@@ -153,9 +154,9 @@ class PaymentResultSheet extends StatelessWidget {
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  child: const Text(
-                    '继续支付',
-                    style: TextStyle(
+                  child: Text(
+                    context.l10n.continuePayment,
+                    style: const TextStyle(
                       fontSize: 15,
                       color: Color(0xFF1677FF),
                       fontWeight: FontWeight.w500,
@@ -182,7 +183,7 @@ class PaymentResultSheet extends StatelessWidget {
                     padding: EdgeInsets.zero,
                   ),
                   child: Text(
-                    type == PaymentResultType.confirm ? (confirmText ?? '确认支付') : '完成',
+                    type == PaymentResultType.confirm ? (confirmText ?? context.l10n.confirmPayment) : context.l10n.done,
                     style: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500),
                   ),
                 ),

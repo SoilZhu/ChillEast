@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/update_service.dart';
+import '../utils/l10n_extension.dart';
 
 class UpdateScreen extends StatelessWidget {
   final String version;
@@ -22,7 +23,7 @@ class UpdateScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('版本更新'),
+        title: Text(context.l10n.versionUpdate),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
@@ -56,7 +57,7 @@ class UpdateScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          '发现新版本 v$version',
+                          context.l10n.foundNewVersion(version),
                           style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -67,7 +68,7 @@ class UpdateScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
                   Text(
-                    '更新日志',
+                    context.l10n.releaseNotes,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -88,7 +89,7 @@ class UpdateScreen extends StatelessWidget {
                     child: SelectionArea(
                       child: Text.rich(
                         _linkify(
-                          releaseNotes,
+                           releaseNotes,
                           TextStyle(
                             fontSize: 14,
                             color: isDark ? Colors.white60 : Colors.grey[800],
@@ -120,16 +121,16 @@ class UpdateScreen extends StatelessWidget {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    '立即更新',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  child: Text(
+                    context.l10n.updateNow,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: Text(
-                    '以后再说',
+                    context.l10n.later,
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),

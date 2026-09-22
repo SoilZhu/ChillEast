@@ -24,6 +24,7 @@ import '../../../core/widgets/login_required_placeholder.dart';
 import '../../../core/constants/app_constants.dart';
 import 'package:logger/logger.dart';
 import '../../profile/providers/settings_provider.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 /// 自定义次顶栏指示器：上圆下方
 class MD2Indicator extends Decoration {
@@ -324,18 +325,19 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
           .update((state) => state + 1);
 
       // 重新安排通知
+      final l10n = context.l10n;
       await ref.read(settingsProvider.notifier).rescheduleNotifications();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('课表已刷新'), behavior: SnackBarBehavior.floating),
+          SnackBar(
+              content: Text(l10n.timetableRefreshed), behavior: SnackBarBehavior.floating),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('刷新失败: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(context.l10n.timetableRefreshFailed(e.toString())), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -367,26 +369,27 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
   Future<void> _shareTimetable() async {
     if (!_hasLocalTimetable) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('没有可分享的课表')),
+        SnackBar(content: Text(context.l10n.noTimetableToShare)),
       );
       return;
     }
 
+    final l10n = context.l10n;
     try {
       final filePath = await _storage.getTimetableFilePath();
       if (filePath == null) {
-        throw Exception('课表文件不存在');
+        throw Exception(l10n.timetableFileNotFound);
       }
 
       // 使用 share_plus 分享文件
       await Share.shareXFiles(
         [XFile(filePath)],
-        text: '我的湖南农业大学课表',
+        text: l10n.shareTimetableText,
       );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('分享失败: $e')),
+          SnackBar(content: Text(l10n.shareFailed(e.toString()))),
         );
       }
     }
@@ -451,9 +454,9 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
                 indicatorHeight: 4,
                 radius: 4,
               ),
-              tabs: const [
-                Tab(text: '日程'),
-                Tab(text: '周'),
+              tabs: [
+                Tab(text: context.l10n.tabAgenda),
+                Tab(text: context.l10n.tabWeek),
               ],
             ),
           ),
@@ -466,7 +469,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
                       ? Colors.white70
                       : const Color(0xFF5F6368)),
               onPressed: _handleModifyRulesClick,
-              tooltip: '调整课表',
+              tooltip: context.l10n.adjustTimetable,
             ),
             IconButton(
               icon: Icon(Icons.today_rounded,
@@ -475,7 +478,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
                       ? Colors.white70
                       : const Color(0xFF5F6368)),
               onPressed: _handleTodayClick,
-              tooltip: '回到今天',
+              tooltip: context.l10n.backToToday,
             ),
             IconButton(
               icon: Icon(Icons.refresh_rounded,
@@ -484,7 +487,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
                       ? Colors.white70
                       : const Color(0xFF5F6368)),
               onPressed: _isLoading ? null : _handleManualRefresh,
-              tooltip: '刷新课表',
+              tooltip: context.l10n.refreshTimetable,
             ),
             IconButton(
               icon: Icon(Icons.share_rounded,
@@ -493,7 +496,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
                       ? Colors.white70
                       : const Color(0xFF5F6368)),
               onPressed: _shareTimetable,
-              tooltip: '分享课表',
+              tooltip: context.l10n.shareTimetable,
             ),
             const SizedBox(width: 8),
           ],
@@ -508,9 +511,9 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
     // 只有在完全没有本地账号信息时，才显示登录占位符
     if (authState.status == AuthStatus.unauthenticated &&
         !authState.hasAccount) {
-      return const LoginRequiredPlaceholder(
-        title: '需要登录以查看课表',
-        message: '登录后即可同步并查看您的个人课表信息',
+      return LoginRequiredPlaceholder(
+        title: context.l10n.timetableLoginRequiredTitle,
+        message: context.l10n.timetableLoginRequiredMessage,
       );
     }
 
@@ -544,7 +547,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
             Icon(Icons.event_busy_rounded,
                 size: 48, color: Theme.of(context).hintColor.withOpacity(0.3)),
             const SizedBox(height: 16),
-            Text('本学期暂无课程及作业安排',
+            Text(context.l10n.noCoursesThisSemester,
                 style: TextStyle(color: Theme.of(context).hintColor)),
           ],
         ),
@@ -573,19 +576,19 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
   }
 
   Widget _buildMonthHeader(int month) {
-    const months = [
-      '一月',
-      '二月',
-      '三月',
-      '四月',
-      '五月',
-      '六月',
-      '七月',
-      '八月',
-      '九月',
-      '十月',
-      '十一月',
-      '十二月'
+    final months = [
+      context.l10n.month1,
+      context.l10n.month2,
+      context.l10n.month3,
+      context.l10n.month4,
+      context.l10n.month5,
+      context.l10n.month6,
+      context.l10n.month7,
+      context.l10n.month8,
+      context.l10n.month9,
+      context.l10n.month10,
+      context.l10n.month11,
+      context.l10n.month12,
     ];
     return Container(
       height: 40,
@@ -607,7 +610,15 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
   }
 
   Widget _buildAgendaDaySection(DateTime date, List<CourseModel> courses) {
-    const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    final weekDays = [
+      context.l10n.weekdayMon,
+      context.l10n.weekdayTue,
+      context.l10n.weekdayWed,
+      context.l10n.weekdayThu,
+      context.l10n.weekdayFri,
+      context.l10n.weekdaySat,
+      context.l10n.weekdaySun,
+    ];
     final dayName = weekDays[date.weekday - 1];
     final now = DateTime.now();
     final isToday =
@@ -722,12 +733,12 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       const Icon(Icons.error_outline, size: 64, color: Colors.red),
       const SizedBox(height: 16),
-      const Text('加载失败'),
+      Text(context.l10n.loadFailed),
       Text(_errorMessage!,
           style: TextStyle(color: Theme.of(context).hintColor),
           textAlign: TextAlign.center),
       const SizedBox(height: 24),
-      ElevatedButton(onPressed: _loadLocalTimetable, child: const Text('重试')),
+      ElevatedButton(onPressed: _loadLocalTimetable, child: Text(context.l10n.retry)),
     ]));
   }
 
@@ -736,10 +747,10 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       const Icon(Icons.info_outline, size: 64, color: Colors.orange),
       const SizedBox(height: 16),
-      const Text('课表信息不完整'),
-      const Text('请重新下载课表'),
+      Text(context.l10n.timetableInfoIncomplete),
+      Text(context.l10n.pleaseReDownloadTimetable),
       const SizedBox(height: 24),
-      ElevatedButton(onPressed: _loadLocalTimetable, child: const Text('重试')),
+      ElevatedButton(onPressed: _loadLocalTimetable, child: Text(context.l10n.retry)),
     ]));
   }
 
@@ -798,7 +809,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  '${item.courseName} · 截止时间 ${item.endTime != null ? DateFormat('HH:mm').format(item.endTime!) : "无截止时间"}',
+                  '${item.courseName} · ${context.l10n.deadlinePrefix} ${item.endTime != null ? DateFormat('HH:mm').format(item.endTime!) : context.l10n.noDeadline}',
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).brightness == Brightness.dark

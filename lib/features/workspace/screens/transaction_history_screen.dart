@@ -2,8 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../models/transaction_model.dart';
 import '../services/transaction_service.dart';
+
+extension TransactionTypeL10n on TransactionType {
+  String getLocalizedLabel(BuildContext context) {
+    switch (this) {
+      case TransactionType.all:
+        return context.l10n.all;
+      case TransactionType.consume:
+        return context.l10n.transactionConsume;
+      case TransactionType.recharge:
+        return context.l10n.transactionRecharge;
+      case TransactionType.subsidy:
+        return context.l10n.transactionSubsidy;
+      case TransactionType.transfer:
+        return context.l10n.transactionTransfer;
+    }
+  }
+}
 
 /// 校园卡账单页
 ///
@@ -49,13 +67,13 @@ class _TransactionHistoryScreenState
 
   /// 对齐 querytrace.js 的三段校验，返回 null 表示通过
   String? _validate() {
-    if (_beginDate == null) return '请选择起始日期';
-    if (_endDate == null) return '请选择截止日期';
-    if (_beginDate!.isAfter(_endDate!)) return '截止时间大于起始时间';
+    if (_beginDate == null) return context.l10n.pleaseSelectStartDate;
+    if (_endDate == null) return context.l10n.pleaseSelectEndDate;
+    if (_beginDate!.isAfter(_endDate!)) return context.l10n.endDateMustBeAfterStartDate;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    if (_endDate!.isAfter(today)) return '截止时间大于当前时间';
-    if (_endDate!.difference(_beginDate!).inDays > 31) return '日期区间最大为一个月!';
+    if (_endDate!.isAfter(today)) return context.l10n.endDateCannotBeInFuture;
+    if (_endDate!.difference(_beginDate!).inDays > 31) return context.l10n.dateRangeMaxOneMonth;
     return null;
   }
 
@@ -155,8 +173,8 @@ class _TransactionHistoryScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('账单',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+        title: Text(context.l10n.bill,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -234,7 +252,7 @@ class _TransactionHistoryScreenState
         Expanded(
           flex: 4,
           child: _buildDateBox(
-            label: '起始日期',
+            label: context.l10n.startDate,
             date: _beginDate,
             isDark: isDark,
             themeColor: themeColor,
@@ -245,7 +263,7 @@ class _TransactionHistoryScreenState
         Expanded(
           flex: 4,
           child: _buildDateBox(
-            label: '截止日期',
+            label: context.l10n.endDate,
             date: _endDate,
             isDark: isDark,
             themeColor: themeColor,
@@ -279,7 +297,7 @@ class _TransactionHistoryScreenState
         children: [
           Expanded(
             child: Text(
-              date == null ? '请选择' : _fmt(date),
+              date == null ? context.l10n.pleaseSelect : _fmt(date),
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -337,14 +355,14 @@ class _TransactionHistoryScreenState
   /// hit test，debug 下刷 `Cannot hit test a render box with no size`）
   Widget _buildTypeBox(bool isDark) {
     return _md2Box(
-      label: '类型',
+      label: context.l10n.type,
       onTap: () => _pickType(isDark),
       isDark: isDark,
       child: Row(
         children: [
           Expanded(
             child: Text(
-              _type.label,
+              _type.getLocalizedLabel(context),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -386,7 +404,7 @@ class _TransactionHistoryScreenState
               ),
               ...TransactionType.values.map(
                 (t) => ListTile(
-                  title: Text(t.label,
+                  title: Text(t.getLocalizedLabel(sheetContext),
                       style: TextStyle(
                           color:
                               isDark ? Colors.white : Colors.black87)),
@@ -430,8 +448,8 @@ class _TransactionHistoryScreenState
                     color: Colors.white, strokeWidth: 2),
               )
             : const Icon(Icons.search, size: 18),
-        label: const Text('查询',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        label: Text(context.l10n.query,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
       ),
     );
   }
@@ -499,8 +517,8 @@ class _TransactionHistoryScreenState
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(6)),
               ),
-              child: const Text('重试',
-                  style: TextStyle(color: Colors.white)),
+              child: Text(context.l10n.retry,
+                  style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -509,7 +527,7 @@ class _TransactionHistoryScreenState
     if (_records.isEmpty) {
       return Center(
         key: const ValueKey('bill-empty'),
-        child: Text('暂无账单',
+        child: Text(context.l10n.noTransactions,
             style: TextStyle(
                 color: isDark ? Colors.white54 : Colors.black54)),
       );

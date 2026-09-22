@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/utils/route_utils.dart';
 import '../../../core/services/update_service.dart';
+import '../../../core/utils/l10n_extension.dart';
 import 'oss_licenses_screen.dart';
 
 class AboutScreen extends StatelessWidget {
@@ -54,7 +55,7 @@ class AboutScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Text(
-                '自在东湖',
+                context.l10n.appTitle,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -89,12 +90,12 @@ class AboutScreen extends StatelessWidget {
             // 列表项 - 无分割线，涟漪延伸到两侧
             _buildAboutItem(
               context,
-              title: '检查更新',
+              title: context.l10n.checkUpdate,
               onTap: () => UpdateService().checkUpdate(context, showNoUpdate: true),
             ),
             _buildAboutItem(
               context,
-              title: '开源声明',
+              title: context.l10n.openSourceLicenses,
               onTap: () {
                 Navigator.push(
                   context,

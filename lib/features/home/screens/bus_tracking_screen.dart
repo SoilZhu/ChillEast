@@ -3,7 +3,10 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/location_helper.dart';
+
+enum _BusErrorType { serviceDisabled, permissionDenied, permissionPermanentlyDenied, custom }
 
 class BusTrackingScreen extends StatefulWidget {
   const BusTrackingScreen({super.key});
@@ -16,7 +19,8 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
   InAppWebViewController? _webViewController;
   bool _isLoading = true;
   double _progress = 0;
-  String? _errorMessage;
+  _BusErrorType? _errorType;
+  String? _customError;
 
   @override
   void initState() {
@@ -28,10 +32,12 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        setState(() {
-          _errorMessage = '位置服务未开启';
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _errorType = _BusErrorType.serviceDisabled;
+            _isLoading = false;
+          });
+        }
         return;
       }
 
@@ -39,19 +45,23 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          setState(() {
-            _errorMessage = '定位权限被拒绝';
-            _isLoading = false;
-          });
+          if (mounted) {
+            setState(() {
+              _errorType = _BusErrorType.permissionDenied;
+              _isLoading = false;
+            });
+          }
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        setState(() {
-          _errorMessage = '定位权限被永久拒绝，请在设置中开启';
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _errorType = _BusErrorType.permissionPermanentlyDenied;
+            _isLoading = false;
+          });
+        }
         return;
       }
 
@@ -68,10 +78,28 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
         _webViewController!.loadUrl(urlRequest: URLRequest(url: WebUri(url)));
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = '获取位置失败: $e';
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _errorType = _BusErrorType.custom;
+          _customError = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  String? _getErrorMessage(BuildContext context) {
+    switch (_errorType) {
+      case _BusErrorType.serviceDisabled:
+        return context.l10n.locationServiceDisabled;
+      case _BusErrorType.permissionDenied:
+        return context.l10n.locationPermissionDenied;
+      case _BusErrorType.permissionPermanentlyDenied:
+        return context.l10n.locationPermissionPermanentlyDenied;
+      case _BusErrorType.custom:
+        return context.l10n.getLocationFailed(_customError ?? '');
+      case null:
+        return null;
     }
   }
 
@@ -167,8 +195,8 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
                           GestureDetector(
                             behavior: HitTestBehavior.opaque,
                             onTap: () {
-                              if (_errorMessage != null) {
-                                setState(() { _isLoading = true; _errorMessage = null; });
+                              if (_errorType != null) {
+                                setState(() { _isLoading = true; _errorType = null; _customError = null; });
                                 _fetchLocationAndLoad();
                               } else {
                                 _webViewController?.reload();
@@ -194,7 +222,7 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
                   ),
 
                   // 6. 错误提示
-                  if (_errorMessage != null)
+                  if (_getErrorMessage(context) != null)
                     Container(
                       color: Colors.white,
                       child: Center(
@@ -205,18 +233,18 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
                             const SizedBox(height: 16),
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 40),
-                              child: Text(_errorMessage!, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[600])),
+                              child: Text(_getErrorMessage(context)!, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[600])),
                             ),
                             const SizedBox(height: 24),
                             OutlinedButton(
                               onPressed: () {
-                                setState(() { _isLoading = true; _errorMessage = null; });
+                                setState(() { _isLoading = true; _errorType = null; _customError = null; });
                                 _fetchLocationAndLoad();
                               },
                               style: OutlinedButton.styleFrom(
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                               ),
-                              child: const Text('重试'),
+                              child: Text(context.l10n.retry),
                             ),
                           ],
                         ),

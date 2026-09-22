@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/download_timetable_screen.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 class TimetableSyncPromptScreen extends StatelessWidget {
   final VoidCallback? onSkip;
@@ -60,7 +61,7 @@ class TimetableSyncPromptScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 24),
             Text(
-              '获取课表',
+              context.l10n.fetchTimetable,
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -71,7 +72,7 @@ class TimetableSyncPromptScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              '检测到您已成功登录，是否现在同步您的课程安排并导入日历？',
+              context.l10n.syncTimetablePrompt,
               style: TextStyle(
                 fontSize: 14,
                 color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF5F6368),
@@ -97,10 +98,10 @@ class TimetableSyncPromptScreen extends StatelessWidget {
                       }
                     },
                     style: TextButton.styleFrom(
-                      foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF5F6368),
+                       foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF5F6368),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                     ),
-                    child: const Text('跳过', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text(context.l10n.skip, style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
@@ -129,9 +130,9 @@ class TimetableSyncPromptScreen extends StatelessWidget {
                       elevation: 0,
                     ),
                     icon: const Icon(Icons.download_rounded, size: 18),
-                    label: const Text(
-                      '立即同步',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    label: Text(
+                      context.l10n.syncNow,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],

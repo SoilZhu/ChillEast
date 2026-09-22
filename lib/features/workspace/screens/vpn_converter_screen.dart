@@ -8,6 +8,7 @@ import 'package:pointycastle/export.dart' as pc;
 
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 /// WebVPN 链接转换器 - 原生 UI 版
 class VpnConverterScreen extends StatefulWidget {
@@ -138,7 +139,7 @@ class _VpnConverterScreenState extends State<VpnConverterScreen> {
       _logger.e('URL Conversion Error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('转换失败: $e')),
+          SnackBar(content: Text(context.l10n.conversionFailed(e.toString()))),
         );
       }
     }
@@ -153,7 +154,7 @@ class _VpnConverterScreenState extends State<VpnConverterScreen> {
       _logger.e('Open Browser Error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('跳转浏览器失败')),
+          SnackBar(content: Text(context.l10n.openBrowserFailed)),
         );
       }
     }
@@ -164,7 +165,7 @@ class _VpnConverterScreenState extends State<VpnConverterScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('WebVPN 转换器'),
+        title: Text(context.l10n.webVpnConverter),
         elevation: 0,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       ),
@@ -186,10 +187,10 @@ class _VpnConverterScreenState extends State<VpnConverterScreen> {
                   children: [
                     const Icon(Icons.shield_outlined, color: Color(0xFF5F6368), size: 20),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        '将普通校内链接转换为 WebVPN 链接，以便在校外直接访问。',
-                        style: TextStyle(
+                        context.l10n.webVpnDescription,
+                        style: const TextStyle(
                           fontSize: 13,
                           color: Color(0xFF5F6368),
                           height: 1.5,
@@ -206,7 +207,7 @@ class _VpnConverterScreenState extends State<VpnConverterScreen> {
                 controller: _urlController,
                 style: const TextStyle(fontSize: 15),
                 decoration: InputDecoration(
-                  labelText: '原始地址',
+                  labelText: context.l10n.originalUrl,
                   labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
                   floatingLabelStyle: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.w500),
                   hintText: 'https://jwxt.hunau.edu.cn/...',
@@ -243,9 +244,9 @@ class _VpnConverterScreenState extends State<VpnConverterScreen> {
               
               // 转换结果展示
               if (_convertedUrl.isNotEmpty) ...[
-                const Text(
-                  '转换结果',
-                  style: TextStyle(
+                Text(
+                  context.l10n.conversionResult,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF202124),
@@ -283,14 +284,14 @@ class _VpnConverterScreenState extends State<VpnConverterScreen> {
                       onPressed: () {
                         Clipboard.setData(ClipboardData(text: _convertedUrl));
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('已复制到剪贴板'),
+                          SnackBar(
+                            content: Text(context.l10n.copiedToClipboard),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
                       },
                       icon: const Icon(Icons.copy_outlined, size: 18),
-                      label: const Text('复制'),
+                      label: Text(context.l10n.copy),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF5F6368),
                         side: const BorderSide(color: Color(0xFFDADCE0)),
@@ -301,7 +302,7 @@ class _VpnConverterScreenState extends State<VpnConverterScreen> {
                     ElevatedButton.icon(
                       onPressed: _openInBrowser,
                       icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                      label: const Text('访问'),
+                      label: Text(context.l10n.visit),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
@@ -320,7 +321,7 @@ class _VpnConverterScreenState extends State<VpnConverterScreen> {
                       Icon(Icons.link_off_outlined, size: 48, color: Colors.grey[200]),
                       const SizedBox(height: 16),
                       Text(
-                        '在上方粘贴链接以开始转换',
+                        context.l10n.pasteUrlToConvertHint,
                         style: TextStyle(color: Colors.grey[400], fontSize: 13),
                       ),
                     ],

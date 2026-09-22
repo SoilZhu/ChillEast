@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/campus_card_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 const String kAlipaySvg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g><path fill="none" d="M0 0h24v24H0z"/><path d="M21.422 15.358c-3.83-1.153-6.055-1.84-6.678-2.062a12.41 12.41 0 0 0 1.32-3.32H12.8V8.872h4v-.68h-4V6.344h-1.536c-.28 0-.312.248-.312.248v1.592H7.2v.68h3.752v1.104H7.88v.616h6.224a10.972 10.972 0 0 1-.888 2.176c-1.408-.464-2.192-.784-3.912-.944-3.256-.312-4.008 1.48-4.128 2.576C5 16.064 6.48 17.424 8.688 17.424s3.68-1.024 5.08-2.72c1.167.558 3.338 1.525 6.514 2.902A9.99 9.99 0 0 1 12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10a9.983 9.983 0 0 1-.578 3.358zm-12.99 1.01c-2.336 0-2.704-1.48-2.584-2.096.12-.616.8-1.416 2.104-1.416 1.496 0 2.832.384 4.44 1.16-1.136 1.48-2.52 2.352-3.96 2.352z"/></g></svg>''';
 const String kWechatSvg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.691 2.188C3.891 2.188 0 5.478 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.858-2.525.405-5.32 2.964-6.494 1.706-.782 3.65-.77 5.342-.036C16.89 5.568 13.143 2.188 8.691 2.188zm-2.42 4.095c.578 0 1.047.469 1.048 1.048s-.469 1.048-1.048 1.048c-.579 0-1.048-.469-1.048-1.048s.47-1.048 1.048-1.048zm5.234 0c.579 0 1.048.469 1.048 1.048s-.47 1.048-1.048 1.048c-.579 0-1.048-.469-1.048-1.048s.47-1.048 1.048-1.048zm3.834 4.544c-3.993 0-7.23 2.742-7.23 6.124 0 1.843.975 3.502 2.502 4.625.138.102.21.272.177.444l-.325 1.233c-.016.059-.04.118-.04.178 0 .135.109.246.242.246.06 0 .12-.022.17-.057l1.586-.928a.72.72 0 0 1 .597-.082c.74.202 1.52.312 2.321.312 3.993 0 7.23-2.742 7.23-6.124 0-3.382-3.237-6.124-7.23-6.124zm-2.016 3.41c.482 0 .873.391.873.873s-.391.873-.873.873c-.482 0-.873-.391-.873-.873s.391-.873.873-.873zm4.362 0c.482 0 .873.391.873.873s-.391.873-.873.873c-.482 0-.873-.391-.873-.873s.391-.873.873-.873z"/></svg>''';
@@ -176,7 +177,7 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
           }
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('支付处理中，请在微信中完成支付后稍候查询')),
+              SnackBar(content: Text(context.l10n.paymentProcessingWechatHint)),
             );
           }
         }
@@ -213,7 +214,7 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
       }
       if (isManual && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('暂未查询到到账，请在支付宝中完成支付后稍候重试')),
+          SnackBar(content: Text(context.l10n.paymentProcessingAlipayHint)),
         );
       }
     } catch (e) {
@@ -312,14 +313,14 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
               Expanded(
                 child: Text(
                   _secondaryError != null
-                      ? '校园卡充值成功，电费充值失败'
+                      ? context.l10n.rechargeCardSuccessElectricityFailed
                       : (_isSuccess
-                          ? (widget.successTitle ?? '支付成功')
+                          ? (widget.successTitle ?? context.l10n.paymentSuccess)
                           : (_isExecutingSecondary
-                              ? '正在充值...'
+                              ? context.l10n.recharging
                               : (_isPaying
-                                  ? '正在支付...'
-                                  : '支付确认 (${_isWeChat ? '微信支付' : '支付宝'})'))),
+                                  ? context.l10n.paying
+                                  : context.l10n.paymentConfirmationMethod(_isWeChat ? context.l10n.wechatPay : context.l10n.alipay)))),
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
@@ -372,7 +373,7 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
           if (_error != null) ...[
             const SizedBox(height: 16),
             Text(
-              '支付失败: $_error',
+              context.l10n.paymentFailedWithReason(_error!),
               style: const TextStyle(color: Colors.red, fontSize: 14),
             ),
           ],
@@ -385,7 +386,7 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
                   CircularProgressIndicator(color: primaryColor),
                   const SizedBox(height: 16),
                   Text(
-                    '正在充值...',
+                    context.l10n.recharging,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -394,7 +395,7 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '请稍候，请勿关闭页面',
+                    context.l10n.pleaseWaitDoNotClose,
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? Colors.white38 : Colors.black45,
@@ -415,7 +416,7 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
                   CircularProgressIndicator(color: _themeColor),
                   const SizedBox(height: 16),
                   Text(
-                    _isWeChat ? '请在跳转后的微信中完成支付' : '请在跳转后的支付宝中完成支付',
+                    _isWeChat ? context.l10n.completePaymentInWechat : context.l10n.completePaymentInAlipay,
                     style: TextStyle(
                       fontSize: 14,
                       color: isDark ? Colors.white54 : Colors.black54,
@@ -440,7 +441,7 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
                             child: CircularProgressIndicator(strokeWidth: 2, color: _themeColor),
                           )
                         : const Icon(Icons.check, size: 16),
-                    label: Text(_isCheckingResult ? '查询中...' : '已完成'),
+                    label: Text(_isCheckingResult ? context.l10n.checkingPaymentStatus : context.l10n.completed),
                   ),
                 ],
               ),
@@ -455,20 +456,20 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
               if (_isConfirming)
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('取消', style: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
+                  child: Text(context.l10n.cancel, style: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
                 ),
               if (_isConfirming) const SizedBox(width: 16),
 
               if (_isConfirming)
                 TextButton(
                   onPressed: _startPayment,
-                  child: Text('确认支付', style: TextStyle(color: _themeColor, fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: Text(context.l10n.confirmPayment, style: TextStyle(color: _themeColor, fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
 
               if (_isSuccess || _error != null || _secondaryError != null)
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('确定', style: TextStyle(color: _themeColor, fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: Text(context.l10n.ok, style: TextStyle(color: _themeColor, fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
             ],
           ),

@@ -4,6 +4,7 @@ import '../models/timetable_rule_model.dart';
 import '../services/timetable_rule_service.dart';
 import '../utils/date_calculator.dart';
 import '../utils/week_parser.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 /// 课表规则操作管理组件
 class TimetableRuleDialogs {
@@ -37,7 +38,7 @@ class TimetableRuleDialogs {
                 _buildActionTile(
                   icon: Icons.swap_horiz_rounded,
                   iconColor: Colors.blue,
-                  title: '调课',
+                  title: context.l10n.reschedule,
                   onTap: () {
                     Navigator.pop(ctx);
                     showRescheduleDialog(
@@ -51,7 +52,7 @@ class TimetableRuleDialogs {
                 _buildActionTile(
                   icon: Icons.event_busy_rounded,
                   iconColor: Colors.orange,
-                  title: '停课',
+                  title: context.l10n.suspension,
                   onTap: () {
                     Navigator.pop(ctx);
                     showSuspensionDialog(
@@ -65,7 +66,7 @@ class TimetableRuleDialogs {
                 _buildActionTile(
                   icon: Icons.add_circle_outline_rounded,
                   iconColor: Colors.green,
-                  title: '加课',
+                  title: context.l10n.addCourse,
                   onTap: () {
                     Navigator.pop(ctx);
                     showCustomCourseDialog(
@@ -78,7 +79,7 @@ class TimetableRuleDialogs {
                 _buildActionTile(
                   icon: Icons.rule_folder_outlined,
                   iconColor: Colors.redAccent,
-                  title: '我的调整',
+                  title: context.l10n.myAdjustments,
                   onTap: () {
                     Navigator.pop(ctx);
                     showRulesListDialog(
@@ -198,15 +199,24 @@ class TimetableRuleDialogs {
     int wholeTargetDayOfWeek = 7; // 周日
     String wholeDayAction = 'move'; // 'copy', 'move', 'swap'
 
-    final weekdayNames = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    final weekdayNames = [
+      '',
+      context.l10n.weekdayMon,
+      context.l10n.weekdayTue,
+      context.l10n.weekdayWed,
+      context.l10n.weekdayThu,
+      context.l10n.weekdayFri,
+      context.l10n.weekdaySat,
+      context.l10n.weekdaySun,
+    ];
     final periodChoiceNames = {
-      0: '保持原节次',
-      1: '第1-2节 08:00',
-      3: '第3-4节 10:05',
-      5: '第5-6节 14:30',
-      7: '第7-8节 16:35',
-      9: '第9-10节 19:30',
-      11: '第11-12节 21:20',
+      0: context.l10n.keepOriginalPeriod,
+      1: context.l10n.periodTimeRange(1, 2, '08:00'),
+      3: context.l10n.periodTimeRange(3, 4, '10:05'),
+      5: context.l10n.periodTimeRange(5, 6, '14:30'),
+      7: context.l10n.periodTimeRange(7, 8, '16:35'),
+      9: context.l10n.periodTimeRange(9, 10, '19:30'),
+      11: context.l10n.periodTimeRange(11, 12, '21:20'),
     };
 
     await showDialog(
@@ -262,13 +272,13 @@ class TimetableRuleDialogs {
             }).toList();
 
             return AlertDialog(
-              title: const Row(
+              title: Row(
                 children: [
-                  Icon(Icons.swap_horiz_rounded, color: Colors.blue),
-                  SizedBox(width: 8),
+                  const Icon(Icons.swap_horiz_rounded, color: Colors.blue),
+                  const SizedBox(width: 8),
                   Expanded(
-                    child: Text('调课',
-                        style: TextStyle(
+                    child: Text(context.l10n.reschedule,
+                        style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                 ],
@@ -286,14 +296,14 @@ class TimetableRuleDialogs {
                         _buildModeOption(
                           context: context,
                           selected: rescheduleMode == 0,
-                          label: '调一节',
+                          label: context.l10n.rescheduleSingleClass,
                           onTap: () => setState(() => rescheduleMode = 0),
                         ),
                         const SizedBox(width: 8),
                         _buildModeOption(
                           context: context,
                           selected: rescheduleMode == 1,
-                          label: '调一天',
+                          label: context.l10n.rescheduleWholeDay,
                           onTap: () => setState(() => rescheduleMode = 1),
                         ),
                       ],
@@ -303,19 +313,19 @@ class TimetableRuleDialogs {
                     if (rescheduleMode == 0) ...[
                       // --- 模式 0: 单门调课 ---
                       if (courseNames.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Text('暂无课程，请先同步课表',
-                              style: TextStyle(color: Colors.grey)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Text(context.l10n.noCoursesSyncFirst,
+                              style: const TextStyle(color: Colors.grey)),
                         )
                       else ...[
                         DropdownButtonFormField<String>(
                           isExpanded: true,
                           value: singleCourseName,
-                          decoration: const InputDecoration(
-                              labelText: '课程',
+                          decoration: InputDecoration(
+                              labelText: context.l10n.courseLabel,
                               filled: false,
-                              border: OutlineInputBorder()),
+                              border: const OutlineInputBorder()),
                           items: courseNames
                               .map((name) => DropdownMenuItem(
                                   value: name,
@@ -348,16 +358,16 @@ class TimetableRuleDialogs {
                           DropdownButtonFormField<int>(
                             isExpanded: true,
                             value: singleSlotIndex,
-                            decoration: const InputDecoration(
-                                labelText: '上课时段',
+                            decoration: InputDecoration(
+                                labelText: context.l10n.classTimeSlot,
                                 filled: false,
-                                border: OutlineInputBorder()),
+                                border: const OutlineInputBorder()),
                             items: List.generate(matchingSlots.length, (idx) {
                               final m = matchingSlots[idx];
                               return DropdownMenuItem(
                                 value: idx,
                                 child: Text(
-                                    '周${weekdayNames[m.dayOfWeek]} 第${m.periods}节 (${m.weeks})',
+                                    context.l10n.originalSlotFormat(weekdayNames[m.dayOfWeek], m.periods, m.weeks),
                                     style: const TextStyle(fontSize: 13)),
                               );
                             }),
@@ -386,7 +396,7 @@ class TimetableRuleDialogs {
                         ] else if (activeSlot != null) ...[
                           const SizedBox(height: 6),
                           Text(
-                            '平时：每周${weekdayNames[slotDay]} 第${slotStartP}-${slotEndP}节 (${activeSlot.weeks})',
+                            context.l10n.usualTimeFormat(weekdayNames[slotDay], slotStartP, slotEndP, activeSlot.weeks),
                             style: TextStyle(
                                 fontSize: 12,
                                 color:
@@ -400,15 +410,15 @@ class TimetableRuleDialogs {
                               child: DropdownButtonFormField<int>(
                                 isExpanded: true,
                                 value: effSingleSourceWeek,
-                                decoration: const InputDecoration(
-                                    labelText: '原周次',
+                                decoration: InputDecoration(
+                                    labelText: context.l10n.originalWeek,
                                     filled: false,
-                                    border: OutlineInputBorder()),
+                                    border: const OutlineInputBorder()),
                                 items: singleWeekOptions
                                     .map((w) => DropdownMenuItem(
                                         value: w,
                                         child: Text(
-                                            '第$w周${w == currentWeek ? ' (本周)' : ''}')))
+                                            '${context.l10n.weekNumbered(w)}${w == currentWeek ? context.l10n.currentWeekSuffix : ''}')))
                                     .toList(),
                                 onChanged: (v) {
                                   setState(() {
@@ -431,7 +441,7 @@ class TimetableRuleDialogs {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                    '原${weekdayNames[slotDay]} 第$slotStartP-$slotEndP节',
+                                    context.l10n.originalPeriodSummary(weekdayNames[slotDay], slotStartP, slotEndP),
                                     style: const TextStyle(fontSize: 13)),
                               ),
                             ),
@@ -440,7 +450,7 @@ class TimetableRuleDialogs {
                         if (!isSingleActiveInWeek && activeSlot != null) ...[
                           const SizedBox(height: 6),
                           Text(
-                            '第$effSingleSourceWeek周没有这节课',
+                            context.l10n.noClassInWeek(effSingleSourceWeek),
                             style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.orange,
@@ -448,8 +458,8 @@ class TimetableRuleDialogs {
                           ),
                         ],
                         const SizedBox(height: 16),
-                        const Text('调到',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(context.l10n.rescheduleTo,
+                            style: const TextStyle(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         Row(
                           children: [
@@ -457,15 +467,15 @@ class TimetableRuleDialogs {
                               child: DropdownButtonFormField<int>(
                                 isExpanded: true,
                                 value: singleTargetWeek,
-                                decoration: const InputDecoration(
-                                    labelText: '新周次',
+                                decoration: InputDecoration(
+                                    labelText: context.l10n.newWeek,
                                     filled: false,
-                                    border: OutlineInputBorder()),
+                                    border: const OutlineInputBorder()),
                                 items: List.generate(
                                     25,
                                     (i) => DropdownMenuItem(
                                         value: i + 1,
-                                        child: Text('第${i + 1}周'))),
+                                        child: Text(context.l10n.weekNumbered(i + 1)))),
                                 onChanged: (v) => setState(() =>
                                     singleTargetWeek =
                                         v ?? effSingleSourceWeek),
@@ -476,10 +486,10 @@ class TimetableRuleDialogs {
                               child: DropdownButtonFormField<int>(
                                 isExpanded: true,
                                 value: singleTargetDayOfWeek,
-                                decoration: const InputDecoration(
-                                    labelText: '新星期',
+                                decoration: InputDecoration(
+                                    labelText: context.l10n.newWeekday,
                                     filled: false,
-                                    border: OutlineInputBorder()),
+                                    border: const OutlineInputBorder()),
                                 items: List.generate(
                                     7,
                                     (i) => DropdownMenuItem(
@@ -495,10 +505,10 @@ class TimetableRuleDialogs {
                         DropdownButtonFormField<int>(
                           isExpanded: true,
                           value: singleTargetPeriodChoice,
-                          decoration: const InputDecoration(
-                              labelText: '新节次',
+                          decoration: InputDecoration(
+                              labelText: context.l10n.newPeriod,
                               filled: false,
-                              border: OutlineInputBorder()),
+                              border: const OutlineInputBorder()),
                           items: periodChoiceNames.entries
                               .map((e) => DropdownMenuItem(
                                   value: e.key,
@@ -518,7 +528,17 @@ class TimetableRuleDialogs {
                                 Border.all(color: Colors.blue.withOpacity(0.3)),
                           ),
                           child: Text(
-                            '第$effSingleSourceWeek周《$singleCourseName》：${weekdayNames[slotDay]}$slotStartP-$slotEndP节 → 第$singleTargetWeek周${weekdayNames[singleTargetDayOfWeek]}$targetStartP-$targetEndP节',
+                            context.l10n.courseSummaryText(
+                              effSingleSourceWeek,
+                              singleCourseName ?? '',
+                              weekdayNames[slotDay],
+                              slotStartP,
+                              slotEndP,
+                              singleTargetWeek,
+                              weekdayNames[singleTargetDayOfWeek],
+                              targetStartP,
+                              targetEndP,
+                            ),
                             style: const TextStyle(
                                 fontSize: 12, color: Colors.blue),
                           ),
@@ -526,8 +546,8 @@ class TimetableRuleDialogs {
                       ],
                     ] else ...[
                       // --- 模式 1: 整天调休 ---
-                      const Text('调走',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(context.l10n.rescheduleAway,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 6),
                       Row(
                         children: [
@@ -535,16 +555,16 @@ class TimetableRuleDialogs {
                             child: DropdownButtonFormField<int>(
                               isExpanded: true,
                               value: effWholeSourceWeek,
-                              decoration: const InputDecoration(
-                                  labelText: '原周次',
+                              decoration: InputDecoration(
+                                  labelText: context.l10n.originalWeek,
                                   filled: false,
-                                  border: OutlineInputBorder()),
+                                  border: const OutlineInputBorder()),
                               items: List.generate(
                                   25,
                                   (i) => DropdownMenuItem(
                                       value: i + 1,
                                       child: Text(
-                                          '第${i + 1}周${i + 1 == currentWeek ? ' (本周)' : ''}'))),
+                                          '${context.l10n.weekNumbered(i + 1)}${i + 1 == currentWeek ? context.l10n.currentWeekSuffix : ''}'))),
                               onChanged: (v) => setState(() =>
                                   wholeSourceWeek = v ?? effWholeSourceWeek),
                             ),
@@ -554,10 +574,10 @@ class TimetableRuleDialogs {
                             child: DropdownButtonFormField<int>(
                               isExpanded: true,
                               value: wholeSourceDayOfWeek,
-                              decoration: const InputDecoration(
-                                  labelText: '原星期',
+                              decoration: InputDecoration(
+                                  labelText: context.l10n.originalWeekday,
                                   filled: false,
-                                  border: OutlineInputBorder()),
+                                  border: const OutlineInputBorder()),
                               items: List.generate(
                                   7,
                                   (i) => DropdownMenuItem(
@@ -571,16 +591,16 @@ class TimetableRuleDialogs {
                       ),
                       const SizedBox(height: 6),
                       if (wholeSourceCourses.isEmpty)
-                        const Text(
-                          '当天没有课',
-                          style: TextStyle(
+                        Text(
+                          context.l10n.noCoursesOnDay,
+                          style: const TextStyle(
                               fontSize: 12,
                               color: Colors.red,
                               fontWeight: FontWeight.bold),
                         ),
                       const SizedBox(height: 16),
-                      const Text('调到',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(context.l10n.rescheduleTo,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 6),
                       Row(
                         children: [
@@ -588,14 +608,14 @@ class TimetableRuleDialogs {
                             child: DropdownButtonFormField<int>(
                               isExpanded: true,
                               value: wholeTargetWeek,
-                              decoration: const InputDecoration(
-                                  labelText: '目标周次',
+                              decoration: InputDecoration(
+                                  labelText: context.l10n.targetWeek,
                                   filled: false,
-                                  border: OutlineInputBorder()),
+                                  border: const OutlineInputBorder()),
                               items: List.generate(
                                   25,
                                   (i) => DropdownMenuItem(
-                                      value: i + 1, child: Text('第${i + 1}周'))),
+                                      value: i + 1, child: Text(context.l10n.weekNumbered(i + 1)))),
                               onChanged: (v) => setState(() =>
                                   wholeTargetWeek = v ?? effWholeSourceWeek),
                             ),
@@ -605,10 +625,10 @@ class TimetableRuleDialogs {
                             child: DropdownButtonFormField<int>(
                               isExpanded: true,
                               value: wholeTargetDayOfWeek,
-                              decoration: const InputDecoration(
-                                  labelText: '目标星期',
+                              decoration: InputDecoration(
+                                  labelText: context.l10n.targetWeekday,
                                   filled: false,
-                                  border: OutlineInputBorder()),
+                                  border: const OutlineInputBorder()),
                               items: List.generate(
                                   7,
                                   (i) => DropdownMenuItem(
@@ -621,15 +641,15 @@ class TimetableRuleDialogs {
                         ],
                       ),
                       const SizedBox(height: 14),
-                      const Text('调课方式',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(context.l10n.rescheduleMethod,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       Row(
                         children: [
                           _buildModeOption(
                             context: context,
                             selected: wholeDayAction == 'copy',
-                            label: '复制',
+                            label: context.l10n.rescheduleCopy,
                             onTap: () =>
                                 setState(() => wholeDayAction = 'copy'),
                           ),
@@ -637,7 +657,7 @@ class TimetableRuleDialogs {
                           _buildModeOption(
                             context: context,
                             selected: wholeDayAction == 'move',
-                            label: '平移',
+                            label: context.l10n.rescheduleShift,
                             onTap: () =>
                                 setState(() => wholeDayAction = 'move'),
                           ),
@@ -645,7 +665,7 @@ class TimetableRuleDialogs {
                           _buildModeOption(
                             context: context,
                             selected: wholeDayAction == 'swap',
-                            label: '对调',
+                            label: context.l10n.rescheduleSwap,
                             onTap: () =>
                                 setState(() => wholeDayAction = 'swap'),
                           ),
@@ -654,10 +674,10 @@ class TimetableRuleDialogs {
                       const SizedBox(height: 6),
                       Text(
                         wholeDayAction == 'copy'
-                            ? '原日期的课保留，目标日原本的课会被覆盖'
+                            ? context.l10n.rescheduleCopyDesc
                             : (wholeDayAction == 'swap'
-                                ? '两天的课程互相交换'
-                                : '只把课挪过去，原日期的课不保留，目标日原本的课会被覆盖'),
+                                ? context.l10n.rescheduleSwapDesc
+                                : context.l10n.rescheduleShiftDesc),
                         style: TextStyle(
                           fontSize: 12,
                           color: Theme.of(context).textTheme.bodySmall?.color ??
@@ -672,7 +692,7 @@ class TimetableRuleDialogs {
             actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('取消'),
+                  child: Text(context.l10n.cancel),
                 ),
                 FilledButton(
                   style: FilledButton.styleFrom(
@@ -685,7 +705,7 @@ class TimetableRuleDialogs {
                       if (singleCourseName == null ||
                           singleCourseName!.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('请先选择课程')),
+                          SnackBar(content: Text(context.l10n.selectCourseFirst)),
                         );
                         return;
                       }
@@ -693,20 +713,20 @@ class TimetableRuleDialogs {
                         final confirm = await showDialog<bool>(
                           context: context,
                           builder: (c) => AlertDialog(
-                            title: const Text('确认调课'),
+                            title: Text(context.l10n.confirmReschedule),
                             content: Text(
-                                '第$effSingleSourceWeek周没有《$singleCourseName》，继续吗？'),
+                                context.l10n.rescheduleWarnNoCourse(effSingleSourceWeek, singleCourseName!)),
                             actions: [
                               TextButton(
                                   onPressed: () => Navigator.pop(c, false),
-                                  child: const Text('返回')),
+                                  child: Text(context.l10n.goBack)),
                               FilledButton(
                                   style: FilledButton.styleFrom(
                                     shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8)),
                                   ),
                                   onPressed: () => Navigator.pop(c, true),
-                                  child: const Text('继续')),
+                                  child: Text(context.l10n.continueAction)),
                             ],
                           ),
                         );
@@ -730,8 +750,8 @@ class TimetableRuleDialogs {
                       onRuleApplied();
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('调课已保存'),
+                          SnackBar(
+                              content: Text(context.l10n.rescheduleSaved),
                               behavior: SnackBarBehavior.floating),
                         );
                       }
@@ -739,8 +759,8 @@ class TimetableRuleDialogs {
                       // 整天调休提交
                       if (wholeSourceCourses.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('当天没有课，无法调休'),
+                          SnackBar(
+                              content: Text(context.l10n.noCoursesOnDayCannotReschedule),
                               backgroundColor: Colors.red),
                         );
                         return;
@@ -760,14 +780,14 @@ class TimetableRuleDialogs {
                       onRuleApplied();
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('调休已保存'),
+                          SnackBar(
+                              content: Text(context.l10n.rescheduleDaySaved),
                               behavior: SnackBarBehavior.floating),
                         );
                       }
                     }
                   },
-                  child: const Text('保存'),
+                  child: Text(context.l10n.save),
                 ),
               ],
             );
@@ -795,7 +815,16 @@ class TimetableRuleDialogs {
 
     final courseNames = currentCourses.map((c) => c.name).toSet().toList()
       ..sort();
-    final weekdayNames = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    final weekdayNames = [
+      '',
+      context.l10n.weekdayMon,
+      context.l10n.weekdayTue,
+      context.l10n.weekdayWed,
+      context.l10n.weekdayThu,
+      context.l10n.weekdayFri,
+      context.l10n.weekdaySat,
+      context.l10n.weekdaySun,
+    ];
 
     await showDialog(
       context: context,
@@ -803,13 +832,13 @@ class TimetableRuleDialogs {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Row(
+              title: Row(
                 children: [
-                  Icon(Icons.event_busy_rounded, color: Colors.orange),
-                  SizedBox(width: 8),
+                  const Icon(Icons.event_busy_rounded, color: Colors.orange),
+                  const SizedBox(width: 8),
                   Expanded(
-                    child: Text('停课',
-                        style: TextStyle(
+                    child: Text(context.l10n.suspension,
+                        style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                 ],
@@ -827,16 +856,16 @@ class TimetableRuleDialogs {
                           child: DropdownButtonFormField<int>(
                             isExpanded: true,
                             value: startWeek,
-                            decoration: const InputDecoration(
-                                labelText: '起始周',
+                            decoration: InputDecoration(
+                                labelText: context.l10n.startWeek,
                                 filled: false,
-                                border: OutlineInputBorder()),
+                                border: const OutlineInputBorder()),
                             items: List.generate(
                                 25,
                                 (i) => DropdownMenuItem(
                                     value: i + 1,
                                     child: Text(
-                                        '第${i + 1}周${i + 1 == currentWeek ? ' (本周)' : ''}'))),
+                                        '${context.l10n.weekNumbered(i + 1)}${i + 1 == currentWeek ? context.l10n.currentWeekSuffix : ''}'))),
                             onChanged: (v) {
                               if (v == null) return;
                               setState(() {
@@ -855,10 +884,10 @@ class TimetableRuleDialogs {
                           child: DropdownButtonFormField<int>(
                             isExpanded: true,
                             value: startDayOfWeek,
-                            decoration: const InputDecoration(
-                                labelText: '星期',
+                            decoration: InputDecoration(
+                                labelText: context.l10n.weekday,
                                 filled: false,
-                                border: OutlineInputBorder()),
+                                border: const OutlineInputBorder()),
                             items: List.generate(
                                 7,
                                 (i) => DropdownMenuItem(
@@ -886,16 +915,16 @@ class TimetableRuleDialogs {
                           child: DropdownButtonFormField<int>(
                             isExpanded: true,
                             value: endWeek,
-                            decoration: const InputDecoration(
-                                labelText: '结束周',
+                            decoration: InputDecoration(
+                                labelText: context.l10n.endWeek,
                                 filled: false,
-                                border: OutlineInputBorder()),
+                                border: const OutlineInputBorder()),
                             items: List.generate(
                                 25,
                                 (i) => DropdownMenuItem(
                                     value: i + 1,
                                     child: Text(
-                                        '第${i + 1}周${i + 1 == currentWeek ? ' (本周)' : ''}'))),
+                                        '${context.l10n.weekNumbered(i + 1)}${i + 1 == currentWeek ? context.l10n.currentWeekSuffix : ''}'))),
                             onChanged: (v) {
                               if (v == null) return;
                               setState(() {
@@ -914,10 +943,10 @@ class TimetableRuleDialogs {
                           child: DropdownButtonFormField<int>(
                             isExpanded: true,
                             value: endDayOfWeek,
-                            decoration: const InputDecoration(
-                                labelText: '星期',
+                            decoration: InputDecoration(
+                                labelText: context.l10n.weekday,
                                 filled: false,
-                                border: OutlineInputBorder()),
+                                border: const OutlineInputBorder()),
                             items: List.generate(
                                 7,
                                 (i) => DropdownMenuItem(
@@ -942,14 +971,14 @@ class TimetableRuleDialogs {
                     DropdownButtonFormField<String?>(
                       isExpanded: true,
                       value: selectedCourseName,
-                      decoration: const InputDecoration(
-                        labelText: '课程',
+                      decoration: InputDecoration(
+                        labelText: context.l10n.courseLabel,
                         filled: false,
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                       items: [
-                        const DropdownMenuItem(
-                            value: null, child: Text('全部课程')),
+                        DropdownMenuItem(
+                            value: null, child: Text(context.l10n.allCourses)),
                         ...courseNames.map((name) =>
                             DropdownMenuItem(value: name, child: Text(name))),
                       ],
@@ -958,7 +987,7 @@ class TimetableRuleDialogs {
                     const SizedBox(height: 8),
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('指定节次', style: TextStyle(fontSize: 14)),
+                      title: Text(context.l10n.specifyPeriods, style: const TextStyle(fontSize: 14)),
                       value: limitPeriod,
                       onChanged: (v) =>
                           setState(() => limitPeriod = v ?? false),
@@ -970,14 +999,14 @@ class TimetableRuleDialogs {
                             child: DropdownButtonFormField<int>(
                               isExpanded: true,
                               value: startPeriod,
-                              decoration: const InputDecoration(
-                                  labelText: '开始节次',
+                              decoration: InputDecoration(
+                                  labelText: context.l10n.startPeriod,
                                   filled: false,
-                                  border: OutlineInputBorder()),
+                                  border: const OutlineInputBorder()),
                               items: List.generate(
                                   12,
                                   (i) => DropdownMenuItem(
-                                      value: i + 1, child: Text('第${i + 1}节'))),
+                                      value: i + 1, child: Text(context.l10n.periodNumbered(i + 1)))),
                               onChanged: (v) {
                                 setState(() {
                                   startPeriod = v ?? 1;
@@ -993,14 +1022,14 @@ class TimetableRuleDialogs {
                             child: DropdownButtonFormField<int>(
                               isExpanded: true,
                               value: endPeriod,
-                              decoration: const InputDecoration(
-                                  labelText: '结束节次',
+                              decoration: InputDecoration(
+                                  labelText: context.l10n.endPeriod,
                                   filled: false,
-                                  border: OutlineInputBorder()),
+                                  border: const OutlineInputBorder()),
                               items: List.generate(
                                   12,
                                   (i) => DropdownMenuItem(
-                                      value: i + 1, child: Text('第${i + 1}节'))),
+                                      value: i + 1, child: Text(context.l10n.periodNumbered(i + 1)))),
                               onChanged: (v) {
                                 setState(() {
                                   endPeriod = v ?? 2;
@@ -1021,7 +1050,7 @@ class TimetableRuleDialogs {
             actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('取消'),
+                  child: Text(context.l10n.cancel),
                 ),
                 FilledButton(
                   style: FilledButton.styleFrom(
@@ -1043,13 +1072,13 @@ class TimetableRuleDialogs {
                     onRuleApplied();
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('停课已保存'),
+                        SnackBar(
+                            content: Text(context.l10n.suspensionSaved),
                             behavior: SnackBarBehavior.floating),
                       );
                     }
                   },
-                  child: const Text('保存'),
+                  child: Text(context.l10n.save),
                 ),
               ],
             );
@@ -1074,7 +1103,16 @@ class TimetableRuleDialogs {
     int startPeriod = 1;
     int endPeriod = 2;
 
-    final weekdayNames = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    final weekdayNames = [
+      '',
+      context.l10n.weekdayMon,
+      context.l10n.weekdayTue,
+      context.l10n.weekdayWed,
+      context.l10n.weekdayThu,
+      context.l10n.weekdayFri,
+      context.l10n.weekdaySat,
+      context.l10n.weekdaySun,
+    ];
 
     await showDialog(
       context: context,
@@ -1082,13 +1120,13 @@ class TimetableRuleDialogs {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Row(
+              title: Row(
                 children: [
-                  Icon(Icons.add_circle_outline_rounded, color: Colors.green),
-                  SizedBox(width: 8),
+                  const Icon(Icons.add_circle_outline_rounded, color: Colors.green),
+                  const SizedBox(width: 8),
                   Expanded(
-                    child: Text('添加课程',
-                        style: TextStyle(
+                    child: Text(context.l10n.addCourseTitle,
+                        style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                 ],
@@ -1101,26 +1139,26 @@ class TimetableRuleDialogs {
                   children: [
                     TextField(
                       controller: nameController,
-                      decoration: const InputDecoration(
-                          labelText: '课程名称',
+                      decoration: InputDecoration(
+                          labelText: context.l10n.courseNameLabel,
                           filled: false,
-                          border: OutlineInputBorder()),
+                          border: const OutlineInputBorder()),
                     ),
                     const SizedBox(height: 10),
                     TextField(
                       controller: teacherController,
-                      decoration: const InputDecoration(
-                          labelText: '授课教师 (选填)',
+                      decoration: InputDecoration(
+                          labelText: context.l10n.teacherOptional,
                           filled: false,
-                          border: OutlineInputBorder()),
+                          border: const OutlineInputBorder()),
                     ),
                     const SizedBox(height: 10),
                     TextField(
                       controller: roomController,
-                      decoration: const InputDecoration(
-                          labelText: '教室 (选填)',
+                      decoration: InputDecoration(
+                          labelText: context.l10n.classroomOptional,
                           filled: false,
-                          border: OutlineInputBorder()),
+                          border: const OutlineInputBorder()),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -1129,14 +1167,14 @@ class TimetableRuleDialogs {
                           child: DropdownButtonFormField<int>(
                             isExpanded: true,
                             value: startWeek,
-                            decoration: const InputDecoration(
-                                labelText: '起始周',
+                            decoration: InputDecoration(
+                                labelText: context.l10n.startWeek,
                                 filled: false,
-                                border: OutlineInputBorder()),
+                                border: const OutlineInputBorder()),
                             items: List.generate(
                                 25,
                                 (i) => DropdownMenuItem(
-                                    value: i + 1, child: Text('第${i + 1}周'))),
+                                    value: i + 1, child: Text(context.l10n.weekNumbered(i + 1)))),
                             onChanged: (v) =>
                                 setState(() => startWeek = v ?? 1),
                           ),
@@ -1146,14 +1184,14 @@ class TimetableRuleDialogs {
                           child: DropdownButtonFormField<int>(
                             isExpanded: true,
                             value: endWeek,
-                            decoration: const InputDecoration(
-                                labelText: '结束周',
+                            decoration: InputDecoration(
+                                labelText: context.l10n.endWeek,
                                 filled: false,
-                                border: OutlineInputBorder()),
+                                border: const OutlineInputBorder()),
                             items: List.generate(
                                 25,
                                 (i) => DropdownMenuItem(
-                                    value: i + 1, child: Text('第${i + 1}周'))),
+                                    value: i + 1, child: Text(context.l10n.weekNumbered(i + 1)))),
                             onChanged: (v) => setState(() => endWeek = v ?? 16),
                           ),
                         ),
@@ -1163,10 +1201,10 @@ class TimetableRuleDialogs {
                     DropdownButtonFormField<int>(
                       isExpanded: true,
                       value: dayOfWeek,
-                      decoration: const InputDecoration(
-                          labelText: '星期',
+                      decoration: InputDecoration(
+                          labelText: context.l10n.weekday,
                           filled: false,
-                          border: OutlineInputBorder()),
+                          border: const OutlineInputBorder()),
                       items: List.generate(
                           7,
                           (i) => DropdownMenuItem(
@@ -1180,14 +1218,14 @@ class TimetableRuleDialogs {
                           child: DropdownButtonFormField<int>(
                             isExpanded: true,
                             value: startPeriod,
-                            decoration: const InputDecoration(
-                                labelText: '开始节次',
+                            decoration: InputDecoration(
+                                labelText: context.l10n.startPeriod,
                                 filled: false,
-                                border: OutlineInputBorder()),
+                                border: const OutlineInputBorder()),
                             items: List.generate(
                                 12,
                                 (i) => DropdownMenuItem(
-                                    value: i + 1, child: Text('第${i + 1}节'))),
+                                    value: i + 1, child: Text(context.l10n.periodNumbered(i + 1)))),
                             onChanged: (v) {
                               setState(() {
                                 startPeriod = v ?? 1;
@@ -1202,14 +1240,14 @@ class TimetableRuleDialogs {
                           child: DropdownButtonFormField<int>(
                             isExpanded: true,
                             value: endPeriod,
-                            decoration: const InputDecoration(
-                                labelText: '结束节次',
+                            decoration: InputDecoration(
+                                labelText: context.l10n.endPeriod,
                                 filled: false,
-                                border: OutlineInputBorder()),
+                                border: const OutlineInputBorder()),
                             items: List.generate(
                                 12,
                                 (i) => DropdownMenuItem(
-                                    value: i + 1, child: Text('第${i + 1}节'))),
+                                    value: i + 1, child: Text(context.l10n.periodNumbered(i + 1)))),
                             onChanged: (v) {
                               setState(() {
                                 endPeriod = v ?? startPeriod;
@@ -1228,18 +1266,18 @@ class TimetableRuleDialogs {
             actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('取消'),
+                  child: Text(context.l10n.cancel),
                 ),
                 FilledButton(
                   style: FilledButton.styleFrom(
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6)),
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () async {
                     final name = nameController.text.trim();
                     if (name.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('请填写课程名称')),
+                        SnackBar(content: Text(context.l10n.pleaseEnterCourseName)),
                       );
                       return;
                     }
@@ -1270,13 +1308,13 @@ class TimetableRuleDialogs {
                     onRuleApplied();
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('已添加到课表'),
+                        SnackBar(
+                            content: Text(context.l10n.addedToTimetable),
                             behavior: SnackBarBehavior.floating),
                       );
                     }
                   },
-                  child: const Text('添加'),
+                  child: Text(context.l10n.add),
                 ),
               ],
             );
@@ -1302,13 +1340,13 @@ class TimetableRuleDialogs {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Row(
+              title: Row(
                 children: [
-                  Icon(Icons.rule_folder_outlined, color: Colors.redAccent),
-                  SizedBox(width: 8),
+                  const Icon(Icons.rule_folder_outlined, color: Colors.redAccent),
+                  const SizedBox(width: 8),
                   Expanded(
-                    child: Text('我的调整',
-                        style: TextStyle(
+                    child: Text(context.l10n.myAdjustments,
+                        style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                 ],
@@ -1316,16 +1354,16 @@ class TimetableRuleDialogs {
               content: SizedBox(
                 width: double.maxFinite,
                 child: rules.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 32),
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 32),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.check_circle_outline_rounded,
+                            const Icon(Icons.check_circle_outline_rounded,
                                 size: 48, color: Colors.grey),
-                            SizedBox(height: 12),
-                            Text('还没有任何调整',
-                                style: TextStyle(color: Colors.grey)),
+                            const SizedBox(height: 12),
+                            Text(context.l10n.noAdjustmentsYet,
+                                style: const TextStyle(color: Colors.grey)),
                           ],
                         ),
                       )
@@ -1339,15 +1377,15 @@ class TimetableRuleDialogs {
                           switch (rule.type) {
                             case TimetableRuleType.reschedule:
                               typeColor = Colors.blue;
-                              typeName = '调休';
+                              typeName = context.l10n.ruleTypeRescheduleDay;
                               break;
                             case TimetableRuleType.suspension:
                               typeColor = Colors.orange;
-                              typeName = '停课';
+                              typeName = context.l10n.ruleTypeSuspension;
                               break;
                             case TimetableRuleType.customCourse:
                               typeColor = Colors.green;
-                              typeName = '加课';
+                              typeName = context.l10n.ruleTypeAddCourse;
                               break;
                           }
 
@@ -1372,7 +1410,7 @@ class TimetableRuleDialogs {
                               ),
                             ),
                             title: Text(
-                              rule.description,
+                              rule.getLocalizedDescription(context),
                               style: const TextStyle(
                                   fontSize: 13, fontWeight: FontWeight.w500),
                             ),
@@ -1386,8 +1424,8 @@ class TimetableRuleDialogs {
                                 onRuleApplied();
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('已删除'),
+                                    SnackBar(
+                                        content: Text(context.l10n.ruleDeleted),
                                         behavior: SnackBarBehavior.floating),
                                   );
                                 }
@@ -1405,19 +1443,19 @@ class TimetableRuleDialogs {
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (c) => AlertDialog(
-                          title: const Text('清空全部调整？'),
-                          content: const Text('清空后课表恢复为教务原样。'),
+                          title: Text(context.l10n.clearAllAdjustmentsConfirmTitle),
+                          content: Text(context.l10n.clearAllAdjustmentsConfirmContent),
                           actions: [
                             TextButton(
                                 onPressed: () => Navigator.pop(c, false),
-                                child: const Text('取消')),
+                                child: Text(context.l10n.cancel)),
                             FilledButton(
                               style: FilledButton.styleFrom(
                                   backgroundColor: Colors.red,
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8))),
                               onPressed: () => Navigator.pop(c, true),
-                              child: const Text('清空'),
+                              child: Text(context.l10n.clear),
                             ),
                           ],
                         ),
@@ -1429,18 +1467,18 @@ class TimetableRuleDialogs {
                         onRuleApplied();
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('已清空'),
+                            SnackBar(
+                                content: Text(context.l10n.cleared),
                                 behavior: SnackBarBehavior.floating),
                           );
                         }
                       }
                     },
-                    child: const Text('清空全部'),
+                    child: Text(context.l10n.clearAll),
                   ),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('关闭'),
+                  child: Text(context.l10n.close),
                 ),
               ],
             );

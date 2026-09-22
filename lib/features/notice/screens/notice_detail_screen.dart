@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../providers/notice_provider.dart';
 import '../services/notice_service.dart';
 import 'package:logger/logger.dart';
@@ -65,14 +66,14 @@ class _NoticeDetailScreenState extends ConsumerState<NoticeDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('通知详情'),
+        title: Text(context.l10n.noticeDetail),
         elevation: 0,
       ),
-      body: _buildBody(),
+      body: _buildBody(context),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -86,18 +87,18 @@ class _NoticeDetailScreenState extends ConsumerState<NoticeDetailScreen> {
             const SizedBox(height: 16),
             Text(_errorMessage!, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: _loadDetail, child: const Text('重试')),
+            ElevatedButton(onPressed: _loadDetail, child: Text(context.l10n.retry)),
           ],
         ),
       );
     }
 
     if (_detailData == null) {
-      return const Center(child: Text('未找到详情数据'));
+      return Center(child: Text(context.l10n.noticeNotFound));
     }
 
-    final String title = _detailData!['title'] ?? '无标题';
-    final String sender = _detailData!['createrName'] ?? '系统';
+    final String title = _detailData!['title'] ?? context.l10n.noTitle;
+    final String sender = _detailData!['createrName'] ?? context.l10n.senderSystem;
     final String time = _detailData!['sendTime'] ?? '';
     
     // ✨ 使用原始 content 字段，并将 \r 转换为标准的换行符 \n

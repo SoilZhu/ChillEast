@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../models/library_models.dart';
 import '../providers/library_provider.dart';
 import '../utils/library_time_utils.dart';
@@ -136,7 +137,7 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
   Future<void> _submitReservation() async {
     if (_selectedSeatNum == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请先在地图中选择一个座位')),
+        SnackBar(content: Text(context.l10n.pleaseSelectSeatFirst)),
       );
       return;
     }
@@ -166,29 +167,29 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.check_circle, color: Color(0xFF09C489)),
-              SizedBox(width: 8),
-              Text('预约成功',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Icon(Icons.check_circle, color: Color(0xFF09C489)),
+              const SizedBox(width: 8),
+              Text(context.l10n.reservationSuccess,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('阅览室：${widget.room.displayName}'),
+              Text(context.l10n.readingRoomLabel(widget.room.displayName)),
               const SizedBox(height: 4),
-              Text('座位号：${result.seatNum} 号'),
+              Text(context.l10n.seatNumberLabel(result.seatNum)),
               const SizedBox(height: 4),
-              Text('日期：${widget.day}'),
+              Text(context.l10n.dateLabel(widget.day)),
               const SizedBox(height: 4),
-              Text('时间：$_startTime ~ $_endTime'),
+              Text(context.l10n.timeValueLabel('$_startTime ~ $_endTime')),
               const SizedBox(height: 12),
-              const Text(
-                '请在规定时间内完成签到，超时未签到将视为违规。',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+              Text(
+                context.l10n.reservationNotice,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ],
           ),
@@ -207,8 +208,8 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                 Navigator.pop(ctx);
                 Navigator.pop(context, true);
               },
-              child: const Text('完成',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              child: Text(context.l10n.done,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -220,13 +221,13 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
           builder: (ctx) => AlertDialog(
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            title: const Row(
+            title: Row(
               children: [
-                Icon(Icons.error_outline, color: Colors.red),
-                SizedBox(width: 8),
-                Text('预约失败',
+                const Icon(Icons.error_outline, color: Colors.red),
+                const SizedBox(width: 8),
+                Text(context.l10n.reservationFailed,
                     style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
             content: Text(e.toString().replaceAll('Exception:', '').trim()),
@@ -242,8 +243,8 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                       borderRadius: BorderRadius.circular(6)),
                 ),
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('我知道了',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(context.l10n.iUnderstand,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -287,7 +288,7 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: '刷新座位状态',
+            tooltip: context.l10n.refreshSeatStatus,
             onPressed: _loadUsedSeats,
           ),
         ],
@@ -321,7 +322,7 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                             size: 16, color: Color(0xFF09C489)),
                         const SizedBox(width: 8),
                         Text(
-                          '日期：${widget.day}  |  时段：$_startTime - $_endTime',
+                          context.l10n.dateAndPeriod(widget.day, '$_startTime - $_endTime'),
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -353,13 +354,13 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                           ? const Color(0xFF16382B)
                           : const Color(0xFFE8F5E9),
                       borderColor: const Color(0xFF09C489),
-                      label: '可选',
+                      label: context.l10n.seatAvailable,
                       isDark: isDark,
                     ),
                     _buildLegendItem(
                       color: const Color(0xFF09C489),
                       borderColor: const Color(0xFF09C489),
-                      label: '已选',
+                      label: context.l10n.seatSelected,
                       isDark: isDark,
                     ),
                     _buildLegendItem(
@@ -367,7 +368,7 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                           isDark ? const Color(0xFF2A2A2A) : Colors.grey[300]!,
                       borderColor:
                           isDark ? const Color(0xFF3D3D3D) : Colors.grey[400]!,
-                      label: '占用/不可选',
+                      label: context.l10n.seatOccupied,
                       isDark: isDark,
                     ),
                   ],
@@ -424,13 +425,13 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
 
   Widget _buildSeatGridContent(bool isDark) {
     if (_isLoadingGrid) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: Color(0xFF09C489)),
-            SizedBox(height: 12),
-            Text('正在加载座位分布图...'),
+            const CircularProgressIndicator(color: Color(0xFF09C489)),
+            const SizedBox(height: 12),
+            Text(context.l10n.loadingSeatMap),
           ],
         ),
       );
@@ -444,7 +445,7 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
             const Icon(Icons.sentiment_dissatisfied,
                 size: 48, color: Colors.grey),
             const SizedBox(height: 12),
-            Text(_errorMessage ?? '加载失败'),
+            Text(_errorMessage ?? context.l10n.loadFailed),
             const SizedBox(height: 12),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -455,7 +456,7 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                     borderRadius: BorderRadius.circular(6)),
               ),
               onPressed: _loadSeatGrid,
-              child: const Text('重试'),
+              child: Text(context.l10n.retry),
             ),
           ],
         ),
@@ -616,9 +617,9 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text(
-                        '立即预约',
-                        style: TextStyle(
+                    : Text(
+                        context.l10n.reserveNow,
+                        style: const TextStyle(
                             fontSize: 14, fontWeight: FontWeight.bold),
                       ),
               ),

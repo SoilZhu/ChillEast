@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 /// 学工问卷列表项
 /// 字段来自 HAR: content/tabledata/fwk/wjdc/stu/xs_wjdc 的 aaData
@@ -167,5 +169,13 @@ class QuestionnaireDetail {
               .toList()
           : const [],
     );
+  }
+}
+
+extension QuestionnaireItemL10n on QuestionnaireItem {
+  String getLocalizedStatus(BuildContext context) {
+    if (isSubmitted) return context.l10n.statusSubmitted;
+    if (isExpired) return context.l10n.statusExpired;
+    return context.l10n.statusPendingFill;
   }
 }

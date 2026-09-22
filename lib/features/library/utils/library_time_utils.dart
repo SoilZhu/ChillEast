@@ -1,3 +1,6 @@
+import 'package:flutter/widgets.dart';
+import '../../../core/utils/l10n_extension.dart';
+
 /// 图书馆预约时间选择相关的纯逻辑。
 class LibraryTimeRangeSelection {
   final String startTime;
@@ -78,6 +81,41 @@ class LibraryTimeUtils {
 
       if (diff == 0) return '今天 ($monthDay)';
       if (diff == 1) return '明天 ($monthDay)';
+      return '$weekdayStr ($monthDay)';
+    } catch (_) {
+      return dayStr;
+    }
+  }
+
+  /// 国际化格式化日期标签
+  static String formatDayLabelLocalized(BuildContext context, String dayStr, {DateTime? now}) {
+    try {
+      final dateParts = dayStr.split('-');
+      if (dateParts.length != 3) return dayStr;
+      final year = int.tryParse(dateParts[0]);
+      final month = int.tryParse(dateParts[1]);
+      final day = int.tryParse(dateParts[2]);
+      if (year == null || month == null || day == null) return dayStr;
+
+      final beijing = getBeijingNow(now);
+      final today = DateTime.utc(beijing.year, beijing.month, beijing.day);
+      final target = DateTime.utc(year, month, day);
+
+      final diff = target.difference(today).inDays;
+      final date = DateTime(year, month, day);
+      final weekdayStr = switch (date.weekday) {
+        1 => context.l10n.weekdayMon,
+        2 => context.l10n.weekdayTue,
+        3 => context.l10n.weekdayWed,
+        4 => context.l10n.weekdayThu,
+        5 => context.l10n.weekdayFri,
+        6 => context.l10n.weekdaySat,
+        _ => context.l10n.weekdaySun,
+      };
+      final monthDay = context.l10n.monthDayFormat(month, day);
+
+      if (diff == 0) return context.l10n.todayWithDate(monthDay);
+      if (diff == 1) return context.l10n.tomorrowWithDate(monthDay);
       return '$weekdayStr ($monthDay)';
     } catch (_) {
       return dayStr;

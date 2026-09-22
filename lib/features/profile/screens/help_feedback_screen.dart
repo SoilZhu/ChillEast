@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 class HelpFeedbackScreen extends StatelessWidget {
   const HelpFeedbackScreen({super.key});
@@ -11,12 +12,12 @@ class HelpFeedbackScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _sendEmail() async {
+  Future<void> _sendEmail(BuildContext context) async {
     final Uri emailLaunchUri = Uri(
       scheme: 'mailto',
       path: 'soilzhu80@gmail.com',
       queryParameters: {
-        'subject': '自在东湖 App 反馈',
+        'subject': context.l10n.feedbackEmailSubject,
       },
     );
     if (!await launchUrl(emailLaunchUri)) {
@@ -31,30 +32,24 @@ class HelpFeedbackScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('帮助与反馈', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        title: Text(context.l10n.helpFeedback, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        centerTitle: false,
-        iconTheme: IconThemeData(
-          color: isDark ? Colors.white : Colors.black87,
-        ),
-        titleTextStyle: TextStyle(
-          color: isDark ? Colors.white : Colors.black87,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildFeedbackItem(
               context,
-              title: '发送邮件',
+              title: context.l10n.sendEmail,
               subtitle: 'soilzhu80@gmail.com',
               icon: Icons.mail_outline_rounded,
-              onTap: _sendEmail,
+              onTap: () => _sendEmail(context),
             ),
             
             _buildFeedbackItem(
@@ -70,7 +65,7 @@ class HelpFeedbackScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                '开发者',
+                context.l10n.developer,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,

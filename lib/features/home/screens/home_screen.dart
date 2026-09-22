@@ -22,6 +22,8 @@ import '../../workspace/screens/classroom_inquiry_screen.dart';
 import '../../workspace/screens/payment_code_screen.dart';
 import '../../../core/utils/route_utils.dart';
 import '../../profile/providers/appearance_provider.dart';
+import '../../profile/models/appearance_state.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../../workspace/screens/campus_card_recharge_screen.dart';
 import '../../workspace/screens/electricity_recharge_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -180,7 +182,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ...visibleItems.map((item) => _buildQuickActionItem(
             context,
             icon: item.icon,
-            label: item.label,
+            label: item.getLocalizedTitle(context),
             iconColor: item.color,
             bgColor: isDark ? item.color.withOpacity(0.15) : item.color.withOpacity(0.08),
             onTap: () => _handleActionTap(context, item.id, isLoggedIn),
@@ -189,7 +191,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _buildQuickActionItem(
             context,
             icon: Icons.grid_view_rounded,
-            label: '更多',
+            label: context.l10n.more,
             iconColor: const Color(0xFFE6A334),
             bgColor: isDark ? const Color(0xFF2E271A) : const Color(0xFFFFF8E8),
             onTap: () => _navigateToTab(context, 4),
@@ -228,8 +230,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         break;
       case 'xgxt':
         isLoggedIn 
-            ? Navigator.push(context, createSlideUpRoute(const WebViewDetailScreen(
-                title: '学工系统',
+            ? Navigator.push(context, createSlideUpRoute(WebViewDetailScreen(
+                title: context.l10n.funcXgxt,
                 url: AppConstants.xgxtWapUrl,
                 showAppBar: false,
                 showWebBack: false,
@@ -254,8 +256,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         break;
       case 'repairs':
         isLoggedIn 
-            ? Navigator.push(context, createSlideUpRoute(const WebViewDetailScreen(
-                title: '报修平台',
+            ? Navigator.push(context, createSlideUpRoute(WebViewDetailScreen(
+                title: context.l10n.funcRepairs,
                 url: AppConstants.repairsSsoUrl,
                 userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Mobile Safari/537.36',
                 showWebBack: true,
@@ -265,8 +267,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         break;
       case 'gym':
         isLoggedIn 
-            ? Navigator.push(context, createSlideUpRoute(const WebViewDetailScreen(
-                title: '场馆预约',
+            ? Navigator.push(context, createSlideUpRoute(WebViewDetailScreen(
+                title: context.l10n.funcGym,
                 url: AppConstants.gymReservationUrl,
                 showWebBack: true,
             )))
@@ -274,8 +276,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         break;
       case 'teaching_eval':
         isLoggedIn 
-            ? Navigator.push(context, createSlideUpRoute(const WebViewDetailScreen(
-                title: '教评系统',
+            ? Navigator.push(context, createSlideUpRoute(WebViewDetailScreen(
+                title: context.l10n.funcTeachingEval,
                 url: AppConstants.teachingEvalUrl,
                 showAppBar: false,
                 showWebBack: false,
@@ -297,9 +299,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           final service = ref.read(campusCardServiceProvider);
           final url = service.getCampusCardHomeUrl();
           
+          if (!context.mounted) return;
           Navigator.push(context, createSlideUpRoute(
             WebViewDetailScreen(
-              title: '校园卡',
+              title: context.l10n.funcCampusCard,
               url: url,
               userAgent: AppConstants.campusCardUA,
               showWebBack: false,
@@ -317,20 +320,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 'cs_bus':
         final hasPermission = await LocationHelper.requestPermission();
         if (hasPermission) {
+          if (!context.mounted) return;
           Navigator.push(context, createSlideUpRoute(
-            const WebViewDetailScreen(
-              title: '长沙实时公交',
+            WebViewDetailScreen(
+              title: context.l10n.funcCsBus,
               url: AppConstants.changshaBusUrl,
               showWebBack: true,
               showAppBar: true,
-              appBarColor: Color(0xFFF4F4F4),
+              appBarColor: const Color(0xFFF4F4F4),
             ),
           ));
         } else {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('需要定位权限以显示附近的实时公交'),
+              SnackBar(
+                content: Text(context.l10n.needLocationForBus),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -412,9 +416,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '图书馆预约',
-          style: TextStyle(
+        Text(
+          context.l10n.libraryReservation,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -501,8 +505,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                             onPressed: () =>
                                 _handleCancelLibraryReserve(context, reserve),
-                            child: const Text('取消',
-                                style: TextStyle(fontSize: 13)),
+                            child: Text(context.l10n.cancel,
+                                style: const TextStyle(fontSize: 13)),
                           ),
                           const SizedBox(width: 8),
                           ElevatedButton(
@@ -519,15 +523,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                             onPressed: () =>
                                 _handleSignInLibraryReserve(context, reserve),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.check_circle_outline_rounded,
+                                const Icon(Icons.check_circle_outline_rounded,
                                     size: 16),
-                                SizedBox(width: 4),
+                                const SizedBox(width: 4),
                                 Text(
-                                  '签到',
-                                  style: TextStyle(
+                                  context.l10n.signIn,
+                                  style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold),
                                 ),
@@ -551,14 +555,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                         onPressed: () =>
                             _handleSignBackLibraryReserve(context, reserve),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.logout_rounded, size: 16),
-                            SizedBox(width: 4),
+                            const Icon(Icons.logout_rounded, size: 16),
+                            const SizedBox(width: 4),
                             Text(
-                              '退座',
-                              style: TextStyle(
+                              context.l10n.signBack,
+                              style: const TextStyle(
                                   fontSize: 14, fontWeight: FontWeight.bold),
                             ),
                           ],
@@ -576,6 +580,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _handleSignInLibraryReserve(
       BuildContext context, LibraryReserveModel reserve) async {
+    final l10n = context.l10n;
     try {
       final success = await ref
           .read(cachedLibraryReserveProvider.notifier)
@@ -583,15 +588,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
       if (context.mounted && success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('签到成功！祝您学习愉快。'),
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(l10n.signInSuccess),
               ],
             ),
-            backgroundColor: Color(0xFF09C489),
+            backgroundColor: const Color(0xFF09C489),
           ),
         );
       }
@@ -599,8 +604,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                '签到失败: ${e.toString().replaceAll(RegExp(r'^.*?: '), '').replaceAll(RegExp(r'\s*\(code:.*\)$'), '').trim()}'),
+            content: Text(l10n.signInFailed(_libraryErrorMessage(e))),
           ),
         );
       }
@@ -609,15 +613,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _handleSignBackLibraryReserve(
       BuildContext context, LibraryReserveModel reserve) async {
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        title: const Text('确认退座？',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        title: Text(l10n.signBackConfirmTitle,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         content: Text(
-          '确定结束在【${reserve.thirdLevelName}】的 ${reserve.seatNum} 号座位使用吗？',
+          l10n.signBackConfirmContent(reserve.thirdLevelName, reserve.seatNum),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
@@ -627,7 +632,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             ),
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('我再想想', style: TextStyle(fontSize: 14)),
+            child: Text(l10n.thinkAgain, style: const TextStyle(fontSize: 14)),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
@@ -641,8 +646,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   borderRadius: BorderRadius.circular(6)),
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('确认退座',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            child: Text(l10n.confirmSignBack,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -656,13 +661,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           .signBackSeat(reserve);
       if (context.mounted && success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('退座成功')),
+          SnackBar(content: Text(l10n.signBackSuccess)),
         );
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('退座失败: ${_libraryErrorMessage(e)}')),
+          SnackBar(content: Text(l10n.signBackFailed(_libraryErrorMessage(e)))),
         );
       }
     }
@@ -678,13 +683,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _handleCancelLibraryReserve(
       BuildContext context, LibraryReserveModel reserve) async {
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        title: const Text('确认取消预约？', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        content: Text('确定取消在【${reserve.thirdLevelName}】的 ${reserve.seatNum} 号座位预约吗？'),
+        title: Text(l10n.cancelReserveConfirmTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        content: Text(l10n.cancelReserveConfirmContent(reserve.thirdLevelName, reserve.seatNum)),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           TextButton(
@@ -695,7 +701,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             ),
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('我再想想', style: TextStyle(fontSize: 14)),
+            child: Text(l10n.thinkAgain, style: const TextStyle(fontSize: 14)),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
@@ -711,9 +717,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              '确认取消',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            child: Text(
+              l10n.confirmCancel,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -727,7 +733,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             .cancelReservation(reserve.id);
         if (context.mounted && success) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('已成功取消该预约')),
+            SnackBar(content: Text(l10n.reserveCancelledSuccess)),
           );
         }
       } catch (e) {
@@ -735,7 +741,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text(
-                    '取消失败: ${e.toString().replaceAll('Exception:', '').trim()}')),
+                    l10n.cancelFailed(e.toString().replaceAll('Exception:', '').trim()))),
           );
         }
       }
@@ -749,13 +755,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _isShowingTomorrow ? '明日课表' : '今日课表',
+            _isShowingTomorrow ? context.l10n.tomorrowTimetable : context.l10n.todayTimetable,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           LoginRequiredPlaceholder(
-            title: '需要登录以查看课表',
-            message: '登录后即可同步并查看您的个人课表信息',
+            title: context.l10n.timetableLoginRequiredTitle,
+            message: context.l10n.timetableLoginRequiredMessage,
             icon: Icons.calendar_today_outlined,
             padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
           ),
@@ -770,7 +776,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              _isShowingTomorrow ? '明日课表' : '今日课表',
+              _isShowingTomorrow ? context.l10n.tomorrowTimetable : context.l10n.todayTimetable,
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -778,7 +784,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             TextButton(
               onPressed: () => _navigateToTab(context, 1),
-              child: const Text('查看全部'),
+              child: Text(context.l10n.viewAll),
             ),
           ],
         ),
@@ -801,7 +807,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             child: Center(
               child: Text(
-                _isShowingTomorrow ? '明天没有待上的课程' : '今天没有待上的课程',
+                _isShowingTomorrow ? context.l10n.noCoursesTomorrow : context.l10n.noCoursesToday,
                 style: const TextStyle(
                   fontSize: 14,
                   color: Colors.grey,
@@ -881,8 +887,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _showLoginDialog(BuildContext context) {
     if (ref.read(authStateProvider).status == AuthStatus.authenticating) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('正在登录，请稍候...'),
+        SnackBar(
+          content: Text(context.l10n.loggingInWait),
           behavior: SnackBarBehavior.floating,
         ),
       );

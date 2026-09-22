@@ -1,4 +1,6 @@
+import 'package:flutter/widgets.dart';
 import 'package:html/parser.dart' as html;
+import '../../../core/utils/l10n_extension.dart';
 
 class SunshineStatistics {
   final String total;
@@ -164,4 +166,20 @@ class SunshineFormData {
   final SunshineIdentity identity;
   final List<SunshineDepartment> departments;
   const SunshineFormData(this.identity, this.departments);
+}
+
+extension SunshineLetterL10n on SunshineLetter {
+  String getLocalizedStatus(BuildContext context) => switch (status) {
+        '0' || '1' => context.l10n.statusInProgress,
+        '2' => context.l10n.statusResolved,
+        _ => context.l10n.statusUnknown,
+      };
+}
+
+extension SunshineTicketDetailL10n on SunshineTicketDetail {
+  String getLocalizedStatus(BuildContext context) => switch (status) {
+        '0' || '1' => context.l10n.statusInProgress,
+        '2' => context.l10n.statusResolved,
+        _ => context.l10n.statusUnknown,
+      };
 }

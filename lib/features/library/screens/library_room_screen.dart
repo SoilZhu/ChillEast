@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/route_utils.dart';
 import '../models/library_models.dart';
 import '../providers/library_provider.dart';
@@ -17,7 +18,7 @@ class LibraryRoomScreen extends ConsumerStatefulWidget {
 class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
   late String _selectedDay;
   late List<String> _availableDays;
-  String _selectedFloor = '全部';
+  String? _selectedFloor; // null means 'all'
   String? _selectedStartTime;
   String? _selectedEndTime;
 
@@ -33,7 +34,7 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
   }
 
   String _formatDayTab(String dayStr) {
-    return LibraryTimeUtils.formatDayLabel(dayStr);
+    return LibraryTimeUtils.formatDayLabelLocalized(context, dayStr);
   }
 
   @override
@@ -44,7 +45,7 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('选择阅览室'),
+        title: Text(context.l10n.selectReadingRoom),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
         foregroundColor: isDark ? Colors.white : Colors.black87,
@@ -52,6 +53,7 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: context.l10n.refresh,
             onPressed: () {
               setState(() {
                 _availableDays = LibraryTimeUtils.availableReserveDays();
@@ -145,7 +147,7 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
                       ),
                       onPressed: () =>
                           ref.invalidate(libraryRoomsProvider(_selectedDay)),
-                      child: const Text('重试'),
+                      child: Text(context.l10n.retry),
                     ),
                   ],
                 ),
@@ -161,26 +163,28 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // 提取全部楼层
-    final floors = <String>{'全部'};
+    final rawFloors = <String>{};
     for (final r in rooms) {
       if (r.secondLevelName.isNotEmpty) {
-        floors.add(r.secondLevelName);
+        rawFloors.add(r.secondLevelName);
       }
     }
 
     // 过滤列表
     final filtered = rooms.where((r) {
-      if (_selectedFloor != '全部' && r.secondLevelName != _selectedFloor) {
+      if (_selectedFloor != null && r.secondLevelName != _selectedFloor) {
         return false;
       }
       return true;
     }).toList();
 
+    final allFloorItems = [null, ...rawFloors];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // 楼层快捷过滤
-        if (floors.length > 2)
+        if (rawFloors.length > 1)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Align(
@@ -188,12 +192,13 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: floors.map((floor) {
+                  children: allFloorItems.map((floor) {
                     final isSelected = floor == _selectedFloor;
+                    final label = floor ?? context.l10n.all;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: FilterChip(
-                        label: Text(floor),
+                        label: Text(label),
                         selected: isSelected,
                         selectedColor:
                             const Color(0xFF09C489).withValues(alpha: 0.15),
@@ -215,7 +220,7 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
                         ),
                         onSelected: (selected) {
                           setState(() {
-                            _selectedFloor = selected ? floor : '全部';
+                            _selectedFloor = selected ? floor : null;
                           });
                         },
                       ),
@@ -230,7 +235,7 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
           child: filtered.isEmpty
               ? Center(
                   child: Text(
-                    '暂无符合条件的阅览室',
+                    context.l10n.noRoomsFound,
                     style:
                         TextStyle(color: isDark ? Colors.white38 : Colors.grey),
                   ),
@@ -363,7 +368,7 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '总座位数：${room.capacity}',
+                            context.l10n.totalSeats(room.capacity.toString()),
                             style: TextStyle(
                               fontSize: 12,
                               color: isDark ? Colors.white54 : Colors.grey[600],

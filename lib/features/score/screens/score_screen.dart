@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/score_provider.dart';
 import '../models/score_model.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 class ScoreScreen extends ConsumerWidget {
   const ScoreScreen({super.key});
@@ -13,7 +14,7 @@ class ScoreScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('成绩查询'),
+        title: Text(context.l10n.scoreQuery),
         elevation: 0,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         actions: [
@@ -49,7 +50,7 @@ class ScoreScreen extends ConsumerWidget {
       child: Row(
         children: [
           Text(
-            '当前学期',
+            context.l10n.currentSemester,
             style: TextStyle(
               fontSize: 14, 
               fontWeight: FontWeight.w600, 
@@ -112,7 +113,7 @@ class ScoreScreen extends ConsumerWidget {
               style: OutlinedButton.styleFrom(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               ),
-              child: const Text('重试'),
+              child: Text(context.l10n.retry),
             ),
           ],
         ),
@@ -126,7 +127,7 @@ class ScoreScreen extends ConsumerWidget {
           children: [
             Icon(Icons.assignment_turned_in_outlined, size: 64, color: Colors.grey[100]),
             const SizedBox(height: 16),
-            Text('本学期暂无成绩数据', style: TextStyle(color: Colors.grey[400])),
+            Text(context.l10n.noScoreData, style: TextStyle(color: Colors.grey[400])),
           ],
         ),
       );
@@ -205,11 +206,11 @@ class ScoreScreen extends ConsumerWidget {
                     style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                     child: Row(
                       children: [
-                        Text('学分: ${score.credit ?? "N/A"}'),
+                        Text(context.l10n.scoreCredit(score.credit ?? "N/A")),
                         const SizedBox(width: 12),
                         const Text('•'),
                         const SizedBox(width: 12),
-                        Text(score.examType ?? '正常考试'),
+                        Text(score.examType ?? context.l10n.normalExam),
                       ],
                     ),
                   ),
@@ -232,7 +233,7 @@ class ScoreScreen extends ConsumerWidget {
                 ),
                 if (isExcellent || isFailed)
                   Text(
-                    isExcellent ? '优秀' : '不及格',
+                    isExcellent ? context.l10n.gradeExcellent : context.l10n.gradeFailed,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
