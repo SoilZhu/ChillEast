@@ -207,6 +207,9 @@ class AppLocalizationsYue extends AppLocalizations {
   String get funcCsBus => '長沙實時公交';
 
   @override
+  String get funcCampusBusRoute => '校内公交线路';
+
+  @override
   String get more => '更多';
 
   @override

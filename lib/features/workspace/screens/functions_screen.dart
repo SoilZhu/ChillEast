@@ -23,6 +23,7 @@ import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/location_helper.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../library/screens/library_home_screen.dart';
+import '../../campus_bus/screens/campus_bus_map_screen.dart';
 
 /// 功能页 - 展示各种功能入口
 class FunctionsScreen extends ConsumerStatefulWidget {
@@ -231,6 +232,9 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
         break;
       case 'bus':
         _safeNavigate(const BusTrackingScreen());
+        break;
+      case 'campus_bus_route':
+        _safeNavigate(const CampusBusMapScreen());
         break;
       case 'cs_bus':
         final hasPermission = await LocationHelper.requestPermission();

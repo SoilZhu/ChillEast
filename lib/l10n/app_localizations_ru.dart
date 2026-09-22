@@ -209,6 +209,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get funcCsBus => 'Автобусы онлайн';
 
   @override
+  String get funcCampusBusRoute => '校内公交线路';
+
+  @override
   String get more => 'Еще';
 
   @override

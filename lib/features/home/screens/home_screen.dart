@@ -32,6 +32,7 @@ import '../../workspace/screens/vpn_converter_screen.dart';
 import '../../library/models/library_models.dart';
 import '../../library/providers/library_provider.dart';
 import '../../library/screens/library_home_screen.dart';
+import '../../campus_bus/screens/campus_bus_map_screen.dart';
 
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -316,6 +317,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         break;
       case 'bus':
         Navigator.push(context, createSlideUpRoute(const BusTrackingScreen()));
+        break;
+      case 'campus_bus_route':
+        Navigator.push(context, createSlideUpRoute(const CampusBusMapScreen()));
         break;
       case 'cs_bus':
         final hasPermission = await LocationHelper.requestPermission();
