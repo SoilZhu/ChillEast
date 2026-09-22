@@ -240,11 +240,11 @@ void main() {
 
     test('AppLocalizations returns correct yue texts', () {
       final l10n = lookupAppLocalizations(const Locale('yue'));
-      expect(l10n.appTitle, equals('自在東湖'));
-      expect(l10n.settings, equals('設置'));
-      expect(l10n.traditionalChineseHK, equals('繁體中文（中國香港）'));
-      expect(l10n.traditionalChineseTW, equals('繁體中文'));
-      expect(l10n.tabHome, equals('主頁'));
+      expect(l10n.appTitle, equals('自在东湖'));
+      expect(l10n.settings, equals('设定'));
+      expect(l10n.traditionalChineseHK, equals('繁体中文（中国香港）'));
+      expect(l10n.traditionalChineseTW, equals('繁体中文'));
+      expect(l10n.tabHome, equals('主页'));
     });
 
     test('AppLocalizations returns correct wuu texts', () {
@@ -266,10 +266,10 @@ void main() {
         const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'hefei'),
       );
       expect(l10n.appTitle, equals('自在东湖'));
-      expect(l10n.settings, equals('设置'));
-      expect(l10n.tabHome, equals('首页'));
-      expect(l10n.cancel, equals('取消'));
-      expect(l10n.confirm, equals('确定'));
+      expect(l10n.settings, equals('设定'));
+      expect(l10n.tabHome, equals('头页'));
+      expect(l10n.cancel, equals('算了'));
+      expect(l10n.confirm, equals('定下'));
       expect(l10n.noData, equals('没得数据'));
     });
 
@@ -366,15 +366,15 @@ void main() {
               final zhTW = LocaleNotifier.supportedLanguages.firstWhere((o) => o.code == 'zh_TW');
               final ru = LocaleNotifier.supportedLanguages.firstWhere((o) => o.code == 'ru');
 
-              expect(LocaleNotifier.getDisplayTitle(wuu, context), equals('吳語（蘇州話）'));
-              expect(LocaleNotifier.getDisplayTitle(yue, context), equals('粵語（廣州話）'));
-              expect(LocaleNotifier.getDisplayTitle(hsn, context), equals('湘語（長沙話）'));
-              expect(LocaleNotifier.getDisplayTitle(hefei, context), equals('江淮官話（合肥話）'));
-              expect(LocaleNotifier.getDisplayTitle(gan, context), equals('贛語（南昌話）'));
-              expect(LocaleNotifier.getDisplayTitle(zh, context), equals('簡體中文'));
-              expect(LocaleNotifier.getDisplayTitle(zhHK, context), equals('繁體中文（中國香港）'));
-              expect(LocaleNotifier.getDisplayTitle(zhTW, context), equals('繁體中文'));
-              expect(LocaleNotifier.getDisplayTitle(ru, context), equals('俄文 (Русский)'));
+              expect(LocaleNotifier.getDisplayTitle(wuu, context), equals('吴语（苏州话）'));
+              expect(LocaleNotifier.getDisplayTitle(yue, context), equals('粤语（广州话）'));
+              expect(LocaleNotifier.getDisplayTitle(hsn, context), equals('湘语（长沙话）'));
+              expect(LocaleNotifier.getDisplayTitle(hefei, context), equals('江淮官话（合肥话）'));
+              expect(LocaleNotifier.getDisplayTitle(gan, context), equals('赣语（南昌话）'));
+              expect(LocaleNotifier.getDisplayTitle(zh, context), equals('简体中文'));
+              expect(LocaleNotifier.getDisplayTitle(zhHK, context), equals('繁体中文（中国香港）'));
+              expect(LocaleNotifier.getDisplayTitle(zhTW, context), equals('繁体中文'));
+              expect(LocaleNotifier.getDisplayTitle(ru, context), equals('俄语 (Русский)'));
 
               return const SizedBox();
             },
