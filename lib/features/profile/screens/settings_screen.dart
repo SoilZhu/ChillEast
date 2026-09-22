@@ -6,6 +6,7 @@ import '../../../core/utils/route_utils.dart';
 import 'notification_settings_screen.dart';
 import 'appearance_settings_screen.dart';
 import 'ai_settings_screen.dart';
+import 'language_settings_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -52,7 +53,12 @@ class SettingsScreen extends ConsumerWidget {
                 color: isDark ? Colors.white70 : const Color(0xFF5F6368),
               ),
             ),
-            onTap: () => _showLanguageDialog(context, ref),
+            onTap: () {
+              Navigator.push(
+                context,
+                createSlideUpRoute(const LanguageSettingsScreen()),
+              );
+            },
           ),
           _buildSettingItem(
             context,
@@ -89,81 +95,6 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-
-  void _showLanguageDialog(BuildContext context, WidgetRef ref) {
-    final currentLocale = ref.read(localeProvider);
-    final currentCode = LocaleNotifier.localeToCode(currentLocale);
-
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        final l10n = ctx.l10n;
-        return AlertDialog(
-          title: Text(l10n.language),
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(ctx).size.height * 0.6,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: LocaleNotifier.supportedLanguages.map((option) {
-                    final isSelected = currentCode == option.code;
-                    final displayTitle = LocaleNotifier.getDisplayTitle(option, ctx);
-
-                    return _buildLanguageOption(
-                      context: ctx,
-                      title: displayTitle,
-                      isSelected: isSelected,
-                      onTap: () {
-                        ref.read(localeProvider.notifier).setLocale(option.locale);
-                        Navigator.pop(ctx);
-                      },
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(l10n.cancel),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildLanguageOption({
-    required BuildContext context,
-    required String title,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    final primaryColor = Theme.of(context).primaryColor;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return ListTile(
-      title: Text(
-        title,
-        style: TextStyle(
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          color: isSelected
-              ? primaryColor
-              : (isDark ? Colors.white : const Color(0xFF202124)),
-        ),
-      ),
-      trailing: isSelected
-          ? Icon(Icons.check_rounded, color: primaryColor)
-          : null,
-      onTap: onTap,
     );
   }
 
