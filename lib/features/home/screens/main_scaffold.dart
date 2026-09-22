@@ -20,6 +20,7 @@ import '../../../core/widgets/triangle_painter.dart';
 import '../widgets/ai_response_card.dart';
 import '../../../core/ai/ai_provider.dart';
 import '../../profile/providers/settings_provider.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 
 /// 自定义顶部滑动指示器，圆角朝下
@@ -78,7 +79,7 @@ class MainScaffold extends ConsumerStatefulWidget {
 class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
   late AnimationController _aiAnimController;
-  String _hitokoto = '自在东湖在湖东！';
+  String? _hitokoto;
   final HitokotoService _hitokotoService = HitokotoService();
   bool _hasSeenReminder = false;
   DateTime _lastReschedule = DateTime.fromMillisecondsSinceEpoch(0);
@@ -244,9 +245,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
     // 如果正在登录中，拦截通知页的访问 (index 3)
     if (authState.status == AuthStatus.authenticating && index == 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('正在登录，请稍候...'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(context.l10n.loggingInPleaseWait),
+          duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -305,7 +306,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                     decoration: BoxDecoration(
                       color: Theme.of(context).primaryColor.withOpacity(0.8),
                     ),
-                    accountName: const Text('自在东湖'),
+                    accountName: Text(context.l10n.appTitle),
                     accountEmail: const Text('v1.0.0'),
                     currentAccountPicture: CircleAvatar(
                       backgroundColor: Theme.of(context).cardColor,
@@ -314,7 +315,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                   ),
                   ListTile(
                     leading: const Icon(Icons.settings),
-                    title: const Text('设置'),
+                    title: Text(context.l10n.settings),
                     onTap: () => Navigator.pop(context),
                   ),
                 ],
@@ -384,40 +385,40 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                       if (authState.status == AuthStatus.authenticating && index == 3) {
                         _tabController.index = _tabController.previousIndex;
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('正在登录，请稍候...'),
-                            duration: Duration(seconds: 2),
+                          SnackBar(
+                            content: Text(context.l10n.loggingInWait),
+                            duration: const Duration(seconds: 2),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
                         return;
                       }
                     },
-                    tabs: const [
+                    tabs: [
                       Tab(
-                        icon: Icon(Icons.home_outlined),
-                        text: '首页',
-                        iconMargin: EdgeInsets.only(bottom: 4),
+                        icon: const Icon(Icons.home_outlined),
+                        text: context.l10n.tabHome,
+                        iconMargin: const EdgeInsets.only(bottom: 4),
                       ),
                       Tab(
-                        icon: Icon(Icons.calendar_month_outlined),
-                        text: '课表',
-                        iconMargin: EdgeInsets.only(bottom: 4),
+                        icon: const Icon(Icons.calendar_month_outlined),
+                        text: context.l10n.tabTimetable,
+                        iconMargin: const EdgeInsets.only(bottom: 4),
                       ),
                       Tab(
-                        icon: Icon(Icons.assignment_outlined),
-                        text: '作业',
-                        iconMargin: EdgeInsets.only(bottom: 4),
+                        icon: const Icon(Icons.assignment_outlined),
+                        text: context.l10n.tabHomework,
+                        iconMargin: const EdgeInsets.only(bottom: 4),
                       ),
                       Tab(
-                        icon: Icon(Icons.inbox_outlined),
-                        text: '通知',
-                        iconMargin: EdgeInsets.only(bottom: 4),
+                        icon: const Icon(Icons.inbox_outlined),
+                        text: context.l10n.tabNotice,
+                        iconMargin: const EdgeInsets.only(bottom: 4),
                       ),
                       Tab(
-                        icon: Icon(Icons.dashboard_outlined),
-                        text: '功能',
-                        iconMargin: EdgeInsets.only(bottom: 4),
+                        icon: const Icon(Icons.dashboard_outlined),
+                        text: context.l10n.tabFunctions,
+                        iconMargin: const EdgeInsets.only(bottom: 4),
                       ),
                     ],
                   ),
@@ -589,7 +590,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                                   color: isDark ? Colors.white : const Color(0xFF202124),
                                 ),
                                 decoration: InputDecoration(
-                                  hintText: '有什么新鲜事？',
+                                  hintText: context.l10n.whatsNewHint,
                                   hintStyle: TextStyle(
                                     fontSize: 16,
                                     height: 1.2,
@@ -615,7 +616,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                               key: const ValueKey('hitokoto_text'),
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                _hitokoto,
+                                _hitokoto ?? context.l10n.defaultHitokoto,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -757,9 +758,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                                             color: isDark ? Colors.grey.withOpacity(0.4) : Colors.black54,
                                             borderRadius: BorderRadius.circular(6),
                                           ),
-                                          child: const Text(
-                                            '在这里开启上课提醒',
-                                            style: TextStyle(
+                                          child: Text(
+                                            context.l10n.enableClassReminderHere,
+                                            style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 11,
                                               fontWeight: FontWeight.bold,
@@ -801,8 +802,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
   void _showLoginDialog(BuildContext context) {
     if (ref.read(authStateProvider).status == AuthStatus.authenticating) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('正在登录，请稍候...'),
+        SnackBar(
+          content: Text(context.l10n.loggingInPleaseWait),
           behavior: SnackBarBehavior.floating,
         ),
       );

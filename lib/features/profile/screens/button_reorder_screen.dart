@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/appearance_provider.dart';
+import '../models/appearance_state.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 class ButtonReorderScreen extends ConsumerWidget {
   final String title;
@@ -41,11 +43,11 @@ class ButtonReorderScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          _buildInfoBanner(isDark),
+          _buildInfoBanner(context, isDark),
           Expanded(
             child: ReorderableListView(
               padding: const EdgeInsets.only(top: 0, bottom: 60), // 增加底部边距，方便拖拽到最后
-              header: _buildSectionHeader(context, '显示中的功能', Icons.visibility_outlined, isFixed: true),
+              header: _buildSectionHeader(context, context.l10n.visibleFunctions, Icons.visibility_outlined, isFixed: true),
               proxyDecorator: (Widget child, int index, Animation<double> animation) {
                 return AnimatedBuilder(
                   animation: animation,
@@ -73,7 +75,7 @@ class ButtonReorderScreen extends ConsumerWidget {
                 // 2. 已隐藏的功能区域标题 (分界线)
                 _buildSectionHeader(
                   context, 
-                  '已隐藏的功能 (拖动到此隐藏)', 
+                  context.l10n.hiddenFunctions, 
                   Icons.visibility_off_outlined, 
                   key: const ValueKey('header_hidden'),
                 ),
@@ -88,7 +90,7 @@ class ButtonReorderScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfoBanner(bool isDark) {
+  Widget _buildInfoBanner(BuildContext context, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       width: double.infinity,
@@ -97,10 +99,10 @@ class ButtonReorderScreen extends ConsumerWidget {
         children: [
           Icon(Icons.touch_app_outlined, size: 16, color: Colors.grey[600]),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
-              '长按拖动图标，移入不同区域可显示或隐藏功能',
-              style: TextStyle(fontSize: 13, color: Colors.grey),
+              context.l10n.dragToReorderTip,
+              style: const TextStyle(fontSize: 13, color: Colors.grey),
             ),
           ),
         ],
@@ -131,7 +133,7 @@ class ButtonReorderScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildReorderItem(BuildContext context, WidgetRef ref, dynamic item) {
+  Widget _buildReorderItem(BuildContext context, WidgetRef ref, FunctionItem item) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Container(
@@ -154,7 +156,7 @@ class ButtonReorderScreen extends ConsumerWidget {
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              item.label,
+              item.getLocalizedTitle(context),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w400,

@@ -1,4 +1,7 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../l10n/app_localizations.dart';
+import '../state/locale_provider.dart';
 import '../mcp/services/mcp_tool_registry.dart';
 import '../utils/secure_storage_helper.dart';
 import 'ai_service.dart';
@@ -173,15 +176,24 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
     );
   }
 
+  AppLocalizations _getL10n() {
+    final locale = ref.read(localeProvider);
+    return lookupAppLocalizations(
+      locale ?? WidgetsBinding.instance.platformDispatcher.locale,
+    );
+  }
+
   /// 发送消息给 AI
   Future<void> sendMessage(String text) async {
     final query = text.trim();
     if (query.isEmpty) return;
 
+    final l10n = _getL10n();
+
     if (!state.hasApiKey) {
       state = state.copyWith(
         status: AiAssistantStatus.error,
-        errorMessage: '未配置 API Key，请先在「AI 助理设置」中填入 API Key',
+        errorMessage: l10n.aiApiKeyNotConfigured,
       );
       return;
     }
@@ -196,7 +208,7 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
       status: AiAssistantStatus.thinking,
       conversationHistory: newHistory,
       displayMessages: newDisplay,
-      currentToolStatus: '正在思考中...',
+      currentToolStatus: l10n.aiThinking,
       errorMessage: null,
     );
 

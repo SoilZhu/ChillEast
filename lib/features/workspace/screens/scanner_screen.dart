@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -15,7 +16,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('扫一扫'),
+        title: Text(context.l10n.scanQrCode),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),
@@ -46,14 +47,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
               ),
             ),
           ),
-          const Positioned(
+          Positioned(
             bottom: 80,
             left: 0,
             right: 0,
             child: Text(
-              '将二维码放入框内即可自动扫描',
+              context.l10n.scanQrCodeHint,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70),
+              style: const TextStyle(color: Colors.white70),
             ),
           ),
         ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../models/questionnaire_models.dart';
 import '../services/questionnaire_service.dart';
 
@@ -89,16 +90,27 @@ class _QuestionnaireDetailScreenState
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error =
-          e is QuestionnaireException ? e.message : '加载失败,请检查网络后重试');
+      setState(() => _error = _getErrorMessage(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
+  String _getErrorMessage(dynamic e) {
+    if (e is QuestionnaireException) {
+      if (e.message.contains('统一认证已过期')) return context.l10n.ssoExpiredRelogin;
+      if (e.message.contains('登录已失效')) return context.l10n.studentSystemSessionExpired;
+      if (e.message.contains('未能读取')) return context.l10n.readQuestionnaireDataFailed;
+      if (e.message.contains('格式异常')) return context.l10n.questionnaireListFormatError;
+      if (e.message.contains('缺少任务标识')) return context.l10n.questionnaireMissingTaskId;
+      return e.message;
+    }
+    return context.l10n.loadFailedCheckNetwork;
+  }
+
   String? _validate() {
     final detail = _detail;
-    if (detail == null) return '问卷数据异常';
+    if (detail == null) return context.l10n.questionnaireDataError;
     for (final question in detail.questions) {
       if (!question.required) continue;
       final value = _answers[question.dm];
@@ -106,11 +118,11 @@ class _QuestionnaireDetailScreenState
         if (value == null ||
             (value is String && value.trim().isEmpty) ||
             (value is List && value.isEmpty)) {
-          return '请填写: ${question.title}';
+          return context.l10n.pleaseFillQuestion(question.title);
         }
       } else {
         final text = _controllers[question.dm]?.text.trim() ?? '';
-        if (text.isEmpty) return '请填写: ${question.title}';
+        if (text.isEmpty) return context.l10n.pleaseFillQuestion(question.title);
       }
     }
     return null;
@@ -133,8 +145,8 @@ class _QuestionnaireDetailScreenState
     if (detail == null || _submitting) return;
     if (!detail.canSubmit) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('该问卷当前不可提交'),
+        SnackBar(
+          content: Text(context.l10n.questionnaireCannotBeSubmitted),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -158,8 +170,8 @@ class _QuestionnaireDetailScreenState
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('提交成功'),
+        SnackBar(
+          content: Text(context.l10n.submitSuccess),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -169,7 +181,7 @@ class _QuestionnaireDetailScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              e is QuestionnaireException ? e.message : '提交失败,请稍后重试'),
+              e is QuestionnaireException ? e.message : context.l10n.submitFailedRetry),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -230,7 +242,7 @@ class _QuestionnaireDetailScreenState
                         const SizedBox(height: 12),
                         FilledButton(
                           onPressed: _load,
-                          child: const Text('重试'),
+                          child: Text(context.l10n.retry),
                         ),
                       ],
                     ),
@@ -264,8 +276,8 @@ class _QuestionnaireDetailScreenState
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('提交',
-                                style: TextStyle(fontSize: 15)),
+                            : Text(context.l10n.submit,
+                                style: const TextStyle(fontSize: 15)),
                       ),
                     ),
                   ],
@@ -375,13 +387,13 @@ class _QuestionnaireDetailScreenState
       borderRadius: BorderRadius.circular(4),
       child: InputDecorator(
         isEmpty: value.isEmpty,
-        decoration: const InputDecoration(
-          hintText: '请选择日期',
+        decoration: InputDecoration(
+          hintText: context.l10n.pleaseSelectDate,
           filled: false,
-          border: OutlineInputBorder(),
+          border: const OutlineInputBorder(),
           contentPadding:
-              EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-          suffixIcon: Icon(Icons.calendar_month_outlined),
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          suffixIcon: const Icon(Icons.calendar_month_outlined),
         ),
         child: Text(
           value,
@@ -410,7 +422,7 @@ class _QuestionnaireDetailScreenState
           ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9+\- ]'))]
           : null,
       decoration: InputDecoration(
-        hintText: question.isPhone ? '请输入电话' : '请输入',
+        hintText: question.isPhone ? context.l10n.pleaseEnterPhone : context.l10n.pleaseEnter,
         filled: false,
         border: const OutlineInputBorder(),
       ),

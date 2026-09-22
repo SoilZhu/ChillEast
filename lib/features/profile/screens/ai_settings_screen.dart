@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ai/ai_provider.dart';
 import '../../../core/ai/ai_service.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 class AiSettingsScreen extends ConsumerStatefulWidget {
   const AiSettingsScreen({super.key});
@@ -56,8 +57,8 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ Agent 配置已保存'),
+        SnackBar(
+          content: Text(context.l10n.aiSettingsSaved),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -74,8 +75,8 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
     });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('已恢复默认配置（硅基流动 + Qwen/Qwen3.5-4B）'),
+        SnackBar(
+          content: Text(context.l10n.aiSettingsResetDefaults),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -100,9 +101,9 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
-          'Agent 设置',
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+        title: Text(
+          context.l10n.agentSettings,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
         ),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
@@ -129,12 +130,12 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                 color: isDark ? Colors.white : const Color(0xFF202124),
               ),
               decoration: InputDecoration(
-                labelText: 'API 接口地址 (Base URL)',
+                labelText: context.l10n.aiApiUrl,
                 labelStyle: TextStyle(
                   color: isDark ? Colors.white70 : Colors.grey[700],
                   fontSize: 14,
                 ),
-                hintText: '默认 https://api.siliconflow.cn/v1',
+                hintText: context.l10n.aiApiUrlHint,
                 hintStyle: TextStyle(
                   fontSize: 13,
                   color: isDark ? Colors.white38 : Colors.grey[400],
@@ -180,12 +181,12 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                 color: isDark ? Colors.white : const Color(0xFF202124),
               ),
               decoration: InputDecoration(
-                labelText: '模型名称 (Model Name)',
+                labelText: context.l10n.aiModelName,
                 labelStyle: TextStyle(
                   color: isDark ? Colors.white70 : Colors.grey[700],
                   fontSize: 14,
                 ),
-                hintText: '默认 Qwen/Qwen3.5-4B',
+                hintText: context.l10n.aiModelNameHint,
                 hintStyle: TextStyle(
                   fontSize: 13,
                   color: isDark ? Colors.white38 : Colors.grey[400],
@@ -232,12 +233,12 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                 color: isDark ? Colors.white : const Color(0xFF202124),
               ),
               decoration: InputDecoration(
-                labelText: aiState.hasCustomApiKey ? 'API Key (已使用自定义)' : 'API Key (使用默认)',
+                labelText: aiState.hasCustomApiKey ? context.l10n.aiApiKeyCustom : context.l10n.aiApiKeyDefault,
                 labelStyle: TextStyle(
                   color: isDark ? Colors.white70 : Colors.grey[700],
                   fontSize: 14,
                 ),
-                hintText: '留空使用默认 Key，或填入您的 Key (sk-...)',
+                hintText: context.l10n.aiApiKeyHint,
                 hintStyle: TextStyle(
                   fontSize: 13,
                   color: isDark ? Colors.white38 : Colors.grey[400],
@@ -294,7 +295,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                         size: 20,
                         color: isDark ? Colors.white60 : Colors.grey[600],
                       ),
-                      tooltip: '粘贴',
+                      tooltip: context.l10n.paste,
                       onPressed: _pasteFromClipboard,
                     ),
                   ],
@@ -326,9 +327,9 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                           valueColor: AlwaysStoppedAnimation(Colors.white),
                         ),
                       )
-                    : const Text(
-                        '保存配置',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    : Text(
+                        context.l10n.saveSettings,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                       ),
               ),
             ),
@@ -341,7 +342,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
               child: OutlinedButton.icon(
                 onPressed: _resetDefaults,
                 icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('恢复默认配置'),
+                label: Text(context.l10n.resetDefaults),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: isDark ? Colors.white70 : Colors.grey[700],
                   side: BorderSide(

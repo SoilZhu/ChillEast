@@ -7,6 +7,7 @@ import '../../auth/screens/login_screen.dart';
 import 'settings_screen.dart';
 import 'about_screen.dart';
 import 'help_feedback_screen.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 
 
@@ -41,7 +42,7 @@ class ProfileScreen extends ConsumerWidget {
             _buildListTile(
               context,
               icon: Icons.settings_outlined,
-              title: '设置',
+              title: context.l10n.settings,
               onTap: () {
                 Navigator.push(
                   context,
@@ -52,7 +53,7 @@ class ProfileScreen extends ConsumerWidget {
             _buildListTile(
               context,
               icon: Icons.help_outline_rounded,
-              title: '帮助与反馈',
+              title: context.l10n.helpFeedback,
               onTap: () {
                 Navigator.push(
                   context,
@@ -63,7 +64,7 @@ class ProfileScreen extends ConsumerWidget {
             _buildListTile(
               context,
               icon: Icons.info_outline_rounded,
-              title: '关于',
+              title: context.l10n.about,
               onTap: () {
                 Navigator.push(
                   context,
@@ -77,7 +78,7 @@ class ProfileScreen extends ConsumerWidget {
               _buildListTile(
                 context,
                 icon: Icons.logout_rounded,
-                title: '退出登录',
+                title: context.l10n.logout,
                 titleColor: isAuthenticating 
                     ? (Theme.of(context).brightness == Brightness.dark ? Colors.white38 : Colors.grey) 
                     : Colors.redAccent,
@@ -135,7 +136,7 @@ class ProfileScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    !isUnauthenticated ? (authState.realName ?? '湖南农大学子') : '未登录',
+                    !isUnauthenticated ? (authState.realName ?? context.l10n.defaultStudentName) : context.l10n.notLoggedIn,
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -144,7 +145,7 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    !isUnauthenticated ? (authState.username ?? '') : '点击登录以访问更多功能',
+                    !isUnauthenticated ? (authState.username ?? '') : context.l10n.clickToLogin,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[600],
@@ -208,13 +209,13 @@ class ProfileScreen extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)), // MD2 风格圆角
-        title: const Text(
-          '确认退出',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        title: Text(
+          context.l10n.logoutConfirmTitle,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        content: const Text(
-          '退出登录后将清除您的本地凭证并断开数据连接。',
-          style: TextStyle(fontSize: 15, color: Color(0xFF5F6368), height: 1.5),
+        content: Text(
+          context.l10n.logoutConfirmContent,
+          style: const TextStyle(fontSize: 15, color: Color(0xFF5F6368), height: 1.5),
         ),
         actionsPadding: const EdgeInsets.only(right: 12, bottom: 12),
         actions: [
@@ -224,7 +225,7 @@ class ProfileScreen extends ConsumerWidget {
               foregroundColor: const Color(0xFF5F6368),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             ),
-            child: const Text('取消', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(context.l10n.cancel, style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -232,7 +233,7 @@ class ProfileScreen extends ConsumerWidget {
               foregroundColor: Colors.redAccent,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             ),
-            child: const Text('确认', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(context.l10n.confirm, style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

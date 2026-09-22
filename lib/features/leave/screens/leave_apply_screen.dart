@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../models/leave_models.dart';
 import '../services/leave_service.dart';
 
@@ -67,6 +68,15 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
     super.dispose();
   }
 
+  String _getErrorMessage(dynamic e) {
+    if (e is LeaveException) {
+      if (e.message.contains('统一认证已过期')) return context.l10n.ssoExpiredRelogin;
+      if (e.message.contains('登录已失效')) return context.l10n.studentSystemSessionExpired;
+      return e.message;
+    }
+    return context.l10n.loadFailedCheckNetwork;
+  }
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -87,8 +97,7 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() =>
-          _error = e is LeaveException ? e.message : '加载失败,请检查网络后重试');
+      setState(() => _error = _getErrorMessage(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -202,34 +211,38 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
   String _durationText() {
     final days = _daysController.text.trim();
     final hours = _hoursController.text.trim();
-    if (days.isEmpty && hours.isEmpty) return '请选择起止时间自动计算';
-    return '${days.isEmpty ? '0' : days}天${hours.isEmpty ? '0' : hours}小时';
+    if (days.isEmpty && hours.isEmpty) {
+      return context.l10n.selectTimeAutoCalculateDuration;
+    }
+    final d = days.isEmpty ? '0' : days;
+    final h = hours.isEmpty ? '0' : hours;
+    return '${context.l10n.durationDays(d)} ${context.l10n.durationHours(h)}';
   }
 
   String? _validate() {
-    if (_typeId == null || _typeId!.isEmpty) return '请选择请假类别';
-    if (_startTime == null) return '请选择开始时间';
-    if (_endTime == null) return '请选择结束时间';
+    if (_typeId == null || _typeId!.isEmpty) return context.l10n.pleaseSelectLeaveType;
+    if (_startTime == null) return context.l10n.pleaseSelectStartTime;
+    if (_endTime == null) return context.l10n.pleaseSelectEndTime;
     final start = _parse(_startTime);
     final end = _parse(_endTime);
-    if (start == null || end == null) return '时间格式异常，请重新选择';
-    if (!end.isAfter(start)) return '结束时间应大于开始时间！';
+    if (start == null || end == null) return context.l10n.timeFormatErrorReselect;
+    if (!end.isAfter(start)) return context.l10n.endTimeMustBeAfterStartTime;
     final days = _daysController.text.trim();
     final hours = _hoursController.text.trim();
-    if (days.isEmpty && hours.isEmpty) return '时长计算失败，请重新选择起止时间';
+    if (days.isEmpty && hours.isEmpty) return context.l10n.durationCalculateFailedReselect;
     final dayInt = int.tryParse(days.isEmpty ? '0' : days);
     final hourInt = int.tryParse(hours.isEmpty ? '0' : hours);
-    if (dayInt == null || hourInt == null) return '请假时长请输入整数！';
-    if (dayInt < 0 || hourInt < 0 || hourInt > 23) return '请输入正确的请假时长！';
-    if (_reasonController.text.trim().isEmpty) return '请填写请假事由';
-    if (_contactController.text.trim().isEmpty) return '请填写紧急联系人';
+    if (dayInt == null || hourInt == null) return context.l10n.durationMustBeInteger;
+    if (dayInt < 0 || hourInt < 0 || hourInt > 23) return context.l10n.pleaseEnterValidDuration;
+    if (_reasonController.text.trim().isEmpty) return context.l10n.pleaseFillLeaveReason;
+    if (_contactController.text.trim().isEmpty) return context.l10n.pleaseFillEmergencyContact;
     final phone = _phoneController.text.trim();
-    if (phone.isEmpty) return '请填写紧急联系人电话';
-    if (!RegExp(r'^1\d{10}$').hasMatch(phone)) return '紧急联系人电话格式不正确';
+    if (phone.isEmpty) return context.l10n.pleaseFillEmergencyContactPhone;
+    if (!RegExp(r'^1\d{10}$').hasMatch(phone)) return context.l10n.invalidEmergencyContactPhone;
     if (_leaveSchool) {
-      if (_provinceId == null) return '请选择离校去向';
-      if (_addressController.text.trim().isEmpty) return '请填写离校详细地址';
-      if (_remarkController.text.trim().isEmpty) return '请填写备注';
+      if (_provinceId == null) return context.l10n.pleaseSelectLeaveDestination;
+      if (_addressController.text.trim().isEmpty) return context.l10n.pleaseFillDetailedAddress;
+      if (_remarkController.text.trim().isEmpty) return context.l10n.pleaseFillRemark;
     }
     return null;
   }
@@ -338,14 +351,14 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
         );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('提交成功'), behavior: SnackBarBehavior.floating),
+        SnackBar(content: Text(context.l10n.submitSuccess), behavior: SnackBarBehavior.floating),
       );
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e is LeaveException ? e.message : '提交失败,请稍后重试'),
+          content: Text(e is LeaveException ? e.message : context.l10n.submitFailedRetry),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -362,7 +375,7 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('请假申请'),
+        title: Text(context.l10n.leaveApplication),
         backgroundColor: theme.scaffoldBackgroundColor,
         surfaceTintColor: theme.scaffoldBackgroundColor,
         foregroundColor: isDark ? Colors.white : Colors.black87,
@@ -383,7 +396,7 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
                         const SizedBox(height: 12),
                         FilledButton(
                           onPressed: _load,
-                          child: const Text('重试'),
+                          child: Text(context.l10n.retry),
                         ),
                       ],
                     ),
@@ -392,7 +405,7 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
                   children: [
-                    _label('请假类别', required: true),
+                    _label(context.l10n.leaveType, required: true),
                     DropdownButtonFormField<String>(
                       initialValue: _typeId,
                       isExpanded: true,
@@ -407,13 +420,15 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
                       onChanged: (v) => setState(() => _typeId = v),
                     ),
                     const SizedBox(height: 20),
-                    _label('开始时间', required: true),
+                    _label(context.l10n.startTime, required: true),
                     _dateField(_startTime, () => _pickDateTime(true)),
                     const SizedBox(height: 20),
-                    _label('结束时间', required: true),
+                    _label(context.l10n.endTime, required: true),
                     _dateField(_endTime, () => _pickDateTime(false)),
                     const SizedBox(height: 20),
-                    _label('请假时长', required: true, suffix: _calculating ? '（试算中…）' : ''),
+                    _label(context.l10n.leaveDuration,
+                        required: true,
+                        suffix: _calculating ? context.l10n.calculatingDuration : ''),
                     Text(
                       _durationText(),
                       style: TextStyle(
@@ -424,49 +439,49 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _label('请假事由', required: true),
+                    _label(context.l10n.leaveReason, required: true),
                     TextField(
                       controller: _reasonController,
                       maxLines: 3,
                       minLines: 3,
-                      decoration: const InputDecoration(
-                        hintText: '请输入',
+                      decoration: InputDecoration(
+                        hintText: context.l10n.pleaseEnter,
                         filled: false,
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _label('紧急联系人', required: true),
+                    _label(context.l10n.emergencyContact, required: true),
                     TextField(
                       controller: _contactController,
-                      decoration: const InputDecoration(
-                        hintText: '请输入',
+                      decoration: InputDecoration(
+                        hintText: context.l10n.pleaseEnter,
                         filled: false,
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _label('紧急联系人电话', required: true),
+                    _label(context.l10n.emergencyContactPhone, required: true),
                     TextField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))
                       ],
-                      decoration: const InputDecoration(
-                        hintText: '请输入11位手机号',
+                      decoration: InputDecoration(
+                        hintText: context.l10n.pleaseEnter11DigitPhone,
                         filled: false,
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _label('同行人员'),
+                    _label(context.l10n.accompanyingPersons),
                     TextField(
                       controller: _companionsController,
-                      decoration: const InputDecoration(
-                        hintText: '选填',
+                      decoration: InputDecoration(
+                        hintText: context.l10n.optional,
                         filled: false,
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -474,19 +489,19 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
                       value: _leaveSchool,
                       onChanged: (v) =>
                           setState(() => _leaveSchool = v),
-                      title: const Text('离校', style: TextStyle(fontSize: 15)),
+                      title: Text(context.l10n.leaveCampus, style: const TextStyle(fontSize: 15)),
                       contentPadding: EdgeInsets.zero,
                       activeThumbColor: const Color(0xFF09C489),
                     ),
                     if (_leaveSchool) ...[
-                      _label('离校去向', required: true),
+                      _label(context.l10n.leaveDestination, required: true),
                       DropdownButtonFormField<String>(
                         initialValue: _provinceId,
                         isExpanded: true,
-                        decoration: const InputDecoration(
-                          hintText: '省',
+                        decoration: InputDecoration(
+                          hintText: context.l10n.province,
                           filled: false,
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
                         ),
                         items: _regions
                             .map((r) => DropdownMenuItem(
@@ -505,10 +520,10 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
                             child: DropdownButtonFormField<String>(
                               initialValue: _cityId,
                               isExpanded: true,
-                              decoration: const InputDecoration(
-                                hintText: '市',
+                              decoration: InputDecoration(
+                                hintText: context.l10n.city,
                                 filled: false,
-                                border: OutlineInputBorder(),
+                                border: const OutlineInputBorder(),
                               ),
                               items: _cities
                                   .map((r) => DropdownMenuItem(
@@ -525,10 +540,10 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
                             child: DropdownButtonFormField<String>(
                               initialValue: _countyId,
                               isExpanded: true,
-                              decoration: const InputDecoration(
-                                hintText: '区/县',
+                              decoration: InputDecoration(
+                                hintText: context.l10n.districtCounty,
                                 filled: false,
-                                border: OutlineInputBorder(),
+                                border: const OutlineInputBorder(),
                               ),
                               items: _counties
                                   .map((r) => DropdownMenuItem(
@@ -541,15 +556,15 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      _label('详细地址', required: true),
+                      _label(context.l10n.detailedAddress, required: true),
                       TextField(
                         controller: _addressController,
                         maxLines: 2,
                         minLines: 2,
-                        decoration: const InputDecoration(
-                          hintText: '请输入',
+                        decoration: InputDecoration(
+                          hintText: context.l10n.pleaseEnter,
                           filled: false,
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                       SwitchListTile(
@@ -557,26 +572,26 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
                         onChanged: (v) =>
                             setState(() => _backDorm = v),
                         title:
-                            const Text('回宿舍', style: TextStyle(fontSize: 15)),
+                            Text(context.l10n.returnToDormitory, style: const TextStyle(fontSize: 15)),
                         contentPadding: EdgeInsets.zero,
                         activeThumbColor: const Color(0xFF09C489),
                       ),
-                      _label('备注', required: true),
+                      _label(context.l10n.remark, required: true),
                       TextField(
                         controller: _remarkController,
                         maxLines: 2,
                         minLines: 2,
-                        decoration: const InputDecoration(
-                          hintText: '请输入',
+                        decoration: InputDecoration(
+                          hintText: context.l10n.pleaseEnter,
                           filled: false,
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                     ],
                     SwitchListTile(
                       value: _outCity,
                       onChanged: (v) => setState(() => _outCity = v),
-                      title: const Text('出市', style: TextStyle(fontSize: 15)),
+                      title: Text(context.l10n.leaveCity, style: const TextStyle(fontSize: 15)),
                       contentPadding: EdgeInsets.zero,
                       activeThumbColor: const Color(0xFF09C489),
                     ),
@@ -584,21 +599,21 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
                       value: _outProvince,
                       onChanged: (v) =>
                           setState(() => _outProvince = v),
-                      title: const Text('出省', style: TextStyle(fontSize: 15)),
+                      title: Text(context.l10n.leaveProvince, style: const TextStyle(fontSize: 15)),
                       contentPadding: EdgeInsets.zero,
                       activeThumbColor: const Color(0xFF09C489),
                     ),
-                    _label('请假材料'),
+                    _label(context.l10n.leaveMaterials),
                     InkWell(
                       onTap: _pickAttachment,
                       borderRadius: BorderRadius.circular(4),
                       child: InputDecorator(
                         isEmpty: _attachmentPath == null,
-                        decoration: const InputDecoration(
-                          hintText: '选填，点击从相册选择',
+                        decoration: InputDecoration(
+                          hintText: context.l10n.leaveMaterialsHint,
                           filled: false,
-                          border: OutlineInputBorder(),
-                          suffixIcon: Icon(Icons.image_outlined),
+                          border: const OutlineInputBorder(),
+                          suffixIcon: const Icon(Icons.image_outlined),
                         ),
                         child: Text(
                           _attachmentName ?? '',
@@ -616,7 +631,7 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
                             _attachmentPath = null;
                             _attachmentName = null;
                           }),
-                          child: const Text('移除附件'),
+                          child: Text(context.l10n.removeAttachment),
                         ),
                       ),
                     const SizedBox(height: 16),
@@ -642,8 +657,8 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('提交',
-                                style: TextStyle(fontSize: 15)),
+                            : Text(context.l10n.submit,
+                                style: const TextStyle(fontSize: 15)),
                       ),
                     ),
                   ],
@@ -691,11 +706,11 @@ class _LeaveApplyScreenState extends ConsumerState<LeaveApplyScreen> {
       borderRadius: BorderRadius.circular(4),
       child: InputDecorator(
         isEmpty: value == null,
-        decoration: const InputDecoration(
-          hintText: '请选择',
+        decoration: InputDecoration(
+          hintText: context.l10n.pleaseSelect,
           filled: false,
-          border: OutlineInputBorder(),
-          suffixIcon: Icon(Icons.calendar_month_outlined),
+          border: const OutlineInputBorder(),
+          suffixIcon: const Icon(Icons.calendar_month_outlined),
         ),
         child: Text(
           value ?? '',

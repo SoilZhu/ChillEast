@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/l10n_extension.dart';
 import 'package:logger/logger.dart';
 
 class WorkspaceScreen extends StatefulWidget {
@@ -20,14 +21,14 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('工作台'),
+        title: Text(context.l10n.workspace),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
               _webViewController?.reload();
             },
-            tooltip: '刷新',
+            tooltip: context.l10n.refresh,
           ),
         ],
       ),
@@ -80,9 +81,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('加载失败: ${error.description}'),
+                    content: Text(context.l10n.loadFailedWithReason(error.description)),
                     action: SnackBarAction(
-                      label: '重试',
+                      label: context.l10n.retry,
                       onPressed: () {
                         _webViewController?.reload();
                       },
@@ -100,7 +101,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 children: [
                   const CircularProgressIndicator(),
                   const SizedBox(height: 16),
-                  Text('加载中... ${(_progress * 100).toInt()}%'),
+                  Text(context.l10n.loadingProgress((_progress * 100).toInt())),
                   if (_progress > 0)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 32),

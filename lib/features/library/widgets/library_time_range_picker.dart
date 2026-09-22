@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../utils/library_time_utils.dart';
 
 /// 统一的预约时段选择弹窗。
@@ -67,7 +68,7 @@ Future<LibraryTimeRangeSelection?> showLibraryTimeRangePicker({
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '选择预约时段',
+                      context.l10n.selectReservationPeriod,
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
@@ -85,7 +86,7 @@ Future<LibraryTimeRangeSelection?> showLibraryTimeRangePicker({
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '开始时间',
+                  context.l10n.startTime,
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? Colors.white60 : Colors.grey[700],
@@ -143,7 +144,7 @@ Future<LibraryTimeRangeSelection?> showLibraryTimeRangePicker({
                 if (availableStarts.isEmpty) ...[
                   const SizedBox(height: 8),
                   Text(
-                    '该日期已没有可预约的开始时段，请选择其他日期。',
+                    context.l10n.noAvailableSlotsForDate,
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? Colors.orange[300] : Colors.orange[800],
@@ -152,7 +153,7 @@ Future<LibraryTimeRangeSelection?> showLibraryTimeRangePicker({
                 ],
                 const SizedBox(height: 16),
                 Text(
-                  '结束时间',
+                  context.l10n.endTime,
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? Colors.white60 : Colors.grey[700],
@@ -230,10 +231,10 @@ Future<LibraryTimeRangeSelection?> showLibraryTimeRangePicker({
                               ),
                             )
                         : null,
-                    child: const Text(
-                      '确定时段',
+                    child: Text(
+                      context.l10n.confirmPeriod,
                       style:
-                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/state/auth_state.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../auth/screens/login_screen.dart';
 import '../services/timetable_service.dart';
 import '../../profile/providers/settings_provider.dart';
@@ -125,7 +127,7 @@ class _DownloadTimetableScreenState extends ConsumerState<DownloadTimetableScree
               // 学年学期选择
               DropdownButtonFormField<String>(
                 value: _selectedSemester,
-                decoration: md2InputDecoration('学年学期', Icons.calendar_today_outlined),
+                decoration: md2InputDecoration(context.l10n.academicSemester, Icons.calendar_today_outlined),
                 isExpanded: true,
                 icon: Icon(
                   Icons.arrow_drop_down, 
@@ -156,11 +158,11 @@ class _DownloadTimetableScreenState extends ConsumerState<DownloadTimetableScree
                   child: TextFormField(
                     controller: TextEditingController(
                       text: _selectedDate != null 
-                          ? '${_selectedDate!.year}年${_selectedDate!.month}月${_selectedDate!.day}日'
+                          ? DateFormat.yMMMd(Localizations.localeOf(context).toString()).format(_selectedDate!)
                           : '',
                     ),
-                    decoration: md2InputDecoration('第一周周一', Icons.date_range_outlined).copyWith(
-                      hintText: '请选择日期',
+                    decoration: md2InputDecoration(context.l10n.firstWeekMonday, Icons.date_range_outlined).copyWith(
+                      hintText: context.l10n.selectDateHint,
                       suffixIcon: const Icon(Icons.edit_calendar_outlined, size: 18),
                     ),
                     readOnly: true,
@@ -211,9 +213,9 @@ class _DownloadTimetableScreenState extends ConsumerState<DownloadTimetableScree
                     elevation: 0,
                   ),
                   icon: const Icon(Icons.download_rounded, size: 18),
-                  label: const Text(
-                    '导入',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  label: Text(
+                    context.l10n.importButton,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -233,7 +235,7 @@ class _DownloadTimetableScreenState extends ConsumerState<DownloadTimetableScree
       initialDate: _selectedDate ?? now,
       firstDate: DateTime(now.year - 1),
       lastDate: DateTime(now.year + 1),
-      helpText: '选择本学期第一周的周一',
+      helpText: context.l10n.selectFirstWeekMondayHelp,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -281,6 +283,7 @@ class _DownloadTimetableScreenState extends ConsumerState<DownloadTimetableScree
     }
     
     setState(() { _isLoading = true; });
+    final l10n = context.l10n;
     
     try {
       await _timetableService.downloadAndSaveTimetable(
@@ -302,9 +305,9 @@ class _DownloadTimetableScreenState extends ConsumerState<DownloadTimetableScree
         
         // 在全局提示成功
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('🎉 课表导入成功！'), 
-            backgroundColor: Color(0xFF09C489),
+          SnackBar(
+            content: Text(l10n.timetableImportSuccess), 
+            backgroundColor: const Color(0xFF09C489),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -312,7 +315,7 @@ class _DownloadTimetableScreenState extends ConsumerState<DownloadTimetableScree
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('导入失败: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(l10n.importFailed(e.toString())), backgroundColor: Colors.red),
         );
       }
     } finally {

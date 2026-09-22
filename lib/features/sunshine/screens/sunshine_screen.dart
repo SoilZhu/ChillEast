@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/route_utils.dart';
 import '../models/sunshine_models.dart';
 import '../services/sunshine_service.dart';
 import 'sunshine_detail_screen.dart';
 import 'sunshine_form_screen.dart';
+
+enum SunshineFilter {
+  all,
+  inProgress,
+  resolved;
+
+  String getLocalizedLabel(BuildContext context) => switch (this) {
+        SunshineFilter.all => context.l10n.all,
+        SunshineFilter.inProgress => context.l10n.statusInProgress,
+        SunshineFilter.resolved => context.l10n.statusResolved,
+      };
+
+  bool matches(SunshineLetter letter) => switch (this) {
+        SunshineFilter.all => true,
+        SunshineFilter.inProgress => letter.status == '0' || letter.status == '1',
+        SunshineFilter.resolved => letter.status == '2',
+      };
+}
 
 class SunshineScreen extends ConsumerStatefulWidget {
   const SunshineScreen({super.key});
@@ -16,12 +35,27 @@ class _SunshineScreenState extends ConsumerState<SunshineScreen> {
   List<SunshineLetter> _letters = [];
   bool _loading = true;
   String? _error;
-  String _filter = '全部';
+  SunshineFilter _filter = SunshineFilter.all;
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  String _getErrorMessage(dynamic e) {
+    if (e is SunshineException) {
+      if (e.message.contains('暂时不可用')) return context.l10n.sunshineServiceUnavailable;
+      if (e.message.contains('未能读取')) return context.l10n.sunshineDataReadFailed;
+      if (e.message.contains('格式异常')) return context.l10n.sunshineDataFormatError;
+      if (e.message.contains('未找到诉求工单详情')) return context.l10n.sunshineTicketNotFound;
+      if (e.message.contains('响应超时')) return context.l10n.sunshineFormTimeout;
+      if (e.message.contains('统一认证已过期')) return context.l10n.ssoExpiredRelogin;
+      if (e.message.contains('登录已失效')) return context.l10n.sunshineSessionExpired;
+      if (e.message.contains('暂无可用受理单位')) return context.l10n.noDepartmentsAvailable;
+      return e.message;
+    }
+    return context.l10n.loadFailedCheckNetwork;
   }
 
   Future<void> _load() async {
@@ -38,8 +72,7 @@ class _SunshineScreenState extends ConsumerState<SunshineScreen> {
       });
     } catch (e) {
       if (mounted) {
-        setState(() =>
-            _error = e is SunshineException ? e.message : '加载失败，请检查网络后重试');
+        setState(() => _error = _getErrorMessage(e));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -51,20 +84,20 @@ class _SunshineScreenState extends ConsumerState<SunshineScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final letters = _letters
-        .where((letter) => _filter == '全部' || letter.statusLabel == _filter)
+        .where((letter) => _filter.matches(letter))
         .toList();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('阳光服务'),
+        title: Text(context.l10n.sunshineService),
         backgroundColor: theme.scaffoldBackgroundColor,
         surfaceTintColor: theme.scaffoldBackgroundColor,
         foregroundColor: isDark ? Colors.white : Colors.black87,
         elevation: 0,
         actions: [
           IconButton(
-            tooltip: '刷新',
+            tooltip: context.l10n.refresh,
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh),
           ),
@@ -103,7 +136,7 @@ class _SunshineScreenState extends ConsumerState<SunshineScreen> {
                             const SizedBox(height: 8),
                             TextButton(
                               onPressed: _load,
-                              child: const Text('重试'),
+                              child: Text(context.l10n.retry),
                             ),
                           ],
                         ),
@@ -117,7 +150,7 @@ class _SunshineScreenState extends ConsumerState<SunshineScreen> {
 
                   // 2. 近期公开诉求模块
                   Text(
-                    '近期公开诉求',
+                    context.l10n.recentPublicAppeals,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -127,8 +160,8 @@ class _SunshineScreenState extends ConsumerState<SunshineScreen> {
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
-                    children: ['全部', '办理中', '已办结']
-                        .map((label) => _buildFilterChip(label, isDark))
+                    children: SunshineFilter.values
+                        .map((filter) => _buildFilterChip(filter, isDark))
                         .toList(),
                   ),
                   const SizedBox(height: 12),
@@ -138,7 +171,7 @@ class _SunshineScreenState extends ConsumerState<SunshineScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 36),
                       child: Center(
                         child: Text(
-                          '暂无符合条件的公开诉求',
+                          context.l10n.noPublicAppeals,
                           style: TextStyle(
                             fontSize: 14,
                             color: isDark ? Colors.white38 : Colors.grey,
@@ -188,7 +221,7 @@ class _SunshineScreenState extends ConsumerState<SunshineScreen> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '填写诉求',
+                  context.l10n.writeAppeal,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -209,12 +242,12 @@ class _SunshineScreenState extends ConsumerState<SunshineScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label, bool isDark) {
-    final isSelected = _filter == label;
+  Widget _buildFilterChip(SunshineFilter filter, bool isDark) {
+    final isSelected = _filter == filter;
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => setState(() => _filter = label),
+        onTap: () => setState(() => _filter = filter),
         borderRadius: BorderRadius.circular(6),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
@@ -229,7 +262,7 @@ class _SunshineScreenState extends ConsumerState<SunshineScreen> {
             ),
           ),
           child: Text(
-            label,
+            filter.getLocalizedLabel(context),
             style: TextStyle(
               fontSize: 13,
               color: isSelected
@@ -324,7 +357,7 @@ class _SunshineScreenState extends ConsumerState<SunshineScreen> {
                       ),
                     ),
                     Text(
-                      letter.statusLabel,
+                      letter.getLocalizedStatus(context),
                       style: TextStyle(
                         fontSize: 12,
                         color: letter.status == '2'

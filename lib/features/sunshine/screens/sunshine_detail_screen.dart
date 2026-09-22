@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../models/sunshine_models.dart';
 import '../services/sunshine_service.dart';
 
@@ -29,6 +30,21 @@ class _SunshineDetailScreenState extends ConsumerState<SunshineDetailScreen> {
     _load();
   }
 
+  String _getErrorMessage(dynamic e) {
+    if (e is SunshineException) {
+      if (e.message.contains('暂时不可用')) return context.l10n.sunshineServiceUnavailable;
+      if (e.message.contains('未能读取')) return context.l10n.sunshineDataReadFailed;
+      if (e.message.contains('格式异常')) return context.l10n.sunshineDataFormatError;
+      if (e.message.contains('未找到诉求工单详情')) return context.l10n.sunshineTicketNotFound;
+      if (e.message.contains('响应超时')) return context.l10n.sunshineFormTimeout;
+      if (e.message.contains('统一认证已过期')) return context.l10n.ssoExpiredRelogin;
+      if (e.message.contains('登录已失效')) return context.l10n.sunshineSessionExpired;
+      if (e.message.contains('暂无可用受理单位')) return context.l10n.noDepartmentsAvailable;
+      return e.message;
+    }
+    return context.l10n.fetchSunshineDetailFailed;
+  }
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -44,8 +60,7 @@ class _SunshineDetailScreenState extends ConsumerState<SunshineDetailScreen> {
       });
     } catch (e) {
       if (mounted) {
-        setState(() =>
-            _error = e is SunshineException ? e.message : '加载工单详情失败，请重试');
+        setState(() => _error = _getErrorMessage(e));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -57,24 +72,24 @@ class _SunshineDetailScreenState extends ConsumerState<SunshineDetailScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final title = _detail?.title ?? widget.initialLetter?.title ?? '诉求详情';
+    final title = _detail?.title ?? widget.initialLetter?.title ?? context.l10n.appealDetails;
     final status = _detail?.status ?? widget.initialLetter?.status ?? '';
-    final statusLabel = _detail?.statusLabel ??
-        widget.initialLetter?.statusLabel ??
-        '未知状态';
+    final statusLabel = _detail?.getLocalizedStatus(context) ??
+        widget.initialLetter?.getLocalizedStatus(context) ??
+        context.l10n.statusUnknown;
     final isCompleted = status == '2';
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('诉求详情'),
+        title: Text(context.l10n.appealDetails),
         backgroundColor: theme.scaffoldBackgroundColor,
         surfaceTintColor: theme.scaffoldBackgroundColor,
         foregroundColor: isDark ? Colors.white : Colors.black87,
         elevation: 0,
         actions: [
           IconButton(
-            tooltip: '刷新',
+            tooltip: context.l10n.refresh,
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh),
           ),
@@ -140,7 +155,7 @@ class _SunshineDetailScreenState extends ConsumerState<SunshineDetailScreen> {
                   ),
                 ),
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('重新加载'),
+                label: Text(context.l10n.reload),
               ),
             ],
           ),
@@ -270,7 +285,7 @@ class _SunshineDetailScreenState extends ConsumerState<SunshineDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '流转信息',
+          context.l10n.transferInfo,
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.bold,
@@ -282,15 +297,15 @@ class _SunshineDetailScreenState extends ConsumerState<SunshineDetailScreen> {
         _buildMetaRow(
           isDark,
           icon: Icons.person_outline_rounded,
-          label: '提交人',
-          value: detail.submitter.isNotEmpty ? detail.submitter : '匿名',
+          label: context.l10n.submitter,
+          value: detail.submitter.isNotEmpty ? detail.submitter : context.l10n.anonymous,
         ),
         if (detail.expectedDepartment.isNotEmpty) ...[
           const SizedBox(height: 10),
           _buildMetaRow(
             isDark,
             icon: Icons.account_balance_outlined,
-            label: '期望受理部门',
+            label: context.l10n.expectedDepartment,
             value: detail.expectedDepartment,
           ),
         ],
@@ -299,7 +314,7 @@ class _SunshineDetailScreenState extends ConsumerState<SunshineDetailScreen> {
           _buildMetaRow(
             isDark,
             icon: Icons.business_rounded,
-            label: '受理部门',
+            label: context.l10n.handlingDepartment,
             value: detail.handlingDepartment,
           ),
         ],
@@ -308,7 +323,7 @@ class _SunshineDetailScreenState extends ConsumerState<SunshineDetailScreen> {
           _buildMetaRow(
             isDark,
             icon: Icons.event_available_rounded,
-            label: '期望解决时间',
+            label: context.l10n.expectedResolveTime,
             value: detail.finishTime,
           ),
         ],
@@ -317,7 +332,7 @@ class _SunshineDetailScreenState extends ConsumerState<SunshineDetailScreen> {
           _buildMetaRow(
             isDark,
             icon: Icons.access_time_rounded,
-            label: '受理时间',
+            label: context.l10n.acceptedTime,
             value: detail.jieTime,
           ),
         ],
@@ -326,7 +341,7 @@ class _SunshineDetailScreenState extends ConsumerState<SunshineDetailScreen> {
           _buildMetaRow(
             isDark,
             icon: Icons.check_circle_outline_rounded,
-            label: '办结时间',
+            label: context.l10n.finishedTime,
             value: detail.wanTime,
           ),
         ],
@@ -380,7 +395,7 @@ class _SunshineDetailScreenState extends ConsumerState<SunshineDetailScreen> {
             ),
             const SizedBox(width: 8),
             Text(
-              '诉求内容',
+              context.l10n.appealContent,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
@@ -391,7 +406,7 @@ class _SunshineDetailScreenState extends ConsumerState<SunshineDetailScreen> {
         ),
         const SizedBox(height: 10),
         SelectableText(
-          detail.content.isNotEmpty ? detail.content : '（暂无详细问题描述）',
+          detail.content.isNotEmpty ? detail.content : context.l10n.noDescriptionAvailable,
           style: TextStyle(
             fontSize: 14,
             height: 1.6,
@@ -415,7 +430,7 @@ class _SunshineDetailScreenState extends ConsumerState<SunshineDetailScreen> {
             ),
             const SizedBox(width: 8),
             Text(
-              '处理结果',
+              context.l10n.processingResult,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,

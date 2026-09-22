@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 /// 课表空状态组件
 class EmptyTimetableState extends StatelessWidget {
@@ -28,7 +29,7 @@ class EmptyTimetableState extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             Text(
-              '课表正在同步中',
+              context.l10n.timetableSyncing,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
@@ -38,7 +39,7 @@ class EmptyTimetableState extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              '系统正在为您全自动拉取教务课表\n请稍等片刻...',
+              context.l10n.timetableSyncingDesc,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,

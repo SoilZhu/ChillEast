@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 /// 请假记录
 /// 字段来自 HAR: content/tabledata/student/leave/apply_stu 的 aaData
@@ -154,3 +156,36 @@ class LeaveDetail {
   factory LeaveDetail.fromJson(Map<String, dynamic> json) =>
       LeaveDetail(Map<String, dynamic>.from(json));
 }
+
+extension LeaveRecordL10n on LeaveRecord {
+  String getLocalizedStatus(BuildContext context) {
+    if (auditStatus == '0') return context.l10n.statusPendingAudit;
+    if (auditStatus == '8') return context.l10n.statusAuditing;
+    if (auditStatus == '9') {
+      if (auditResultName.isNotEmpty) {
+        return '${context.l10n.statusAudited} · $auditResultName';
+      }
+      return context.l10n.statusAudited;
+    }
+    if (auditStatusName.isNotEmpty) {
+      if (auditStatusName == '待审核') return context.l10n.statusPendingAudit;
+      if (auditStatusName == '审核中') return context.l10n.statusAuditing;
+      if (auditStatusName == '已审核') {
+        return auditResultName.isNotEmpty
+            ? '${context.l10n.statusAudited} · $auditResultName'
+            : context.l10n.statusAudited;
+      }
+      return auditStatusName;
+    }
+    return context.l10n.statusUnknown;
+  }
+
+  String getLocalizedDuration(BuildContext context) {
+    final parts = <String>[];
+    if (days > 0) parts.add(context.l10n.durationDays(days.toString()));
+    if (hours > 0) parts.add(context.l10n.durationHours(hours.toString()));
+    if (parts.isEmpty) return '';
+    return parts.join(' ');
+  }
+}
+

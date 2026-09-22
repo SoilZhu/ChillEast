@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../models/sunshine_models.dart';
 import '../services/sunshine_service.dart';
 
@@ -24,7 +25,15 @@ class _SunshineFormScreenState extends ConsumerState<SunshineFormScreen> {
   bool _locked = false;
   bool _agreed = false;
   String? _error;
-  static const _types = {'2': '咨询', '3': '建议', '1': '投诉', '4': '表扬'};
+  static const _typeKeys = ['2', '3', '1', '4'];
+
+  String _getAppealTypeLabel(BuildContext context, String type) => switch (type) {
+        '2' => context.l10n.appealTypeInquiry,
+        '3' => context.l10n.appealTypeSuggestion,
+        '1' => context.l10n.appealTypeComplaint,
+        '4' => context.l10n.appealTypePraise,
+        _ => type,
+      };
 
   @override
   void initState() {
@@ -38,6 +47,21 @@ class _SunshineFormScreenState extends ConsumerState<SunshineFormScreen> {
       controller.dispose();
     }
     super.dispose();
+  }
+
+  String _getErrorMessage(dynamic e) {
+    if (e is SunshineException) {
+      if (e.message.contains('暂时不可用')) return context.l10n.sunshineServiceUnavailable;
+      if (e.message.contains('未能读取')) return context.l10n.sunshineDataReadFailed;
+      if (e.message.contains('格式异常')) return context.l10n.sunshineDataFormatError;
+      if (e.message.contains('未找到诉求工单详情')) return context.l10n.sunshineTicketNotFound;
+      if (e.message.contains('响应超时')) return context.l10n.sunshineFormTimeout;
+      if (e.message.contains('统一认证已过期')) return context.l10n.ssoExpiredRelogin;
+      if (e.message.contains('登录已失效')) return context.l10n.sunshineSessionExpired;
+      if (e.message.contains('暂无可用受理单位')) return context.l10n.noDepartmentsAvailable;
+      return e.message;
+    }
+    return context.l10n.loadSunshineFormFailed;
   }
 
   Future<void> _load() async {
@@ -55,8 +79,7 @@ class _SunshineFormScreenState extends ConsumerState<SunshineFormScreen> {
       });
     } catch (e) {
       if (mounted) {
-        setState(() =>
-            _error = e is SunshineException ? e.message : '加载填报信息失败，请检查网络后重试');
+        setState(() => _error = _getErrorMessage(e));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -73,16 +96,21 @@ class _SunshineFormScreenState extends ConsumerState<SunshineFormScreen> {
     final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-              title: const Text('确认提交诉求'),
+              title: Text(context.l10n.confirmSubmitAppeal),
               content: Text(
-                  '将以 ${_data!.identity.name} 的身份向“${_department!.name}”提交${_types[_type]}：\n\n${_title.text.trim()}\n\n请确认内容真实准确，相同内容请勿重复提交。'),
+                  context.l10n.confirmSubmitAppealMessage(
+                    _data!.identity.name,
+                    _department!.name,
+                    _getAppealTypeLabel(context, _type),
+                    _title.text.trim(),
+                  )),
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(context, false),
-                    child: const Text('继续编辑')),
+                    child: Text(context.l10n.continueEditing)),
                 FilledButton(
                     onPressed: () => Navigator.pop(context, true),
-                    child: const Text('确认提交')),
+                    child: Text(context.l10n.confirmSubmit)),
               ],
             ));
     if (confirmed != true || !mounted) return;
@@ -108,27 +136,27 @@ class _SunshineFormScreenState extends ConsumerState<SunshineFormScreen> {
       _locked = result != '2';
     });
     final message = switch (result) {
-      '1' => '您的诉求已受理，感谢您对学校工作的支持。',
-      '2' => '平台提示手机号或验证码不正确。请核对手机号；如需验证码，请在阳光服务官网完成验证。',
-      'errer' => '该类型问题已提交且正在处理，请勿重复提交。',
-      _ => '暂时无法确认是否提交成功，请先到阳光服务官网“与我相关”核实，勿重复提交。本页已暂停再次提交。',
+      '1' => context.l10n.appealSubmitSuccessMsg,
+      '2' => context.l10n.appealSubmitPhoneCodeInvalidMsg,
+      'errer' => context.l10n.appealSubmitDuplicateMsg,
+      _ => context.l10n.appealSubmitUnknownMsg,
     };
     await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
-              title: Text(result == '1' ? '提交成功' : '提交结果'),
+              title: Text(result == '1' ? context.l10n.submitSuccess : context.l10n.submitResult),
               content: Text(message),
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('知道了'))
+                    child: Text(context.l10n.gotIt))
               ],
             ));
     if (result == '1' && mounted) Navigator.pop(context, true);
   }
 
   String? _required(String? value) =>
-      value == null || value.trim().isEmpty ? '此项不能为空' : null;
+      value == null || value.trim().isEmpty ? context.l10n.fieldCannotBeEmpty : null;
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +205,7 @@ class _SunshineFormScreenState extends ConsumerState<SunshineFormScreen> {
           ),
         ),
         child: Scaffold(
-          appBar: AppBar(title: const Text('阳光服务填报')),
+          appBar: AppBar(title: Text(context.l10n.sunshineFormTitle)),
           body: _loading
               ? const Center(
                   child: CircularProgressIndicator(color: Color(0xFF09C489)),
@@ -192,7 +220,7 @@ class _SunshineFormScreenState extends ConsumerState<SunshineFormScreen> {
                               Text(_error!),
                               const SizedBox(height: 12),
                               TextButton(
-                                  onPressed: _load, child: const Text('重试'))
+                                  onPressed: _load, child: Text(context.l10n.retry))
                             ],
                           )))
                   : Form(
@@ -206,7 +234,7 @@ class _SunshineFormScreenState extends ConsumerState<SunshineFormScreen> {
                                 padding:
                                     const EdgeInsets.only(top: 4, bottom: 20),
                                 child: Text(
-                                  '欢迎为学校建设与发展建言献策。带 * 的栏目为必填项。\n一般问题 1–3 个工作日办复，复杂问题最长不超过 7 个工作日（以平台说明为准）。相同内容请勿重复提交或一信多投。',
+                                  context.l10n.sunshineNotice,
                                   style: TextStyle(
                                     fontSize: 13,
                                     height: 1.6,
@@ -219,10 +247,10 @@ class _SunshineFormScreenState extends ConsumerState<SunshineFormScreen> {
                               DropdownButtonFormField<String>(
                                 initialValue: _type,
                                 decoration:
-                                    const InputDecoration(labelText: '信件类别 *'),
-                                items: _types.entries
-                                    .map((e) => DropdownMenuItem(
-                                        value: e.key, child: Text(e.value)))
+                                    InputDecoration(labelText: context.l10n.letterTypeRequired),
+                                items: _typeKeys
+                                    .map((key) => DropdownMenuItem(
+                                        value: key, child: Text(_getAppealTypeLabel(context, key))))
                                     .toList(),
                                 onChanged: (value) =>
                                     setState(() => _type = value!),
@@ -232,7 +260,7 @@ class _SunshineFormScreenState extends ConsumerState<SunshineFormScreen> {
                                 isExpanded: true,
                                 initialValue: _department,
                                 decoration:
-                                    const InputDecoration(labelText: '受理单位 *'),
+                                    InputDecoration(labelText: context.l10n.handlingDepartmentRequired),
                                 items: _data!.departments
                                     .map((d) => DropdownMenuItem(
                                         value: d,
@@ -240,7 +268,7 @@ class _SunshineFormScreenState extends ConsumerState<SunshineFormScreen> {
                                             overflow: TextOverflow.ellipsis)))
                                     .toList(),
                                 validator: (value) =>
-                                    value == null ? '请选择受理单位' : null,
+                                    value == null ? context.l10n.pleaseSelectHandlingDepartment : null,
                                 onChanged: (value) =>
                                     setState(() => _department = value),
                               ),
@@ -249,56 +277,56 @@ class _SunshineFormScreenState extends ConsumerState<SunshineFormScreen> {
                                   controller: _title,
                                   maxLength: 50,
                                   decoration:
-                                      const InputDecoration(labelText: '主题 *'),
+                                      InputDecoration(labelText: context.l10n.subjectRequired),
                                   validator: _required),
                               const SizedBox(height: 16),
                               TextFormField(
                                   controller: _content,
                                   minLines: 5,
                                   maxLines: 10,
-                                  decoration: const InputDecoration(
-                                      labelText: '内容 *',
+                                  decoration: InputDecoration(
+                                      labelText: context.l10n.contentRequired,
                                       alignLabelWithHint: true,
-                                      hintText: '请描述具体情况及您的诉求'),
+                                      hintText: context.l10n.appealContentHint),
                                   validator: _required),
                               const SizedBox(height: 16),
                               TextFormField(
                                 initialValue: _data!.identity.name,
                                 readOnly: true,
                                 decoration:
-                                    const InputDecoration(labelText: '姓名 *'),
+                                    InputDecoration(labelText: context.l10n.nameRequired),
                               ),
                               const SizedBox(height: 16),
                               TextFormField(
                                   controller: _phone,
                                   readOnly: _data!.identity.phone.isNotEmpty,
                                   keyboardType: TextInputType.phone,
-                                  decoration: const InputDecoration(
-                                      labelText: '手机号码 *'),
+                                  decoration: InputDecoration(
+                                      labelText: context.l10n.phoneRequired),
                                   validator: (value) => RegExp(r'^1\d{10}$')
                                           .hasMatch(value?.trim() ?? '')
                                       ? null
-                                      : '请输入有效的 11 位手机号'),
+                                      : context.l10n.pleaseEnterValidPhone),
                               const SizedBox(height: 16),
                               TextFormField(
                                   controller: _email,
                                   keyboardType: TextInputType.emailAddress,
-                                  decoration: const InputDecoration(
-                                      labelText: 'Email（选填）'),
+                                  decoration: InputDecoration(
+                                      labelText: context.l10n.emailOptional),
                                   validator: (value) => value == null ||
                                           value.trim().isEmpty ||
                                           RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
                                               .hasMatch(value.trim())
                                       ? null
-                                      : '请输入有效的邮箱地址'),
+                                      : context.l10n.pleaseEnterValidEmail),
                               const SizedBox(height: 16),
                               TextFormField(
                                   controller: _date,
                                   readOnly: true,
                                   decoration: InputDecoration(
-                                      labelText: '期望解决时间（选填）',
+                                      labelText: context.l10n.expectedResolveTimeOptional,
                                       suffixIcon: IconButton(
-                                          tooltip: '清除日期',
+                                          tooltip: context.l10n.clearDate,
                                           onPressed: () => _date.clear(),
                                           icon: const Icon(Icons.clear,
                                               size: 18))),
@@ -353,7 +381,7 @@ class _SunshineFormScreenState extends ConsumerState<SunshineFormScreen> {
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        '已阅读填报须知，确认内容真实准确',
+                                        context.l10n.readNoticeAgreement,
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: isDark
@@ -400,9 +428,9 @@ class _SunshineFormScreenState extends ConsumerState<SunshineFormScreen> {
                                               color: Colors.white,
                                             ),
                                           )
-                                        : const Text(
-                                            '提交',
-                                            style: TextStyle(
+                                        : Text(
+                                            context.l10n.submit,
+                                            style: const TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.bold,
                                             ),

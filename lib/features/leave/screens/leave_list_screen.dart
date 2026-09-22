@@ -1,10 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/route_utils.dart';
 import '../models/leave_models.dart';
 import '../services/leave_service.dart';
 import 'leave_apply_screen.dart';
 import 'leave_detail_screen.dart';
+
+enum LeaveFilter {
+  all,
+  pendingAudit,
+  auditing,
+  audited;
+
+  String getLocalizedLabel(BuildContext context) => switch (this) {
+        LeaveFilter.all => context.l10n.all,
+        LeaveFilter.pendingAudit => context.l10n.statusPendingAudit,
+        LeaveFilter.auditing => context.l10n.statusAuditing,
+        LeaveFilter.audited => context.l10n.statusAudited,
+      };
+
+  bool matches(LeaveRecord item) => switch (this) {
+        LeaveFilter.all => true,
+        LeaveFilter.pendingAudit => item.auditStatus == '0',
+        LeaveFilter.auditing => item.auditStatus == '8',
+        LeaveFilter.audited => item.auditStatus == '9',
+      };
+}
 
 /// 请假申请 - 功能页（记录列表）
 class LeaveListScreen extends ConsumerStatefulWidget {
@@ -18,13 +40,22 @@ class _LeaveListScreenState extends ConsumerState<LeaveListScreen> {
   List<LeaveRecord> _items = [];
   bool _loading = true;
   String? _error;
-  String _filter = '全部';
+  LeaveFilter _filter = LeaveFilter.all;
   bool _deleting = false;
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  String _getErrorMessage(dynamic e) {
+    if (e is LeaveException) {
+      if (e.message.contains('统一认证已过期')) return context.l10n.ssoExpiredRelogin;
+      if (e.message.contains('登录已失效')) return context.l10n.studentSystemSessionExpired;
+      return e.message;
+    }
+    return context.l10n.loadFailedCheckNetwork;
   }
 
   Future<void> _load() async {
@@ -39,8 +70,7 @@ class _LeaveListScreenState extends ConsumerState<LeaveListScreen> {
       setState(() => _items = items);
     } catch (e) {
       if (!mounted) return;
-      setState(() =>
-          _error = e is LeaveException ? e.message : '加载失败,请检查网络后重试');
+      setState(() => _error = _getErrorMessage(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -64,17 +94,24 @@ class _LeaveListScreenState extends ConsumerState<LeaveListScreen> {
             useMaterial3: false,
           ),
           child: AlertDialog(
-            title: const Text('撤销请假?'),
-            content: Text('确定撤销《${item.typeName}》(${item.timeRange})吗？'),
+            title: Text(context.l10n.cancelLeavePromptTitle),
+            content: Text(
+              context.l10n.confirmRevokeLeaveItem(
+                item.typeName.isEmpty ? context.l10n.leaveApplication : item.typeName,
+                item.timeRange,
+              ),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('取消'),
+                child: Text(context.l10n.cancel),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('撤销',
-                    style: TextStyle(color: Colors.red)),
+                child: Text(
+                  context.l10n.revoke,
+                  style: const TextStyle(color: Colors.red),
+                ),
               ),
             ],
           ),
@@ -87,14 +124,17 @@ class _LeaveListScreenState extends ConsumerState<LeaveListScreen> {
       await ref.read(leaveServiceProvider).delete(item.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('已撤销'), behavior: SnackBarBehavior.floating),
+        SnackBar(
+          content: Text(context.l10n.revokedSuccess),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       _load();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e is LeaveException ? e.message : '撤销失败,请稍后重试'),
+          content: Text(e is LeaveException ? e.message : context.l10n.revokeFailedRetry),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -107,24 +147,19 @@ class _LeaveListScreenState extends ConsumerState<LeaveListScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final filtered = _items.where((item) {
-      if (_filter == '待审核') return item.auditStatus == '0';
-      if (_filter == '审核中') return item.auditStatus == '8';
-      if (_filter == '已审核') return item.auditStatus == '9';
-      return true;
-    }).toList();
+    final filtered = _items.where((item) => _filter.matches(item)).toList();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('请假申请'),
+        title: Text(context.l10n.leaveApplication),
         backgroundColor: theme.scaffoldBackgroundColor,
         surfaceTintColor: theme.scaffoldBackgroundColor,
         foregroundColor: isDark ? Colors.white : Colors.black87,
         elevation: 0,
         actions: [
           IconButton(
-            tooltip: '刷新',
+            tooltip: context.l10n.refresh,
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh),
           ),
@@ -162,7 +197,7 @@ class _LeaveListScreenState extends ConsumerState<LeaveListScreen> {
                             const SizedBox(height: 8),
                             TextButton(
                               onPressed: _load,
-                              child: const Text('重试'),
+                              child: Text(context.l10n.retry),
                             ),
                           ],
                         ),
@@ -172,8 +207,8 @@ class _LeaveListScreenState extends ConsumerState<LeaveListScreen> {
                   const SizedBox(height: 20),
                   Wrap(
                     spacing: 8,
-                    children: ['全部', '待审核', '审核中', '已审核']
-                        .map((label) => _buildFilterChip(label, isDark))
+                    children: LeaveFilter.values
+                        .map((filter) => _buildFilterChip(filter, isDark))
                         .toList(),
                   ),
                   const SizedBox(height: 12),
@@ -182,7 +217,7 @@ class _LeaveListScreenState extends ConsumerState<LeaveListScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 36),
                       child: Center(
                         child: Text(
-                          '暂无符合条件的请假记录',
+                          context.l10n.noLeaveRecordsFound,
                           style: TextStyle(
                             fontSize: 14,
                             color: isDark ? Colors.white38 : Colors.grey,
@@ -225,7 +260,7 @@ class _LeaveListScreenState extends ConsumerState<LeaveListScreen> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '请假申请',
+                  context.l10n.leaveApplication,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -246,12 +281,12 @@ class _LeaveListScreenState extends ConsumerState<LeaveListScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label, bool isDark) {
-    final isSelected = _filter == label;
+  Widget _buildFilterChip(LeaveFilter filter, bool isDark) {
+    final isSelected = _filter == filter;
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => setState(() => _filter = label),
+        onTap: () => setState(() => _filter = filter),
         borderRadius: BorderRadius.circular(6),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
@@ -264,7 +299,7 @@ class _LeaveListScreenState extends ConsumerState<LeaveListScreen> {
             ),
           ),
           child: Text(
-            label,
+            filter.getLocalizedLabel(context),
             style: TextStyle(
               fontSize: 13,
               color: isSelected
@@ -285,6 +320,10 @@ class _LeaveListScreenState extends ConsumerState<LeaveListScreen> {
       '9' => const Color(0xFF09C489),
       _ => Colors.grey,
     };
+    final typeTitle = item.typeName.isEmpty ? context.l10n.leaveApplication : item.typeName;
+    final duration = item.getLocalizedDuration(context);
+    final titleText = duration.isNotEmpty ? '$typeTitle · $duration' : typeTitle;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
@@ -316,7 +355,7 @@ class _LeaveListScreenState extends ConsumerState<LeaveListScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        '${item.typeName.isEmpty ? '请假' : item.typeName} · ${item.durationLabel}',
+                        titleText,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -333,7 +372,7 @@ class _LeaveListScreenState extends ConsumerState<LeaveListScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           child: Text(
-                            '撤销',
+                            context.l10n.revoke,
                             style: TextStyle(
                               fontSize: 13,
                               color: isDark ? Colors.white60 : Colors.black54,
@@ -373,7 +412,7 @@ class _LeaveListScreenState extends ConsumerState<LeaveListScreen> {
                 ],
                 const SizedBox(height: 8),
                 Text(
-                  item.statusLabel,
+                  item.getLocalizedStatus(context),
                   style: TextStyle(
                     fontSize: 12,
                     color: statusColor,

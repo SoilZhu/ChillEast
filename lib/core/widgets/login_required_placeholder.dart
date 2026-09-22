@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
 import '../../features/auth/screens/login_screen.dart';
+import '../utils/l10n_extension.dart';
 
 class LoginRequiredPlaceholder extends StatelessWidget {
-  final String title;
-  final String message;
+  final String? title;
+  final String? message;
   final IconData icon;
   final EdgeInsetsGeometry padding;
 
   const LoginRequiredPlaceholder({
     super.key,
-    this.title = '需要登录以查看内容',
-    this.message = '登录后即可查看您的课表、作业和成绩信息',
+    this.title,
+    this.message,
     this.icon = Icons.lock_person_outlined,
     this.padding = const EdgeInsets.all(32.0),
   });
 
   @override
   Widget build(BuildContext context) {
+    final displayTitle = title ?? context.l10n.loginRequiredTitle;
+    final displayMessage = message ?? context.l10n.loginRequiredMessage;
+
     return Center(
       child: Padding(
         padding: padding,
@@ -37,7 +41,7 @@ class LoginRequiredPlaceholder extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             Text(
-              title,
+              displayTitle,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
@@ -47,7 +51,7 @@ class LoginRequiredPlaceholder extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              message,
+              displayMessage,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -64,9 +68,9 @@ class LoginRequiredPlaceholder extends StatelessWidget {
                   Navigator.push(context, LoginScreen.route());
                 },
                 icon: const Icon(Icons.login_rounded, size: 20),
-                label: const Text(
-                  '登录',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                label: Text(
+                  context.l10n.loginButton,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).primaryColor,

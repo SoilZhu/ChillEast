@@ -3,6 +3,7 @@ import '../models/course_model.dart';
 import '../utils/date_calculator.dart';
 import '../utils/week_parser.dart';
 import '../utils/course_color_utils.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 /// 周视图日历组件
 class WeeklyCalendarView extends StatefulWidget {
@@ -61,7 +62,7 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
     if (widget.courses.isEmpty) {
       return Center(
         child: Text(
-          '未获取到课表',
+          context.l10n.noTimetableFound,
           style: TextStyle(
             fontSize: 14,
             color: Theme.of(context).hintColor.withOpacity(0.5),
@@ -116,7 +117,7 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
         children: [
           const SizedBox(width: 8),
           Text(
-            '第$weekNumber周',
+            context.l10n.weekNumber(weekNumber),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -291,17 +292,18 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildDetailRow('教师', course.teacher),
-            _buildDetailRow('教室', course.classroom),
-            _buildDetailRow('周次', WeekParser.formatWeeks(
+            _buildDetailRow(context.l10n.teacher, course.teacher),
+            _buildDetailRow(context.l10n.classroom, course.classroom),
+            _buildDetailRow(context.l10n.weeksLabel, WeekParser.formatWeeksLocalized(
+              context,
               WeekParser.parseWeeks(course.weeks),
             )),
             _buildDetailRow(
-              '节次',
-              '${course.startPeriod}-${course.endPeriod}节',
+              context.l10n.periodsLabel,
+              context.l10n.periodsRange(course.startPeriod, course.endPeriod),
             ),
             _buildDetailRow(
-              '时间',
+              context.l10n.timeLabel,
               '${DateCalculator.getSectionTime(course.startPeriod)['start']!.format(context)}-'
               '${DateCalculator.getSectionTime(course.endPeriod)['end']!.format(context)}',
             ),
@@ -310,7 +312,7 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('关闭'),
+            child: Text(context.l10n.close),
           ),
         ],
       ),
@@ -333,7 +335,7 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
             ),
           ),
           Expanded(
-            child: Text(value.isEmpty ? '未知' : value),
+            child: Text(value.isEmpty ? context.l10n.unknown : value),
           ),
         ],
       ),
@@ -355,7 +357,15 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
 
   /// 构建星期标题
   Widget _buildWeekdayHeader(double screenWidth, DateTime weekMonday) {
-    const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    final weekdays = [
+      context.l10n.weekdayMon,
+      context.l10n.weekdayTue,
+      context.l10n.weekdayWed,
+      context.l10n.weekdayThu,
+      context.l10n.weekdayFri,
+      context.l10n.weekdaySat,
+      context.l10n.weekdaySun,
+    ];
     final now = DateTime.now();
     final todayStr = '${now.year}-${now.month}-${now.day}';
 

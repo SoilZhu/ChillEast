@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../l10n/app_localizations.dart';
 import '../../features/timetable/models/course_model.dart';
 import '../../features/timetable/utils/date_calculator.dart';
 import '../../features/timetable/utils/week_parser.dart';
@@ -19,6 +21,22 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
   final _logger = Logger();
+
+  Future<AppLocalizations> _getL10n() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final code = prefs.getString('app_language_code');
+      if (code != null && code != 'system') {
+        return lookupAppLocalizations(Locale(code));
+      }
+    } catch (_) {}
+    try {
+      final platformLocale = WidgetsBinding.instance.platformDispatcher.locale;
+      return lookupAppLocalizations(platformLocale);
+    } catch (_) {
+      return lookupAppLocalizations(const Locale('zh'));
+    }
+  }
 
   Future<void> init() async {
     // 1. 初始化时区数据
@@ -216,6 +234,7 @@ class NotificationService {
     // 暂时简单处理：如果不通知，直接返回
     if (reminderMinutes <= 0) return;
 
+    final l10n = await _getL10n();
     final now = DateTime.now();
     int scheduledCount = 0;
 
@@ -267,11 +286,11 @@ class NotificationService {
                 makeupId,
                 '$timeStr ${course.name}',
                 course.classroom,
-                const NotificationDetails(
+                NotificationDetails(
                   android: AndroidNotificationDetails(
                     'course_reminder_channel',
-                    '上课提醒',
-                    channelDescription: '在每节课开始前发送提醒',
+                    l10n.classReminderChannelName,
+                    channelDescription: l10n.classReminderChannelDesc,
                     importance: Importance.max,
                     priority: Priority.high,
                   ),
@@ -304,11 +323,11 @@ class NotificationService {
           title: '$timeStr ${course.name}', // 18:20 材料力学
           body: course.classroom, // [地点]
           scheduledDate: tz.TZDateTime.from(reminderTime, tz.local),
-          notificationDetails: const NotificationDetails(
+          notificationDetails: NotificationDetails(
             android: AndroidNotificationDetails(
               'course_reminder_channel',
-              '上课提醒',
-              channelDescription: '在每节课开始前发送提醒',
+              l10n.classReminderChannelName,
+              channelDescription: l10n.classReminderChannelDesc,
               importance: Importance.max,
               priority: Priority.high,
               showWhen: true,
@@ -334,6 +353,7 @@ class NotificationService {
   ) async {
     if (advanceHours <= 0) return;
 
+    final l10n = await _getL10n();
     final now = DateTime.now();
     int scheduledCount = 0;
 
@@ -358,22 +378,22 @@ class NotificationService {
 
             String timeLabel = '';
             if (advanceHours < 1) {
-              timeLabel = '${(advanceHours * 60).toInt()}分钟';
+              timeLabel = l10n.minutesCount((advanceHours * 60).toInt());
             } else if (advanceHours == advanceHours.toInt()) {
-              timeLabel = '${advanceHours.toInt()}小时';
+              timeLabel = l10n.hoursCount('${advanceHours.toInt()}');
             } else {
-              timeLabel = '$advanceHours小时';
+              timeLabel = l10n.hoursCount('$advanceHours');
             }
 
             await _notificationsPlugin.show(
               makeupId,
               '${hw.title} ${hw.courseName}',
-              '作业将在不到$timeLabel后截止',
-              const NotificationDetails(
+              l10n.homeworkDueInLessThan(timeLabel),
+              NotificationDetails(
                 android: AndroidNotificationDetails(
                   'homework_reminder_channel',
-                  '作业截止提醒',
-                  channelDescription: '在作业截止前发送提醒',
+                  l10n.homeworkReminderChannelName,
+                  channelDescription: l10n.homeworkReminderChannelDesc,
                   importance: Importance.max,
                   priority: Priority.high,
                 ),
@@ -395,23 +415,23 @@ class NotificationService {
 
       String timeLabel = '';
       if (advanceHours < 1) {
-        timeLabel = '${(advanceHours * 60).toInt()}分钟';
+        timeLabel = l10n.minutesCount((advanceHours * 60).toInt());
       } else if (advanceHours == advanceHours.toInt()) {
-        timeLabel = '${advanceHours.toInt()}小时';
+        timeLabel = l10n.hoursCount('${advanceHours.toInt()}');
       } else {
-        timeLabel = '$advanceHours小时';
+        timeLabel = l10n.hoursCount('$advanceHours');
       }
 
       await _zonedScheduleWithFallback(
         id: notificationId,
         title: '${hw.title} ${hw.courseName}',
-        body: '作业将在$timeLabel后截止',
+        body: l10n.homeworkDueIn(timeLabel),
         scheduledDate: tz.TZDateTime.from(reminderTime, tz.local),
-        notificationDetails: const NotificationDetails(
+        notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             'homework_reminder_channel',
-            '作业截止提醒',
-            channelDescription: '在作业截止前发送提醒',
+            l10n.homeworkReminderChannelName,
+            channelDescription: l10n.homeworkReminderChannelDesc,
             importance: Importance.max,
             priority: Priority.high,
             showWhen: true,
@@ -436,6 +456,7 @@ class NotificationService {
   ) async {
     if (reminderMinutes <= 0 || reserves.isEmpty) return;
 
+    final l10n = await _getL10n();
     final now = DateTime.now();
     int scheduledCount = 0;
 
@@ -446,7 +467,7 @@ class NotificationService {
 
       final timeStr =
           '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
-      final title = '$timeStr ${reserve.seatNum}号座位';
+      final title = l10n.seatNumberNotificationTitle(timeStr, reserve.seatNum);
       final body = reserve.fullRoomName;
 
       // 如果提醒时间已经过了，检查是否需要补发
@@ -467,11 +488,11 @@ class NotificationService {
               makeupId,
               title,
               body,
-              const NotificationDetails(
+              NotificationDetails(
                 android: AndroidNotificationDetails(
                   'library_reminder_channel',
-                  '图书馆预约提醒',
-                  channelDescription: '在图书馆座位预约开始前发送提醒',
+                  l10n.libraryReminderChannelName,
+                  channelDescription: l10n.libraryReminderChannelDesc,
                   importance: Importance.max,
                   priority: Priority.high,
                 ),
@@ -498,11 +519,11 @@ class NotificationService {
         title: title,
         body: body,
         scheduledDate: tz.TZDateTime.from(reminderTime, tz.local),
-        notificationDetails: const NotificationDetails(
+        notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             'library_reminder_channel',
-            '图书馆预约提醒',
-            channelDescription: '在图书馆座位预约开始前发送提醒',
+            l10n.libraryReminderChannelName,
+            channelDescription: l10n.libraryReminderChannelDesc,
             importance: Importance.max,
             priority: Priority.high,
             showWhen: true,

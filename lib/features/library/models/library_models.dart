@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:flutter/widgets.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 /// 图书馆预约记录状态
 enum ReserveStatus {
@@ -43,6 +45,25 @@ enum ReserveStatus {
         return '已取消';
       case ReserveStatus.unknown:
         return '未知';
+    }
+  }
+
+  String getLocalizedLabel(BuildContext context) {
+    switch (this) {
+      case ReserveStatus.reserved:
+        return context.l10n.libraryStatusPendingCheckIn;
+      case ReserveStatus.inUse:
+        return context.l10n.libraryStatusInUse;
+      case ReserveStatus.temporarilyAway:
+        return context.l10n.libraryStatusAway;
+      case ReserveStatus.flexibleSign:
+        return context.l10n.libraryStatusCanCheckIn;
+      case ReserveStatus.completed:
+        return context.l10n.libraryStatusFinished;
+      case ReserveStatus.cancelled:
+        return context.l10n.libraryStatusCancelled;
+      case ReserveStatus.unknown:
+        return context.l10n.statusUnknown;
     }
   }
 

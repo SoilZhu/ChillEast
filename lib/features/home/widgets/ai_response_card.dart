@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ai/ai_provider.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/route_utils.dart';
 import '../../profile/screens/ai_settings_screen.dart';
 
@@ -137,7 +138,7 @@ class _AiResponseCardState extends ConsumerState<AiResponseCard> {
                   ),
                   const SizedBox(width: 3),
                   Text(
-                    '新对话',
+                    context.l10n.newChat,
                     style: TextStyle(
                       fontSize: 11.5,
                       color: isDark ? Colors.white60 : Colors.grey[500],
@@ -225,14 +226,14 @@ class _AiResponseCardState extends ConsumerState<AiResponseCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.error_outline_rounded, size: 14, color: Colors.redAccent),
-                  SizedBox(width: 4),
+                  const Icon(Icons.error_outline_rounded, size: 14, color: Colors.redAccent),
+                  const SizedBox(width: 4),
                   Text(
-                    '请求异常',
-                    style: TextStyle(
+                    context.l10n.requestException,
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: Colors.redAccent,
@@ -256,9 +257,9 @@ class _AiResponseCardState extends ConsumerState<AiResponseCard> {
                     createSlideUpRoute(const AiSettingsScreen()),
                   );
                 },
-                child: const Text(
-                  '检查 Agent 设置 >',
-                  style: TextStyle(
+                child: Text(
+                  context.l10n.checkAgentSettingsArrow,
+                  style: const TextStyle(
                     fontSize: 11,
                     color: Color(0xFF09C489),
                     fontWeight: FontWeight.bold,
@@ -294,7 +295,7 @@ class _AiResponseCardState extends ConsumerState<AiResponseCard> {
               );
             },
             icon: const Icon(Icons.code_rounded, size: 16),
-            label: const Text('检查 Agent 设置'),
+            label: Text(context.l10n.checkAgentSettings),
           ),
         ],
       ),
@@ -304,14 +305,14 @@ class _AiResponseCardState extends ConsumerState<AiResponseCard> {
   /// 初始快捷提问推荐（白底灰边框，按钮统一 4px 圆角，右上角设置按钮）
   Widget _buildInitialQuickActions(BuildContext context, bool isDark) {
     final quickPrompts = [
-      {'icon': Icons.calendar_today_outlined, 'text': '今天有什么课？'},
-      {'icon': Icons.assignment_outlined, 'text': '有哪些未完成的作业？'},
-      {'icon': Icons.local_library_outlined, 'text': '预约图书馆座位'},
-      {'icon': Icons.wb_sunny_outlined, 'text': '快速提交阳光服务'},
-      {'icon': Icons.credit_card_outlined, 'text': '查询校园卡余额'},
-      {'icon': Icons.flash_on_outlined, 'text': '宿舍还有多少电？'},
-      {'icon': Icons.meeting_room_outlined, 'text': '查询现在的空教室'},
-      {'icon': Icons.campaign_outlined, 'text': '最近有什么重要通知？'},
+      {'icon': Icons.calendar_today_outlined, 'text': context.l10n.promptTodayCourses},
+      {'icon': Icons.assignment_outlined, 'text': context.l10n.promptPendingHomework},
+      {'icon': Icons.local_library_outlined, 'text': context.l10n.promptReserveLibrary},
+      {'icon': Icons.wb_sunny_outlined, 'text': context.l10n.promptSubmitSunshine},
+      {'icon': Icons.credit_card_outlined, 'text': context.l10n.promptCampusCardBalance},
+      {'icon': Icons.flash_on_outlined, 'text': context.l10n.promptDormElectricity},
+      {'icon': Icons.meeting_room_outlined, 'text': context.l10n.promptEmptyClassrooms},
+      {'icon': Icons.campaign_outlined, 'text': context.l10n.promptImportantNotices},
     ];
 
     return SingleChildScrollView(
@@ -321,7 +322,7 @@ class _AiResponseCardState extends ConsumerState<AiResponseCard> {
           Row(
             children: [
               Text(
-                '快捷提问',
+                context.l10n.quickPromptsTitle,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -512,9 +513,9 @@ class _AiResponseCardState extends ConsumerState<AiResponseCard> {
                         onTap: () {
                           Clipboard.setData(ClipboardData(text: msg.text));
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('已复制回答内容'),
-                              duration: Duration(seconds: 1),
+                            SnackBar(
+                              content: Text(context.l10n.copiedAnswer),
+                              duration: const Duration(seconds: 1),
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -530,7 +531,7 @@ class _AiResponseCardState extends ConsumerState<AiResponseCard> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '复制',
+                                context.l10n.copy,
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: isDark ? Colors.white54 : Colors.grey[500],
@@ -580,7 +581,7 @@ class _AiResponseCardState extends ConsumerState<AiResponseCard> {
               ),
               const SizedBox(width: 8),
               Text(
-                '正在思考中...',
+                context.l10n.aiThinking,
                 style: TextStyle(
                   fontSize: 12,
                   color: isDark ? Colors.white70 : Colors.grey[600],

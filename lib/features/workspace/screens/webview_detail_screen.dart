@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'scanner_screen.dart';
+import '../../../core/utils/l10n_extension.dart';
 
 /// WebView 详情页 - 终极重构版（带小程序胶囊菜单）
 class WebViewDetailScreen extends StatefulWidget {
@@ -59,7 +60,7 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
     _loadTimeoutTimer = Timer(Duration(seconds: _loadTimeoutSeconds), () {
       if (_isLoading && mounted) {
         setState(() {
-          _errorMessage = '加载超时，可能是校内网络响应缓慢。';
+          _errorMessage = context.l10n.loadTimeoutCampusNetworkSlow;
           _isLoading = false;
         });
       }
@@ -656,7 +657,7 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                           setState(() { _errorMessage = null; _isLoading = true; });
                           _webViewController?.reload();
                         },
-                        child: const Text('重试'),
+                        child: Text(context.l10n.retry),
                       ),
                     ],
                   ),
@@ -761,12 +762,12 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: const Text('拍照'),
+              title: Text(context.l10n.takePhoto),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('从相册选择'),
+              title: Text(context.l10n.chooseFromGallery),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
           ],

@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:android_package_installer/android_package_installer.dart';
 import 'package:logger/logger.dart';
 import '../../../core/utils/route_utils.dart';
+import '../utils/l10n_extension.dart';
 import '../widgets/update_screen.dart';
 
 class UpdateService {
@@ -30,7 +31,7 @@ class UpdateService {
       // 2. 获取最新版本信息 (从 GitHub 获取版本号和更新日志)
       final response = await _dio.get(_apiUrl);
       if (response.statusCode != 200) {
-        throw Exception('无法获取版本信息');
+        throw Exception('Failed to fetch version information');
       }
       
       final data = response.data;
@@ -43,11 +44,11 @@ class UpdateService {
           // 在底部显示提醒 (类似正在登录的 SnackBar)
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('🚀 发现新版本 v$latestVersion，点击查看详情'),
+              content: Text(context.l10n.newVersionFoundSnackBar(latestVersion)),
               behavior: SnackBarBehavior.floating,
               duration: const Duration(seconds: 10),
               action: SnackBarAction(
-                label: '查看',
+                label: context.l10n.viewAction,
                 onPressed: () => Navigator.push(context, createSlideUpRoute(UpdateScreen(
                   version: latestVersion,
                   releaseNotes: releaseNotes,
@@ -69,7 +70,7 @@ class UpdateService {
       } else {
         if (showNoUpdate && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('已是最新版本')),
+            SnackBar(content: Text(context.l10n.alreadyLatestVersion)),
           );
         }
       }
@@ -77,7 +78,7 @@ class UpdateService {
       _logger.e('Check update failed: $e');
       if (showNoUpdate && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('检查更新失败: $e')),
+          SnackBar(content: Text(context.l10n.checkUpdateFailed(e.toString()))),
         );
       }
     }
@@ -105,7 +106,7 @@ class UpdateService {
               child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)),
             ),
             const SizedBox(width: 12),
-            Text('正在下载更新 v$version...'),
+            Text(context.l10n.downloadingUpdate(version)),
           ],
         ),
         behavior: SnackBarBehavior.floating,
@@ -129,7 +130,7 @@ class UpdateService {
           snackBar.close();
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('下载失败: $err'), behavior: SnackBarBehavior.floating),
+            SnackBar(content: Text(context.l10n.downloadFailedWithReason(err)), behavior: SnackBarBehavior.floating),
           );
         },
       ),
@@ -180,7 +181,7 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
   Future<void> _download() async {
     try {
       final dir = await getExternalStorageDirectory();
-      if (dir == null) throw Exception('无法访问外部存储');
+      if (dir == null) throw Exception('External storage unavailable');
       
       final savePath = '${dir.path}/${widget.fileName}';
       _cancelToken = CancelToken();
@@ -218,7 +219,7 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      title: const Text('正在下载更新'),
+      title: Text(context.l10n.downloadingUpdateTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -233,7 +234,7 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
             _cancelToken?.cancel();
             Navigator.pop(context);
           },
-          child: const Text('取消'),
+          child: Text(context.l10n.cancel),
         ),
       ],
     );

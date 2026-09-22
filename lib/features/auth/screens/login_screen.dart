@@ -4,6 +4,7 @@ import '../../../core/state/auth_state.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/utils/secure_storage_helper.dart';
 import '../../timetable/screens/timetable_sync_prompt_screen.dart';
+import '../../../core/utils/l10n_extension.dart';
 import 'package:logger/logger.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -153,7 +154,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 const SizedBox(height: 24),
                 Text(
-                  '登录',
+                  context.l10n.loginTitle,
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -164,7 +165,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '请登录以继续。',
+                  context.l10n.loginSubtitle,
                   style: TextStyle(
                     fontSize: 14,
                     color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF5F6368),
@@ -177,10 +178,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               // 用户名输入框
               TextFormField(
                 controller: _usernameController,
-                decoration: md2InputDecoration('学号', Icons.person_outline),
+                decoration: md2InputDecoration(context.l10n.studentId, Icons.person_outline),
                 keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return '请输入学号';
+                  if (value == null || value.isEmpty) return context.l10n.studentIdHint;
                   return null;
                 },
                 enabled: authState.status != AuthStatus.authenticating,
@@ -191,7 +192,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               TextFormField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
-                decoration: md2InputDecoration('密码', Icons.lock_outline).copyWith(
+                decoration: md2InputDecoration(context.l10n.password, Icons.lock_outline).copyWith(
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -201,7 +202,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) return '请输入密码';
+                  if (value == null || value.isEmpty) return context.l10n.passwordHint;
                   return null;
                 },
                 enabled: authState.status != AuthStatus.authenticating,
@@ -247,9 +248,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         elevation: 0,
                       ),
                       icon: const Icon(Icons.login_rounded, size: 18),
-                      label: const Text(
-                        '登录',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      label: Text(
+                        context.l10n.loginButton,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],

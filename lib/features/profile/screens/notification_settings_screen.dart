@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../../core/services/course_live_service.dart';
 import '../../../core/services/flyme_live_service.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/utils/l10n_extension.dart';
 import '../providers/settings_provider.dart';
 
 class NotificationSettingsScreen extends ConsumerWidget {
@@ -52,25 +53,25 @@ class NotificationSettingsScreen extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
 
     final courseDurations = [
-      {'label': '不通知', 'value': 0},
-      {'label': '5分钟前', 'value': 5},
-      {'label': '10分钟前', 'value': 10},
-      {'label': '20分钟前', 'value': 20},
-      {'label': '30分钟前', 'value': 30},
-      {'label': '40分钟前', 'value': 40},
-      {'label': '50分钟前', 'value': 50},
-      {'label': '60分钟前', 'value': 60},
+      {'label': context.l10n.notifDurationNone, 'value': 0},
+      {'label': context.l10n.notifMinutesBefore(5), 'value': 5},
+      {'label': context.l10n.notifMinutesBefore(10), 'value': 10},
+      {'label': context.l10n.notifMinutesBefore(20), 'value': 20},
+      {'label': context.l10n.notifMinutesBefore(30), 'value': 30},
+      {'label': context.l10n.notifMinutesBefore(40), 'value': 40},
+      {'label': context.l10n.notifMinutesBefore(50), 'value': 50},
+      {'label': context.l10n.notifMinutesBefore(60), 'value': 60},
     ];
 
     final homeworkDurations = [
-      {'label': '不通知', 'value': 0.0},
-      {'label': '0.5小时前', 'value': 0.5},
-      {'label': '1小时前', 'value': 1.0},
-      {'label': '2小时前', 'value': 2.0},
-      {'label': '6小时前', 'value': 6.0},
-      {'label': '12小时前', 'value': 12.0},
-      {'label': '24小时前', 'value': 24.0},
-      {'label': '48小时前', 'value': 48.0},
+      {'label': context.l10n.notifDurationNone, 'value': 0.0},
+      {'label': context.l10n.notifHoursBefore('0.5'), 'value': 0.5},
+      {'label': context.l10n.notifHoursBefore('1'), 'value': 1.0},
+      {'label': context.l10n.notifHoursBefore('2'), 'value': 2.0},
+      {'label': context.l10n.notifHoursBefore('6'), 'value': 6.0},
+      {'label': context.l10n.notifHoursBefore('12'), 'value': 12.0},
+      {'label': context.l10n.notifHoursBefore('24'), 'value': 24.0},
+      {'label': context.l10n.notifHoursBefore('48'), 'value': 48.0},
     ];
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -78,7 +79,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('通知设置'),
+        title: Text(context.l10n.notificationSettings),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: false,
@@ -100,13 +101,13 @@ class NotificationSettingsScreen extends ConsumerWidget {
           _buildSettingItem(
             context,
             icon: Icons.book_outlined,
-            title: '上课提醒',
+            title: context.l10n.courseReminder,
             subtitle: courseDurations.firstWhere(
                 (e) => e['value'] == settings.reminderMinutes,
                 orElse: () => courseDurations[0])['label'] as String,
             onTap: () => _showPicker(
               context,
-              title: '上课提醒时间',
+              title: context.l10n.courseReminderTime,
               options: courseDurations,
               currentValue: settings.reminderMinutes,
               onSelected: (val) async {
@@ -123,13 +124,13 @@ class NotificationSettingsScreen extends ConsumerWidget {
           _buildSettingItem(
             context,
             icon: Icons.assignment_outlined,
-            title: '作业截止提醒',
+            title: context.l10n.homeworkReminder,
             subtitle: homeworkDurations.firstWhere(
                 (e) => (e['value'] as double) == settings.homeworkReminderHours,
                 orElse: () => homeworkDurations[0])['label'] as String,
             onTap: () => _showPicker(
               context,
-              title: '作业提醒时间',
+              title: context.l10n.homeworkReminderTime,
               options: homeworkDurations,
               currentValue: settings.homeworkReminderHours,
               onSelected: (val) async {
@@ -146,13 +147,13 @@ class NotificationSettingsScreen extends ConsumerWidget {
           _buildSettingItem(
             context,
             icon: Icons.event_seat_outlined,
-            title: '图书馆预约提醒',
+            title: context.l10n.libraryReminder,
             subtitle: courseDurations.firstWhere(
                 (e) => e['value'] == settings.libraryReminderMinutes,
                 orElse: () => courseDurations[0])['label'] as String,
             onTap: () => _showPicker(
               context,
-              title: '图书馆预约提醒时间',
+              title: context.l10n.libraryReminderTime,
               options: courseDurations,
               currentValue: settings.libraryReminderMinutes,
               onSelected: (val) async {
@@ -258,7 +259,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('已设置为: ${opt['label']}'),
+                              content: Text(context.l10n.setSuccessfully(opt['label'] as String)),
                               behavior: SnackBarBehavior.floating,
                               duration: const Duration(seconds: 1),
                             ),
@@ -267,7 +268,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('设置通知失败: $e'),
+                              content: Text(context.l10n.setNotificationFailed(e.toString())),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -335,8 +336,9 @@ class _CourseLiveSectionState extends ConsumerState<CourseLiveSection> {
   }
 
   Future<void> _onToggle(bool value) async {
+    final l10n = context.l10n;
     if (_supported != true) {
-      _snack('当前设备不支持 Live Updates（需 Android 16+）', error: true);
+      _snack(l10n.liveUpdatesNotSupported, error: true);
       return;
     }
     if (value) {
@@ -347,7 +349,7 @@ class _CourseLiveSectionState extends ConsumerState<CourseLiveSection> {
             await NotificationService().requestNotificationsPermission();
         await _refreshStatus();
         if (granted != true) {
-          _snack('需先允许通知权限', error: true);
+          _snack(l10n.needNotificationPermission, error: true);
           return;
         }
       }
@@ -355,18 +357,19 @@ class _CourseLiveSectionState extends ConsumerState<CourseLiveSection> {
     final flymeWasOn = ref.read(settingsProvider).flymeLiveEnabled;
     await ref.read(settingsProvider.notifier).setCourseLiveEnabled(value);
     if (value && flymeWasOn) {
-      _snack('已开启实时活动，实况通知已关闭');
+      _snack(l10n.liveActivityEnabledFlymeDisabled);
     } else {
-      _snack(value ? '已开启实时活动' : '已关闭实时活动');
+      _snack(value ? l10n.liveActivityEnabled : l10n.liveActivityDisabled);
     }
   }
 
   /// 单击整行：跳本应用的系统通知设置页。
   Future<void> _onRowTap() async {
     if (_busy || _supported != true) return;
+    final l10n = context.l10n;
     final ok = await CourseLiveService().openNotificationSettings();
     if (!ok) {
-      _snack('打不开系统设置，请手动去设置 > 通知里查看', error: true);
+      _snack(l10n.openSystemSettingsFailed, error: true);
     } else {
       // 从设置页返回后刷新通知开关状态
       await _refreshStatus();
@@ -376,8 +379,9 @@ class _CourseLiveSectionState extends ConsumerState<CourseLiveSection> {
   /// 双击整行：没在测就发一次测试，在测就撤回。
   Future<void> _onRowDoubleTap() async {
     if (_busy) return;
+    final l10n = context.l10n;
     if (_supported != true) {
-      _snack('当前设备不支持 Live Updates（需 Android 16+）', error: true);
+      _snack(l10n.liveUpdatesNotSupported, error: true);
       return;
     }
     if (_testing) {
@@ -387,7 +391,7 @@ class _CourseLiveSectionState extends ConsumerState<CourseLiveSection> {
           _testing = false;
         });
       }
-      _snack('测试已撤回');
+      _snack(l10n.testRetracted);
       return;
     }
     setState(() => _busy = true);
@@ -403,9 +407,9 @@ class _CourseLiveSectionState extends ConsumerState<CourseLiveSection> {
         setState(() {
           _testing = true;
         });
-        _snack('测试已发送');
+        _snack(l10n.testSent);
       } else {
-        _snack('发送失败：请检查通知权限', error: true);
+        _snack(l10n.sendFailedCheckPermission, error: true);
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -420,11 +424,11 @@ class _CourseLiveSectionState extends ConsumerState<CourseLiveSection> {
     // A16 以下直接整条隐藏（检测中也先不占位，避免闪一下再消失）
     if (_supported != true) return const SizedBox.shrink();
 
-    String subtitle = '使用 Live Updates API 提醒';
+    String subtitle = context.l10n.liveActivitySubtitle;
     if (_testing) {
-      subtitle += ' · 双击撤回';
+      subtitle += ' · ${context.l10n.doubleTapToRetract}';
     } else if (!_notifOn) {
-      subtitle += ' · 系统通知未开启';
+      subtitle += ' · ${context.l10n.systemNotificationDisabled}';
     }
 
     return InkWell(
@@ -443,8 +447,8 @@ class _CourseLiveSectionState extends ConsumerState<CourseLiveSection> {
                 children: [
                   Row(
                     children: [
-                      const Text('实时活动',
-                          style: TextStyle(fontSize: 16)),
+                      Text(context.l10n.liveActivity,
+                          style: const TextStyle(fontSize: 16)),
                       if (_testing) ...[
                         const SizedBox(width: 8),
                         SizedBox(
@@ -532,6 +536,7 @@ class _FlymeLiveSectionState extends ConsumerState<FlymeLiveSection> {
 
   Future<void> _onToggle(bool value) async {
     if (_supported != true) return;
+    final l10n = context.l10n;
     if (value) {
       final on = await FlymeLiveService().areNotificationsEnabled();
       if (!on) {
@@ -539,7 +544,7 @@ class _FlymeLiveSectionState extends ConsumerState<FlymeLiveSection> {
             await NotificationService().requestNotificationsPermission();
         await _refreshStatus();
         if (granted != true) {
-          _snack('需先允许通知权限', error: true);
+          _snack(l10n.needNotificationPermission, error: true);
           return;
         }
       }
@@ -547,18 +552,19 @@ class _FlymeLiveSectionState extends ConsumerState<FlymeLiveSection> {
     final courseWasOn = ref.read(settingsProvider).courseLiveEnabled;
     await ref.read(settingsProvider.notifier).setFlymeLiveEnabled(value);
     if (value && courseWasOn) {
-      _snack('已开启实况通知，实时活动已关闭');
+      _snack(l10n.flymeLiveEnabledActivityDisabled);
     } else {
-      _snack(value ? '已开启实况通知' : '已关闭实况通知');
+      _snack(value ? l10n.flymeLiveEnabled : l10n.flymeLiveDisabled);
     }
   }
 
   /// 单击整行：跳本应用的系统通知设置页。
   Future<void> _onRowTap() async {
     if (_busy || _supported != true) return;
+    final l10n = context.l10n;
     final ok = await FlymeLiveService().openNotificationSettings();
     if (!ok) {
-      _snack('打不开系统设置，请手动去设置 > 通知里查看', error: true);
+      _snack(l10n.openSystemSettingsFailed, error: true);
     } else {
       await _refreshStatus();
     }
@@ -568,6 +574,7 @@ class _FlymeLiveSectionState extends ConsumerState<FlymeLiveSection> {
   Future<void> _onRowDoubleTap() async {
     if (_busy) return;
     if (_supported != true) return;
+    final l10n = context.l10n;
     if (_testing) {
       await FlymeLiveService().cancelTest();
       if (mounted) {
@@ -575,7 +582,7 @@ class _FlymeLiveSectionState extends ConsumerState<FlymeLiveSection> {
           _testing = false;
         });
       }
-      _snack('测试已撤回');
+      _snack(l10n.testRetracted);
       return;
     }
     setState(() => _busy = true);
@@ -591,9 +598,9 @@ class _FlymeLiveSectionState extends ConsumerState<FlymeLiveSection> {
         setState(() {
           _testing = true;
         });
-        _snack('测试已发送');
+        _snack(l10n.testSent);
       } else {
-        _snack('发送失败：请检查通知权限', error: true);
+        _snack(l10n.sendFailedCheckPermission, error: true);
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -608,11 +615,11 @@ class _FlymeLiveSectionState extends ConsumerState<FlymeLiveSection> {
     // 非 Flyme 12+ 直接整条隐藏
     if (_supported != true) return const SizedBox.shrink();
 
-    String subtitle = '使用 Flyme 实况通知 API';
+    String subtitle = context.l10n.flymeLiveSubtitle;
     if (_testing) {
-      subtitle += ' · 双击撤回';
+      subtitle += ' · ${context.l10n.doubleTapToRetract}';
     } else if (!_notifOn) {
-      subtitle += ' · 系统通知未开启';
+      subtitle += ' · ${context.l10n.systemNotificationDisabled}';
     }
 
     return InkWell(
@@ -631,8 +638,8 @@ class _FlymeLiveSectionState extends ConsumerState<FlymeLiveSection> {
                 children: [
                   Row(
                     children: [
-                      const Text('实况通知',
-                          style: TextStyle(fontSize: 16)),
+                      Text(context.l10n.flymeLive,
+                          style: const TextStyle(fontSize: 16)),
                       if (_testing) ...[
                         const SizedBox(width: 8),
                         SizedBox(

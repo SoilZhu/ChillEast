@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   
   # UI & Icons
   cupertino_icons: ^1.0.6
@@ -47,7 +49,7 @@ dependencies:
   permission_handler: ^11.1.0
   
   # Utils
-  intl: ^0.19.0
+  intl: ^0.20.2
   logger: ^2.0.2+1
   geolocator: ^14.0.2
   flutter_local_notifications: ^17.1.0
@@ -97,6 +99,7 @@ flutter_native_splash:
 
 flutter:
   uses-material-design: true
+  generate: true
   
   assets:
     - assets/images/
