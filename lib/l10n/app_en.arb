@@ -670,5 +670,8 @@
   "weeksRange": "Weeks {weeks}",
   "ruleModeCopy": "Copy",
   "ruleModeSwap": "Swap",
-  "ruleModeShift": "Shift"
+  "ruleModeShift": "Shift",
+  "uploadImage": "Upload Image",
+  "describeImagePrompt": "Please analyze or describe this image",
+  "removeImage": "Remove Image"
 }

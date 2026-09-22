@@ -4154,6 +4154,24 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'平移'**
   String get ruleModeShift;
+
+  /// No description provided for @uploadImage.
+  ///
+  /// In zh, this message translates to:
+  /// **'上传图片'**
+  String get uploadImage;
+
+  /// No description provided for @describeImagePrompt.
+  ///
+  /// In zh, this message translates to:
+  /// **'请分析或描述这张图片'**
+  String get describeImagePrompt;
+
+  /// No description provided for @removeImage.
+  ///
+  /// In zh, this message translates to:
+  /// **'移除图片'**
+  String get removeImage;
 }
 
 class _AppLocalizationsDelegate

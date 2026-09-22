@@ -59,6 +59,8 @@ dependencies:
   url_launcher: ^6.3.2
   mobile_scanner: ^5.1.1
   image_picker: ^1.0.7
+  image_picker_android: ^0.8.12
+  image_picker_platform_interface: ^2.11.0
   package_info_plus: ^9.0.1
   android_package_installer: ^0.0.3
   flutter_markdown: ^0.7.7+1

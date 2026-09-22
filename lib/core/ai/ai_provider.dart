@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
@@ -19,12 +21,14 @@ enum AiAssistantStatus {
 class AiDisplayMessage {
   final String role; // 'user' | 'assistant'
   final String text;
+  final String? imagePath;
   final String? toolUsed;
   final DateTime timestamp;
 
   AiDisplayMessage({
     required this.role,
     required this.text,
+    this.imagePath,
     this.toolUsed,
     DateTime? timestamp,
   }) : timestamp = timestamp ?? DateTime.now();
@@ -217,10 +221,19 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
     );
   }
 
-  /// 发送消息给 AI
-  Future<void> sendMessage(String text) async {
+  String _getMimeType(String path) {
+    final lower = path.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    if (lower.endsWith('.gif')) return 'image/gif';
+    if (lower.endsWith('.bmp')) return 'image/bmp';
+    return 'image/jpeg';
+  }
+
+  /// 发送消息给 AI（支持附带本地图片并按 MiMo/OpenAI 多模态规范转为 Base64 Data URI）
+  Future<void> sendMessage(String text, {String? imagePath}) async {
     final query = text.trim();
-    if (query.isEmpty) return;
+    if (query.isEmpty && (imagePath == null || imagePath.isEmpty)) return;
 
     final l10n = _getL10n();
 
@@ -232,11 +245,50 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
       return;
     }
 
-    final newHistory = List<AiChatMessage>.from(state.conversationHistory);
-    newHistory.add(AiChatMessage(role: 'user', content: query));
+    final effectiveDisplayText = query.isNotEmpty
+        ? query
+        : (imagePath != null ? l10n.describeImagePrompt : '');
 
+    final newHistory = List<AiChatMessage>.from(state.conversationHistory);
     final newDisplay = List<AiDisplayMessage>.from(state.displayMessages);
-    newDisplay.add(AiDisplayMessage(role: 'user', text: query));
+
+    if (imagePath != null && imagePath.isNotEmpty) {
+      final file = File(imagePath);
+      if (await file.exists()) {
+        final bytes = await file.readAsBytes();
+        final base64String = base64Encode(bytes);
+        final mimeType = _getMimeType(imagePath);
+        final dataUri = 'data:$mimeType;base64,$base64String';
+
+        final promptForModel = query.isNotEmpty ? query : l10n.describeImagePrompt;
+
+        newHistory.add(AiChatMessage(
+          role: 'user',
+          content: [
+            {
+              'type': 'image_url',
+              'image_url': {
+                'url': dataUri,
+              },
+            },
+            {
+              'type': 'text',
+              'text': promptForModel,
+            },
+          ],
+        ));
+      } else {
+        newHistory.add(AiChatMessage(role: 'user', content: effectiveDisplayText));
+      }
+    } else {
+      newHistory.add(AiChatMessage(role: 'user', content: query));
+    }
+
+    newDisplay.add(AiDisplayMessage(
+      role: 'user',
+      text: effectiveDisplayText,
+      imagePath: imagePath,
+    ));
 
     state = state.copyWith(
       status: AiAssistantStatus.thinking,

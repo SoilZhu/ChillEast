@@ -19,6 +19,40 @@ void main() {
       expect(fromJson.content, '今天有什么课？');
     });
 
+    test('AiChatMessage multimodal image message serialization and deserialization', () {
+      final multimodalContent = [
+        {
+          'type': 'image_url',
+          'image_url': {
+            'url':
+                'data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+          },
+        },
+        {
+          'type': 'text',
+          'text': '请描述这张图片',
+        },
+      ];
+
+      final msg = AiChatMessage(
+        role: 'user',
+        content: multimodalContent,
+      );
+
+      final json = msg.toJson();
+      expect(json['role'], 'user');
+      expect(json['content'], isA<List>());
+      expect((json['content'] as List).length, 2);
+      expect((json['content'] as List)[0]['type'], 'image_url');
+      expect((json['content'] as List)[1]['type'], 'text');
+      expect((json['content'] as List)[1]['text'], '请描述这张图片');
+
+      final fromJson = AiChatMessage.fromJson(json);
+      expect(fromJson.role, 'user');
+      expect(fromJson.content, isA<List>());
+      expect((fromJson.content as List).length, 2);
+    });
+
     test('AiAssistantService prompt construction', () async {
       final service = AiAssistantService();
       final prompt = await service.buildSystemPrompt();

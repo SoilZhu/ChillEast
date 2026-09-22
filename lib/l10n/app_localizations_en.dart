@@ -2248,4 +2248,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ruleModeShift => 'Shift';
+
+  @override
+  String get uploadImage => 'Upload Image';
+
+  @override
+  String get describeImagePrompt => 'Please analyze or describe this image';
+
+  @override
+  String get removeImage => 'Remove Image';
 }

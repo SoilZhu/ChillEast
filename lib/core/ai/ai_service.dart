@@ -8,7 +8,7 @@ import '../../features/timetable/utils/date_calculator.dart';
 /// AI Message model
 class AiChatMessage {
   final String role; // 'system', 'user', 'assistant', 'tool'
-  final String? content;
+  final dynamic content;
   final String? name;
   final String? toolCallId;
   final List<dynamic>? toolCalls;
@@ -37,7 +37,7 @@ class AiChatMessage {
   factory AiChatMessage.fromJson(Map<String, dynamic> json) {
     return AiChatMessage(
       role: json['role'] as String? ?? 'user',
-      content: json['content'] as String?,
+      content: json['content'],
       name: json['name'] as String?,
       toolCallId: json['tool_call_id'] as String?,
       toolCalls: json['tool_calls'] as List<dynamic>?,
@@ -256,6 +256,7 @@ $weekInfo
           options: Options(
             headers: {
               'Authorization': 'Bearer $effectiveApiKey',
+              'api-key': effectiveApiKey,
               'Content-Type': 'application/json',
             },
           ),

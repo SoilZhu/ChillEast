@@ -2183,6 +2183,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ruleModeShift => '平移';
+
+  @override
+  String get uploadImage => '上传图片';
+
+  @override
+  String get describeImagePrompt => '请分析或描述这张图片';
+
+  @override
+  String get removeImage => '移除图片';
 }
 
 /// The translations for Chinese, as used in Hong Kong (`zh_HK`).

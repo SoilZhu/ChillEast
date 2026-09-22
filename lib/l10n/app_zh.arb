@@ -1289,5 +1289,8 @@
   },
   "ruleModeCopy": "复制",
   "ruleModeSwap": "对调",
-  "ruleModeShift": "平移"
+  "ruleModeShift": "平移",
+  "uploadImage": "上传图片",
+  "describeImagePrompt": "请分析或描述这张图片",
+  "removeImage": "移除图片"
 }

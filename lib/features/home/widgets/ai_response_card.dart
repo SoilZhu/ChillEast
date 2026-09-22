@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -418,16 +419,59 @@ class _AiResponseCardState extends ConsumerState<AiResponseCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (isUser)
-                  SelectableText(
-                    msg.text,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      height: 1.45,
-                      color: isDark ? Colors.white : const Color(0xFF202124),
+                if (isUser) ...[
+                  if (msg.imagePath != null && File(msg.imagePath!).existsSync()) ...[
+                    GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => Dialog(
+                            backgroundColor: Colors.transparent,
+                            insetPadding: const EdgeInsets.all(16),
+                            child: Stack(
+                              alignment: Alignment.topRight,
+                              children: [
+                                Center(
+                                  child: InteractiveViewer(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.file(File(msg.imagePath!)),
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
+                                  onPressed: () => Navigator.pop(context),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: msg.text.isNotEmpty ? 6 : 0),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.file(
+                            File(msg.imagePath!),
+                            width: 140,
+                            height: 140,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
                     ),
-                  )
-                else
+                  ],
+                  if (msg.text.isNotEmpty)
+                    SelectableText(
+                      msg.text,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        height: 1.45,
+                        color: isDark ? Colors.white : const Color(0xFF202124),
+                      ),
+                    ),
+                ] else
                   MarkdownBody(
                     data: msg.text,
                     selectable: true,

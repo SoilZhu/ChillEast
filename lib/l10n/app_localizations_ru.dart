@@ -2267,4 +2267,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ruleModeShift => 'Переместить';
+
+  @override
+  String get uploadImage => '上传图片';
+
+  @override
+  String get describeImagePrompt => '请分析或描述这张图片';
+
+  @override
+  String get removeImage => '移除图片';
 }
