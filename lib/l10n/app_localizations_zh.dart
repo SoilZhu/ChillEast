@@ -201,7 +201,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get funcEleRecharge => '电费充值';
 
   @override
-  String get funcBus => '长沙实时公交';
+  String get funcBus => '实时校车';
 
   @override
   String get funcCsBus => '长沙实时公交';
@@ -2379,7 +2379,7 @@ class AppLocalizationsZhHk extends AppLocalizationsZh {
   String get funcEleRecharge => '電費充值';
 
   @override
-  String get funcBus => '長沙實時公交';
+  String get funcBus => '實時校車';
 
   @override
   String get funcCsBus => '長沙實時公交';
@@ -4557,7 +4557,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get funcEleRecharge => '電費充值';
 
   @override
-  String get funcBus => '長沙即時公交';
+  String get funcBus => '即時校車';
 
   @override
   String get funcCsBus => '長沙即時公交';
@@ -6735,7 +6735,7 @@ class AppLocalizationsZhHefei extends AppLocalizationsZh {
   String get funcEleRecharge => '电费充值';
 
   @override
-  String get funcBus => '长沙实时公交';
+  String get funcBus => '实时校车';
 
   @override
   String get funcCsBus => '长沙实时公交';

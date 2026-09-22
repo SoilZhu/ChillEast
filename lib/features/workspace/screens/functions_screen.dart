@@ -238,7 +238,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
         if (hasPermission) {
           _safeNavigate(
             WebViewDetailScreen(
-              title: context.l10n.funcBus,
+              title: context.l10n.funcCsBus,
               url: AppConstants.changshaBusUrl,
               showWebBack: true,
               showAppBar: true,

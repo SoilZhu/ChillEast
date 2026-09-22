@@ -201,7 +201,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get funcEleRecharge => '電気代チャージ';
 
   @override
-  String get funcBus => '長沙リアルタイムバス';
+  String get funcBus => '学内リアルタイムバス';
 
   @override
   String get funcCsBus => '長沙リアルタイムバス';

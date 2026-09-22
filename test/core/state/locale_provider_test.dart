@@ -163,6 +163,8 @@ void main() {
       expect(l10n.english, equals('English'));
       expect(l10n.tabHome, equals('首页'));
       expect(l10n.tabTimetable, equals('课表'));
+      expect(l10n.funcBus, equals('实时校车'));
+      expect(l10n.funcCsBus, equals('长沙实时公交'));
     });
 
     test('AppLocalizations returns correct en texts', () {
@@ -177,6 +179,8 @@ void main() {
       expect(l10n.english, equals('English'));
       expect(l10n.tabHome, equals('Home'));
       expect(l10n.tabTimetable, equals('Schedule'));
+      expect(l10n.funcBus, equals('Campus Bus'));
+      expect(l10n.funcCsBus, equals('Changsha Bus'));
     });
 
     test('AppLocalizations returns correct zh_HK texts', () {

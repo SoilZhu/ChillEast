@@ -366,7 +366,7 @@ hefei_dict = {
     "funcPaymentCode": "付款码",
     "funcRecharge": "校园卡充值",
     "funcLibrary": "图书馆",
-    "funcBus": "长沙实时公交",
+    "funcBus": "实时校车",
     "funcScore": "成绩查询",
     "funcVpn": "VPN转换",
     "reserveSeat": "预约选座",
