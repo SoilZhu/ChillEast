@@ -1,53 +1,140 @@
 {
   "@@locale": "gan",
   "appTitle": "自在东湖",
+  "@appTitle": {
+    "description": "应用名称"
+  },
   "settings": "设置",
+  "@settings": {
+    "description": "设置页面标题"
+  },
   "agentSettings": "Agent 设置",
+  "@agentSettings": {
+    "description": "Agent 设置项"
+  },
   "appearanceSettings": "外观设置",
+  "@appearanceSettings": {
+    "description": "外观设置项"
+  },
   "notificationSettings": "通知设置",
+  "@notificationSettings": {
+    "description": "通知设置项"
+  },
   "language": "语言设置",
+  "@language": {
+    "description": "语言设置项"
+  },
   "followSystem": "跟随系统",
+  "@followSystem": {
+    "description": "跟随系统选项"
+  },
   "simplifiedChinese": "简体中文",
+  "@simplifiedChinese": {
+    "description": "简体中文选项"
+  },
   "english": "English",
+  "@english": {
+    "description": "英文选项"
+  },
   "traditionalChineseHK": "繁体中文（中国香港）",
+  "@traditionalChineseHK": {
+    "description": "繁体中文（中国香港）选项"
+  },
   "traditionalChineseTW": "繁体中文",
+  "@traditionalChineseTW": {
+    "description": "繁体中文选项"
+  },
   "japanese": "日语",
+  "@japanese": {
+    "description": "日语选项"
+  },
   "spanish": "西班牙语",
+  "@spanish": {
+    "description": "西班牙语选项"
+  },
   "french": "法语",
+  "@french": {
+    "description": "法语选项"
+  },
   "portuguese": "葡萄牙语",
+  "@portuguese": {
+    "description": "葡萄牙语选项"
+  },
   "russian": "俄语",
+  "@russian": {
+    "description": "俄语选项"
+  },
   "cantonese": "粤语（广州话）",
+  "@cantonese": {
+    "description": "粤语（广州话）选项"
+  },
   "wuSuzhou": "吴语（苏州话）",
+  "@wuSuzhou": {
+    "description": "吴语（苏州话）选项"
+  },
   "xiangChangsha": "湘语（长沙话）",
+  "@xiangChangsha": {
+    "description": "湘语（长沙话）选项"
+  },
   "jianghuaiHefei": "江淮官话（合肥话）",
+  "@jianghuaiHefei": {
+    "description": "江淮官话（合肥话）选项"
+  },
   "ganNanchang": "赣语（南昌话）",
+  "@ganNanchang": {
+    "description": "赣语（南昌话）选项"
+  },
   "tabHome": "首页",
+  "@tabHome": {
+    "description": "主页底栏首页标签"
+  },
   "tabTimetable": "课表",
+  "@tabTimetable": {
+    "description": "主页底栏课表标签"
+  },
   "tabHomework": "作业",
+  "@tabHomework": {
+    "description": "主页底栏作业标签"
+  },
   "tabNotice": "通知",
+  "@tabNotice": {
+    "description": "主页底栏通知标签"
+  },
   "tabFunctions": "功能",
+  "@tabFunctions": {
+    "description": "主页底栏功能标签"
+  },
   "cancel": "取消",
+  "@cancel": {
+    "description": "通用取消按钮"
+  },
   "confirm": "确定",
-  "loggingInWait": "正在登录，请等下子...",
+  "@confirm": {
+    "description": "通用确定按钮"
+  },
+  "loggingInWait": "正登录，请等哈子...",
+  "@loggingInWait": {
+    "description": "登录中提示"
+  },
   "profile": "个人中心",
   "helpFeedback": "帮助与反馈",
   "about": "关于",
   "logout": "退出登录",
-  "notLoggedIn": "冇登录",
-  "clickToLogin": "点下登录以访问更多功能",
+  "notLoggedIn": "冒有登录",
+  "clickToLogin": "点登录就得用多些功能",
   "defaultStudentName": "湖南农大学子",
   "logoutConfirmTitle": "确认退出",
-  "logoutConfirmContent": "退出登录后将清除侬嗰本地凭证并断开数据连接。",
+  "logoutConfirmContent": "退出登录后会清掉侬个本地凭证，数据连接也会断开。",
   "checkUpdate": "检查更新",
   "openSourceLicenses": "开源声明",
-  "sendEmail": "发送邮件",
+  "sendEmail": "发出邮件",
   "developer": "开发者",
   "loginTitle": "登录",
-  "loginSubtitle": "请登录以继续。",
+  "loginSubtitle": "请先登录再继续。",
   "studentId": "学号",
-  "studentIdHint": "请输入学号",
+  "studentIdHint": "请填入学号",
   "password": "密码",
-  "passwordHint": "请输入密码",
+  "passwordHint": "请填入密码",
   "loginButton": "登录",
   "funcSunshine": "阳光服务",
   "funcQuestionnaire": "学工问卷",
@@ -66,154 +153,266 @@
   "funcEleRecharge": "电费充值",
   "funcBus": "实时校车",
   "funcCsBus": "长沙实时公交",
-  "more": "更多",
+  "funcCampusBusRoute": "校内公交线路",
+  "more": "多些",
   "homeButtonsSetting": "首页按钮排序与隐藏",
   "homeButtonsTitle": "首页按钮设置",
   "functionsButtonsSetting": "功能页按钮排序与隐藏",
   "functionsButtonsTitle": "功能页按钮设置",
-  "visibleFunctions": "显示中嗰功能",
-  "hiddenFunctions": "已隐藏嗰功能 (拖到箇里隐藏)",
+  "visibleFunctions": "现显示个功能",
+  "hiddenFunctions": "藏起个功能（拖到简里就藏起）",
   "dragToReorderTip": "长按拖动图标，移入不同区域可显示或隐藏功能",
-  "loginRequiredTitle": "需要登录以查看内容",
-  "loginRequiredMessage": "登录后即可查看侬嗰课表、作业和成绩信息",
+  "loginRequiredTitle": "要登录才得望内容",
+  "loginRequiredMessage": "登录后就得望侬个课表、作业和成绩信息",
   "noticeTitle": "通知公告",
-  "noticeLoginTitle": "需要登录以接收通知",
-  "noticeLoginMessage": "登录后即可向侬推送学校嗰最新通知公告",
-  "loadingNotices": "正在加载通知...",
-  "loadFailed": "加载失败",
-  "retry": "重试",
-  "noNotices": "暂无通知",
-  "noNoticesSubtitle": "有新消息时会在箇里显示",
-  "loadingMore": "正在加载更多...",
-  "noMoreNotices": "冇得更多通知哩",
-  "homeworkLoginTitle": "需要登录以同步作业",
-  "homeworkLoginMessage": "登录后即可从超星平台实时同步侬嗰课程作业，侬也可以直接点击右下角手动添加",
+  "noticeLoginTitle": "要登录以收着通知",
+  "noticeLoginMessage": "登录后就得向侬推送学校个新通知公告",
+  "loadingNotices": "正载入通知...",
+  "loadFailed": "载入失败",
+  "retry": "再试",
+  "noNotices": "暂冒有通知",
+  "noNoticesSubtitle": "有新消息就会显示到简里",
+  "loadingMore": "正载入多些...",
+  "noMoreNotices": "冒得多些通知哩",
+  "homeworkLoginTitle": "要登录以同步作业",
+  "homeworkLoginMessage": "登录后就得从超星平台实时同步侬个课程作业，也得点右下角手动添",
   "homeworkTabArchived": "存档",
-  "homeworkTabCompleted": "已完成",
-  "homeworkTabPending": "冇完成",
-  "homeworkEmptyArchived": "存档里空空如也",
-  "homeworkEmptyCompleted": "还冇完成过作业哦",
-  "homeworkEmptyPending": "暂时冇得待办作业",
-  "homeworkLoadFailed": "作业加载失败: {error}",
+  "homeworkTabCompleted": "做完哩",
+  "homeworkTabPending": "冒做完",
+  "homeworkEmptyArchived": "存档里空荡荡",
+  "homeworkEmptyCompleted": "还冒做完过作业哦",
+  "homeworkEmptyPending": "暂时冒得待办作业",
+  "homeworkLoadFailed": "作业载入失败: {error}",
+  "@homeworkLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "scoreQuery": "成绩查询",
   "currentSemester": "当前学期",
-  "noScoreData": "本学期暂冇成绩数据",
+  "noScoreData": "本学期暂冒有成绩数据",
   "scoreCredit": "学分: {credit}",
+  "@scoreCredit": {
+    "placeholders": {
+      "credit": {
+        "type": "String"
+      }
+    }
+  },
   "normalExam": "正常考试",
   "gradeExcellent": "优秀",
-  "gradeFailed": "不及格",
+  "gradeFailed": "冒及格",
   "courseReminder": "上课提醒",
-  "courseReminderTime": "上课提醒时间",
+  "courseReminderTime": "上课提醒时辰",
   "homeworkReminder": "作业截止提醒",
-  "homeworkReminderTime": "作业提醒时间",
+  "homeworkReminderTime": "作业提醒时辰",
   "libraryReminder": "图书馆预约提醒",
-  "libraryReminderTime": "图书馆预约提醒时间",
-  "notifDurationNone": "莫通知",
+  "libraryReminderTime": "图书馆预约提醒时辰",
+  "notifDurationNone": "冒通知",
   "notifMinutesBefore": "{minutes}分钟前",
+  "@notifMinutesBefore": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "notifHoursBefore": "{hours}小时前",
-  "setSuccessfully": "已设置成哩: {label}",
+  "@notifHoursBefore": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  },
+  "setSuccessfully": "设成哩: {label}",
+  "@setSuccessfully": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
   "setNotificationFailed": "设置通知失败: {error}",
-  "liveUpdatesNotSupported": "当前设备莫支持 Live Updates（需 Android 16+）",
-  "needNotificationPermission": "需先允许通知权限",
+  "@setNotificationFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "liveUpdatesNotSupported": "当前设备冒支持 Live Updates（需 Android 16+）",
+  "needNotificationPermission": "需先准通知权限",
   "liveActivity": "实时活动",
-  "liveActivitySubtitle": "使用 Live Updates API 提醒",
-  "liveActivityEnabled": "已开启实时活动",
-  "liveActivityDisabled": "已关闭实时活动",
-  "liveActivityEnabledFlymeDisabled": "已开启实时活动，实况通知已关闭",
+  "liveActivitySubtitle": "用 Live Updates API 提醒",
+  "liveActivityEnabled": "开哩实时活动",
+  "liveActivityDisabled": "关哩实时活动",
+  "liveActivityEnabledFlymeDisabled": "开哩实时活动，实况通知关哩",
   "flymeLive": "实况通知",
-  "flymeLiveSubtitle": "使用 Flyme 实况通知 API",
-  "flymeLiveEnabled": "已开启实况通知",
-  "flymeLiveDisabled": "已关闭实况通知",
-  "flymeLiveEnabledActivityDisabled": "已开启实况通知，实时活动已关闭",
-  "openSystemSettingsFailed": "打莫开系统设置，请手动去设置 > 通知里望下",
+  "flymeLiveSubtitle": "用 Flyme 实况通知 API",
+  "flymeLiveEnabled": "开哩实况通知",
+  "flymeLiveDisabled": "关哩实况通知",
+  "flymeLiveEnabledActivityDisabled": "开哩实况通知，实时活动关哩",
+  "openSystemSettingsFailed": "系统设置打不开，请手动到设置 > 通知里望下",
   "doubleTapToRetract": "双击撤回",
-  "systemNotificationDisabled": "系统通知未开启",
-  "testRetracted": "测试已撤回",
-  "testSent": "测试已发送",
-  "sendFailedCheckPermission": "发送失败：请检查通知权限",
-  "aiSettingsSaved": "✅ Agent 配置已保存",
-  "aiSettingsResetDefaults": "已恢复默认配置（硅基流动 + Qwen/Qwen3.5-4B）",
+  "systemNotificationDisabled": "系统通知冒开",
+  "testRetracted": "测试撤回哩",
+  "testSent": "测试发出哩",
+  "sendFailedCheckPermission": "发出失败：请检查通知权限",
+  "aiSettingsSaved": "✅ Agent 配置存好哩",
+  "aiSettingsResetDefaults": "默认配置还原哩",
   "aiApiUrl": "API 接口地址 (Base URL)",
-  "aiApiUrlHint": "默认 https://api.siliconflow.cn/v1",
+  "aiApiUrlHint": "默认中转服务",
   "aiModelName": "模型名称 (Model Name)",
-  "aiModelNameHint": "默认 Qwen/Qwen3.5-4B",
-  "aiApiKeyCustom": "API Key (已使用自定义)",
-  "aiApiKeyDefault": "API Key (使用默认)",
-  "aiApiKeyHint": "留空使用默认 Key，或填入侬嗰 Key (sk-...)",
+  "aiModelNameHint": "默认 soilzhu-latest",
+  "aiApiKeyCustom": "API Key (已用自定义)",
+  "aiApiKeyDefault": "API Key (用默认)",
+  "aiApiKeyHint": "留空就用默认 Key，或者填侬个 Key (sk-...)",
   "paste": "粘贴",
-  "saveSettings": "保存配置",
-  "resetDefaults": "恢复默认配置",
-  "ossDescription": "自在东湖 是基于开源社区的各种优秀组件构建而成的。偶们尊重并感谢每一位开发者的贡献。",
-  "needLocationForBus": "需要定位权限以显示附近嗰实时公交",
+  "saveSettings": "存配置",
+  "resetDefaults": "还原默认配置",
+  "ossDescription": "自在东湖是基于开源社区个各种优秀组件构建而成个。我们尊重并感谢每一位开发者个贡献。",
+  "needLocationForBus": "要定位权限才得显示旁边个实时公交",
   "libraryReservation": "图书馆预约",
   "signIn": "签到",
   "signBack": "退座",
-  "signInSuccess": "签到成功哩！祝侬学习愉快。",
+  "signInSuccess": "签到成功！祝侬学习快活。",
   "signInFailed": "签到失败: {error}",
+  "@signInFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "signBackConfirmTitle": "确认退座？",
-  "signBackConfirmContent": "确定结束在【{room}】嗰 {seat} 号座位使用吗？",
-  "thinkAgain": "偶再想想",
+  "signBackConfirmContent": "确定结束在【{room}】个 {seat} 号座位使用吗？",
+  "@signBackConfirmContent": {
+    "placeholders": {
+      "room": {
+        "type": "String"
+      },
+      "seat": {
+        "type": "String"
+      }
+    }
+  },
+  "thinkAgain": "我再想想",
   "confirmSignBack": "确认退座",
-  "signBackSuccess": "退座成功哩",
+  "signBackSuccess": "退座成功",
   "signBackFailed": "退座失败: {error}",
+  "@signBackFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "cancelReserveConfirmTitle": "确认取消预约？",
-  "cancelReserveConfirmContent": "确定取消在【{room}】嗰 {seat} 号座位预约吗？",
+  "cancelReserveConfirmContent": "确定取消在【{room}】个 {seat} 号座位预约吗？",
+  "@cancelReserveConfirmContent": {
+    "placeholders": {
+      "room": {
+        "type": "String"
+      },
+      "seat": {
+        "type": "String"
+      }
+    }
+  },
   "confirmCancel": "确认取消",
-  "reserveCancelledSuccess": "已成功取消该预约",
+  "reserveCancelledSuccess": "该预约取消哩",
   "cancelFailed": "取消失败: {error}",
-  "tomorrowTimetable": "明日课表",
-  "todayTimetable": "今日课表",
-  "timetableLoginRequiredTitle": "需要登录以查看课表",
-  "timetableLoginRequiredMessage": "登录后即可同步并查看侬嗰个人课表信息",
-  "viewAll": "查看全部",
-  "noCoursesTomorrow": "明天冇得待上嗰课程",
-  "noCoursesToday": "今天冇得待上嗰课程",
-  "locationServiceDisabled": "位置服务未开启",
-  "locationPermissionDenied": "定位权限被拒绝",
-  "locationPermissionPermanentlyDenied": "定位权限被永久拒绝，请在设置中开启",
-  "getLocationFailed": "获取位置失败: {error}",
+  "@cancelFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "tomorrowTimetable": "明朝课表",
+  "todayTimetable": "今朝课表",
+  "timetableLoginRequiredTitle": "要登录以望下课表",
+  "timetableLoginRequiredMessage": "登录后就得同步、望侬个课表",
+  "viewAll": "望下一概",
+  "noCoursesTomorrow": "明朝冒有课",
+  "noCoursesToday": "今朝冒有课",
+  "locationServiceDisabled": "位置服务冒开",
+  "locationPermissionDenied": "定位权限拒绝哩",
+  "locationPermissionPermanentlyDenied": "定位权限永久拒绝哩，请到设置中开",
+  "getLocationFailed": "拿位置失败: {error}",
+  "@getLocationFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "newChat": "新对话",
   "requestException": "请求异常",
   "checkAgentSettings": "检查 Agent 设置",
   "checkAgentSettingsArrow": "检查 Agent 设置 >",
   "quickPromptsTitle": "快捷提问",
-  "promptTodayCourses": "今天有么事课？",
-  "promptPendingHomework": "有哪些冇完成嗰作业？",
+  "promptTodayCourses": "今朝有什哩课？",
+  "promptPendingHomework": "有哪些冒做完个作业？",
   "promptReserveLibrary": "预约图书馆座位",
   "promptSubmitSunshine": "快速提交阳光服务",
   "promptCampusCardBalance": "查询校园卡余额",
-  "promptDormElectricity": "宿舍还有好多电？",
-  "promptEmptyClassrooms": "查询现在嗰空教室",
-  "promptImportantNotices": "最近有么事重要通知？",
-  "copiedAnswer": "已复制回答内容哩",
+  "promptDormElectricity": "宿舍还剩几多电？",
+  "promptEmptyClassrooms": "查现今个空教室",
+  "promptImportantNotices": "最近有什哩重要通知？",
+  "copiedAnswer": "回答内容复制哩",
   "copy": "复制",
-  "aiThinking": "正在思考中...",
+  "aiThinking": "正思量...",
   "noticeDetail": "通知详情",
-  "noticeNotFound": "未找到详情数据",
+  "noticeNotFound": "冒找到详情信息",
   "noTitle": "无标题",
   "senderSystem": "系统",
   "versionUpdate": "版本更新",
-  "foundNewVersion": "发现新版本 v{version}",
+  "foundNewVersion": "寻着新版本 v{version}",
+  "@foundNewVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "releaseNotes": "更新日志",
-  "updateNow": "立即更新",
-  "later": "以后再说",
-  "timetableRefreshed": "课表刷新好哩",
+  "updateNow": "即刻更新",
+  "later": "后头再说",
+  "timetableRefreshed": "课表刷新哩",
   "timetableRefreshFailed": "刷新失败: {error}",
-  "noTimetableToShare": "冇得可分享嗰课表",
-  "timetableFileNotFound": "课表文件莫存在",
-  "shareTimetableText": "偶嗰湖南农业大学课表",
+  "@timetableRefreshFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noTimetableToShare": "冒有可分享个课表",
+  "timetableFileNotFound": "冒寻着课表文件",
+  "shareTimetableText": "我个湖南农业大学课表",
   "shareFailed": "分享失败: {error}",
+  "@shareFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "tabAgenda": "日程",
   "tabWeek": "周",
   "adjustTimetable": "调整课表",
-  "backToToday": "回到今天",
+  "backToToday": "回到今朝",
   "refreshTimetable": "刷新课表",
   "shareTimetable": "分享课表",
-  "noCoursesThisSemester": "这学期还冇得课程及作业安排",
-  "timetableInfoIncomplete": "课表信息莫完整",
+  "noCoursesThisSemester": "本学期冒有课程安排",
+  "timetableInfoIncomplete": "课表信息冒齐",
   "pleaseReDownloadTimetable": "请重新下载课表",
-  "deadlinePrefix": "截止时间",
-  "noDeadline": "冇得截止时间",
+  "deadlinePrefix": "截止时辰",
+  "noDeadline": "冒有截止时辰",
   "weekdayMon": "周一",
   "weekdayTue": "周二",
   "weekdayWed": "周三",
@@ -233,40 +432,61 @@
   "month10": "十月",
   "month11": "十一月",
   "month12": "十二月",
-  "fetchTimetable": "获取课表",
-  "syncTimetablePrompt": "检测到侬已成功登录，是否现在同步侬嗰课程安排并导入日历？",
+  "fetchTimetable": "拿课表",
+  "syncTimetablePrompt": "检测到侬已成功登录，要现今同步侬个课程安排并导入日历吗？",
   "skip": "跳过",
-  "syncNow": "立即同步",
+  "syncNow": "即刻同步",
   "academicSemester": "学年学期",
   "firstWeekMonday": "第一周周一",
-  "selectDateHint": "请选择日期",
+  "selectDateHint": "请拣日子",
   "importButton": "导入",
-  "selectFirstWeekMondayHelp": "选择本学期第一周嗰周一",
-  "timetableImportSuccess": "🎉 课表导入成功哩！",
+  "selectFirstWeekMondayHelp": "拣本学期第一周个周一",
+  "timetableImportSuccess": "🎉 课表导入成哩！",
   "importFailed": "导入失败: {error}",
-  "timetableSyncing": "课表正在同步中",
-  "timetableSyncingDesc": "系统正在为侬全自动拉取教务课表\n请稍等下子...",
-  "noTimetableFound": "冇获取到课表",
+  "@importFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "timetableSyncing": "课表正同步中",
+  "timetableSyncingDesc": "系统正为侬全自动拉取教务课表\n请稍等下子...",
+  "noTimetableFound": "冒有拿到课表",
   "weekNumber": "第{week}周",
+  "@weekNumber": {
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
   "teacher": "教师",
   "classroom": "教室",
   "weeksLabel": "周次",
   "periodsLabel": "节次",
-  "timeLabel": "时间",
-  "close": "关闭",
-  "unknown": "未知",
+  "timeLabel": "时辰",
+  "close": "关",
+  "unknown": "冒知",
   "reschedule": "调课",
   "suspension": "停课",
   "addCourse": "加课",
-  "myAdjustments": "偶嗰调整",
+  "myAdjustments": "我个调整",
   "rescheduleSingleClass": "调一节",
   "rescheduleWholeDay": "调一天",
-  "noCoursesSyncFirst": "暂无课程，请先同步课表",
+  "noCoursesSyncFirst": "暂冒有课程，先同步课表",
   "courseLabel": "课程",
   "classTimeSlot": "上课时段",
   "originalWeek": "原周次",
   "currentWeekSuffix": " (本周)",
-  "noClassInWeek": "第{week}周冇得这节课",
+  "noClassInWeek": "第{week}周冒有这节课",
+  "@noClassInWeek": {
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
   "rescheduleTo": "调到",
   "rescheduleAway": "调走",
   "targetWeek": "目标周次",
@@ -275,139 +495,315 @@
   "newWeekday": "新星期",
   "newPeriod": "新节次",
   "originalWeekday": "原星期",
-  "noCoursesOnDay": "当天冇得课",
-  "noCoursesOnDayCannotReschedule": "当天冇得课，无法调休",
+  "noCoursesOnDay": "当天冒有课",
+  "noCoursesOnDayCannotReschedule": "当天冒有课，冒办法调课",
   "rescheduleMethod": "调课方式",
   "rescheduleCopy": "复制",
   "rescheduleShift": "平移",
   "rescheduleSwap": "对调",
-  "rescheduleCopyDesc": "原日期嗰课保留，目标日原本嗰课会被覆盖",
-  "rescheduleSwapDesc": "两天嗰课程互相交换",
-  "rescheduleShiftDesc": "只把课挪过去，原日期嗰课莫保留，目标日原本嗰课会被覆盖",
-  "selectCourseFirst": "请先选择课程",
+  "rescheduleCopyDesc": "原日子个课保留，目标日原本个课会被覆盖",
+  "rescheduleSwapDesc": "两天个课程互相交换",
+  "rescheduleShiftDesc": "只把课挪过去，原日子个课不保留，目标日原本个课会被覆盖",
+  "selectCourseFirst": "先拣课程",
   "confirmReschedule": "确认调课",
-  "rescheduleWarnNoCourse": "第{week}周冇得《{course}》，还要继续啵？",
+  "rescheduleWarnNoCourse": "第{week}周冒有《{course}》，还要接着吗？",
+  "@rescheduleWarnNoCourse": {
+    "placeholders": {
+      "week": {
+        "type": "int"
+      },
+      "course": {
+        "type": "String"
+      }
+    }
+  },
   "goBack": "返回",
-  "continueAction": "继续",
-  "rescheduleSaved": "调课存好哩",
-  "rescheduleDaySaved": "调休存好哩",
-  "save": "保存",
-  "allCourses": "全部课程",
+  "continueAction": "接着",
+  "rescheduleSaved": "调课已存",
+  "rescheduleDaySaved": "调休已存",
+  "save": "存",
+  "allCourses": "一概课程",
   "specifyPeriods": "指定节次",
   "startWeek": "起始周",
   "endWeek": "结束周",
   "weekday": "星期",
   "startPeriod": "开始节次",
   "endPeriod": "结束节次",
-  "suspensionSaved": "停课存好哩",
-  "addCourseTitle": "添加课程",
+  "suspensionSaved": "停课已存",
+  "addCourseTitle": "添课程",
   "courseNameLabel": "课程名称",
   "teacherOptional": "授课教师 (选填)",
   "classroomOptional": "教室 (选填)",
-  "pleaseEnterCourseName": "请填写课程名称",
-  "addedToTimetable": "已添加到课表哩",
-  "add": "添加",
-  "noAdjustmentsYet": "还冇得任何调整",
+  "pleaseEnterCourseName": "请填课程名称",
+  "addedToTimetable": "已添到课表",
+  "add": "添",
+  "noAdjustmentsYet": "还冒有任何调整",
   "ruleTypeRescheduleDay": "调休",
   "ruleTypeSuspension": "停课",
   "ruleTypeAddCourse": "加课",
-  "ruleDeleted": "已删除",
-  "clearAllAdjustmentsConfirmTitle": "清空全部调整？",
-  "clearAllAdjustmentsConfirmContent": "清空后课表恢复为教务原样。",
+  "ruleDeleted": "已删掉",
+  "clearAllAdjustmentsConfirmTitle": "清空一概调整？",
+  "clearAllAdjustmentsConfirmContent": "清空后课表还原成教务原样。",
   "clear": "清空",
   "cleared": "已清空",
-  "clearAll": "清空全部",
-  "keepOriginalPeriod": "保持原节次",
+  "clearAll": "清空一概",
+  "keepOriginalPeriod": "原节次不动",
   "periodNumbered": "第{period}节",
+  "@periodNumbered": {
+    "placeholders": {
+      "period": {
+        "type": "int"
+      }
+    }
+  },
   "periodTimeRange": "第{start}-{end}节 {time}",
+  "@periodTimeRange": {
+    "placeholders": {
+      "start": {
+        "type": "int"
+      },
+      "end": {
+        "type": "int"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "periodsRange": "第{start}-{end}节",
+  "@periodsRange": {
+    "placeholders": {
+      "start": {
+        "type": "int"
+      },
+      "end": {
+        "type": "int"
+      }
+    }
+  },
   "weekNumbered": "第{week}周",
+  "@weekNumbered": {
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
   "courseSummaryText": "第{sourceWeek}周《{course}》：{sourceDay}{sourceStart}-{sourceEnd}节 → 第{targetWeek}周{targetDay}{targetStart}-{targetEnd}节",
+  "@courseSummaryText": {
+    "placeholders": {
+      "sourceWeek": {
+        "type": "int"
+      },
+      "course": {
+        "type": "String"
+      },
+      "sourceDay": {
+        "type": "String"
+      },
+      "sourceStart": {
+        "type": "int"
+      },
+      "sourceEnd": {
+        "type": "int"
+      },
+      "targetWeek": {
+        "type": "int"
+      },
+      "targetDay": {
+        "type": "String"
+      },
+      "targetStart": {
+        "type": "int"
+      },
+      "targetEnd": {
+        "type": "int"
+      }
+    }
+  },
   "usualTimeFormat": "平时：每周{day} 第{start}-{end}节 ({weeks})",
+  "@usualTimeFormat": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "start": {
+        "type": "int"
+      },
+      "end": {
+        "type": "int"
+      },
+      "weeks": {
+        "type": "String"
+      }
+    }
+  },
   "originalSlotFormat": "周{day} 第{periods}节 ({weeks})",
+  "@originalSlotFormat": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "periods": {
+        "type": "String"
+      },
+      "weeks": {
+        "type": "String"
+      }
+    }
+  },
   "originalPeriodSummary": "原{day} 第{start}-{end}节",
-  "noDeadlineHomework": "冇得截止时间嗰作业",
-  "homeworkLoggingInWait": "⏳ 正在登录中，请等下子...",
+  "@originalPeriodSummary": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "start": {
+        "type": "int"
+      },
+      "end": {
+        "type": "int"
+      }
+    }
+  },
+  "noDeadlineHomework": "冒有截止时辰个作业",
+  "homeworkLoggingInWait": "⏳ 正登录中，请等下子...",
   "homeworkDetail": "作业详情",
   "completeInChaoXing": "在学习通里完成",
-  "manualAdd": "手动添加",
-  "movedToArchive": "已移到存档哩",
-  "movedOutOfArchive": "已移出存档哩",
-  "homeworkDeleted": "作业已删除",
+  "manualAdd": "手动添",
+  "movedToArchive": "搬到存档哩",
+  "movedOutOfArchive": "搬出存档哩",
+  "homeworkDeleted": "已删掉作业",
   "undo": "撤销",
-  "homeworkTitleHint": "准备做么事？",
+  "homeworkTitleHint": "准备做什哩？",
   "courseName": "课程名称",
-  "inputCourseHint": "输入所属课程",
+  "inputCourseHint": "填入所属课程",
   "remark": "备注",
-  "addRemarkHint": "添加备注信息",
+  "addRemarkHint": "添备注信息",
   "funcEvaluation": "教评系统",
   "defaultHitokoto": "自在东湖在湖东！",
-  "loggingInPleaseWait": "正在登录，请等下子...",
-  "whatsNewHint": "有么事新鲜事？",
-  "enableClassReminderHere": "在箇里开启上课提醒",
+  "loggingInPleaseWait": "正登录，请等下子...",
+  "whatsNewHint": "有什哩新鲜事？",
+  "enableClassReminderHere": "在简里开上课提醒",
   "systemNotice": "系统通知",
   "noticeTagNotice": "通",
   "scoreGradeExcellent": "优秀",
-  "scoreGradeFail": "不及格",
+  "scoreGradeFail": "冒及格",
   "feedbackEmailSubject": "自在东湖 App 反馈",
   "bill": "账单",
-  "pleaseSelectStartDate": "请选择起始日期",
-  "pleaseSelectEndDate": "请选择截止日期",
-  "endDateMustBeAfterStartDate": "截止时间大于起始时间",
-  "endDateCannotBeInFuture": "截止时间大于当前时间",
-  "dateRangeMaxOneMonth": "日期区间最大为一个月!",
-  "startDate": "起始日期",
-  "endDate": "截止日期",
-  "pleaseSelect": "请选择",
+  "pleaseSelectStartDate": "请拣起始日子",
+  "pleaseSelectEndDate": "请拣截止日子",
+  "endDateMustBeAfterStartDate": "截止时辰大于起始时辰",
+  "endDateCannotBeInFuture": "截止时辰大于当前时辰",
+  "dateRangeMaxOneMonth": "日子区间最大为一个月!",
+  "startDate": "起始日子",
+  "endDate": "截止日子",
+  "pleaseSelect": "请拣",
   "type": "类型",
   "transactionConsume": "消费",
   "transactionRecharge": "充值",
   "transactionSubsidy": "补助",
   "transactionTransfer": "转账",
-  "noTransactions": "暂无账单",
-  "pleaseEnterValidAmountRange": "请输入1-1000之间嗰整数金额",
+  "noTransactions": "暂冒有账单",
+  "pleaseEnterValidAmountRange": "请填入1-1000之间个整数金额",
   "campusCardRecharge": "校园卡充值",
   "refreshBalance": "刷新余额",
   "cardNumberPrefix": "卡号: {number}",
-  "currentBalanceYuan": "当前余额 (元)",
-  "selectRechargeAmount": "选择充值金额",
+  "@cardNumberPrefix": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "currentBalanceYuan": "现今余额（元）",
+  "selectRechargeAmount": "拣充值金额",
   "amountYuan": "{amount}元",
+  "@amountYuan": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "customAmount": "其他金额",
   "wechatPay": "微信支付",
   "alipay": "支付宝",
-  "paymentProcessingWechatHint": "支付处理中，请在微信中完成支付后等下子查询",
-  "paymentProcessingAlipayHint": "暂未查询到到账，请在支付宝中完成支付后等下子重试",
-  "rechargeCardSuccessElectricityFailed": "校园卡充值成功，电费充值失败",
-  "paymentSuccess": "支付成功哩",
-  "recharging": "正在充值...",
-  "paying": "正在支付...",
+  "paymentProcessingWechatHint": "支付处理中，请在微信中完成支付，等哈子再查",
+  "paymentProcessingAlipayHint": "暂冒查到到账，请在支付宝中完成支付，等哈子再试",
+  "rechargeCardSuccessElectricityFailed": "校园卡充值成哩，电费充值弗成",
+  "paymentSuccess": "支付成功",
+  "recharging": "正充值...",
+  "paying": "正支付...",
   "paymentConfirmationMethod": "支付确认 ({method})",
+  "@paymentConfirmationMethod": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
   "paymentFailedWithReason": "支付失败: {reason}",
-  "pleaseWaitDoNotClose": "请等下子，莫关闭页面",
-  "completePaymentInWechat": "请在跳转后嗰微信中完成支付",
-  "completePaymentInAlipay": "请在跳转后嗰支付宝中完成支付",
+  "@paymentFailedWithReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "pleaseWaitDoNotClose": "请等哈子，莫要关页面",
+  "completePaymentInWechat": "请在跳转后个微信中完成支付",
+  "completePaymentInAlipay": "请在跳转后个支付宝中完成支付",
   "checkingPaymentStatus": "查询中...",
   "confirmPayment": "确认支付",
   "classroomInquiry": "空教室查询",
   "building": "教学楼",
   "periodSlot": "节次",
   "capacityCount": "容纳人数: {count}",
-  "loadListFailedRetry": "加载列表失败，请重试",
-  "pleaseSelectCompleteRoom": "请选择完整嗰房间信息",
+  "@capacityCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "loadListFailedRetry": "载入列表失败，请再试",
+  "pleaseSelectCompleteRoom": "请拣完整个房间信息",
   "payElectricityCampusCard": "缴电费 (校园卡支付)",
   "payElectricity": "缴电费",
-  "rechargeFailedRetry": "充值失败，请重试",
+  "rechargeFailedRetry": "充值失败，请再试",
   "rechargeFailedWithReason": "充值失败: {reason}",
-  "fetchCardInfoFailed": "获取校园卡信息失败: {reason}",
+  "@rechargeFailedWithReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "fetchCardInfoFailed": "拿校园卡信息失败: {reason}",
+  "@fetchCardInfoFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "payElectricityWithRoom": "缴电费 ({room})",
-  "electricityRechargeSuccess": "电费充值成功哩",
+  "@payElectricityWithRoom": {
+    "placeholders": {
+      "room": {
+        "type": "String"
+      }
+    }
+  },
+  "electricityRechargeSuccess": "电费充值成功",
   "electricityRechargeFailed": "电费充值失败",
   "electricityRechargeTitle": "电费充值",
   "currentRechargeRoom": "当前充值房间",
   "refreshing": "刷新中",
-  "noRoomSelectedYet": "还冇选房间",
+  "noRoomSelectedYet": "还冒选房间",
   "electricityBalance": "电费余额",
-  "fetchFailedClickRetry": "获取失败，点击重试",
+  "fetchFailedClickRetry": "拿失败，点下再试",
   "campusArea": "校区",
   "dormBuilding": "楼栋",
   "dormRoom": "房间",
@@ -416,126 +812,177 @@
   "paymentFailed": "支付失败",
   "campusCard": "校园卡",
   "balanceAmount": "余额 ￥{balance}",
-  "tapQrToRefresh": "点击二维码以刷新",
+  "@balanceAmount": {
+    "placeholders": {
+      "balance": {
+        "type": "String"
+      }
+    }
+  },
+  "tapQrToRefresh": "点下二维码就得刷新",
   "paymentNotice": "付款提示",
   "paymentConfirmation": "支付确认",
-  "continuePayment": "继续支付",
+  "continuePayment": "接着支付",
   "scanQrCode": "扫一扫",
-  "scanQrCodeHint": "将二维码放入框内即可自动扫描",
+  "scanQrCodeHint": "把二维码放到框内就得自动扫描",
   "conversionFailed": "转换失败: {reason}",
+  "@conversionFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "openBrowserFailed": "跳转浏览器失败",
   "webVpnConverter": "WebVPN 转换器",
-  "webVpnDescription": "将普通校内链接转换为 WebVPN 链接，以便在校外直接访问。",
+  "webVpnDescription": "把普通校内链接转换成 WebVPN 链接，出了校也得直接访问。",
   "originalUrl": "原始地址",
   "conversionResult": "转换结果",
-  "copiedToClipboard": "已复制到剪贴板哩",
+  "copiedToClipboard": "复制哩到剪贴板",
   "visit": "访问",
-  "pasteUrlToConvertHint": "在上方粘贴链接以开始转换",
-  "loadTimeoutCampusNetworkSlow": "加载超时，可能是校内网络响应缓慢。",
+  "pasteUrlToConvertHint": "在上头粘贴链接就得开始转换",
+  "loadTimeoutCampusNetworkSlow": "载入超时，可能是校内网络响应缓慢。",
   "takePhoto": "拍照",
-  "chooseFromGallery": "从相册选择",
-  "loadFailedWithReason": "加载失败: {reason}",
-  "loadingProgress": "加载中... {progress}%",
-  "all": "全部",
+  "chooseFromGallery": "从相册拣",
+  "loadFailedWithReason": "载入失败: {reason}",
+  "@loadFailedWithReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "loadingProgress": "载入中... {progress}%",
+  "@loadingProgress": {
+    "placeholders": {
+      "progress": {
+        "type": "int"
+      }
+    }
+  },
+  "all": "一概",
   "query": "查询",
   "done": "完成",
-  "noData": "冇得数据",
+  "noData": "冒有数据",
   "ok": "确定",
-  "completed": "已完成",
+  "completed": "做完哩",
   "refresh": "刷新",
   "workspace": "工作台",
   "sunshineService": "阳光服务",
   "recentPublicAppeals": "近期公开诉求",
-  "noPublicAppeals": "暂无符合条件嗰公开诉求",
-  "writeAppeal": "填写诉求",
+  "noPublicAppeals": "暂冒有符合条件个公开诉求",
+  "writeAppeal": "填诉求",
   "appealDetails": "诉求详情",
   "transferInfo": "流转信息",
   "submitter": "提交人",
   "anonymous": "匿名",
   "expectedDepartment": "期望受理部门",
   "handlingDepartment": "受理部门",
-  "expectedResolveTime": "期望解决时间",
-  "acceptedTime": "受理时间",
-  "finishedTime": "办结时间",
+  "expectedResolveTime": "期望解决时辰",
+  "acceptedTime": "受理时辰",
+  "finishedTime": "办结时辰",
   "appealContent": "诉求内容",
-  "noDescriptionAvailable": "（暂无详细问题描述）",
+  "noDescriptionAvailable": "（暂冒有详细问题描述）",
   "processingResult": "处理结果",
   "sunshineFormTitle": "阳光服务填报",
-  "sunshineNotice": "欢迎为学校建设与发展建言献策。带 * 嗰栏目为必填项。\n一般问题 1–3 个工作日办复，复杂问题最长莫超过 7 个工作日（以平台说明为准）。相同内容莫要重复提交或一信多投。",
+  "sunshineNotice": "欢迎为学校建设与发展建言献策。带 * 个栏目为必填项。\n一般问题 1–3 个工作日办复，复杂问题最长不超过 7 个工作日（以平台说明为准）。相同内容莫要重复提交或一信多投。",
   "confirmSubmitAppeal": "确认提交诉求",
-  "confirmSubmitAppealMessage": "将以 {identity} 嗰身份向\u201c{department}\u201d提交{type}：\n\n{title}\n\n请确认内容真实准确，相同内容莫要重复提交。",
-  "continueEditing": "继续编辑",
+  "confirmSubmitAppealMessage": "将以 {identity} 个身份向“{department}”提交{type}：\n\n{title}\n\n请确认内容真实准确，相同内容莫要重复提交。",
+  "@confirmSubmitAppealMessage": {
+    "placeholders": {
+      "identity": {
+        "type": "String"
+      },
+      "department": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "continueEditing": "接着编辑",
   "confirmSubmit": "确认提交",
   "appealTypeInquiry": "咨询",
   "appealTypeSuggestion": "建议",
   "appealTypeComplaint": "投诉",
   "appealTypePraise": "表扬",
-  "appealSubmitSuccessMsg": "侬嗰诉求已受理，感谢侬对学校工作嗰支持。",
-  "appealSubmitPhoneCodeInvalidMsg": "平台提示手机号或验证码莫正确。请核对手机号；如需验证码，请在阳光服务官网完成验证。",
-  "appealSubmitDuplicateMsg": "该类型问题已提交且正在处理，莫要重复提交。",
-  "appealSubmitUnknownMsg": "暂时无法确认是否提交成功，请先到阳光服务官网\u201c与我相关\u201d核实，莫重复提交。本页已暂停再次提交。",
+  "appealSubmitSuccessMsg": "侬个诉求已受理，感谢侬对学校工作个支持。",
+  "appealSubmitPhoneCodeInvalidMsg": "平台提示手机号或验证码冒正确。请核对手机号；如需验证码，请到阳光服务官网完成验证。",
+  "appealSubmitDuplicateMsg": "该类型问题已提交且正处理，莫要重复提交。",
+  "appealSubmitUnknownMsg": "暂时冒办法确认是否提交成功，先到阳光服务官网“与我相关”核实，莫要重复提交。本页已暂停再次提交。",
   "submitResult": "提交结果",
-  "submitSuccess": "提交成功哩",
+  "submitSuccess": "提交成功",
   "gotIt": "晓得哩",
   "letterTypeRequired": "信件类别 *",
   "handlingDepartmentRequired": "受理单位 *",
-  "pleaseSelectHandlingDepartment": "请选择受理单位",
+  "pleaseSelectHandlingDepartment": "请拣受理单位",
   "subjectRequired": "主题 *",
   "contentRequired": "内容 *",
-  "appealContentHint": "请描述具体情况及侬嗰诉求",
+  "appealContentHint": "请描述具体情况及侬个诉求",
   "nameRequired": "姓名 *",
   "phoneRequired": "手机号码 *",
-  "pleaseEnterValidPhone": "请输入有效的 11 位手机号",
+  "pleaseEnterValidPhone": "请填入有效个 11 位手机号",
   "emailOptional": "Email（选填）",
-  "pleaseEnterValidEmail": "请输入有效嗰邮箱地址",
-  "expectedResolveTimeOptional": "期望解决时间（选填）",
-  "clearDate": "清除日期",
+  "pleaseEnterValidEmail": "请填入有效个邮箱地址",
+  "expectedResolveTimeOptional": "期望解决时辰（选填）",
+  "clearDate": "清除日子",
   "readNoticeAgreement": "已阅读填报须知，确认内容真实准确",
-  "fieldCannotBeEmpty": "此项莫能为空",
-  "fetchSunshineDetailFailed": "加载工单详情失败，请重试",
-  "loadSunshineFormFailed": "加载填报信息失败，请检查网络后重试",
-  "loadFailedCheckNetwork": "加载失败，请检查网络后重试",
+  "fieldCannotBeEmpty": "此项冒能为空",
+  "fetchSunshineDetailFailed": "载入工单详情失败，请再试",
+  "loadSunshineFormFailed": "载入填报信息失败，请检查网络后再试",
+  "loadFailedCheckNetwork": "载入失败，请检查网络后再试",
   "statusInProgress": "办理中",
   "statusResolved": "已办结",
-  "statusUnknown": "状态未知",
-  "sunshineServiceUnavailable": "阳光服务暂时莫可用，请稍后重试",
-  "sunshineDataReadFailed": "未能读取阳光服务数据，请检查登录状态后重试",
-  "sunshineDataFormatError": "阳光服务返回嗰数据格式异常",
-  "sunshineTicketNotFound": "未找到诉求工单详情",
-  "sunshineFormTimeout": "阳光服务表单响应超时，请稍后重试",
-  "ssoExpiredRelogin": "统一认证已过期，请返回个人中心重新登录",
-  "sunshineSessionExpired": "阳光服务登录已失效，请返回个人中心重新登录后重试",
-  "noDepartmentsAvailable": "暂无可用受理单位，请稍后重试",
-  "reload": "重新加载",
+  "statusUnknown": "状态冒知",
+  "sunshineServiceUnavailable": "阳光服务暂时冒得用，请等哈子再试",
+  "sunshineDataReadFailed": "冒能读取阳光服务数据，请检查登录状态后再试",
+  "sunshineDataFormatError": "阳光服务返回个数据格式异常",
+  "sunshineTicketNotFound": "冒找到诉求工单详情",
+  "sunshineFormTimeout": "阳光服务表单响应超时，请等哈子再试",
+  "ssoExpiredRelogin": "统一认证已过期，请回个人中心重新登录",
+  "sunshineSessionExpired": "阳光服务登录已失效，请返回个人中心重新登录后再试",
+  "noDepartmentsAvailable": "暂冒有可用受理单位，请等哈子再试",
+  "reload": "重新载入",
   "submit": "提交",
   "studentWorkQuestionnaire": "学工问卷",
   "statusSubmitted": "已提交",
   "statusExpired": "已截止",
-  "statusPendingFill": "待填写",
+  "statusPendingFill": "待填",
   "questionnaireDataError": "问卷数据异常",
-  "pleaseFillQuestion": "请填写: {title}",
-  "questionnaireCannotBeSubmitted": "该问卷当前莫可提交",
-  "submitFailedRetry": "提交失败，请稍后重试",
-  "pleaseSelectDate": "请选择日期",
-  "pleaseEnterPhone": "请输入电话",
-  "pleaseEnter": "请输入",
-  "noQuestionnairesFound": "暂无符合条件嗰问卷",
-  "unnamedQuestionnaire": "未命名问卷",
-  "studentSystemSessionExpired": "学工系统登录已失效，请返回个人中心重新登录后重试",
-  "readQuestionnaireDataFailed": "未能读取问卷数据，请检查登录状态后重试",
+  "pleaseFillQuestion": "请填: {title}",
+  "@pleaseFillQuestion": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "questionnaireCannotBeSubmitted": "该问卷现今冒得提交",
+  "submitFailedRetry": "提交失败，请等哈子再试",
+  "pleaseSelectDate": "请拣日子",
+  "pleaseEnterPhone": "请填入电话",
+  "pleaseEnter": "请填入",
+  "noQuestionnairesFound": "暂冒有符合条件个问卷",
+  "unnamedQuestionnaire": "冒命名问卷",
+  "studentSystemSessionExpired": "学工系统登录已失效，请返回个人中心重新登录后再试",
+  "readQuestionnaireDataFailed": "冒能读取问卷数据，请检查登录状态后再试",
   "questionnaireListFormatError": "问卷列表数据格式异常",
-  "questionnaireMissingTaskId": "该问卷缺少任务标识，无法打开",
+  "questionnaireMissingTaskId": "该问卷缺少任务标识，冒办法打开",
   "leaveApplication": "请假申请",
-  "pleaseFillRemark": "请填写备注",
+  "pleaseFillRemark": "请填备注",
   "leaveType": "请假类别",
-  "startTime": "开始时间",
-  "endTime": "结束时间",
+  "startTime": "开始时辰",
+  "endTime": "结束时辰",
   "leaveDuration": "请假时长",
   "calculatingDuration": "（试算中…）",
   "leaveReason": "请假事由",
   "emergencyContact": "紧急联系人",
   "emergencyContactPhone": "紧急联系人电话",
-  "pleaseEnter11DigitPhone": "请输入11位手机号",
+  "pleaseEnter11DigitPhone": "请填入11位手机号",
   "accompanyingPersons": "同行人员",
   "optional": "选填",
   "leaveCampus": "离校",
@@ -545,36 +992,49 @@
   "districtCounty": "区/县",
   "detailedAddress": "详细地址",
   "returnToDormitory": "回宿舍",
-  "remark": "备注",
   "leaveCity": "出市",
   "leaveProvince": "出省",
   "leaveMaterials": "请假材料",
-  "leaveMaterialsHint": "选填，点击从相册选择",
-  "removeAttachment": "移除附件",
-  "selectTimeAutoCalculateDuration": "请选择起止时间自动计算",
-  "pleaseSelectLeaveType": "请选择请假类别",
-  "pleaseSelectStartTime": "请选择开始时间",
-  "pleaseSelectEndTime": "请选择结束时间",
-  "timeFormatErrorReselect": "时间格式异常，请重新选择",
-  "endTimeMustBeAfterStartTime": "结束时间应大于开始时间！",
-  "durationCalculateFailedReselect": "时长计算失败，请重新选择起止时间",
-  "durationMustBeInteger": "请假时长请输入整数！",
-  "pleaseEnterValidDuration": "请输入正确嗰请假时长！",
-  "pleaseFillLeaveReason": "请填写请假事由",
-  "pleaseFillEmergencyContact": "请填写紧急联系人",
-  "pleaseFillEmergencyContactPhone": "请填写紧急联系人电话",
-  "invalidEmergencyContactPhone": "紧急联系人电话格式莫正确",
-  "pleaseSelectLeaveDestination": "请选择离校去向",
-  "pleaseFillDetailedAddress": "请填写离校详细地址",
+  "leaveMaterialsHint": "选填，点下从相册拣",
+  "removeAttachment": "剔除附件",
+  "selectTimeAutoCalculateDuration": "请拣起止时辰自动计算",
+  "pleaseSelectLeaveType": "请拣请假类别",
+  "pleaseSelectStartTime": "请拣开始时辰",
+  "pleaseSelectEndTime": "请拣结束时辰",
+  "timeFormatErrorReselect": "时辰格式异常，请重新拣",
+  "endTimeMustBeAfterStartTime": "结束时辰应大于开始时辰！",
+  "durationCalculateFailedReselect": "时长计算失败，请重新拣起止时辰",
+  "durationMustBeInteger": "请假时长请填入整数！",
+  "pleaseEnterValidDuration": "请填入正确个请假时长！",
+  "pleaseFillLeaveReason": "请填请假事由",
+  "pleaseFillEmergencyContact": "请填紧急联系人",
+  "pleaseFillEmergencyContactPhone": "请填紧急联系人电话",
+  "invalidEmergencyContactPhone": "紧急联系人电话格式冒正确",
+  "pleaseSelectLeaveDestination": "请拣离校去向",
+  "pleaseFillDetailedAddress": "请填离校详细地址",
   "cancelLeavePromptTitle": "撤销请假?",
-  "cancelLeavePromptContent": "确定撤销这条请假申请吗？",
+  "cancelLeavePromptContent": "确定撤销简条请假申请吗？",
   "revoke": "撤销",
   "revokedSuccess": "已撤销",
-  "revokeFailedRetry": "撤销失败，请稍后重试",
+  "revokeFailedRetry": "撤销失败，请等哈子再试",
   "yes": "是",
   "no": "否",
   "durationDays": "{days}天",
+  "@durationDays": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
   "durationHours": "{hours}小时",
+  "@durationHours": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  },
   "contactPhone": "联系人电话",
   "isLeavingCampus": "是否离校",
   "practiceInstructor": "实践指导老师",
@@ -582,95 +1042,344 @@
   "auditStatus": "审核状态",
   "leaveDetails": "请假详情",
   "leaveTypeDetails": "{type}详情",
+  "@leaveTypeDetails": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
   "revokeApplication": "撤销申请",
-  "statusPendingAudit": "待审核",
-  "statusAuditing": "审核中",
-  "statusAudited": "已审核",
-  "noLeaveRecordsFound": "暂无符合条件嗰请假记录",
+  "statusPendingAudit": "等审",
+  "statusAuditing": "审到",
+  "statusAudited": "审过哩",
+  "noLeaveRecordsFound": "暂冒有符合条件个请假记录",
   "confirmRevokeLeaveItem": "确定撤销《{type}》({timeRange})吗？",
+  "@confirmRevokeLeaveItem": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "timeRange": {
+        "type": "String"
+      }
+    }
+  },
   "library": "图书馆",
   "libraryStatusPendingCheckIn": "待签到",
-  "libraryStatusInUse": "使用中",
+  "libraryStatusInUse": "用到",
   "libraryStatusAway": "暂离中",
   "libraryStatusCanCheckIn": "可签到",
   "libraryStatusFinished": "已结束",
-  "libraryStatusCancelled": "已取消",
-  "checkInSuccessEnjoy": "签到成功哩！祝侬学习愉快。",
+  "libraryStatusCancelled": "取消哩",
+  "checkInSuccessEnjoy": "签到成功！祝侬学习愉快。",
   "checkInFailedWithReason": "签到失败: {reason}",
+  "@checkInFailedWithReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "confirmCheckOutTitle": "确认退座？",
-  "confirmCheckOutMessage": "确定结束在【{room}】嗰 {seat} 号座位使用吗？",
-  "thinkAgain": "偶再想想",
+  "confirmCheckOutMessage": "确定结束在【{room}】个 {seat} 号座位用吗？",
+  "@confirmCheckOutMessage": {
+    "placeholders": {
+      "room": {
+        "type": "String"
+      },
+      "seat": {
+        "type": "String"
+      }
+    }
+  },
   "confirmCheckOut": "确认退座",
-  "checkOutSuccess": "退座成功哩",
+  "checkOutSuccess": "退座成功",
   "checkOutFailedWithReason": "退座失败: {reason}",
+  "@checkOutFailedWithReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "confirmCancelReservationTitle": "确认取消预约？",
-  "confirmCancelReservationMessage": "确定取消在【{room}】嗰 {seat} 号座位预约吗？",
-  "reservationCancelledSuccess": "该预约已取消",
+  "confirmCancelReservationMessage": "确定取消在【{room}】个 {seat} 号座位预约吗？",
+  "@confirmCancelReservationMessage": {
+    "placeholders": {
+      "room": {
+        "type": "String"
+      },
+      "seat": {
+        "type": "String"
+      }
+    }
+  },
+  "reservationCancelledSuccess": "该预约取消哩",
   "cancelReservationFailedWithReason": "取消失败: {reason}",
-  "submittingReservation": "正在提交预约...",
-  "reservationSuccess": "预约成功哩",
+  "@cancelReservationFailedWithReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "submittingReservation": "正提交预约...",
+  "reservationSuccess": "预约成功",
   "readingRoomLabel": "阅览室：{room}",
+  "@readingRoomLabel": {
+    "placeholders": {
+      "room": {
+        "type": "String"
+      }
+    }
+  },
   "seatNumberLabel": "座位号：{seat} 号",
-  "dateLabel": "日期：{date}",
-  "timeValueLabel": "时间：{time}",
-  "reservationNotice": "请在规定时间内完成签到，超时未签到将视为违规。",
+  "@seatNumberLabel": {
+    "placeholders": {
+      "seat": {
+        "type": "String"
+      }
+    }
+  },
+  "dateLabel": "日子：{date}",
+  "@dateLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "timeValueLabel": "时辰：{time}",
+  "@timeValueLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "reservationNotice": "请在规定时辰内完成签到，超时冒签到就算违规。",
   "reservationFailed": "预约失败",
-  "iUnderstand": "偶晓得哩",
+  "iUnderstand": "我晓得哩",
   "seatWithNumber": "{seat} 号座位",
+  "@seatWithNumber": {
+    "placeholders": {
+      "seat": {
+        "type": "String"
+      }
+    }
+  },
   "cancelReservation": "取消预约",
   "checkIn": "签到",
   "checkOut": "退座",
   "reserveSeat": "预约选座",
   "recentReservations": "近期预约记录",
-  "noReservationRecords": "暂无历史预约记录",
+  "noReservationRecords": "暂冒有历史预约记录",
   "reserve": "预约",
-  "selectReadingRoom": "选择阅览室",
-  "noRoomsFound": "暂无符合条件嗰阅览室",
+  "selectReadingRoom": "拣阅览室",
+  "noRoomsFound": "暂冒有符合条件个阅览室",
   "totalSeats": "总座位数：{capacity}",
-  "pleaseSelectSeatFirst": "请先在地图中选择一个座位",
+  "@totalSeats": {
+    "placeholders": {
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
+  "pleaseSelectSeatFirst": "先到地图中拣一个座位",
   "refreshSeatStatus": "刷新座位状态",
-  "dateAndPeriod": "日期：{day}  |  时段：{time}",
+  "dateAndPeriod": "日子：{day}  |  时段：{time}",
+  "@dateAndPeriod": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "seatAvailable": "可选",
-  "seatSelected": "已选",
-  "seatOccupied": "占用/莫可选",
-  "loadingSeatMap": "正在加载座位分布图...",
-  "reserveNow": "立即预约",
+  "seatSelected": "选哩",
+  "seatOccupied": "占用/冒得选",
+  "loadingSeatMap": "正载入座位分布图...",
+  "reserveNow": "即刻预约",
   "quickReserve": "快速预约",
-  "selectDate": "选择日期",
-  "noAvailableSlotsForDate": "该日期已冇得可用预约时段，请选择其他日期。",
+  "selectDate": "拣日子",
+  "noAvailableSlotsForDate": "简日冒有可用预约时段，请换个日子。",
   "confirmReservationPeriod": "确认预约 ({day} {start} - {end})",
-  "pleaseSelectValidPeriod": "请选择有效时段",
-  "selectReservationPeriod": "选择预约时段",
+  "@confirmReservationPeriod": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "pleaseSelectValidPeriod": "请拣有效时段",
+  "selectReservationPeriod": "拣预约时段",
   "confirmPeriod": "确定时段",
-  "todayWithDate": "今天 ({date})",
-  "tomorrowWithDate": "明天 ({date})",
+  "todayWithDate": "今朝 ({date})",
+  "@todayWithDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "tomorrowWithDate": "明朝 ({date})",
+  "@tomorrowWithDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "monthDayFormat": "{month}月{day}日",
-  "newVersionFoundSnackBar": "🚀 发现新版本 v{version}，点击望下详情",
-  "viewAction": "查看",
+  "@monthDayFormat": {
+    "placeholders": {
+      "month": {
+        "type": "int"
+      },
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "newVersionFoundSnackBar": "🚀 寻着新版本 v{version}，点下望下详情",
+  "@newVersionFoundSnackBar": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "viewAction": "望下",
   "alreadyLatestVersion": "已经是最新版本哩",
   "checkUpdateFailed": "检查更新失败: {error}",
-  "downloadingUpdate": "正在下载更新 v{version}...",
-  "downloadingUpdateTitle": "正在下载更新",
+  "@checkUpdateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadingUpdate": "正下载更新 v{version}...",
+  "@downloadingUpdate": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadingUpdateTitle": "正下载更新",
   "downloadFailedWithReason": "下载失败: {error}",
+  "@downloadFailedWithReason": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "classReminderChannelName": "上课提醒",
-  "classReminderChannelDesc": "在每节课开始前发送提醒",
+  "classReminderChannelDesc": "在每节课开始前发出提醒",
   "homeworkReminderChannelName": "作业截止提醒",
-  "homeworkReminderChannelDesc": "在作业截止前发送提醒",
+  "homeworkReminderChannelDesc": "在作业截止前发出提醒",
   "libraryReminderChannelName": "图书馆预约提醒",
-  "libraryReminderChannelDesc": "在图书馆座位预约开始前发送提醒",
-  "homeworkDueInLessThan": "作业将在莫到{time}后截止",
-  "homeworkDueIn": "作业将在{time}后截止",
+  "libraryReminderChannelDesc": "在图书馆座位预约开始前发出提醒",
+  "homeworkDueInLessThan": "作业不到{time}就截止",
+  "@homeworkDueInLessThan": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "homeworkDueIn": "作业{time}后截止",
+  "@homeworkDueIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "minutesCount": "{count}分钟",
+  "@minutesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "hoursCount": "{count}小时",
+  "@hoursCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "seatNumberNotificationTitle": "{time} {seat}号座位",
-  "liveMinutesRemainingClass": "还有 {minutes} 分钟上课",
+  "@seatNumberNotificationTitle": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      },
+      "seat": {
+        "type": "String"
+      }
+    }
+  },
+  "liveMinutesRemainingClass": "还剩 {minutes} 分钟就上课",
+  "@liveMinutesRemainingClass": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "liveClassStartingTime": "{time}开课",
-  "liveMinutesRemainingSeat": "还有 {minutes} 分钟开始 · 请按时签到",
+  "@liveClassStartingTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "liveMinutesRemainingSeat": "还剩 {minutes} 分钟就开始 · 请按时签到",
+  "@liveMinutesRemainingSeat": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "liveSeatStartingTime": "{time}开始",
-  "aiApiKeyNotConfigured": "未配置 API Key，请先在「AI 助理设置」中填入 API Key",
-  "aiThinking": "正在思考中...",
+  "@liveSeatStartingTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "aiApiKeyNotConfigured": "冒配置 API Key，先到「AI 助理设置」中填入 API Key",
   "weeksRange": "第{weeks}周",
+  "@weeksRange": {
+    "placeholders": {
+      "weeks": {
+        "type": "String"
+      }
+    }
+  },
   "ruleModeCopy": "复制",
   "ruleModeSwap": "对调",
-  "ruleModeShift": "平移"
+  "ruleModeShift": "平移",
+  "uploadImage": "上传图片",
+  "describeImagePrompt": "请分析或描述简张图片",
+  "removeImage": "剔除图片"
 }
