@@ -435,20 +435,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get aiSettingsSaved => '✅ Paramètres de l\'agent enregistrés';
 
   @override
-  String get aiSettingsResetDefaults =>
-      'Paramètres par défaut rétablis (SiliconFlow + Qwen/Qwen3.5-4B)';
+  String get aiSettingsResetDefaults => 'Paramètres par défaut rétablis';
 
   @override
   String get aiApiUrl => 'URL de base de l\'API (Base URL)';
 
   @override
-  String get aiApiUrlHint => 'Par défaut : https://api.siliconflow.cn/v1';
+  String get aiApiUrlHint => 'Service relais par défaut';
 
   @override
   String get aiModelName => 'Nom du modèle (Model Name)';
 
   @override
-  String get aiModelNameHint => 'Par défaut : Qwen/Qwen3.5-4B';
+  String get aiModelNameHint => 'Par défaut : soilzhu-latest';
 
   @override
   String get aiApiKeyCustom => 'Clé API (personnalisée)';
@@ -2295,4 +2294,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ruleModeShift => 'Décaler';
+
+  @override
+  String get uploadImage => '上传图片';
+
+  @override
+  String get describeImagePrompt => '请分析或描述这张图片';
+
+  @override
+  String get removeImage => '移除图片';
 }

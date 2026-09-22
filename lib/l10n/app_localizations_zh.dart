@@ -420,19 +420,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiSettingsSaved => '✅ Agent 配置已保存';
 
   @override
-  String get aiSettingsResetDefaults => '已恢复默认配置（硅基流动 + Qwen/Qwen3.5-4B）';
+  String get aiSettingsResetDefaults => '已恢复默认配置';
 
   @override
   String get aiApiUrl => 'API 接口地址 (Base URL)';
 
   @override
-  String get aiApiUrlHint => '默认 https://api.siliconflow.cn/v1';
+  String get aiApiUrlHint => '默认中转服务';
 
   @override
   String get aiModelName => '模型名称 (Model Name)';
 
   @override
-  String get aiModelNameHint => '默认 Qwen/Qwen3.5-4B';
+  String get aiModelNameHint => '默认 soilzhu-latest';
 
   @override
   String get aiApiKeyCustom => 'API Key (已使用自定义)';
@@ -2183,6 +2183,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ruleModeShift => '平移';
+
+  @override
+  String get uploadImage => '上传图片';
+
+  @override
+  String get describeImagePrompt => '请分析或描述这张图片';
+
+  @override
+  String get removeImage => '移除图片';
 }
 
 /// The translations for Chinese, as used in Hong Kong (`zh_HK`).
@@ -2598,19 +2607,19 @@ class AppLocalizationsZhHk extends AppLocalizationsZh {
   String get aiSettingsSaved => '✅ Agent 配置已保存';
 
   @override
-  String get aiSettingsResetDefaults => '已恢復預設配置（硅基流動 + Qwen/Qwen3.5-4B）';
+  String get aiSettingsResetDefaults => '已恢復預設配置';
 
   @override
   String get aiApiUrl => 'API 接口地址 (Base URL)';
 
   @override
-  String get aiApiUrlHint => '預設 https://api.siliconflow.cn/v1';
+  String get aiApiUrlHint => '預設中轉服務';
 
   @override
   String get aiModelName => '模型名稱 (Model Name)';
 
   @override
-  String get aiModelNameHint => '預設 Qwen/Qwen3.5-4B';
+  String get aiModelNameHint => '預設 soilzhu-latest';
 
   @override
   String get aiApiKeyCustom => 'API Key (已使用自定義)';
@@ -4776,19 +4785,19 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get aiSettingsSaved => '✅ Agent 配置已儲存';
 
   @override
-  String get aiSettingsResetDefaults => '已恢復預設配置（矽基流動 + Qwen/Qwen3.5-4B）';
+  String get aiSettingsResetDefaults => '已恢復預設配置';
 
   @override
   String get aiApiUrl => 'API 介面地址 (Base URL)';
 
   @override
-  String get aiApiUrlHint => '預設 https://api.siliconflow.cn/v1';
+  String get aiApiUrlHint => '預設中轉服務';
 
   @override
   String get aiModelName => '模型名稱 (Model Name)';
 
   @override
-  String get aiModelNameHint => '預設 Qwen/Qwen3.5-4B';
+  String get aiModelNameHint => '預設 soilzhu-latest';
 
   @override
   String get aiApiKeyCustom => 'API Key (已使用自定義)';
@@ -6744,6 +6753,9 @@ class AppLocalizationsZhHefei extends AppLocalizationsZh {
   String get funcCsBus => '长沙实时公交';
 
   @override
+  String get funcCampusBusRoute => '校内公交线路';
+
+  @override
   String get more => '更多';
 
   @override
@@ -6954,19 +6966,19 @@ class AppLocalizationsZhHefei extends AppLocalizationsZh {
   String get aiSettingsSaved => '✅ Agent 配置已保存';
 
   @override
-  String get aiSettingsResetDefaults => '已恢复默认配置（硅基流动 + Qwen/Qwen3.5-4B）';
+  String get aiSettingsResetDefaults => '已恢复默认配置';
 
   @override
   String get aiApiUrl => 'API 接口地址 (Base URL)';
 
   @override
-  String get aiApiUrlHint => '默认 https://api.siliconflow.cn/v1';
+  String get aiApiUrlHint => '默认中转服务';
 
   @override
   String get aiModelName => '模型名称 (Model Name)';
 
   @override
-  String get aiModelNameHint => '默认 Qwen/Qwen3.5-4B';
+  String get aiModelNameHint => '默认 soilzhu-latest';
 
   @override
   String get aiApiKeyCustom => 'API Key (已使用自定义)';

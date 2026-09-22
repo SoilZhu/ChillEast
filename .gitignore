@@ -62,6 +62,11 @@ ios/ServiceDefinitions.json
 ios/Runner/GeneratedPluginRegistrant.h
 ios/Runner/GeneratedPluginRegistrant.m
 
+# Desktop ephemeral
+**/linux/flutter/ephemeral/
+**/windows/flutter/ephemeral/
+**/macos/Flutter/ephemeral/
+
 # debug
 debug
 
@@ -77,3 +82,10 @@ debug
 .env
 .env.*
 .env.json
+
+# Cloudflare Worker (relay)
+worker/node_modules/
+worker/.dev.vars
+worker/.wrangler/
+worker/worker-configuration.d.ts
+worker

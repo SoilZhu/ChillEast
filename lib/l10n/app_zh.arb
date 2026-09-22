@@ -262,11 +262,11 @@
   "testSent": "测试已发送",
   "sendFailedCheckPermission": "发送失败：请检查通知权限",
   "aiSettingsSaved": "✅ Agent 配置已保存",
-  "aiSettingsResetDefaults": "已恢复默认配置（硅基流动 + Qwen/Qwen3.5-4B）",
+  "aiSettingsResetDefaults": "已恢复默认配置",
   "aiApiUrl": "API 接口地址 (Base URL)",
-  "aiApiUrlHint": "默认 https://api.siliconflow.cn/v1",
+  "aiApiUrlHint": "默认中转服务",
   "aiModelName": "模型名称 (Model Name)",
-  "aiModelNameHint": "默认 Qwen/Qwen3.5-4B",
+  "aiModelNameHint": "默认 soilzhu-latest",
   "aiApiKeyCustom": "API Key (已使用自定义)",
   "aiApiKeyDefault": "API Key (使用默认)",
   "aiApiKeyHint": "留空使用默认 Key，或填入您的 Key (sk-...)",
@@ -1289,5 +1289,8 @@
   },
   "ruleModeCopy": "复制",
   "ruleModeSwap": "对调",
-  "ruleModeShift": "平移"
+  "ruleModeShift": "平移",
+  "uploadImage": "上传图片",
+  "describeImagePrompt": "请分析或描述这张图片",
+  "removeImage": "移除图片"
 }

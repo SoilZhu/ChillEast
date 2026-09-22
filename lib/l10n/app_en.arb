@@ -133,11 +133,11 @@
   "testSent": "Test notification sent",
   "sendFailedCheckPermission": "Send failed: Please check notification permissions",
   "aiSettingsSaved": "✅ Agent settings saved",
-  "aiSettingsResetDefaults": "Reset to default settings (SiliconFlow + Qwen/Qwen3.5-4B)",
+  "aiSettingsResetDefaults": "Defaults restored",
   "aiApiUrl": "API Base URL",
-  "aiApiUrlHint": "Default: https://api.siliconflow.cn/v1",
+  "aiApiUrlHint": "Default relay service",
   "aiModelName": "Model Name",
-  "aiModelNameHint": "Default: Qwen/Qwen3.5-4B",
+  "aiModelNameHint": "Default: soilzhu-latest",
   "aiApiKeyCustom": "API Key (Custom)",
   "aiApiKeyDefault": "API Key (Default)",
   "aiApiKeyHint": "Leave empty for default key, or enter your key (sk-...)",
@@ -670,5 +670,8 @@
   "weeksRange": "Weeks {weeks}",
   "ruleModeCopy": "Copy",
   "ruleModeSwap": "Swap",
-  "ruleModeShift": "Shift"
+  "ruleModeShift": "Shift",
+  "uploadImage": "Upload Image",
+  "describeImagePrompt": "Please analyze or describe this image",
+  "removeImage": "Remove Image"
 }

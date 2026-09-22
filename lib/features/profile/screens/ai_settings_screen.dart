@@ -23,8 +23,8 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
   void initState() {
     super.initState();
     final aiState = ref.read(aiAssistantProvider);
-    _apiUrlController = TextEditingController(text: aiState.apiUrl);
-    _modelController = TextEditingController(text: aiState.model);
+    _apiUrlController = TextEditingController(text: aiState.resolvedApiUrl);
+    _modelController = TextEditingController(text: aiState.resolvedModel);
     _apiKeyController = TextEditingController(text: aiState.apiKey ?? '');
   }
 
@@ -45,9 +45,10 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
     final model = _modelController.text.trim();
     final apiKey = _apiKeyController.text.trim();
 
+    // 留空表示跟随默认（Worker 中转），由 saveFullSettings 落盘为“清除”。
     await ref.read(aiAssistantProvider.notifier).saveFullSettings(
-      apiUrl: apiUrl.isNotEmpty ? apiUrl : AiAssistantService.defaultApiUrl,
-      model: model.isNotEmpty ? model : AiAssistantService.defaultModel,
+      apiUrl: apiUrl,
+      model: model,
       apiKey: apiKey,
     );
 

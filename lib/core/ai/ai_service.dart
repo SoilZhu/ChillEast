@@ -8,7 +8,7 @@ import '../../features/timetable/utils/date_calculator.dart';
 /// AI Message model
 class AiChatMessage {
   final String role; // 'system', 'user', 'assistant', 'tool'
-  final String? content;
+  final dynamic content;
   final String? name;
   final String? toolCallId;
   final List<dynamic>? toolCalls;
@@ -37,7 +37,7 @@ class AiChatMessage {
   factory AiChatMessage.fromJson(Map<String, dynamic> json) {
     return AiChatMessage(
       role: json['role'] as String? ?? 'user',
-      content: json['content'] as String?,
+      content: json['content'],
       name: json['name'] as String?,
       toolCallId: json['tool_call_id'] as String?,
       toolCalls: json['tool_calls'] as List<dynamic>?,
@@ -59,9 +59,58 @@ class AiAssistantService {
     ),
   );
 
-  /// 默认配置：硅基流动中国站 + Qwen/Qwen3.5-4B
-  static const String defaultApiUrl = 'https://api.siliconflow.cn/v1';
-  static const String defaultModel = 'Qwen/Qwen3.5-4B';
+  /// 默认配置：走自建 Cloudflare Worker 中转，运营商 / 模型在 Worker 端切换，
+  /// App 无需发版。部署后把 Worker 地址填到 `_fallbackApiUrl`，
+  /// 或打包时用 --dart-define=DEFAULT_AI_API_URL=... 覆盖。
+  /// （构建密钥含义：此时 DEFAULT_AI_API_KEY 是 Worker 共享密钥 WORKER_API_KEY）
+  static const String _envApiUrl = String.fromEnvironment(
+    'DEFAULT_AI_API_URL',
+    defaultValue: '',
+  );
+
+  /// Worker 部署地址（自定义域名），打包时可用
+  /// --dart-define=DEFAULT_AI_API_URL=... 覆盖。
+  static const String _fallbackApiUrl = 'https://chilleast-llm-api.soilzhu.su/v1';
+
+  static String get defaultApiUrl =>
+      _envApiUrl.trim().isNotEmpty ? _envApiUrl.trim() : _fallbackApiUrl;
+
+  static const String _envModel = String.fromEnvironment(
+    'DEFAULT_AI_MODEL',
+    defaultValue: '',
+  );
+
+  /// 默认模型由 Worker 端 UPSTREAM_MODEL 决定，客户端透传该标记即可。
+  static const String _fallbackModel = 'soilzhu-latest';
+
+  static String get defaultModel =>
+      _envModel.trim().isNotEmpty ? _envModel.trim() : _fallbackModel;
+
+  /// 旧直连默认值（硅基流动）：仅用于识别老用户存量配置并自动迁移，
+  /// 不要再作为新默认值使用。
+  static const String legacyDefaultApiUrl = 'https://api.siliconflow.cn/v1';
+  static const String legacyDefaultModel = 'Qwen/Qwen3.5-4B';
+
+  /// 是否为旧直连硅基流动的存量配置（含 /chat/completions 后缀与末尾斜杠变体）
+  static bool isLegacyDefaultApiUrl(String? url) {
+    if (url == null) return false;
+    var v = url.trim();
+    if (v.isEmpty) return false;
+    while (v.endsWith('/')) {
+      v = v.substring(0, v.length - 1);
+    }
+    if (v.endsWith('/chat/completions')) {
+      v = v.substring(0, v.length - '/chat/completions'.length);
+    }
+    return v == legacyDefaultApiUrl;
+  }
+
+  static bool isLegacyDefaultModel(String? model) {
+    if (model == null) return false;
+    final v = model.trim();
+    // Qwen 直连旧值，以及过渡期的 worker-default 标记，都视为“跟随默认”
+    return v == legacyDefaultModel || v == 'worker-default';
+  }
 
   /// 从 CI / 构建环境通过 --dart-define=DEFAULT_AI_API_KEY=xxx 注入的默认 Key
   static const String defaultApiKey = String.fromEnvironment(
@@ -156,7 +205,7 @@ $weekInfo
     required List<AiChatMessage> conversationHistory,
     required McpToolRegistry toolRegistry,
     String? apiUrl,
-    String model = defaultModel,
+    String? model,
     void Function(String toolName, String statusMessage)? onToolExecuting,
   }) async {
     final effectiveApiKey = apiKey.trim().isNotEmpty
@@ -168,7 +217,8 @@ $weekInfo
     }
 
     final effectiveEndpoint = normalizeEndpointUrl(apiUrl);
-    final effectiveModel = model.trim().isNotEmpty ? model.trim() : defaultModel;
+    final effectiveModel =
+        (model != null && model.trim().isNotEmpty) ? model.trim() : defaultModel;
 
     final systemPrompt = await buildSystemPrompt();
     final tools = _convertMcpTools(toolRegistry);
@@ -206,6 +256,7 @@ $weekInfo
           options: Options(
             headers: {
               'Authorization': 'Bearer $effectiveApiKey',
+              'api-key': effectiveApiKey,
               'Content-Type': 'application/json',
             },
           ),

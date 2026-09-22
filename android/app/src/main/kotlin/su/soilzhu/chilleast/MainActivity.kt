@@ -1,14 +1,34 @@
 package su.soilzhu.chilleast
 
+import android.os.Bundle
+import android.util.Log
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     companion object {
+        private const val TAG = "MainActivity"
         private const val LIVE_CHANNEL = "course_live"
         private const val FLYME_CHANNEL = "flyme_live"
         private const val ALARM_CHANNEL = "live_alarm"
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            val isImagePickerCrash = throwable.stackTrace?.any {
+                it.className.contains("io.flutter.plugins.imagepicker")
+            } == true || throwable.cause?.stackTrace?.any {
+                it.className.contains("io.flutter.plugins.imagepicker")
+            } == true
+            if (isImagePickerCrash) {
+                Log.e(TAG, "Prevented crash from imagepicker on thread ${thread.name}: ${throwable.message}", throwable)
+                return@setDefaultUncaughtExceptionHandler
+            }
+            defaultHandler?.uncaughtException(thread, throwable)
+        }
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

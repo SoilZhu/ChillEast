@@ -425,20 +425,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiSettingsSaved => '✅ AIアシスタント設定を保存しました';
 
   @override
-  String get aiSettingsResetDefaults =>
-      'デフォルト設定に戻しました（SiliconFlow + Qwen/Qwen3.5-4B）';
+  String get aiSettingsResetDefaults => 'デフォルト設定に戻しました';
 
   @override
   String get aiApiUrl => 'APIベースURL (Base URL)';
 
   @override
-  String get aiApiUrlHint => 'デフォルト: https://api.siliconflow.cn/v1';
+  String get aiApiUrlHint => 'デフォルト中継サービス';
 
   @override
   String get aiModelName => 'モデル名 (Model Name)';
 
   @override
-  String get aiModelNameHint => 'デフォルト: Qwen/Qwen3.5-4B';
+  String get aiModelNameHint => 'デフォルト: soilzhu-latest';
 
   @override
   String get aiApiKeyCustom => 'APIキー (カスタム設定中)';
@@ -2204,4 +2203,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get ruleModeShift => '移動';
+
+  @override
+  String get uploadImage => '上传图片';
+
+  @override
+  String get describeImagePrompt => '请分析或描述这张图片';
+
+  @override
+  String get removeImage => '移除图片';
 }

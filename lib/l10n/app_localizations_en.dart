@@ -430,20 +430,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiSettingsSaved => '✅ Agent settings saved';
 
   @override
-  String get aiSettingsResetDefaults =>
-      'Reset to default settings (SiliconFlow + Qwen/Qwen3.5-4B)';
+  String get aiSettingsResetDefaults => 'Defaults restored';
 
   @override
   String get aiApiUrl => 'API Base URL';
 
   @override
-  String get aiApiUrlHint => 'Default: https://api.siliconflow.cn/v1';
+  String get aiApiUrlHint => 'Default relay service';
 
   @override
   String get aiModelName => 'Model Name';
 
   @override
-  String get aiModelNameHint => 'Default: Qwen/Qwen3.5-4B';
+  String get aiModelNameHint => 'Default: soilzhu-latest';
 
   @override
   String get aiApiKeyCustom => 'API Key (Custom)';
@@ -2249,4 +2248,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ruleModeShift => 'Shift';
+
+  @override
+  String get uploadImage => 'Upload Image';
+
+  @override
+  String get describeImagePrompt => 'Please analyze or describe this image';
+
+  @override
+  String get removeImage => 'Remove Image';
 }

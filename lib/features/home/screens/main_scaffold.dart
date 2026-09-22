@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/route_utils.dart';
@@ -86,6 +87,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
 
   // AI 助理交互状态
   bool _isAiMode = false;
+  String? _selectedImagePath;
   final TextEditingController _aiInputController = TextEditingController();
   final FocusNode _aiInputFocusNode = FocusNode();
 
@@ -138,17 +140,69 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
         setState(() {
           _isAiMode = false;
           _aiInputController.clear();
+          _selectedImagePath = null;
         });
         ref.read(aiAssistantProvider.notifier).clearSession();
       }
     });
   }
 
+  Future<void> _pickImage() async {
+    _aiInputFocusNode.unfocus();
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(context.l10n.chooseFromGallery),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: Text(context.l10n.takePhoto),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source != null) {
+      try {
+        final picker = ImagePicker();
+        final file = await picker.pickImage(
+          source: source,
+          maxWidth: 1920,
+          maxHeight: 1920,
+          imageQuality: 85,
+        );
+        if (file != null && mounted) {
+          setState(() {
+            _selectedImagePath = file.path;
+          });
+        }
+      } catch (e) {
+        debugPrint('Failed to pick image: $e');
+      }
+    }
+  }
+
   void _submitAiQuery(String text) {
-    if (text.trim().isEmpty) return;
     final query = text.trim();
+    final imagePath = _selectedImagePath;
+    if (query.isEmpty && (imagePath == null || imagePath.isEmpty)) return;
     _aiInputController.clear();
-    ref.read(aiAssistantProvider.notifier).sendMessage(query);
+    setState(() {
+      _selectedImagePath = null;
+    });
+    ref.read(aiAssistantProvider.notifier).sendMessage(query, imagePath: imagePath);
   }
 
   Future<void> _loadReminderState() async {
@@ -450,11 +504,12 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
               right: 0,
               child: Material(
                 type: MaterialType.transparency,
-                child: _buildGlobalTopBar(context, authState, hasTimetable),
+                child: _buildExpandedTopBar(context, authState, hasTimetable),
               ),
             ),
             Positioned(
-              top: MediaQuery.of(context).padding.top + 76,
+              // 顶栏白条已展开到 120（2 倍），总高 134，卡片紧跟其下保持 2px 间隙
+              top: MediaQuery.of(context).padding.top + 136,
               left: 0,
               right: 0,
               child: FadeTransition(
@@ -476,6 +531,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                       onClose: _exitAiMode,
                       onQuickQuerySelected: (query) {
                         _aiInputController.clear();
+                        setState(() {
+                          _selectedImagePath = null;
+                        });
                       },
                     ),
                   ),
@@ -488,11 +546,14 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
     );
   }
 
-  PreferredSizeWidget _buildGlobalTopBar(BuildContext context, AuthState authState, bool hasTimetable) {
+  PreferredSizeWidget _buildGlobalTopBar(BuildContext context, AuthState authState, bool hasTimetable, [double? overrideBarHeight]) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // 白条高度：默认 60，点击后展开到 120（2 倍）；整体高度联动 +60，保持边距不变
+    final barHeight = overrideBarHeight ?? 60.0;
+    final prefHeight = 88.0 + (barHeight - 60.0);
 
     return PreferredSize(
-      preferredSize: const Size.fromHeight(88),
+      preferredSize: Size.fromHeight(prefHeight),
       child: SafeArea(
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
@@ -500,7 +561,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
             onTap: _isAiMode ? null : _enterAiMode,
             behavior: HitTestBehavior.opaque,
             child: Container(
-              height: 60,
+              height: barHeight,
+              alignment: Alignment.topCenter,
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
@@ -521,8 +583,15 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                   width: 1.0,
                 ),
               ),
-              child: Row(
-                children: [
+              // 首行固定 60px 置顶：展开时返回按钮/输入框保持原位，发送按钮下移到底部
+              child: SizedBox(
+                height: barHeight,
+                child: Stack(
+                  children: [
+                    SizedBox(
+                      height: 60,
+                      child: Row(
+                      children: [
                   // 左侧图标：位置绝对固定，原地纯渐变切换（返回按钮 <-> 自然图标）
                   SizedBox(
                     width: 32,
@@ -630,7 +699,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                   ),
                   const SizedBox(width: 8),
 
-                  // 右侧区域：固定 40x40 槽位，原地平滑淡化（发送按钮 <-> 头像）
+                  // 右侧区域：AI 模式下占位（发送按钮已下移到底部），非 AI 模式显示头像
                   SizedBox(
                     width: 40,
                     height: 40,
@@ -645,31 +714,11 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                         );
                       },
                       child: _isAiMode
-                          ? (_aiInputController.text.isNotEmpty
-                              ? GestureDetector(
-                                  key: const ValueKey('ai_send_button'),
-                                  onTap: () => _submitAiQuery(_aiInputController.text),
-                                  behavior: HitTestBehavior.opaque,
-                                  child: Center(
-                                    child: Container(
-                                      padding: const EdgeInsets.all(7),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF09C489),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.arrow_upward_rounded,
-                                        color: Colors.white,
-                                        size: 16,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : const SizedBox(
-                                  key: ValueKey('ai_empty_space'),
-                                  width: 40,
-                                  height: 40,
-                                ))
+                          ? const SizedBox(
+                              key: ValueKey('ai_empty_space'),
+                              width: 40,
+                              height: 40,
+                            )
                           : Stack(
                               key: const ValueKey('profile_avatar'),
                               clipBehavior: Clip.none,
@@ -775,11 +824,142 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                     ),
                   ),
                 ],
+                      ), // Row
+                    ), // 顶部 60px 行：返回按钮 + 输入框保持原位
+                    // 已选图片预览缩略图
+                    if (_isAiMode && overrideBarHeight != null && _selectedImagePath != null)
+                      Positioned(
+                        top: 10 + (barHeight - 60),
+                        left: 42,
+                        child: Container(
+                          height: 40,
+                          padding: const EdgeInsets.only(left: 3, right: 8),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withOpacity(0.08)
+                                : Colors.black.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: const Color(0xFF09C489).withOpacity(0.4),
+                              width: 1.0,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: Image.file(
+                                  File(_selectedImagePath!),
+                                  width: 34,
+                                  height: 34,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedImagePath = null;
+                                  });
+                                },
+                                behavior: HitTestBehavior.opaque,
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  size: 16,
+                                  color: isDark ? Colors.white70 : Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    // 图片按钮与发送按钮：随展开从顶部下移到底部右下角
+                    if (_isAiMode && overrideBarHeight != null)
+                      Positioned(
+                        top: 10 + (barHeight - 60),
+                        right: 0,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // 发送键左侧的图片上传按钮（直接展示图标，不包在圆内）
+                            GestureDetector(
+                              onTap: _pickImage,
+                              behavior: HitTestBehavior.opaque,
+                              child: SizedBox(
+                                width: 40,
+                                height: 40,
+                                child: Center(
+                                  child: Icon(
+                                    _selectedImagePath != null
+                                        ? Icons.image_rounded
+                                        : Icons.image_outlined,
+                                    color: _selectedImagePath != null
+                                        ? const Color(0xFF09C489)
+                                        : (isDark ? Colors.white70 : Colors.grey[600]),
+                                    size: 22,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            // 发送按钮
+                            GestureDetector(
+                              onTap: (_aiInputController.text.trim().isNotEmpty || _selectedImagePath != null)
+                                  ? () => _submitAiQuery(_aiInputController.text)
+                                  : null,
+                              behavior: HitTestBehavior.opaque,
+                              child: SizedBox(
+                                width: 40,
+                                height: 40,
+                                child: Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(7),
+                                    decoration: BoxDecoration(
+                                      color: (_aiInputController.text.trim().isNotEmpty || _selectedImagePath != null)
+                                          ? const Color(0xFF09C489)
+                                          : (isDark
+                                              ? Colors.white.withOpacity(0.1)
+                                              : Colors.grey[300]),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.arrow_upward_rounded,
+                                      color: (_aiInputController.text.trim().isNotEmpty || _selectedImagePath != null)
+                                          ? Colors.white
+                                          : (isDark ? Colors.white38 : Colors.grey[500]),
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  /// AI 模式漂浮顶栏：高度随 _aiAnimController 从 60 展开到 120（2 倍）
+  Widget _buildExpandedTopBar(
+      BuildContext context, AuthState authState, bool hasTimetable) {
+    return AnimatedBuilder(
+      animation: _aiAnimController,
+      builder: (context, _) {
+        final t = CurvedAnimation(
+          parent: _aiAnimController,
+          curve: Curves.easeOutCubic,
+        ).value;
+        final barHeight = 60.0 + 60.0 * t; // 60 -> 120
+        return _buildGlobalTopBar(context, authState, hasTimetable, barHeight);
+      },
     );
   }
 

@@ -81,7 +81,9 @@ jobs:
         run: |
           flutter build apk --release --no-pub \
             -Pshrink=false \
-            --dart-define=DEFAULT_AI_API_KEY="${{ secrets.DEFAULT_AI_API_KEY }}"
+            --dart-define=DEFAULT_AI_API_KEY="${{ secrets.DEFAULT_AI_API_KEY }}" \
+            --dart-define=DEFAULT_AI_API_URL="${{ secrets.DEFAULT_AI_API_URL }}" \
+            --dart-define=DEFAULT_AI_MODEL="${{ secrets.DEFAULT_AI_MODEL }}"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
