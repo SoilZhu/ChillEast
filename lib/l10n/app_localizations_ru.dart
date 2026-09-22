@@ -203,7 +203,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get funcEleRecharge => 'Оплата электроэнергии';
 
   @override
-  String get funcBus => 'Автобусы онлайн';
+  String get funcBus => 'Кампусный автобус';
 
   @override
   String get funcCsBus => 'Автобусы онлайн';

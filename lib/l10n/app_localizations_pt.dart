@@ -202,7 +202,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get funcEleRecharge => 'Recarga de Energia';
 
   @override
-  String get funcBus => 'Ônibus de Changsha';
+  String get funcBus => 'Ônibus do Campus';
 
   @override
   String get funcCsBus => 'Ônibus de Changsha';

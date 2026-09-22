@@ -506,7 +506,7 @@ abstract class AppLocalizations {
   /// No description provided for @funcBus.
   ///
   /// In zh, this message translates to:
-  /// **'长沙实时公交'**
+  /// **'实时校车'**
   String get funcBus;
 
   /// No description provided for @funcCsBus.

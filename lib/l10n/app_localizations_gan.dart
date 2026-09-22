@@ -201,7 +201,7 @@ class AppLocalizationsGan extends AppLocalizations {
   String get funcEleRecharge => '电费充值';
 
   @override
-  String get funcBus => '长沙实时公交';
+  String get funcBus => '实时校车';
 
   @override
   String get funcCsBus => '长沙实时公交';

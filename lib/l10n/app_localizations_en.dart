@@ -202,7 +202,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get funcEleRecharge => 'Electricity Top-up';
 
   @override
-  String get funcBus => 'Changsha Bus';
+  String get funcBus => 'Campus Bus';
 
   @override
   String get funcCsBus => 'Changsha Bus';

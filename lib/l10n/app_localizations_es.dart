@@ -203,7 +203,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get funcEleRecharge => 'Recarga de electricidad';
 
   @override
-  String get funcBus => 'Autobús Changsha en tiempo real';
+  String get funcBus => 'Autobús del campus en tiempo real';
 
   @override
   String get funcCsBus => 'Autobús Changsha en tiempo real';
