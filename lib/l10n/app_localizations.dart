@@ -515,6 +515,12 @@ abstract class AppLocalizations {
   /// **'长沙实时公交'**
   String get funcCsBus;
 
+  /// No description provided for @funcCampusBusRoute.
+  ///
+  /// In zh, this message translates to:
+  /// **'校内公交线路'**
+  String get funcCampusBusRoute;
+
   /// No description provided for @more.
   ///
   /// In zh, this message translates to:

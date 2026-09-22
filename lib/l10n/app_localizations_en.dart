@@ -208,6 +208,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get funcCsBus => 'Changsha Bus';
 
   @override
+  String get funcCampusBusRoute => 'Campus Bus Routes';
+
+  @override
   String get more => 'More';
 
   @override

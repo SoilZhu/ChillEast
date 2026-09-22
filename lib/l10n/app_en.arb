@@ -66,6 +66,7 @@
   "funcEleRecharge": "Electricity Top-up",
   "funcBus": "Campus Bus",
   "funcCsBus": "Changsha Bus",
+  "funcCampusBusRoute": "Campus Bus Routes",
   "more": "More",
   "homeButtonsSetting": "Home Button Layout & Visibility",
   "homeButtonsTitle": "Home Buttons",

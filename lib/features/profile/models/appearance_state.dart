@@ -103,6 +103,8 @@ extension FunctionItemLocalization on FunctionItem {
         return l10n.funcBus;
       case 'cs_bus':
         return l10n.funcCsBus;
+      case 'campus_bus_route':
+        return l10n.funcCampusBusRoute;
       default:
         return label;
     }

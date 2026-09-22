@@ -207,6 +207,9 @@ class AppLocalizationsWuu extends AppLocalizations {
   String get funcCsBus => '长沙实时公交';
 
   @override
+  String get funcCampusBusRoute => '校内公交线路';
+
+  @override
   String get more => '更多';
 
   @override
