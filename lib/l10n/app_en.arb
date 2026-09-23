@@ -209,6 +209,8 @@
   "adjustTimetable": "Adjust Timetable",
   "backToToday": "Today",
   "refreshTimetable": "Refresh Timetable",
+  "timetableSettings": "Timetable settings",
+  "notSet": "Not set",
   "timetableAutoSync": "Auto-sync timetable",
   "disableAutoSyncTitle": "Turn off auto-sync?",
   "disableAutoSyncMessage": "Turning off will delete the local timetable (reschedule and suspension rules will be kept). To view your timetable, tap the refresh button on the timetable page to sync manually.",

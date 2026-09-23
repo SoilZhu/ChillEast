@@ -691,6 +691,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get refreshTimetable => 'Actualizar horario';
 
   @override
+  String get timetableSettings => '课表设置';
+
+  @override
+  String get notSet => '未设置';
+
+  @override
   String get timetableAutoSync => '自动同步课表';
 
   @override

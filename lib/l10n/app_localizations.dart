@@ -1373,6 +1373,18 @@ abstract class AppLocalizations {
   /// **'刷新课表'**
   String get refreshTimetable;
 
+  /// No description provided for @timetableSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'课表设置'**
+  String get timetableSettings;
+
+  /// No description provided for @notSet.
+  ///
+  /// In zh, this message translates to:
+  /// **'未设置'**
+  String get notSet;
+
   /// No description provided for @timetableAutoSync.
   ///
   /// In zh, this message translates to:

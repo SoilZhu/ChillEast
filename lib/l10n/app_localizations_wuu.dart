@@ -667,6 +667,12 @@ class AppLocalizationsWuu extends AppLocalizations {
   String get refreshTimetable => '重新望课表';
 
   @override
+  String get timetableSettings => '课表设置';
+
+  @override
+  String get notSet => '未设置';
+
+  @override
   String get timetableAutoSync => '自动同步课表';
 
   @override

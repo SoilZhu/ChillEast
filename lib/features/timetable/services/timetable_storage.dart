@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/course_model.dart';
 import '../models/timetable_rule_model.dart';
 
@@ -11,6 +12,13 @@ class TimetableStorage {
   static const String _courseListFileName = 'courses.json';
   static const String _rawCourseListFileName = 'raw_courses.json';
   static const String _rulesFileName = 'timetable_rules.json';
+
+  /// 自动同步开关的持久化 key（默认开）
+  static const String autoSyncKey = 'timetable_auto_sync_enabled';
+
+  /// 手动指定的本学期第一周周一（仅自动同步关闭时可设置）
+  static const String manualFirstWeekMondayKey =
+      'timetable_first_week_monday_manual';
 
   /// 获取课表文件对象
   Future<File> _getFile() async {
@@ -267,5 +275,84 @@ class TimetableStorage {
     } catch (e) {
       // 忽略
     }
+  }
+
+  /// 保存手动指定的本学期第一周周一（自动归一到周一）
+  Future<void> saveManualFirstWeekMonday(DateTime monday) async {
+    final normalized = monday.subtract(Duration(days: monday.weekday - 1));
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      manualFirstWeekMondayKey,
+      DateTime(normalized.year, normalized.month, normalized.day)
+          .toIso8601String(),
+    );
+  }
+
+  /// 读取手动指定的第一周周一（未设置返回 null）
+  Future<DateTime?> readManualFirstWeekMonday() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(manualFirstWeekMondayKey);
+      if (raw == null) return null;
+      final parsed = DateTime.tryParse(raw);
+      if (parsed == null) return null;
+      return DateTime(parsed.year, parsed.month, parsed.day);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// 清除手动指定的第一周周一
+  Future<void> clearManualFirstWeekMonday() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(manualFirstWeekMondayKey);
+    } catch (e) {
+      // 忽略
+    }
+  }
+
+  /// 按月份猜测开学周一（兜底逻辑）
+  static DateTime guessFirstWeekMonday() {
+    final now = DateTime.now();
+    DateTime guess;
+    if (now.month >= 8 || now.month <= 1) {
+      guess = DateTime(now.month <= 1 ? now.year - 1 : now.year, 9, 1);
+    } else {
+      guess = DateTime(now.year, 2, 17);
+    }
+    while (guess.weekday != DateTime.monday) {
+      guess = guess.add(const Duration(days: 1));
+    }
+    return guess;
+  }
+
+  /// 解析本学期第一周周一，优先级：
+  /// - 自动同步开：元数据（教务同步校准）> 手动设置 > 猜测
+  /// - 自动同步关：手动设置 > 元数据 > 猜测
+  /// 一定返回有效日期（最差也是猜测值）。
+  Future<DateTime> resolveFirstWeekMonday() async {
+    DateTime? fromMetadata;
+    try {
+      final metadata = await readMetadata();
+      final raw = metadata?['firstWeekMonday'];
+      if (raw is String) fromMetadata = DateTime.tryParse(raw);
+    } catch (_) {}
+
+    DateTime? manual;
+    try {
+      manual = await readManualFirstWeekMonday();
+    } catch (_) {}
+
+    bool autoSync = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      autoSync = prefs.getBool(autoSyncKey) ?? true;
+    } catch (_) {}
+
+    if (autoSync) {
+      return fromMetadata ?? manual ?? guessFirstWeekMonday();
+    }
+    return manual ?? fromMetadata ?? guessFirstWeekMonday();
   }
 }

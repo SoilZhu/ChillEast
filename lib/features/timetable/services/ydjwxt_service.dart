@@ -56,16 +56,10 @@ class YdjwxtService {
       }
 
       if (calculatedFirstWeekMonday == null) {
-        // 如果 API 解析失败，尝试从本地读取作为兜底
-        final metadata = await TimetableStorage().readMetadata();
-        if (metadata != null && metadata['firstWeekMonday'] != null) {
-          calculatedFirstWeekMonday = DateTime.parse(metadata['firstWeekMonday']);
-          _logger.i('📅 Using cached firstWeekMonday as fallback: $calculatedFirstWeekMonday');
-        } else {
-          // 最后的最后，使用系统月份猜测 (兜底中的兜底)
-          calculatedFirstWeekMonday = _guessFirstWeekMonday();
-          _logger.w('📅 Using guessed firstWeekMonday: $calculatedFirstWeekMonday');
-        }
+        // API 解析/本地元数据都拿不到时，按统一优先级解析
+        //（自动同步开：元数据 > 手动设置 > 猜测；关：手动设置优先）
+        calculatedFirstWeekMonday = await storage.resolveFirstWeekMonday();
+        _logger.i('📅 Resolved firstWeekMonday: $calculatedFirstWeekMonday');
       }
 
       // 3. 并发获取 1-20 周的数据
@@ -127,21 +121,6 @@ class YdjwxtService {
     }
   }
 
-  /// 猜测开学日期 (兜底逻辑)
-  DateTime _guessFirstWeekMonday() {
-    final now = DateTime.now();
-    DateTime guess;
-    if (now.month >= 8 || now.month <= 1) {
-      guess = DateTime(now.month <= 1 ? now.year - 1 : now.year, 9, 1);
-    } else {
-      guess = DateTime(now.year, 2, 17);
-    }
-    // 归一化到周一
-    while (guess.weekday != DateTime.monday) {
-      guess = guess.add(const Duration(days: 1));
-    }
-    return guess;
-  }
   /// 获取单周课表原始 JSON
   Future<Map<String, dynamic>> _fetchRawWeekJson(int week) async {
     if (_token == null) throw Exception('Token is null');

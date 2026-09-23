@@ -681,6 +681,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get refreshTimetable => 'Refresh Timetable';
 
   @override
+  String get timetableSettings => 'Timetable settings';
+
+  @override
+  String get notSet => 'Not set';
+
+  @override
   String get timetableAutoSync => 'Auto-sync timetable';
 
   @override

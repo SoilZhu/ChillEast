@@ -7,6 +7,7 @@ import '../services/timetable_service.dart';
 import '../services/timetable_storage.dart';
 import '../services/timetable_rule_service.dart';
 import '../models/course_model.dart';
+import '../models/timetable_rule_model.dart';
 import '../utils/ics_parser.dart';
 import '../utils/date_calculator.dart';
 import '../utils/week_parser.dart';
@@ -159,11 +160,11 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
         }
         final icsContent = await _storage.readTimetable();
         if (courses.isNotEmpty || icsContent != null) {
-          final metadata = await _storage.readMetadata();
+          // 开学周一按统一优先级解析（元数据/手动设置/猜测），一定有值
           DateTime? firstWeekMonday;
-          if (metadata != null && metadata['firstWeekMonday'] != null) {
-            firstWeekMonday = DateTime.parse(metadata['firstWeekMonday']);
-          }
+          try {
+            firstWeekMonday = await _storage.resolveFirstWeekMonday();
+          } catch (_) {}
 
           setState(() {
             _courses = courses;
@@ -184,6 +185,21 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
           });
         }
       } else {
+        // 无本地 ICS：规则（尤其是手动加课）仍应生效——以空为基准应用规则
+        // 并落盘，然后走正常分支展示。没有规则时才显示空状态。
+        List<TimetableRule> rules = [];
+        try {
+          rules = await _storage.readRules();
+        } catch (_) {}
+        if (rules.isNotEmpty) {
+          try {
+            await TimetableRuleService(storage: _storage)
+                .applyRulesAndRegenerate();
+            // 落盘后已产生 ICS，重新走正常分支（最多递归一次）
+            return _loadLocalTimetable();
+          } catch (_) {}
+        }
+        if (!mounted) return;
         setState(() {
           _hasLocalTimetable = false;
           _isLoading = false;
@@ -405,11 +421,14 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
       }
     });
 
-    // 自动同步开关变化（关闭会删本地课表 / 开启会立即同步）时重载本地数据
-    ref.listen<bool>(
-      settingsProvider.select((s) => s.timetableAutoSyncEnabled),
-      (_, __) {
-        if (mounted) _loadLocalTimetable();
+    // 自动同步开关/手动周一变化（关闭会删本地课表 / 开启会立即同步 /
+    // 手动周一改变排期基准）时重载本地数据
+    ref.listen(
+      settingsProvider.select(
+        (s) => (s.timetableAutoSyncEnabled, s.manualFirstWeekMondayIso),
+      ),
+      (prev, next) {
+        if (prev != next && mounted) _loadLocalTimetable();
       },
     );
 
@@ -469,17 +488,17 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
               ],
             ),
           ),
-          // 💡 右侧操作按钮（刷新常驻：无本地课表时也可点一下手动同步）
+          // 💡 右侧操作按钮（调整/刷新常驻：无本地课表时也能加课或手动同步）
+          IconButton(
+            icon: Icon(Icons.tune_rounded,
+                size: 22,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : const Color(0xFF5F6368)),
+            onPressed: _handleModifyRulesClick,
+            tooltip: context.l10n.adjustTimetable,
+          ),
           if (_hasLocalTimetable) ...[
-            IconButton(
-              icon: Icon(Icons.tune_rounded,
-                  size: 22,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white70
-                      : const Color(0xFF5F6368)),
-              onPressed: _handleModifyRulesClick,
-              tooltip: context.l10n.adjustTimetable,
-            ),
             IconButton(
               icon: Icon(Icons.today_rounded,
                   size: 22,

@@ -407,14 +407,8 @@ class TimetableRuleService {
       // 3. 应用规则
       final modifiedCourses = applyRules(rawCourses, rules);
 
-      // 4. 读取开学周一
-      final metadata = await _storage.readMetadata();
-      DateTime? firstWeekMonday;
-      if (metadata != null && metadata['firstWeekMonday'] != null) {
-        firstWeekMonday =
-            DateTime.tryParse(metadata['firstWeekMonday'] as String);
-      }
-      firstWeekMonday ??= _guessFirstWeekMonday();
+      // 4. 读取开学周一（元数据 > 手动设置 > 猜测）
+      final firstWeekMonday = await _storage.resolveFirstWeekMonday();
 
       // 5. 生成 ICS 并保存
       final icsContent =
@@ -429,19 +423,5 @@ class TimetableRuleService {
       _logger.e('Failed to apply rules and regenerate timetable: $e');
       rethrow;
     }
-  }
-
-  DateTime _guessFirstWeekMonday() {
-    final now = DateTime.now();
-    DateTime guess;
-    if (now.month >= 8 || now.month <= 1) {
-      guess = DateTime(now.month <= 1 ? now.year - 1 : now.year, 9, 1);
-    } else {
-      guess = DateTime(now.year, 2, 17);
-    }
-    while (guess.weekday != DateTime.monday) {
-      guess = guess.add(const Duration(days: 1));
-    }
-    return guess;
   }
 }

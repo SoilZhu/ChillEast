@@ -14,6 +14,7 @@ class SettingsState {
   final bool courseLiveEnabled; // Android 16+ Live Updates 实时活动开关
   final bool flymeLiveEnabled; // Flyme 12+ 实况通知开关（与 courseLiveEnabled 互斥）
   final bool timetableAutoSyncEnabled; // 登录后自动同步课表总开关（默认开）
+  final String? manualFirstWeekMondayIso; // 手动指定的本学期第一周周一（ISO 日期，无则 null）
 
   SettingsState({
     required this.reminderMinutes,
@@ -22,6 +23,7 @@ class SettingsState {
     this.courseLiveEnabled = false,
     this.flymeLiveEnabled = false,
     this.timetableAutoSyncEnabled = true,
+    this.manualFirstWeekMondayIso,
   });
 
   SettingsState copyWith({
@@ -31,6 +33,7 @@ class SettingsState {
     bool? courseLiveEnabled,
     bool? flymeLiveEnabled,
     bool? timetableAutoSyncEnabled,
+    String? manualFirstWeekMondayIso,
   }) {
     return SettingsState(
       reminderMinutes: reminderMinutes ?? this.reminderMinutes,
@@ -42,6 +45,8 @@ class SettingsState {
       flymeLiveEnabled: flymeLiveEnabled ?? this.flymeLiveEnabled,
       timetableAutoSyncEnabled:
           timetableAutoSyncEnabled ?? this.timetableAutoSyncEnabled,
+      manualFirstWeekMondayIso:
+          manualFirstWeekMondayIso ?? this.manualFirstWeekMondayIso,
     );
   }
 }
@@ -65,7 +70,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
   /// 课表自动同步开关的持久化 key（默认开）。
   /// auth 层的静默同步直接读 SharedPreferences，避免依赖 settings 加载时序。
-  static const String timetableAutoSyncKey = 'timetable_auto_sync_enabled';
+  /// 实际 key 定义在 TimetableStorage，这里只做别名。
+  static const String timetableAutoSyncKey = TimetableStorage.autoSyncKey;
 
   SettingsNotifier([Ref? _])
       : super(SettingsState(
@@ -85,6 +91,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     final liveEnabled = prefs.getBool(_courseLiveKey) ?? false;
     final flymeEnabled = prefs.getBool(_flymeLiveKey) ?? false;
     final autoSyncEnabled = prefs.getBool(timetableAutoSyncKey) ?? true;
+    final storage = TimetableStorage();
+    final manualMonday = await storage.readManualFirstWeekMonday();
     // 用户已在加载期间修改设置时，不能用旧快照覆盖新 state。
     if (revision != _settingsRevision) return;
     state = state.copyWith(
@@ -94,6 +102,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       courseLiveEnabled: liveEnabled,
       flymeLiveEnabled: flymeEnabled,
       timetableAutoSyncEnabled: autoSyncEnabled,
+      manualFirstWeekMondayIso: manualMonday?.toIso8601String(),
     );
 
     // 初始化时也尝试安排一次通知
@@ -162,8 +171,9 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   }
 
   /// 课表自动同步总开关（默认开）。
-  /// 关闭时删除本地课表（ICS/元数据/课程列表/原始课表），但保留调课/停课等规则，
-  /// 并重排通知以清除残留的课程提醒。用户之后可在课表页下拉手动同步。
+  /// 关闭时删除本地课表（ICS/课程列表/原始课表），但保留调课/停课/加课规则
+  /// 和元数据（开学周一）——无本地课表时规则（尤其是手动加课）仍能照常显示。
+  /// 并重排通知以清除残留的课程提醒。用户之后可在课表页手动同步/加课。
   Future<void> setTimetableAutoSyncEnabled(bool enabled) async {
     _settingsRevision++;
     final prefs = await SharedPreferences.getInstance();
@@ -173,12 +183,23 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     if (!enabled) {
       final storage = TimetableStorage();
       await storage.deleteTimetable();
-      await storage.deleteMetadata();
       await storage.deleteCourseList();
       await storage.deleteRawCourseList();
-      // 注意：保留 timetable_rules.json
+      // 注意：保留 timetable_rules.json 和元数据（firstWeekMonday）
       await rescheduleNotifications();
     }
+  }
+
+  /// 手动指定本学期第一周周一（仅自动同步关闭时可在课表设置页修改）。
+  /// 先写持久化再更新 state，保证监听者重载时能读到新值。
+  Future<void> setManualFirstWeekMonday(DateTime monday) async {
+    _settingsRevision++;
+    final storage = TimetableStorage();
+    await storage.saveManualFirstWeekMonday(monday);
+    final saved = await storage.readManualFirstWeekMonday();
+    state = state.copyWith(
+      manualFirstWeekMondayIso: saved?.toIso8601String(),
+    );
   }
 
   Future<int> getPendingNotificationCount() {
