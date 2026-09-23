@@ -7,6 +7,7 @@ import 'notification_settings_screen.dart';
 import 'appearance_settings_screen.dart';
 import 'ai_settings_screen.dart';
 import 'language_settings_screen.dart';
+import 'timetable_settings_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -90,6 +91,17 @@ class SettingsScreen extends ConsumerWidget {
               Navigator.push(
                 context,
                 createSlideUpRoute(const NotificationSettingsScreen()),
+              );
+            },
+          ),
+          _buildSettingItem(
+            context,
+            icon: Icons.calendar_month_outlined,
+            title: l10n.timetableSettings,
+            onTap: () {
+              Navigator.push(
+                context,
+                createSlideUpRoute(const TimetableSettingsScreen()),
               );
             },
           ),

@@ -13,6 +13,8 @@ class SettingsState {
   final int libraryReminderMinutes; // 0: 不通知, 5, 10, 20, 30, 40, 50, 60
   final bool courseLiveEnabled; // Android 16+ Live Updates 实时活动开关
   final bool flymeLiveEnabled; // Flyme 12+ 实况通知开关（与 courseLiveEnabled 互斥）
+  final bool timetableAutoSyncEnabled; // 登录后自动同步课表总开关（默认开）
+  final String? manualFirstWeekMondayIso; // 手动指定的本学期第一周周一（ISO 日期，无则 null）
 
   SettingsState({
     required this.reminderMinutes,
@@ -20,6 +22,8 @@ class SettingsState {
     required this.libraryReminderMinutes,
     this.courseLiveEnabled = false,
     this.flymeLiveEnabled = false,
+    this.timetableAutoSyncEnabled = true,
+    this.manualFirstWeekMondayIso,
   });
 
   SettingsState copyWith({
@@ -28,6 +32,8 @@ class SettingsState {
     int? libraryReminderMinutes,
     bool? courseLiveEnabled,
     bool? flymeLiveEnabled,
+    bool? timetableAutoSyncEnabled,
+    String? manualFirstWeekMondayIso,
   }) {
     return SettingsState(
       reminderMinutes: reminderMinutes ?? this.reminderMinutes,
@@ -37,6 +43,10 @@ class SettingsState {
           libraryReminderMinutes ?? this.libraryReminderMinutes,
       courseLiveEnabled: courseLiveEnabled ?? this.courseLiveEnabled,
       flymeLiveEnabled: flymeLiveEnabled ?? this.flymeLiveEnabled,
+      timetableAutoSyncEnabled:
+          timetableAutoSyncEnabled ?? this.timetableAutoSyncEnabled,
+      manualFirstWeekMondayIso:
+          manualFirstWeekMondayIso ?? this.manualFirstWeekMondayIso,
     );
   }
 }
@@ -58,6 +68,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   static const String _courseLiveKey = 'course_live_enabled';
   static const String _flymeLiveKey = 'flyme_live_enabled';
 
+  /// 课表自动同步开关的持久化 key（默认开）。
+  /// auth 层的静默同步直接读 SharedPreferences，避免依赖 settings 加载时序。
+  /// 实际 key 定义在 TimetableStorage，这里只做别名。
+  static const String timetableAutoSyncKey = TimetableStorage.autoSyncKey;
+
   SettingsNotifier([Ref? _])
       : super(SettingsState(
           reminderMinutes: 0,
@@ -75,6 +90,9 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     final libMinutes = prefs.getInt(_libraryReminderKey) ?? 0;
     final liveEnabled = prefs.getBool(_courseLiveKey) ?? false;
     final flymeEnabled = prefs.getBool(_flymeLiveKey) ?? false;
+    final autoSyncEnabled = prefs.getBool(timetableAutoSyncKey) ?? true;
+    final storage = TimetableStorage();
+    final manualMonday = await storage.readManualFirstWeekMonday();
     // 用户已在加载期间修改设置时，不能用旧快照覆盖新 state。
     if (revision != _settingsRevision) return;
     state = state.copyWith(
@@ -83,6 +101,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       libraryReminderMinutes: libMinutes,
       courseLiveEnabled: liveEnabled,
       flymeLiveEnabled: flymeEnabled,
+      timetableAutoSyncEnabled: autoSyncEnabled,
+      manualFirstWeekMondayIso: manualMonday?.toIso8601String(),
     );
 
     // 初始化时也尝试安排一次通知
@@ -148,6 +168,38 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       state = state.copyWith(flymeLiveEnabled: false);
     }
     await rescheduleNotifications();
+  }
+
+  /// 课表自动同步总开关（默认开）。
+  /// 关闭时删除本地课表（ICS/课程列表/原始课表），但保留调课/停课/加课规则
+  /// 和元数据（开学周一）——无本地课表时规则（尤其是手动加课）仍能照常显示。
+  /// 并重排通知以清除残留的课程提醒。用户之后可在课表页手动同步/加课。
+  Future<void> setTimetableAutoSyncEnabled(bool enabled) async {
+    _settingsRevision++;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(timetableAutoSyncKey, enabled);
+    state = state.copyWith(timetableAutoSyncEnabled: enabled);
+
+    if (!enabled) {
+      final storage = TimetableStorage();
+      await storage.deleteTimetable();
+      await storage.deleteCourseList();
+      await storage.deleteRawCourseList();
+      // 注意：保留 timetable_rules.json 和元数据（firstWeekMonday）
+      await rescheduleNotifications();
+    }
+  }
+
+  /// 手动指定本学期第一周周一（仅自动同步关闭时可在课表设置页修改）。
+  /// 先写持久化再更新 state，保证监听者重载时能读到新值。
+  Future<void> setManualFirstWeekMonday(DateTime monday) async {
+    _settingsRevision++;
+    final storage = TimetableStorage();
+    await storage.saveManualFirstWeekMonday(monday);
+    final saved = await storage.readManualFirstWeekMonday();
+    state = state.copyWith(
+      manualFirstWeekMondayIso: saved?.toIso8601String(),
+    );
   }
 
   Future<int> getPendingNotificationCount() {

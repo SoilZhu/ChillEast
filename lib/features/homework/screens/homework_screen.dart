@@ -10,6 +10,7 @@ import '../../workspace/screens/webview_detail_screen.dart';
 import '../../../core/network/cookie_manager.dart';
 import '../../../core/utils/route_utils.dart';
 import '../../../core/utils/l10n_extension.dart';
+import '../../../core/utils/date_format_utils.dart';
 
 
 class HomeworkScreen extends ConsumerStatefulWidget {
@@ -238,7 +239,7 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
     final locale = Localizations.localeOf(context).toString();
     final Map<String, List<HomeworkModel>> grouped = {};
     for (var item in withTime) {
-      final dateKey = DateFormat.MMMd(locale).format(item.endTime!);
+      final dateKey = formatMMMd(item.endTime!, locale);
       grouped.putIfAbsent(dateKey, () => []).add(item);
     }
 
@@ -299,8 +300,10 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
   Widget _buildHomeworkItem(HomeworkModel item, {bool showDate = true}) {
     final bool hasTime = item.endTime != null;
     final locale = Localizations.localeOf(context).toString();
-    final String timeDisplay = hasTime 
-        ? (showDate ? DateFormat.MMMd(locale).add_Hm().format(item.endTime!) : DateFormat.Hm(locale).format(item.endTime!))
+    final String timeDisplay = hasTime
+        ? (showDate
+            ? formatMMMdHm(item.endTime!, locale)
+            : formatHm(item.endTime!, locale))
         : '';
     
     final bool isCompleted = item.status == HomeworkStatus.completed;

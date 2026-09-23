@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/state/auth_state.dart';
+import '../../../../core/utils/date_format_utils.dart';
 import '../../../../core/utils/l10n_extension.dart';
 import '../../auth/screens/login_screen.dart';
 import '../services/timetable_service.dart';
@@ -157,8 +157,11 @@ class _DownloadTimetableScreenState extends ConsumerState<DownloadTimetableScree
                 child: IgnorePointer(
                   child: TextFormField(
                     controller: TextEditingController(
-                      text: _selectedDate != null 
-                          ? DateFormat.yMMMd(Localizations.localeOf(context).toString()).format(_selectedDate!)
+                      text: _selectedDate != null
+                          ? formatYMMMd(
+                              _selectedDate!,
+                              Localizations.localeOf(context).toString(),
+                            )
                           : '',
                     ),
                     decoration: md2InputDecoration(context.l10n.firstWeekMonday, Icons.date_range_outlined).copyWith(

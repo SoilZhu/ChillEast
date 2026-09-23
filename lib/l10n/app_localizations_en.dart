@@ -681,6 +681,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get refreshTimetable => 'Refresh Timetable';
 
   @override
+  String get timetableSettings => 'Timetable settings';
+
+  @override
+  String get notSet => 'Not set';
+
+  @override
+  String get timetableAutoSync => 'Auto-sync timetable';
+
+  @override
+  String get disableAutoSyncTitle => 'Turn off auto-sync?';
+
+  @override
+  String get disableAutoSyncMessage =>
+      'Turning off will delete the local timetable (reschedule and suspension rules will be kept). To view your timetable, tap the refresh button on the timetable page to sync manually.';
+
+  @override
+  String get localTimetableDeleted => 'Local timetable deleted';
+
+  @override
+  String get noLocalTimetable => 'No local timetable';
+
+  @override
+  String get tapRefreshButtonToSync =>
+      'Tap the refresh button above to sync manually';
+
+  @override
   String get shareTimetable => 'Share Timetable';
 
   @override
