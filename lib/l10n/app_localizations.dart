@@ -1373,6 +1373,42 @@ abstract class AppLocalizations {
   /// **'刷新课表'**
   String get refreshTimetable;
 
+  /// No description provided for @timetableAutoSync.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动同步课表'**
+  String get timetableAutoSync;
+
+  /// No description provided for @disableAutoSyncTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭自动同步？'**
+  String get disableAutoSyncTitle;
+
+  /// No description provided for @disableAutoSyncMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭后将删除本地课表（调课、停课等规则会保留），如需查看课表，可点击课表页右上角刷新按钮手动同步。'**
+  String get disableAutoSyncMessage;
+
+  /// No description provided for @localTimetableDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地课表已删除'**
+  String get localTimetableDeleted;
+
+  /// No description provided for @noLocalTimetable.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无本地课表'**
+  String get noLocalTimetable;
+
+  /// No description provided for @tapRefreshButtonToSync.
+  ///
+  /// In zh, this message translates to:
+  /// **'点击右上角刷新按钮手动同步'**
+  String get tapRefreshButtonToSync;
+
   /// No description provided for @shareTimetable.
   ///
   /// In zh, this message translates to:

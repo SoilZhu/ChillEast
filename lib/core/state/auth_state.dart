@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/profile/providers/settings_provider.dart';
 import '../utils/secure_storage_helper.dart';
 import '../network/cookie_manager.dart';
 import '../../features/homework/providers/homework_provider.dart';
@@ -324,23 +326,32 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isGuestMode: true);
   }
 
-  /// 静默同步课表 (仅在本地无课表时执行)
+  /// 登录后自动同步课表（本地有课表也会全量同步，保证最新）。
+  /// 仅受设置里的自动同步开关控制，关闭则直接跳过。
   Future<void> _syncTimetableSilently() async {
     try {
-      final storage = TimetableStorage();
-      final hasLocal = await storage.hasLocalTimetable();
-
-      if (hasLocal) {
-        _logger.i('📅 Local timetable exists, skipping automatic sync.');
+      final prefs = await SharedPreferences.getInstance();
+      final autoSync =
+          prefs.getBool(SettingsNotifier.timetableAutoSyncKey) ?? true;
+      if (!autoSync) {
+        _logger.i('📅 Timetable auto-sync disabled, skipping.');
         return;
       }
 
-      _logger.i('📅 No local timetable, starting background sync...');
+      _logger.i('📅 Starting background timetable sync...');
 
       await TimetableService().downloadAndSaveTimetable(
         semester: AppConstants.defaultSemester,
         firstWeekMonday: null,
       );
+
+      // 同步后重排上课提醒，避免新课表与旧提醒不一致
+      try {
+        await _ref.read(settingsProvider.notifier).rescheduleNotifications();
+      } catch (e) {
+        _logger.w('⚠️ Reschedule after timetable sync failed: $e');
+      }
+
       _logger.i('✅ Background timetable sync success');
     } catch (e) {
       _logger.w('⚠️ Background timetable sync failed: $e');

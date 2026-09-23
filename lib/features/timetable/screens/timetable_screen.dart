@@ -20,10 +20,10 @@ import '../widgets/timetable_rule_dialogs.dart';
 import '../../homework/providers/homework_provider.dart';
 import '../../homework/models/homework_model.dart';
 import '../../../core/state/auth_state.dart';
+import '../../profile/providers/settings_provider.dart';
 import '../../../core/widgets/login_required_placeholder.dart';
 import '../../../core/constants/app_constants.dart';
 import 'package:logger/logger.dart';
-import '../../profile/providers/settings_provider.dart';
 import '../../../core/utils/l10n_extension.dart';
 
 /// 自定义次顶栏指示器：上圆下方
@@ -302,8 +302,9 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
     _agendaScrollController.jumpTo(offset);
   }
 
-  /// 手动刷新课表
+  /// 手动刷新课表（不受自动同步开关影响，关闭自动同步后仍可用）
   Future<void> _handleManualRefresh() async {
+    if (_isLoading) return;
     setState(() {
       _isLoading = true;
     });
@@ -404,6 +405,14 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
       }
     });
 
+    // 自动同步开关变化（关闭会删本地课表 / 开启会立即同步）时重载本地数据
+    ref.listen<bool>(
+      settingsProvider.select((s) => s.timetableAutoSyncEnabled),
+      (_, __) {
+        if (mounted) _loadLocalTimetable();
+      },
+    );
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
@@ -460,7 +469,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
               ],
             ),
           ),
-          // 💡 右侧操作按钮
+          // 💡 右侧操作按钮（刷新常驻：无本地课表时也可点一下手动同步）
           if (_hasLocalTimetable) ...[
             IconButton(
               icon: Icon(Icons.tune_rounded,
@@ -480,15 +489,17 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
               onPressed: _handleTodayClick,
               tooltip: context.l10n.backToToday,
             ),
-            IconButton(
-              icon: Icon(Icons.refresh_rounded,
-                  size: 22,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white70
-                      : const Color(0xFF5F6368)),
-              onPressed: _isLoading ? null : _handleManualRefresh,
-              tooltip: context.l10n.refreshTimetable,
-            ),
+          ],
+          IconButton(
+            icon: Icon(Icons.download_rounded,
+                size: 22,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : const Color(0xFF5F6368)),
+            onPressed: _isLoading ? null : _handleManualRefresh,
+            tooltip: context.l10n.refreshTimetable,
+          ),
+          if (_hasLocalTimetable) ...[
             IconButton(
               icon: Icon(Icons.share_rounded,
                   size: 20,
@@ -498,8 +509,8 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
               onPressed: _shareTimetable,
               tooltip: context.l10n.shareTimetable,
             ),
-            const SizedBox(width: 8),
           ],
+          const SizedBox(width: 8),
         ],
       ),
     );
@@ -519,7 +530,9 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
 
     if (_isLoading) return const Center(child: CircularProgressIndicator());
     if (!_hasLocalTimetable) {
-      return const EmptyTimetableState();
+      final autoSyncEnabled =
+          ref.watch(settingsProvider).timetableAutoSyncEnabled;
+      return EmptyTimetableState(autoSyncEnabled: autoSyncEnabled);
     }
 
     // 如果没有课程但是有元数据（已同步过），则继续渲染（为了展示作业）

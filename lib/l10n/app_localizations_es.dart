@@ -691,6 +691,25 @@ class AppLocalizationsEs extends AppLocalizations {
   String get refreshTimetable => 'Actualizar horario';
 
   @override
+  String get timetableAutoSync => '自动同步课表';
+
+  @override
+  String get disableAutoSyncTitle => '关闭自动同步？';
+
+  @override
+  String get disableAutoSyncMessage =>
+      '关闭后将删除本地课表（调课、停课等规则会保留），如需查看课表，可点击课表页右上角刷新按钮手动同步。';
+
+  @override
+  String get localTimetableDeleted => '本地课表已删除';
+
+  @override
+  String get noLocalTimetable => '暂无本地课表';
+
+  @override
+  String get tapRefreshButtonToSync => '点击右上角刷新按钮手动同步';
+
+  @override
   String get shareTimetable => 'Compartir horario';
 
   @override

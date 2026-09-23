@@ -6,6 +6,7 @@ import '../../../core/services/course_live_service.dart';
 import '../../../core/services/flyme_live_service.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/utils/l10n_extension.dart';
+import '../../../core/widgets/brand_switch.dart';
 import '../providers/settings_provider.dart';
 
 class NotificationSettingsScreen extends ConsumerWidget {
@@ -474,7 +475,7 @@ class _CourseLiveSectionState extends ConsumerState<CourseLiveSection> {
               ),
             ),
             // 与 App 主题色一致的 MD2 样式开关
-            _BrandSwitch(
+            BrandSwitch(
               value: enabled && _supported == true,
               onChanged: (_supported == null || _busy) ? null : _onToggle,
             ),
@@ -665,45 +666,12 @@ class _FlymeLiveSectionState extends ConsumerState<FlymeLiveSection> {
               ),
             ),
             // 与 App 主题色一致的 MD2 样式开关
-            _BrandSwitch(
+            BrandSwitch(
               value: enabled && _supported == true,
               onChanged: (_supported == null || _busy) ? null : _onToggle,
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// 与 App 主题色（#09C489）一致的 MD2 样式开关。
-class _BrandSwitch extends StatelessWidget {
-  final bool value;
-  final ValueChanged<bool>? onChanged;
-  const _BrandSwitch({required this.value, required this.onChanged});
-
-  static const Color _brand = Color(0xFF09C489);
-
-  @override
-  Widget build(BuildContext context) {
-    return Theme(
-      data: ThemeData(
-        useMaterial3: false,
-        colorScheme: Theme.of(context).colorScheme,
-      ),
-      child: Switch(
-        value: value,
-        onChanged: onChanged,
-        thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return _brand;
-          return null;
-        }),
-        trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return _brand.withValues(alpha: 0.5);
-          }
-          return null;
-        }),
       ),
     );
   }

@@ -16,13 +16,25 @@ class YdjwxtService {
   String? _token;
 
   /// 全自动同步课表
-  /// 
+  ///
   /// [onProgress] 进度回调
   /// [firstWeekMonday] 本学期第一周周一 (可选，若不传则从 API 自动解析)
+  ///
+  /// 同步是原子的：开始前先备份本地课表，任何一步失败都会回滚，
+  /// 保证旧课表不受损（调用方只需 catch 提示失败即可）。
   Future<void> syncTimetable({
     required Function(String progress) onProgress,
     DateTime? firstWeekMonday,
   }) async {
+    final storage = TimetableStorage();
+
+    TimetableBackup? backup;
+    try {
+      backup = await TimetableBackup.capture(storage);
+    } catch (e) {
+      _logger.w('⚠️ Failed to backup local timetable: $e');
+    }
+
     try {
       _logger.i('🚀 Starting automatic timetable sync (YDJWXT)...');
       
@@ -82,8 +94,6 @@ class YdjwxtService {
 
       // 5. 生成并保存结果
       onProgress('正在保存到本地...');
-      
-      final storage = TimetableStorage();
 
       // 1. 保存原始课表数据（未经规则修改的底数）
       await storage.saveRawCourseList(mergedCourses);
@@ -108,9 +118,11 @@ class YdjwxtService {
 
       onProgress('同步成功！已更新 ${finalCourses.length} 门课程');
       _logger.i('🎉 YDJWXT Sync Completed successfully (applied ${rules.length} local rules).');
-      
+
     } catch (e) {
       _logger.e('❌ YDJWXT sync failed: $e');
+      // 回滚到同步前的本地课表（尽力而为，不掩盖原始错误）
+      if (backup != null) await backup.restore(storage);
       rethrow;
     }
   }
@@ -157,7 +169,72 @@ class YdjwxtService {
         return rawData;
       }
     }
-    
+
     throw Exception('HTTP ${response.statusCode} while fetching week $week');
+  }
+}
+
+/// 本地课表备份：同步失败时原样写回，保证旧数据不受损。
+///
+/// 覆盖 ICS 文件、元数据、课程列表、原始课程列表四份文件。
+/// 注意：规则文件（timetable_rules.json）同步全程只读不写，无需备份。
+class TimetableBackup {
+  final String? ics;
+  final Map<String, dynamic>? metadata;
+  final List<CourseModel> courses;
+  final List<CourseModel> rawCourses;
+
+  const TimetableBackup({
+    this.ics,
+    this.metadata,
+    this.courses = const [],
+    this.rawCourses = const [],
+  });
+
+  /// 读取当前本地文件生成备份（无文件时对应字段为 null/空）。
+  static Future<TimetableBackup> capture(TimetableStorage storage) async {
+    return TimetableBackup(
+      ics: await storage.readTimetable(),
+      metadata: await storage.readMetadata(),
+      courses: await storage.readCourseList(),
+      rawCourses: await storage.readRawCourseList(),
+    );
+  }
+
+  /// 把备份写回本地。原本就没有的文件会被删掉（清理同步写一半的残留），
+  /// 原本就有的则恢复原内容。尽力而为，内部失败只打日志不抛异常。
+  Future<void> restore(TimetableStorage storage) async {
+    try {
+      if (ics == null) {
+        await storage.deleteTimetable();
+      } else {
+        await storage.saveTimetable(ics!);
+      }
+
+      final semester = metadata?['semester'] as String?;
+      final firstWeekMondayRaw = metadata?['firstWeekMonday'];
+      if (semester == null || firstWeekMondayRaw == null) {
+        await storage.deleteMetadata();
+      } else {
+        await storage.saveMetadata(
+          semester: semester,
+          firstWeekMonday: DateTime.parse(firstWeekMondayRaw as String),
+        );
+      }
+
+      if (courses.isEmpty) {
+        await storage.deleteCourseList();
+      } else {
+        await storage.saveCourseList(courses);
+      }
+
+      if (rawCourses.isEmpty) {
+        await storage.deleteRawCourseList();
+      } else {
+        await storage.saveRawCourseList(rawCourses);
+      }
+    } catch (e) {
+      AppLogger.instance.w('⚠️ Timetable rollback failed: $e');
+    }
   }
 }
