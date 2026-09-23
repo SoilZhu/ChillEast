@@ -837,6 +837,7 @@ class RepairService {
         RepairAttachment.fromJson(resData.cast<String, dynamic>());
 
     // 记录节点上传附件活动日志并建立关联 (与 HAR 抓包中 Entry 12 & 13 一致)
+    // 服务端靠这条 CI 日志关联工单展示流转记录，不写可能导致附件在流转记录/审核侧不可见，故保留。
     try {
       final user = auth.realName ?? '用户';
       final logRes = await _rpc('/v2/cmdb/ci/create', [
