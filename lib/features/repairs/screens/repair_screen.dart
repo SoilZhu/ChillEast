@@ -115,25 +115,13 @@ class _RepairScreenState extends ConsumerState<RepairScreen> {
             ),
             const SizedBox(height: 12),
 
-            if (_loading)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8),
-                child: LinearProgressIndicator(
-                    minHeight: 2, color: Color(0xFF09C489)),
-              ),
-
             if (_error != null) _buildError(theme),
 
-            // 4. 工单列表
-            if (_loading && currentOrders.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 40),
-                child: Center(
-                  child: CircularProgressIndicator(color: Color(0xFF09C489)),
-                ),
-              )
-            else if (currentOrders.isEmpty)
-              _buildEmptyState(isDark)
+            // 4. 工单列表（加载中不打断展示，不走进度条）
+            if (currentOrders.isEmpty)
+              if (!_loading) _buildEmptyState(isDark)
+              else
+                const SizedBox.shrink()
             else
               ...currentOrders
                   .map((order) => _buildOrderItem(order, isDark, isDraftTab)),

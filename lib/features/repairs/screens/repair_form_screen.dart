@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/utils/l10n_extension.dart';
 import '../models/repair_models.dart';
 import '../services/repair_service.dart';
+import '../widgets/authenticated_bxpt_image.dart';
 
 class _AttachedImage {
   final RepairAttachment attachment;
@@ -422,19 +423,13 @@ class _RepairFormScreenState extends ConsumerState<RepairFormScreen> {
                         File(localPath),
                         fit: BoxFit.contain,
                       )
-                    : Image.network(
-                        attachment.downloadUrl,
-                        headers: const {
-                          'Referer':
-                              '${RepairService.baseUrl}/relax/mobile/index.html',
-                        },
+                    : AuthenticatedBxptImage(
+                        url: attachment.downloadUrl,
                         fit: BoxFit.contain,
-                        loadingBuilder: (_, child, progress) => progress == null
-                            ? child
-                            : const Center(
-                                child: CircularProgressIndicator(
-                                    color: Colors.white)),
-                        errorBuilder: (_, __, ___) => const Center(
+                        loadingWidget: const Center(
+                            child: CircularProgressIndicator(
+                                color: Colors.white)),
+                        errorWidget: const Center(
                           child: Icon(Icons.broken_image_rounded,
                               size: 48, color: Colors.white70),
                         ),
@@ -760,27 +755,19 @@ class _RepairFormScreenState extends ConsumerState<RepairFormScreen> {
                                         size: 26),
                                   ),
                                 )
-                              : Image.network(
-                                  item.attachment.thumbnailUrl ??
+                              : AuthenticatedBxptImage(
+                                  url: item.attachment.thumbnailUrl ??
                                       item.attachment.downloadUrl,
-                                  headers: const {
-                                    'Referer':
-                                        '${RepairService.baseUrl}/relax/mobile/index.html',
-                                  },
                                   fit: BoxFit.cover,
-                                  loadingBuilder: (_, child, progress) =>
-                                      progress == null
-                                          ? child
-                                          : const Center(
-                                              child: SizedBox(
-                                                width: 18,
-                                                height: 18,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                        strokeWidth: 2),
-                                              ),
-                                            ),
-                                  errorBuilder: (_, __, ___) => const Center(
+                                  loadingWidget: const Center(
+                                    child: SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
+                                    ),
+                                  ),
+                                  errorWidget: const Center(
                                     child: Icon(Icons.image_outlined, size: 26),
                                   ),
                                 ),

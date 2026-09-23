@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/l10n_extension.dart';
 import '../models/repair_models.dart';
 import '../services/repair_service.dart';
+import '../utils/repair_log_parse.dart';
+import '../widgets/authenticated_bxpt_image.dart';
 
 class RepairDetailScreen extends ConsumerStatefulWidget {
   final RepairOrder order;
@@ -103,9 +105,17 @@ class _RepairDetailScreenState extends ConsumerState<RepairDetailScreen> {
   Widget build(BuildContext context) {
     final order = _detail ?? widget.order;
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bgColor = isDark ? Colors.black : Colors.white;
 
     return Scaffold(
+      backgroundColor: bgColor,
       appBar: AppBar(
+        backgroundColor: bgColor,
+        surfaceTintColor: bgColor,
+        foregroundColor: isDark ? Colors.white : Colors.black87,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(context.l10n.repairsOrderDetail),
         actions: [
           IconButton(
@@ -161,31 +171,33 @@ class _RepairDetailScreenState extends ConsumerState<RepairDetailScreen> {
 
                   // 5. 取消报修操作按钮（若当前节点支持）
                   if (order.canCancel) ...[
-                    SizedBox(
-                      height: 48,
-                      child: OutlinedButton.icon(
-                        onPressed: _cancelling ? null : () => _onCancel(order),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: theme.colorScheme.error,
-                          side: BorderSide(
-                            color:
-                                theme.colorScheme.error.withValues(alpha: 0.6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        FilledButton(
+                          onPressed:
+                              _cancelling ? null : () => _onCancel(order),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: theme.colorScheme.error,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 28, vertical: 12),
                           ),
+                          child: _cancelling
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(context.l10n.cancel),
                         ),
-                        icon: _cancelling
-                            ? SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: theme.colorScheme.error,
-                                ),
-                              )
-                            : const Icon(Icons.cancel_outlined),
-                        label: Text(_cancelling
-                            ? context.l10n.repairsCancellingOrder
-                            : context.l10n.repairsCancelOrder),
-                      ),
+                      ],
                     ),
                   ],
                 ],
@@ -199,54 +211,43 @@ class _RepairDetailScreenState extends ConsumerState<RepairDetailScreen> {
         ? Colors.blueGrey
         : (order.isDraft ? Colors.orange : const Color(0xFF09C489));
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.35),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                order.title.isEmpty
+                    ? context.l10n.repairsUnnamedOrder
+                    : order.title,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                order.status,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: statusColor,
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  order.title.isEmpty
-                      ? context.l10n.repairsUnnamedOrder
-                      : order.title,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  order.status,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: statusColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1),
-          const SizedBox(height: 8),
-          _row(context.l10n.repairsOrderNumber, order.code),
+        const SizedBox(height: 8),
+        _row(context.l10n.repairsOrderNumber, order.code),
           if (order.catalog.isNotEmpty)
             _row(context.l10n.repairsOrderType, order.catalog),
           if (order.currentNode.isNotEmpty && order.currentNode != order.status)
@@ -269,58 +270,44 @@ class _RepairDetailScreenState extends ConsumerState<RepairDetailScreen> {
           _row(context.l10n.repairsCreatedAt, _formatDate(order.createdAt)),
           if (order.closedAt != null)
             _row(context.l10n.repairsCompletedAt, _formatDate(order.closedAt)),
-        ],
-      ),
+      ],
     );
   }
 
   Widget _buildContentCard(RepairOrder order, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.35),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.l10n.repairsDescription,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        const SizedBox(height: 8),
+        SelectableText(
+          order.description.isEmpty
+              ? context.l10n.repairsNoDescription
+              : order.description,
+          style: const TextStyle(height: 1.6),
+        ),
+        if (order.supplement.isNotEmpty) ...[
+          const SizedBox(height: 14),
           Text(
-            context.l10n.repairsDescription,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            context.l10n.repairsSupplement,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: theme.textTheme.bodySmall?.color,
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           SelectableText(
-            order.description.isEmpty
-                ? context.l10n.repairsNoDescription
-                : order.description,
-            style: const TextStyle(height: 1.6),
+            order.supplement,
+            style: const TextStyle(height: 1.5),
           ),
-          if (order.supplement.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            const Divider(height: 1),
-            const SizedBox(height: 10),
-            Text(
-              context.l10n.repairsSupplement,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: theme.textTheme.bodySmall?.color,
-              ),
-            ),
-            const SizedBox(height: 4),
-            SelectableText(
-              order.supplement,
-              style: const TextStyle(height: 1.5),
-            ),
-          ],
-          if (order.userResponse.isNotEmpty || order.score != null) ...[
-            const SizedBox(height: 14),
-            const Divider(height: 1),
-            const SizedBox(height: 10),
-            Row(
+        ],
+        if (order.userResponse.isNotEmpty || order.score != null) ...[
+          const SizedBox(height: 14),
+          Row(
               children: [
                 Text(
                   context.l10n.repairsUserFeedback,
@@ -340,34 +327,21 @@ class _RepairDetailScreenState extends ConsumerState<RepairDetailScreen> {
               SelectableText(order.userResponse),
             ],
           ],
-        ],
-      ),
+      ],
     );
   }
 
   Widget _buildAttachmentsCard(RepairOrder order, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.35),
-        ),
-      ),
-      child: Column(
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.attach_file_rounded, size: 20),
-              const SizedBox(width: 6),
-              Text(
-                '${context.l10n.repairsAttachments} (${order.attachments.length})',
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              ),
-            ],
+          Text(
+            context.l10n.repairsAttachments,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: theme.textTheme.bodySmall?.color,
+            ),
           ),
           const SizedBox(height: 10),
           ...order.attachments.map((file) => Padding(
@@ -393,14 +367,10 @@ class _RepairDetailScreenState extends ConsumerState<RepairDetailScreen> {
                               ),
                             ),
                             clipBehavior: Clip.antiAlias,
-                            child: Image.network(
-                              file.thumbnailUrl!,
-                              headers: const {
-                                'Referer':
-                                    '${RepairService.baseUrl}/relax/mobile/index.html',
-                              },
+                            child: AuthenticatedBxptImage(
+                              url: file.thumbnailUrl!,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Icon(
+                              errorWidget: const Icon(
                                 Icons.image_outlined,
                                 size: 18,
                                 color: Color(0xFF09C489),
@@ -420,15 +390,28 @@ class _RepairDetailScreenState extends ConsumerState<RepairDetailScreen> {
                             style: const TextStyle(fontSize: 13),
                           ),
                         ),
-                        const Icon(Icons.visibility_outlined,
-                            size: 16, color: Colors.grey),
                       ],
                     ),
                   ),
                 ),
               )),
-        ],
-      ),
+      ],
+    );
+  }
+
+  Widget _buildLogDescription(RepairActivityLog log, bool isFirst) {
+    final baseStyle = TextStyle(
+      fontSize: 13,
+      fontWeight: isFirst ? FontWeight.w600 : FontWeight.normal,
+    );
+    final segments = parseRepairLogDescription(log.description);
+    if (segments.isEmpty) {
+      return Text(log.description, style: baseStyle);
+    }
+    // 流转记录只做去标记的纯文本展示，附件查看走上方的附件照片卡片。
+    return Text(
+      segments.map((s) => s.text).join(),
+      style: baseStyle,
     );
   }
 
@@ -444,19 +427,13 @@ class _RepairDetailScreenState extends ConsumerState<RepairDetailScreen> {
             InteractiveViewer(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  attachment.downloadUrl,
-                  headers: const {
-                    'Referer':
-                        '${RepairService.baseUrl}/relax/mobile/index.html',
-                  },
+                child: AuthenticatedBxptImage(
+                  url: attachment.downloadUrl,
                   fit: BoxFit.contain,
-                  loadingBuilder: (_, child, progress) => progress == null
-                      ? child
-                      : const Center(
-                          child:
-                              CircularProgressIndicator(color: Colors.white)),
-                  errorBuilder: (_, __, ___) => const Center(
+                  loadingWidget: const Center(
+                      child:
+                          CircularProgressIndicator(color: Colors.white)),
+                  errorWidget: const Center(
                     child: Icon(Icons.broken_image_rounded,
                         size: 48, color: Colors.white70),
                   ),
@@ -479,18 +456,9 @@ class _RepairDetailScreenState extends ConsumerState<RepairDetailScreen> {
 
   Widget _buildTimelineCard(RepairOrder order, ThemeData theme) {
     final logs = order.logs;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.35),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
           Row(
             children: [
               const Icon(Icons.timeline_rounded, size: 20),
@@ -551,15 +519,7 @@ class _RepairDetailScreenState extends ConsumerState<RepairDetailScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              log.description,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: index == 0
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                              ),
-                            ),
+                            _buildLogDescription(log, index == 0),
                             const SizedBox(height: 3),
                             Row(
                               children: [
@@ -592,8 +552,7 @@ class _RepairDetailScreenState extends ConsumerState<RepairDetailScreen> {
                 ),
               );
             }),
-        ],
-      ),
+      ],
     );
   }
 
