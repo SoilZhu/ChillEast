@@ -16,6 +16,8 @@ class FakeRepairService extends RepairService {
   bool submitCalled = false;
   Map<String, dynamic>? lastSubmittedValues;
   List<File> uploadedFiles = [];
+  bool cancelCalled = false;
+  RepairOrder? lastCancelledOrder;
 
   FakeRepairService({
     this.ongoingOrders = const [],
@@ -153,6 +155,13 @@ class FakeRepairService extends RepairService {
     submitCalled = true;
     lastSubmittedValues = values;
     return 'ok';
+  }
+
+  @override
+  Future<bool> cancelOrder(RepairOrder order, {RepairAction? action}) async {
+    cancelCalled = true;
+    lastCancelledOrder = order;
+    return true;
   }
 }
 
@@ -384,6 +393,113 @@ void main() {
       expect(json['success'], isTrue);
       expect(json['catalog'], '校园网络报修');
       expect(service.submitCalled, isTrue);
+    });
+
+    test('cancel_repair_order returns error when not logged in', () async {
+      final service = FakeRepairService(
+        auth: const AuthState.initial(),
+      );
+      final tool = RepairCancelTool.create(service: service);
+
+      final res = await tool.execute({
+        'order_id': '1001',
+      });
+
+      expect(res.isError, isTrue);
+      expect(res.content.first.text, contains('未登录'));
+    });
+
+    test('cancel_repair_order returns error when order cannot be cancelled', () async {
+      final nonCancellableOrder = RepairOrder(
+        id: '1001',
+        code: 'WX1001',
+        title: '已接单的工单',
+        description: '师傅已在路上',
+        catalog: '后勤报修',
+        status: '处理中',
+        statusId: '2',
+        createdAt: DateTime(2026, 9, 23),
+        closedAt: null,
+        department: '后勤保障中心',
+        actions: const [
+          RepairAction(id: 'act-view', name: '查看', displayName: '查看详情', possessorNode: 'node-1'),
+        ],
+      );
+
+      final service = FakeRepairService(detailOrder: nonCancellableOrder);
+      final tool = RepairCancelTool.create(service: service);
+
+      final res = await tool.execute({
+        'order_id': '1001',
+      });
+
+      expect(res.isError, isTrue);
+      expect(res.content.first.text, contains('不支持取消'));
+    });
+
+    test('cancel_repair_order returns confirmation_required when confirmed=false', () async {
+      final cancellableOrder = RepairOrder(
+        id: '1001',
+        code: 'WX1001',
+        title: '刚提交的报修',
+        description: '水龙头漏水',
+        catalog: '后勤报修',
+        status: '处理中',
+        statusId: '1',
+        createdAt: DateTime(2026, 9, 23),
+        closedAt: null,
+        department: '后勤保障中心',
+        actions: const [
+          RepairAction(id: 'act-cancel', name: '取消', displayName: '取消报修', possessorNode: 'node-1'),
+        ],
+      );
+
+      final service = FakeRepairService(detailOrder: cancellableOrder);
+      final tool = RepairCancelTool.create(service: service);
+
+      final res = await tool.execute({
+        'order_id': '1001',
+        'confirmed': false,
+      });
+
+      expect(res.isError, isFalse);
+      final json = jsonDecode(res.content.first.text!);
+      expect(json['status'], 'confirmation_required');
+      expect(json['requires_confirmation'], isTrue);
+      expect(json['order']['code'], 'WX1001');
+      expect(service.cancelCalled, isFalse);
+    });
+
+    test('cancel_repair_order executes cancellation when confirmed=true', () async {
+      final cancellableOrder = RepairOrder(
+        id: '1001',
+        code: 'WX1001',
+        title: '刚提交的报修',
+        description: '水龙头漏水',
+        catalog: '后勤报修',
+        status: '处理中',
+        statusId: '1',
+        createdAt: DateTime(2026, 9, 23),
+        closedAt: null,
+        department: '后勤保障中心',
+        actions: const [
+          RepairAction(id: 'act-cancel', name: '取消', displayName: '取消报修', possessorNode: 'node-1'),
+        ],
+      );
+
+      final service = FakeRepairService(detailOrder: cancellableOrder);
+      final tool = RepairCancelTool.create(service: service);
+
+      final res = await tool.execute({
+        'order_id': '1001',
+        'confirmed': true,
+      });
+
+      expect(res.isError, isFalse);
+      final json = jsonDecode(res.content.first.text!);
+      expect(json['success'], isTrue);
+      expect(service.cancelCalled, isTrue);
+      expect(service.lastCancelledOrder?.id, '1001');
     });
   });
 }
