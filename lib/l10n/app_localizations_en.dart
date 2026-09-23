@@ -2257,4 +2257,189 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get removeImage => 'Remove Image';
+
+  @override
+  String get repairsTitle => 'Campus Repairs';
+
+  @override
+  String get repairsQuickReport => 'Choose a repair type';
+
+  @override
+  String get repairsQuickReportHint =>
+      'Use native forms instead of opening the web page';
+
+  @override
+  String get repairsMyOrders => 'My work orders';
+
+  @override
+  String get repairsMyOrdersHint =>
+      'Work-order status is synchronized with campus repairs';
+
+  @override
+  String get repairsInProgress => 'In progress';
+
+  @override
+  String get repairsCompleted => 'Completed';
+
+  @override
+  String get repairsHeroTitle => 'Campus service, repaired in one tap';
+
+  @override
+  String get repairsHeroSubtitle =>
+      'Native forms with synchronized work-order status. Choose the service type that best matches your issue.';
+
+  @override
+  String get repairsNoCompleted => 'No completed work orders';
+
+  @override
+  String get repairsNoOngoing => 'No ongoing work orders';
+
+  @override
+  String get repairsUnnamedOrder => 'Unnamed work order';
+
+  @override
+  String get repairsEnterValue => 'Enter or paste the platform value';
+
+  @override
+  String repairsRequiredField(String field) {
+    return 'Please fill in $field';
+  }
+
+  @override
+  String get repairsSubmitSuccess => 'Submitted';
+
+  @override
+  String get repairsSubmitSuccessMessage =>
+      'Your work order was submitted. Track it under My work orders.';
+
+  @override
+  String get repairsFormHint =>
+      'Fields marked * are required. Photo attachments can be captured or picked from gallery.';
+
+  @override
+  String get repairsSelectValue => 'Select';
+
+  @override
+  String get repairsSubmit => 'Submit work order';
+
+  @override
+  String get repairsSubmitting => 'Submitting…';
+
+  @override
+  String get repairsOrderDetail => 'Work order details';
+
+  @override
+  String get repairsOrderNumber => 'Number';
+
+  @override
+  String get repairsOrderStatus => 'Status';
+
+  @override
+  String get repairsOrderType => 'Service';
+
+  @override
+  String get repairsDepartment => 'Department';
+
+  @override
+  String get repairsCreatedAt => 'Created';
+
+  @override
+  String get repairsDescription => 'Description';
+
+  @override
+  String get repairsNoDescription => 'No description';
+
+  @override
+  String get repairsDrafts => 'Drafts';
+
+  @override
+  String get repairsNoDrafts => 'No drafts';
+
+  @override
+  String get repairsSaveDraft => 'Save draft';
+
+  @override
+  String get repairsSavingDraft => 'Saving draft…';
+
+  @override
+  String get repairsSaveDraftSuccess => 'Saved to drafts';
+
+  @override
+  String get repairsCancelOrder => 'Cancel repair';
+
+  @override
+  String get repairsCancellingOrder => 'Cancelling…';
+
+  @override
+  String get repairsCancelConfirmTitle => 'Cancel repair order?';
+
+  @override
+  String get repairsCancelConfirmMessage =>
+      'Processing will stop after cancellation. Are you sure you want to cancel?';
+
+  @override
+  String get repairsCancelSuccess => 'Repair order has been cancelled';
+
+  @override
+  String get repairsApplicant => 'Applicant';
+
+  @override
+  String get repairsApplicantDepartment => 'Applicant department';
+
+  @override
+  String get repairsPhone => 'Phone';
+
+  @override
+  String get repairsHandler => 'Handler';
+
+  @override
+  String get repairsHandleResult => 'Resolution';
+
+  @override
+  String get repairsUserFeedback => 'Feedback';
+
+  @override
+  String get repairsRating => 'Rating';
+
+  @override
+  String get repairsSupplement => 'Notes';
+
+  @override
+  String get repairsPriority => 'Priority';
+
+  @override
+  String get repairsCurrentNode => 'Current step';
+
+  @override
+  String get repairsCompletedAt => 'Completed';
+
+  @override
+  String get repairsActivityTimeline => 'Activity history';
+
+  @override
+  String get repairsAttachments => 'Attachments';
+
+  @override
+  String get repairsNoActivity => 'No activity history';
+
+  @override
+  String get repairsUploadImage => 'Add Photo';
+
+  @override
+  String get repairsUploading => 'Uploading photo…';
+
+  @override
+  String get repairsUploadFailed => 'Failed to upload photo';
+
+  @override
+  String get repairsDeleteImage => 'Delete Photo';
+
+  @override
+  String get repairsDeleteConfirm => 'Delete this photo?';
+
+  @override
+  String get repairsSubmitTicket => 'Submit Repair Ticket';
+
+  @override
+  String get repairsSelectCategory => 'Select Repair Category';
 }

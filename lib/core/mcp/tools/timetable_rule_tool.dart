@@ -1,7 +1,6 @@
 import '../../../features/timetable/models/course_model.dart';
 import '../../../features/timetable/models/timetable_rule_model.dart';
 import '../../../features/timetable/services/timetable_rule_service.dart';
-import '../../../features/timetable/utils/week_parser.dart';
 import '../models/mcp_tool.dart';
 
 /// MCP Tool: 课表规则管理 (manage_timetable_rules)

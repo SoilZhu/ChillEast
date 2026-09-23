@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../sunshine/screens/sunshine_screen.dart';
+import '../../repairs/screens/repair_screen.dart';
 import '../../questionnaire/screens/questionnaire_list_screen.dart';
 import '../../leave/screens/leave_list_screen.dart';
 import '../../../core/constants/app_constants.dart';
@@ -154,13 +155,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
       case 'repairs':
         isLoggedIn 
             ? _safeNavigate(
-                WebViewDetailScreen(
-                  title: context.l10n.funcRepairs,
-                  url: AppConstants.repairsSsoUrl,
-                  userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Mobile Safari/537.36',
-                  showWebBack: true,
-                  targetUrl: '/relax/mobile/index.html',
-                ),
+                const RepairScreen(),
               )
             : _showLoginDialog();
         break;

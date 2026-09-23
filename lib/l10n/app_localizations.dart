@@ -4172,6 +4172,360 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'移除图片'**
   String get removeImage;
+
+  /// No description provided for @repairsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'报修平台'**
+  String get repairsTitle;
+
+  /// No description provided for @repairsQuickReport.
+  ///
+  /// In zh, this message translates to:
+  /// **'我要报修'**
+  String get repairsQuickReport;
+
+  /// No description provided for @repairsQuickReportHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'按问题类型快速进入原生填报页面'**
+  String get repairsQuickReportHint;
+
+  /// No description provided for @repairsMyOrders.
+  ///
+  /// In zh, this message translates to:
+  /// **'我的工单'**
+  String get repairsMyOrders;
+
+  /// No description provided for @repairsMyOrdersHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'报修记录会同步到校园报修平台'**
+  String get repairsMyOrdersHint;
+
+  /// No description provided for @repairsInProgress.
+  ///
+  /// In zh, this message translates to:
+  /// **'处理中'**
+  String get repairsInProgress;
+
+  /// No description provided for @repairsCompleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'已完成'**
+  String get repairsCompleted;
+
+  /// No description provided for @repairsHeroTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'校园服务，一键报修'**
+  String get repairsHeroTitle;
+
+  /// No description provided for @repairsHeroSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'原生界面填写，工单状态实时同步；请选择最符合问题的服务类型。'**
+  String get repairsHeroSubtitle;
+
+  /// No description provided for @repairsNoCompleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无已完成工单'**
+  String get repairsNoCompleted;
+
+  /// No description provided for @repairsNoOngoing.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无处理中工单'**
+  String get repairsNoOngoing;
+
+  /// No description provided for @repairsUnnamedOrder.
+  ///
+  /// In zh, this message translates to:
+  /// **'未命名工单'**
+  String get repairsUnnamedOrder;
+
+  /// No description provided for @repairsEnterValue.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入或粘贴平台选项值'**
+  String get repairsEnterValue;
+
+  /// No description provided for @repairsRequiredField.
+  ///
+  /// In zh, this message translates to:
+  /// **'请填写{field}'**
+  String repairsRequiredField(String field);
+
+  /// No description provided for @repairsSubmitSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'提交成功'**
+  String get repairsSubmitSuccess;
+
+  /// No description provided for @repairsSubmitSuccessMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'工单已提交，处理进度可在“我的工单”中查看。'**
+  String get repairsSubmitSuccessMessage;
+
+  /// No description provided for @repairsFormHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'带 * 的字段为必填项。图片附件支持拍照或从相册上传。'**
+  String get repairsFormHint;
+
+  /// No description provided for @repairsSelectValue.
+  ///
+  /// In zh, this message translates to:
+  /// **'请选择'**
+  String get repairsSelectValue;
+
+  /// No description provided for @repairsSubmit.
+  ///
+  /// In zh, this message translates to:
+  /// **'提交工单'**
+  String get repairsSubmit;
+
+  /// No description provided for @repairsSubmitting.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在提交…'**
+  String get repairsSubmitting;
+
+  /// No description provided for @repairsOrderDetail.
+  ///
+  /// In zh, this message translates to:
+  /// **'工单详情'**
+  String get repairsOrderDetail;
+
+  /// No description provided for @repairsOrderNumber.
+  ///
+  /// In zh, this message translates to:
+  /// **'工单编号'**
+  String get repairsOrderNumber;
+
+  /// No description provided for @repairsOrderStatus.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前状态'**
+  String get repairsOrderStatus;
+
+  /// No description provided for @repairsOrderType.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务类型'**
+  String get repairsOrderType;
+
+  /// No description provided for @repairsDepartment.
+  ///
+  /// In zh, this message translates to:
+  /// **'处理部门'**
+  String get repairsDepartment;
+
+  /// No description provided for @repairsCreatedAt.
+  ///
+  /// In zh, this message translates to:
+  /// **'创建时间'**
+  String get repairsCreatedAt;
+
+  /// No description provided for @repairsDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'问题描述'**
+  String get repairsDescription;
+
+  /// No description provided for @repairsNoDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无描述'**
+  String get repairsNoDescription;
+
+  /// No description provided for @repairsDrafts.
+  ///
+  /// In zh, this message translates to:
+  /// **'草稿箱'**
+  String get repairsDrafts;
+
+  /// No description provided for @repairsNoDrafts.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无草稿'**
+  String get repairsNoDrafts;
+
+  /// No description provided for @repairsSaveDraft.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存草稿'**
+  String get repairsSaveDraft;
+
+  /// No description provided for @repairsSavingDraft.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在保存…'**
+  String get repairsSavingDraft;
+
+  /// No description provided for @repairsSaveDraftSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'已保存到草稿箱'**
+  String get repairsSaveDraftSuccess;
+
+  /// No description provided for @repairsCancelOrder.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消报修'**
+  String get repairsCancelOrder;
+
+  /// No description provided for @repairsCancellingOrder.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在取消…'**
+  String get repairsCancellingOrder;
+
+  /// No description provided for @repairsCancelConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认取消报修？'**
+  String get repairsCancelConfirmTitle;
+
+  /// No description provided for @repairsCancelConfirmMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消后该报修工单将停止处理，是否确认取消？'**
+  String get repairsCancelConfirmMessage;
+
+  /// No description provided for @repairsCancelSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'报修工单已成功取消'**
+  String get repairsCancelSuccess;
+
+  /// No description provided for @repairsApplicant.
+  ///
+  /// In zh, this message translates to:
+  /// **'报修人'**
+  String get repairsApplicant;
+
+  /// No description provided for @repairsApplicantDepartment.
+  ///
+  /// In zh, this message translates to:
+  /// **'报修部门'**
+  String get repairsApplicantDepartment;
+
+  /// No description provided for @repairsPhone.
+  ///
+  /// In zh, this message translates to:
+  /// **'联系电话'**
+  String get repairsPhone;
+
+  /// No description provided for @repairsHandler.
+  ///
+  /// In zh, this message translates to:
+  /// **'处理人员'**
+  String get repairsHandler;
+
+  /// No description provided for @repairsHandleResult.
+  ///
+  /// In zh, this message translates to:
+  /// **'处理结果'**
+  String get repairsHandleResult;
+
+  /// No description provided for @repairsUserFeedback.
+  ///
+  /// In zh, this message translates to:
+  /// **'评价反馈'**
+  String get repairsUserFeedback;
+
+  /// No description provided for @repairsRating.
+  ///
+  /// In zh, this message translates to:
+  /// **'评价得分'**
+  String get repairsRating;
+
+  /// No description provided for @repairsSupplement.
+  ///
+  /// In zh, this message translates to:
+  /// **'补充说明'**
+  String get repairsSupplement;
+
+  /// No description provided for @repairsPriority.
+  ///
+  /// In zh, this message translates to:
+  /// **'优先级'**
+  String get repairsPriority;
+
+  /// No description provided for @repairsCurrentNode.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前环节'**
+  String get repairsCurrentNode;
+
+  /// No description provided for @repairsCompletedAt.
+  ///
+  /// In zh, this message translates to:
+  /// **'办结时间'**
+  String get repairsCompletedAt;
+
+  /// No description provided for @repairsActivityTimeline.
+  ///
+  /// In zh, this message translates to:
+  /// **'流转记录'**
+  String get repairsActivityTimeline;
+
+  /// No description provided for @repairsAttachments.
+  ///
+  /// In zh, this message translates to:
+  /// **'附件照片'**
+  String get repairsAttachments;
+
+  /// No description provided for @repairsNoActivity.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无流转记录'**
+  String get repairsNoActivity;
+
+  /// No description provided for @repairsUploadImage.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加图片'**
+  String get repairsUploadImage;
+
+  /// No description provided for @repairsUploading.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在上传图片…'**
+  String get repairsUploading;
+
+  /// No description provided for @repairsUploadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'图片上传失败'**
+  String get repairsUploadFailed;
+
+  /// No description provided for @repairsDeleteImage.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除图片'**
+  String get repairsDeleteImage;
+
+  /// No description provided for @repairsDeleteConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认删除此图片？'**
+  String get repairsDeleteConfirm;
+
+  /// No description provided for @repairsSubmitTicket.
+  ///
+  /// In zh, this message translates to:
+  /// **'填写报修单'**
+  String get repairsSubmitTicket;
+
+  /// No description provided for @repairsSelectCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择报修类型'**
+  String get repairsSelectCategory;
 }
 
 class _AppLocalizationsDelegate

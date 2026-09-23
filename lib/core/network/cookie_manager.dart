@@ -70,6 +70,7 @@ class AppCookieManager {
         'https://passport2.chaoxing.com',
         'https://passport2-api.chaoxing.com',
         'https://sun.hunau.edu.cn',
+        AppConstants.repairsBaseUrl,
       ];
 
       // Delete the entire host, including /cas, /authn and /portal paths.
@@ -194,6 +195,7 @@ class AppCookieManager {
       // 1. 扩充需要同步的域名列表
       final domains = [
         AppConstants.ssoBaseUrl,
+        'https://sso.hunau.edu.cn/cas/', // 👈 增加 CAS 路径以确保抓取到 TGC
         AppConstants.portalBaseUrl,
         'https://hunau.edu.cn',
         'https://bxpt.hunau.edu.cn',

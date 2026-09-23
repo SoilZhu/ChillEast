@@ -2276,4 +2276,183 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get removeImage => '移除图片';
+
+  @override
+  String get repairsTitle => '报修平台';
+
+  @override
+  String get repairsQuickReport => '我要报修';
+
+  @override
+  String get repairsQuickReportHint => '按问题类型快速进入原生填报页面';
+
+  @override
+  String get repairsMyOrders => '我的工单';
+
+  @override
+  String get repairsMyOrdersHint => '报修记录会同步到校园报修平台';
+
+  @override
+  String get repairsInProgress => '处理中';
+
+  @override
+  String get repairsCompleted => '已完成';
+
+  @override
+  String get repairsHeroTitle => '校园服务，一键报修';
+
+  @override
+  String get repairsHeroSubtitle => '原生界面填写，工单状态实时同步；请选择最符合问题的服务类型。';
+
+  @override
+  String get repairsNoCompleted => '暂无已完成工单';
+
+  @override
+  String get repairsNoOngoing => '暂无处理中工单';
+
+  @override
+  String get repairsUnnamedOrder => '未命名工单';
+
+  @override
+  String get repairsEnterValue => '请输入或粘贴平台选项值';
+
+  @override
+  String repairsRequiredField(String field) {
+    return '请填写$field';
+  }
+
+  @override
+  String get repairsSubmitSuccess => '提交成功';
+
+  @override
+  String get repairsSubmitSuccessMessage => '工单已提交，处理进度可在“我的工单”中查看。';
+
+  @override
+  String get repairsFormHint => '带 * 的字段为必填项。图片附件功能将随平台接口适配逐步开放。';
+
+  @override
+  String get repairsSelectValue => '请选择';
+
+  @override
+  String get repairsSubmit => '提交工单';
+
+  @override
+  String get repairsSubmitting => '正在提交…';
+
+  @override
+  String get repairsOrderDetail => '工单详情';
+
+  @override
+  String get repairsOrderNumber => '工单编号';
+
+  @override
+  String get repairsOrderStatus => '当前状态';
+
+  @override
+  String get repairsOrderType => '服务类型';
+
+  @override
+  String get repairsDepartment => '处理部门';
+
+  @override
+  String get repairsCreatedAt => '创建时间';
+
+  @override
+  String get repairsDescription => '问题描述';
+
+  @override
+  String get repairsNoDescription => '暂无描述';
+
+  @override
+  String get repairsDrafts => '草稿箱';
+
+  @override
+  String get repairsNoDrafts => '暂无草稿';
+
+  @override
+  String get repairsSaveDraft => '保存草稿';
+
+  @override
+  String get repairsSavingDraft => '正在保存…';
+
+  @override
+  String get repairsSaveDraftSuccess => '已保存到草稿箱';
+
+  @override
+  String get repairsCancelOrder => '取消报修';
+
+  @override
+  String get repairsCancellingOrder => '正在取消…';
+
+  @override
+  String get repairsCancelConfirmTitle => '确认取消报修？';
+
+  @override
+  String get repairsCancelConfirmMessage => '取消后该报修工单将停止处理，是否确认取消？';
+
+  @override
+  String get repairsCancelSuccess => '报修工单已成功取消';
+
+  @override
+  String get repairsApplicant => '报修人';
+
+  @override
+  String get repairsApplicantDepartment => '报修部门';
+
+  @override
+  String get repairsPhone => '联系电话';
+
+  @override
+  String get repairsHandler => '处理人员';
+
+  @override
+  String get repairsHandleResult => '处理结果';
+
+  @override
+  String get repairsUserFeedback => '评价反馈';
+
+  @override
+  String get repairsRating => '评价得分';
+
+  @override
+  String get repairsSupplement => '补充说明';
+
+  @override
+  String get repairsPriority => '优先级';
+
+  @override
+  String get repairsCurrentNode => '当前环节';
+
+  @override
+  String get repairsCompletedAt => '办结时间';
+
+  @override
+  String get repairsActivityTimeline => '流转记录';
+
+  @override
+  String get repairsAttachments => '附件照片';
+
+  @override
+  String get repairsNoActivity => '暂无流转记录';
+
+  @override
+  String get repairsUploadImage => '添加图片';
+
+  @override
+  String get repairsUploading => '正在上传图片…';
+
+  @override
+  String get repairsUploadFailed => '图片上传失败';
+
+  @override
+  String get repairsDeleteImage => '删除图片';
+
+  @override
+  String get repairsDeleteConfirm => '确认删除此图片？';
+
+  @override
+  String get repairsSubmitTicket => '填写报修单';
+
+  @override
+  String get repairsSelectCategory => '选择报修类型';
 }
