@@ -1006,6 +1006,34 @@ class RepairService {
     );
   }
 
+  Future<RepairOrder> fetchOrderDetailById(String orderId) async {
+    final allOrders = await Future.wait([
+      fetchOrders(ongoing: true),
+      fetchOrders(ongoing: false),
+      fetchOrders(ongoing: false, isDraft: true),
+    ]);
+    final matched = allOrders
+        .expand((x) => x)
+        .where((o) => o.id == orderId || o.code == orderId)
+        .firstOrNull;
+
+    final target = matched ??
+        RepairOrder(
+          id: orderId,
+          code: orderId,
+          title: '',
+          description: '',
+          catalog: '',
+          status: '',
+          statusId: '',
+          createdAt: null,
+          closedAt: null,
+          department: '',
+        );
+
+    return fetchOrderDetail(target);
+  }
+
   Future<bool> executeAction(
     RepairOrder order,
     RepairAction action, {

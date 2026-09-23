@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../state/locale_provider.dart';
 import '../mcp/services/mcp_tool_registry.dart';
+import '../mcp/tools/repair_tool.dart';
 import '../utils/secure_storage_helper.dart';
 import 'ai_service.dart';
 
@@ -253,6 +254,7 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
     final newDisplay = List<AiDisplayMessage>.from(state.displayMessages);
 
     if (imagePath != null && imagePath.isNotEmpty) {
+      RepairSubmitTool.lastChatImagePath = imagePath;
       final file = File(imagePath);
       if (await file.exists()) {
         final bytes = await file.readAsBytes();
@@ -260,7 +262,8 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
         final mimeType = _getMimeType(imagePath);
         final dataUri = 'data:$mimeType;base64,$base64String';
 
-        final promptForModel = query.isNotEmpty ? query : l10n.describeImagePrompt;
+        final basePrompt = query.isNotEmpty ? query : l10n.describeImagePrompt;
+        final promptForModel = '$basePrompt\n[用户已上传图片附件，本地文件路径: $imagePath]';
 
         newHistory.add(AiChatMessage(
           role: 'user',
