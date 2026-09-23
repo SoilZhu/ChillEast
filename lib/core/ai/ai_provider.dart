@@ -263,7 +263,6 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
         final dataUri = 'data:$mimeType;base64,$base64String';
 
         final basePrompt = query.isNotEmpty ? query : l10n.describeImagePrompt;
-        final promptForModel = '$basePrompt\n[用户已上传图片附件，本地文件路径: $imagePath]';
 
         newHistory.add(AiChatMessage(
           role: 'user',
@@ -276,7 +275,7 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
             },
             {
               'type': 'text',
-              'text': promptForModel,
+              'text': basePrompt,
             },
           ],
         ));

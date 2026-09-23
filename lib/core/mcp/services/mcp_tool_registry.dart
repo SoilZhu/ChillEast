@@ -113,6 +113,9 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
   // 23. 报修工单提交（后勤报修必带图，需用户确认）
   registry.register(RepairSubmitTool.create(service: repairService));
 
+  // 24. 报修工单取消（需用户确认）
+  registry.register(RepairCancelTool.create(service: repairService));
+
   return registry;
 });
 

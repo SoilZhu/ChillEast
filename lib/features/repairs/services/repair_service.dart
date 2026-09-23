@@ -10,7 +10,8 @@ import '../../../core/state/auth_state.dart';
 import '../models/repair_models.dart';
 
 final repairServiceProvider = Provider<RepairService>((ref) => RepairService(
-      ref.read(authStateProvider),
+      const AuthState.initial(),
+      authGetter: () => ref.read(authStateProvider),
       reauthenticate: ref.read(authServiceProvider).silentLogin,
     ));
 
@@ -23,7 +24,9 @@ class RepairException implements Exception {
 
 class RepairService {
   static const baseUrl = 'https://bxpt.hunau.edu.cn';
-  final AuthState auth;
+  final AuthState Function()? _authGetter;
+  final AuthState _auth;
+  AuthState get auth => _authGetter != null ? _authGetter!() : _auth;
   final Dio? _client;
   final Future<void> Function()? _reauthenticate;
   bool _repairSessionReady = false;
@@ -31,10 +34,13 @@ class RepairService {
   String? _bxptUserId;
 
   RepairService(
-    this.auth, {
+    AuthState auth, {
+    AuthState Function()? authGetter,
     Dio? dio,
     Future<void> Function()? reauthenticate,
-  })  : _client = dio,
+  })  : _auth = auth,
+        _authGetter = authGetter,
+        _client = dio,
         _reauthenticate = reauthenticate;
 
   static const catalogs = <RepairCatalog>[

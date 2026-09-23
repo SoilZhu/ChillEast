@@ -477,3 +477,84 @@ class RepairSubmitTool {
     );
   }
 }
+
+/// MCP Tool: 取消报修工单 (cancel_repair_order)
+class RepairCancelTool {
+  static const String toolName = 'cancel_repair_order';
+
+  static McpTool create({RepairService? service, String toolName = toolName}) {
+    final repairService = _resolveService(service);
+
+    return McpTool(
+      name: toolName,
+      description:
+          '取消指定的报修工单。安全原则：必须先以 confirmed=false 调用此工具向用户展示待取消工单详情并征得用户明确同意；获得用户同意后，再以 confirmed=true 调用此工具正式执行取消。',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'order_id': {
+            'type': 'string',
+            'description': '待取消的报修工单编号或工单ID（例如“WX202609230001”或数字ID）。',
+          },
+          'confirmed': {
+            'type': 'boolean',
+            'description': '用户是否已明确同意取消此工单。首次调用传 false，待用户明确确认后再传 true。',
+            'default': false,
+          },
+        },
+        'required': ['order_id'],
+      },
+      handler: (arguments) async {
+        final orderId = (arguments['order_id'] as String?)?.trim() ?? '';
+        if (orderId.isEmpty) {
+          return McpToolResult.error('参数错误: 请提供需要取消的工单编号 (order_id)');
+        }
+
+        final confirmed = arguments['confirmed'] == true;
+
+        try {
+          if (repairService.auth.status != AuthStatus.authenticated) {
+            return McpToolResult.error('未登录智慧后勤报修平台，无法取消工单。请先登录。');
+          }
+
+          // 1. 获取工单最新详情以读取 actions 和 canCancel 属性
+          final order = await repairService.fetchOrderDetailById(orderId);
+
+          // 2. 检查工单当前节点是否允许取消
+          if (!order.canCancel) {
+            final orderLabel = order.code.isNotEmpty ? order.code : orderId;
+            final statusLabel = order.status.isNotEmpty ? order.status : '当前状态';
+            return McpToolResult.error(
+                '工单 $orderLabel ($statusLabel) 当前不支持取消。只有在派工处理前的工单方可取消。');
+          }
+
+          // 3. 两阶段确认模式
+          if (!confirmed) {
+            return McpToolResult.json({
+              'status': 'confirmation_required',
+              'requires_confirmation': true,
+              'message':
+                  '取消工单是不可逆操作。请向用户展示以下待取消工单的信息，并询问是否确认取消。在用户明确确认后，再次调用此工具并将 confirmed 设为 true。',
+              'order': _formatOrder(order),
+            });
+          }
+
+          // 4. 正式取消
+          final success = await repairService.cancelOrder(order);
+          if (success) {
+            return McpToolResult.json({
+              'success': true,
+              'message': '工单 ${order.code.isNotEmpty ? order.code : orderId} 已成功取消。',
+              'order': _formatOrder(order),
+            });
+          } else {
+            return McpToolResult.error('取消工单失败，平台未返回成功状态。');
+          }
+        } catch (e) {
+          return McpToolResult.error('取消工单失败: $e');
+        }
+      },
+    );
+  }
+}
+
