@@ -49,11 +49,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<CourseModel> _todayCourses = [];
   bool _isLoadingTimetable = false;
   bool _isShowingTomorrow = false;
-  
+  final PageController _quickPageController = PageController();
+  int _quickPageIndex = 0;
+
   @override
   void initState() {
     super.initState();
     _loadPreviewCourses();
+  }
+
+  @override
+  void dispose() {
+    _quickPageController.dispose();
+    super.dispose();
   }
   
   /// 加载预览课程（晚上10点后展示明天，0点后恢复今天）
@@ -143,7 +151,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 快捷功能 (内部处理 horizontal padding，实现满屏滚动无白边)
+            // 快捷功能 2x3 网格（报修平台卡片风格）
             _buildQuickActions(context, authState),
             
             Padding(
@@ -172,34 +180,135 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isLoggedIn = authState.status == AuthStatus.authenticated;
     final appearance = ref.watch(appearanceProvider);
     final visibleItems = appearance.homeItems.where((item) => item.isVisible).toList();
-    
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: Row(
+
+    // 单页可放 6 格；第一页固定为 5 个功能 + 更多
+    if (visibleItems.length <= 5) {
+      final displayItems = visibleItems.toList();
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        child: _buildQuickGrid(
+          context,
+          items: displayItems,
+          showMore: true,
+          isDark: isDark,
+          isLoggedIn: isLoggedIn,
+        ),
+      );
+    }
+
+    // 多页：第一页 5 功能 + 更多，其余页每页最多 6 个功能
+    final firstPageItems = visibleItems.take(5).toList();
+    final remaining = visibleItems.skip(5).toList();
+    const perPage = 6;
+    final pageCount = 1 + (remaining.length / perPage).ceil();
+    // 3 行固定高度，避免末页高度跳变：3*44 + 2*10
+    const gridHeight = 3 * 44.0 + 2 * 10.0;
+
+    // visibleItems 变化（如设置页增删）时，修正越界的页码
+    if (_quickPageIndex >= pageCount) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _quickPageIndex = pageCount - 1);
+      });
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          ...visibleItems.map((item) => _buildQuickActionItem(
+          SizedBox(
+            height: gridHeight,
+            child: PageView.builder(
+              controller: _quickPageController,
+              itemCount: pageCount,
+              onPageChanged: (i) => setState(() => _quickPageIndex = i),
+              itemBuilder: (context, page) {
+                if (page == 0) {
+                  return _buildQuickGrid(
+                    context,
+                    items: firstPageItems,
+                    showMore: true,
+                    isDark: isDark,
+                    isLoggedIn: isLoggedIn,
+                  );
+                }
+                final start = (page - 1) * perPage;
+                final end = (start + perPage).clamp(0, remaining.length);
+                return _buildQuickGrid(
+                  context,
+                  items: remaining.sublist(start, end),
+                  showMore: false,
+                  isDark: isDark,
+                  isLoggedIn: isLoggedIn,
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(pageCount, (i) {
+              final active = i == _quickPageIndex;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: active ? 16 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: active
+                      ? const Color(0xFF09C489)
+                      : (isDark ? Colors.white24 : Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickGrid(
+    BuildContext context, {
+    required List<FunctionItem> items,
+    required bool showMore,
+    required bool isDark,
+    required bool isLoggedIn,
+  }) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        mainAxisExtent: 44,
+      ),
+      itemCount: items.length + (showMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index < items.length) {
+          final item = items[index];
+          return _buildQuickActionCard(
             context,
             icon: item.icon,
             label: item.getLocalizedTitle(context),
             iconColor: item.color,
-            bgColor: isDark ? item.color.withOpacity(0.15) : item.color.withOpacity(0.08),
+            isDark: isDark,
             onTap: () => _handleActionTap(context, item.id, isLoggedIn),
-          )),
-          // 8. 更多 (始终显示在最后)
-          _buildQuickActionItem(
-            context,
-            icon: Icons.grid_view_rounded,
-            label: context.l10n.more,
-            iconColor: const Color(0xFFE6A334),
-            bgColor: isDark ? const Color(0xFF2E271A) : const Color(0xFFFFF8E8),
-            onTap: () => _navigateToTab(context, 4),
-          ),
-        ],
-      ),
+          );
+        }
+        // 更多 (第一页末尾固定占位)
+        return _buildQuickActionCard(
+          context,
+          icon: Icons.grid_view_rounded,
+          label: context.l10n.more,
+          iconColor: const Color(0xFFE6A334),
+          isDark: isDark,
+          onTap: () => _navigateToTab(context, 4),
+        );
+      },
     );
   }
 
@@ -343,47 +452,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  Widget _buildQuickActionItem(
+  Widget _buildQuickActionCard(
     BuildContext context, {
     required IconData icon,
     required String label,
     required Color iconColor,
-    required Color bgColor,
+    required bool isDark,
     required VoidCallback onTap,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 58,
-              height: 58,
-              decoration: BoxDecoration(
-                color: bgColor,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: 26,
-                color: iconColor,
-              ),
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : const Color(0xFFE0E0E0),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  color: iconColor,
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white70
-                    : Colors.grey[800],
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
