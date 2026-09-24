@@ -75,35 +75,83 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
     final authState = ref.watch(authStateProvider);
     final isLoggedIn = authState.status == AuthStatus.authenticated;
     final appearance = ref.watch(appearanceProvider);
-    final visibleItems = appearance.functionItems.where((item) => item.isVisible).toList();
+    final visibleItems =
+        appearance.functionItems.where((item) => item.isVisible).toList();
+    final hiddenGroups = appearance.hiddenFunctionGroups.toSet();
+    final groupOrder = appearance.functionGroupOrder;
+
+    // 按用户排好的分组顺序，只保留未隐藏且有可见成员的分组
+    final orderedGroups = [
+      for (final key in groupOrder)
+        functionGroups.firstWhere(
+          (g) => g.titleKey == key,
+          orElse: () => functionGroups.first,
+        ),
+      for (final g in functionGroups)
+        if (!groupOrder.contains(g.titleKey)) g,
+    ];
+    final visibleGroups = orderedGroups
+        .where((group) => !hiddenGroups.contains(group.titleKey))
+        .map((group) => (
+              titleKey: group.titleKey,
+              items: visibleItems
+                  .where((item) => group.ids.contains(item.id))
+                  .toList(),
+            ))
+        .where((group) => group.items.isNotEmpty)
+        .toList();
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              
-              // 功能列表
-              ListView.builder(
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: visibleItems.length,
-                itemBuilder: (context, index) {
-                  final item = visibleItems[index];
-                  return _buildFunctionListItem(
-                    context,
-                    title: item.getLocalizedTitle(context),
-                    icon: item.icon,
-                    color: item.color ?? Colors.blue,
-                    onTap: () => _handleFunctionTap(context, item.id, isLoggedIn),
-                  );
-                },
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (int gi = 0; gi < visibleGroups.length; gi++) ...[
+                  if (gi > 0) const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      functionGroupTitle(context, visibleGroups[gi].titleKey),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white70
+                                : Colors.grey[700],
+                      ),
+                    ),
+                  ),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      mainAxisExtent: 52,
+                    ),
+                    itemCount: visibleGroups[gi].items.length,
+                    itemBuilder: (context, index) {
+                      final item = visibleGroups[gi].items[index];
+                      return _buildFunctionGridCard(
+                        context,
+                        title: item.getLocalizedTitle(context),
+                        icon: item.icon,
+                        color: item.color,
+                        onTap: () =>
+                            _handleFunctionTap(context, item.id, isLoggedIn),
+                      );
+                    },
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
@@ -258,45 +306,52 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
     }
   }
 
-  /// 构建列表样式的功能项
-  Widget _buildFunctionListItem(
+  /// 构建网格样式的功能项（与首页快捷功能同款）
+  Widget _buildFunctionGridCard(
     BuildContext context, {
     required String title,
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: Row(
-          children: [
-            // 圆形图标背景 (缩小型)
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: 22,
-                color: color,
-              ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : const Color(0xFFE0E0E0),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              children: [
+                Icon(icon, color: color, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 16),
-            // 功能名称 (缩小型)
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF202124),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

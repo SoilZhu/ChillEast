@@ -750,7 +750,9 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
           ),
           const SizedBox(height: 3),
           Text(
-            '$timeRange, 【${course.classroom}】 ${course.teacher}',
+            [timeRange, course.classroom.trim(), course.teacher.trim()]
+                .where((s) => s.isNotEmpty)
+                .join(', '),
             style: const TextStyle(color: Colors.white, fontSize: 12),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

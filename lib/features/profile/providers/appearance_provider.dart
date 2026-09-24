@@ -11,6 +11,9 @@ final appearanceProvider = StateNotifierProvider<AppearanceNotifier, AppearanceS
 class AppearanceNotifier extends StateNotifier<AppearanceState> {
   static const String _homeItemsKey = 'home_function_items';
   static const String _functionItemsKey = 'function_page_items';
+  static const String _feedItemsKey = 'home_feed_items';
+  static const String _groupOrderKey = 'function_group_order';
+  static const String _hiddenGroupsKey = 'hidden_function_groups';
 
   static final List<FunctionItem> _masterPool = [
     const FunctionItem(id: 'sunshine', label: '阳光服务', icon: Icons.wb_sunny_outlined, color: Color(0xFF09C489)),
@@ -36,11 +39,32 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
   AppearanceNotifier() : super(AppearanceState(
     homeItems: _getDefaultHomeItems(),
     functionItems: _getDefaultFunctionItems(),
+    feedItems: _getDefaultFeedItems(),
+    functionGroupOrder: _defaultGroupOrder(),
+    hiddenFunctionGroups: const [],
   )) {
     _loadSettings();
   }
 
+  static List<String> _defaultGroupOrder() {
+    return functionGroups.map((g) => g.titleKey).toList();
+  }
+
   static const List<String> _defaultVisibleHomeIds = ['payment_code', 'library', 'empty_classroom', 'xgxt', 'repairs', 'bus', 'score'];
+
+  /// 首页信息流区块（默认全显示，顺序即展示顺序）
+  static final List<FunctionItem> _feedPool = [
+    const FunctionItem(id: 'feed_quick', label: '快捷功能', icon: Icons.apps_rounded, color: Color(0xFF09C489)),
+    const FunctionItem(id: 'feed_library', label: '图书馆预约', icon: Icons.local_library_outlined, color: Color(0xFF795548)),
+    const FunctionItem(id: 'feed_agenda', label: '今日日程', icon: Icons.calendar_today_outlined, color: Color(0xFF09C489)),
+    const FunctionItem(id: 'feed_questionnaire', label: '待完成的问卷', icon: Icons.assignment_outlined, color: Color(0xFF2E7D32)),
+    const FunctionItem(id: 'feed_leave', label: '请假申请', icon: Icons.event_note_outlined, color: Color(0xFF009688)),
+    const FunctionItem(id: 'feed_repair', label: '报修工单', icon: Icons.handyman_outlined, color: Colors.blueGrey),
+  ];
+
+  static List<FunctionItem> _getDefaultFeedItems() {
+    return List<FunctionItem>.from(_feedPool);
+  }
 
   static List<FunctionItem> _getDefaultHomeItems() {
     // 首页设置页应包含功能页的全部功能，默认只有首页的 7 个按钮显示，其余隐藏
@@ -70,9 +94,11 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     
     final homeJson = prefs.getString(_homeItemsKey);
     final funcJson = prefs.getString(_functionItemsKey);
+    final feedJson = prefs.getString(_feedItemsKey);
 
     List<FunctionItem> homeItems = state.homeItems;
     List<FunctionItem> funcItems = state.functionItems;
+    List<FunctionItem> feedItems = state.feedItems;
 
     if (homeJson != null) {
       try {
@@ -92,7 +118,57 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
       }
     }
 
-    state = state.copyWith(homeItems: homeItems, functionItems: funcItems);
+    if (feedJson != null) {
+      try {
+        final decoded = json.decode(feedJson) as List;
+        feedItems = _mergeFeedItems(decoded);
+      } catch (e) {
+        debugPrint('Error loading feed items: $e');
+      }
+    }
+
+    state = state.copyWith(homeItems: homeItems, functionItems: funcItems, feedItems: feedItems);
+
+    final groupOrderJson = prefs.getString(_groupOrderKey);
+    final hiddenGroupsJson = prefs.getString(_hiddenGroupsKey);
+    if (groupOrderJson != null) {
+      try {
+        state = state.copyWith(functionGroupOrder: _mergeGroupOrder(json.decode(groupOrderJson)));
+      } catch (e) {
+        debugPrint('Error loading group order: $e');
+      }
+    }
+    if (hiddenGroupsJson != null) {
+      try {
+        final decoded = json.decode(hiddenGroupsJson);
+        if (decoded is List) {
+          state = state.copyWith(
+            hiddenFunctionGroups:
+                decoded.map((e) => e.toString()).toList(),
+          );
+        }
+      } catch (e) {
+        debugPrint('Error loading hidden groups: $e');
+      }
+    }
+  }
+
+  /// 分组顺序合并：保留用户顺序，新分组追加到末尾
+  List<String> _mergeGroupOrder(dynamic decoded) {
+    final validKeys = functionGroups.map((g) => g.titleKey).toSet();
+    final order = <String>[];
+    if (decoded is List) {
+      for (final e in decoded) {
+        final key = e.toString();
+        if (validKeys.contains(key) && !order.contains(key)) {
+          order.add(key);
+        }
+      }
+    }
+    for (final key in validKeys) {
+      if (!order.contains(key)) order.add(key);
+    }
+    return order;
   }
 
   List<FunctionItem> _mergeWithMaster(List decoded, {required bool isHome}) {
@@ -116,7 +192,38 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
         items.add(masterItem.copyWith(isVisible: defaultVisible));
       }
     }
-    
+
+    return items;
+  }
+
+  /// 信息流合并：保留用户顺序与显隐，新增区块默认追加为可见
+  List<FunctionItem> _mergeFeedItems(List decoded) {
+    final items = <FunctionItem>[];
+    for (var data in decoded) {
+      final id = data['id'];
+      FunctionItem? template;
+      for (final master in _feedPool) {
+        if (master.id == id) {
+          template = master;
+          break;
+        }
+      }
+      if (template != null) {
+        items.add(FunctionItem.fromJson(data, template));
+      }
+    }
+
+    for (var masterItem in _feedPool) {
+      if (!items.any((item) => item.id == masterItem.id)) {
+        // 快捷功能是后加入的，老用户存档里没有，默认插到最顶部
+        if (masterItem.id == 'feed_quick') {
+          items.insert(0, masterItem);
+        } else {
+          items.add(masterItem);
+        }
+      }
+    }
+
     return items;
   }
 
@@ -130,10 +237,18 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     _saveSettings();
   }
 
+  Future<void> updateFeedItems(List<FunctionItem> items) async {
+    state = state.copyWith(feedItems: items);
+    _saveSettings();
+  }
+
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_homeItemsKey, json.encode(state.homeItems.map((e) => e.toJson()).toList()));
     await prefs.setString(_functionItemsKey, json.encode(state.functionItems.map((e) => e.toJson()).toList()));
+    await prefs.setString(_feedItemsKey, json.encode(state.feedItems.map((e) => e.toJson()).toList()));
+    await prefs.setString(_groupOrderKey, json.encode(state.functionGroupOrder));
+    await prefs.setString(_hiddenGroupsKey, json.encode(state.hiddenFunctionGroups));
   }
 
   void toggleItemVisibility(String listType, String itemId) {
@@ -145,6 +260,14 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
         return item;
       }).toList();
       updateHomeItems(newItems);
+    } else if (listType == 'feed') {
+      final newItems = state.feedItems.map((item) {
+        if (item.id == itemId) {
+          return item.copyWith(isVisible: !item.isVisible);
+        }
+        return item;
+      }).toList();
+      updateFeedItems(newItems);
     } else {
       final newItems = state.functionItems.map((item) {
         if (item.id == itemId) {
@@ -157,8 +280,11 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
   }
 
   void reorderItems(String listType, int oldIndex, int newIndex) {
-    final isHome = listType == 'home';
-    final items = List<FunctionItem>.from(isHome ? state.homeItems : state.functionItems);
+    final items = List<FunctionItem>.from(
+      listType == 'home'
+          ? state.homeItems
+          : (listType == 'feed' ? state.feedItems : state.functionItems),
+    );
     final visibleCount = items.where((e) => e.isVisible).length;
     
     // 1. 修正 oldIndex (UI -> 数据)
@@ -202,10 +328,45 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
       return 0;
     });
 
-    if (isHome) {
+    if (listType == 'home') {
       updateHomeItems(items);
+    } else if (listType == 'feed') {
+      updateFeedItems(items);
     } else {
       updateFunctionItems(items);
     }
+  }
+
+  /// 功能排序（大模块模式）：整组拖拽排序，拖过隐藏线切换显隐
+  /// [oldIndex]/[newIndex] 为 UI 层索引（含 header_hidden 占位）
+  void reorderFunctionGroups(int oldIndex, int newIndex) {
+    final hiddenSet = state.hiddenFunctionGroups.toSet();
+    final visible = state.functionGroupOrder
+        .where((k) => !hiddenSet.contains(k))
+        .toList();
+    final hidden = state.functionGroupOrder
+        .where((k) => hiddenSet.contains(k))
+        .toList();
+    final visibleCount = visible.length;
+    if (oldIndex == visibleCount) return; // 拖动的是标题，忽略
+
+    final all = [...visible, ...hidden];
+    int realOldIndex = oldIndex > visibleCount ? oldIndex - 1 : oldIndex;
+    if (realOldIndex < 0 || realOldIndex >= all.length) return;
+    int realNewIndex = newIndex > visibleCount ? newIndex - 1 : newIndex;
+    if (realNewIndex > realOldIndex) realNewIndex -= 1;
+    final moving = all.removeAt(realOldIndex);
+    all.insert(realNewIndex.clamp(0, all.length), moving);
+
+    if (newIndex <= visibleCount) {
+      hiddenSet.remove(moving);
+    } else {
+      hiddenSet.add(moving);
+    }
+    state = state.copyWith(
+      functionGroupOrder: all,
+      hiddenFunctionGroups: hiddenSet.toList(),
+    );
+    _saveSettings();
   }
 }

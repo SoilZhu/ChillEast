@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -96,10 +97,11 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 5, vsync: this);
+    // 无条件重绘：点击帧 controller 就同步翻 index 并 notify，
+    // 顶栏要和这一帧一起重绘，一言动画才能与页面动画严格并行。
+    // （作业页同款写法，见 homework_screen.dart）
     _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        setState(() {}); // 重绘以更新 AppBar 状态
-      }
+      if (mounted) setState(() {});
     });
 
     _aiAnimController = AnimationController(
@@ -548,8 +550,129 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
 
   PreferredSizeWidget _buildGlobalTopBar(BuildContext context, AuthState authState, bool hasTimetable, [double? overrideBarHeight]) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // 非 AI 模式：去掉白色卡片顶栏，一言左对齐（无左侧 icon），头像右对齐
+    // 注：正常顶栏不区分 AI 模式，永远 plain；AI 浮层输入条走下面的卡片分支
+    if (overrideBarHeight == null) {
+      // 一言只在主页 tab 显示。controller 在点击帧就同步翻 index，
+      // listener 无条件重绘，所以这里与页面翻页是同一帧，并行动画。
+      final isHomeTab = _tabController.index == 0;
+      return PreferredSize(
+        preferredSize: const Size.fromHeight(56),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    // 注意：不要在这里设 switchIn/OutCurve，出场动画 t 是从 1→0，
+                    // 套 easeOut 会让前半段几乎不动（t=0.9 时 opacity 还有 0.999），
+                    // 看起来就像“过一小会才动”。方向曲线在下面按进/出分别指定。
+                    // 左对齐堆叠（默认 layoutBuilder 是居中的，会把一言挤到中间）
+                    layoutBuilder: (currentChild, previousChildren) {
+                      return Stack(
+                        alignment: Alignment.centerLeft,
+                        clipBehavior: Clip.none,
+                        children: [
+                          ...previousChildren,
+                          if (currentChild != null) currentChild,
+                        ],
+                      );
+                    },
+                    // 进场从下方滑入，出场向上滑出（各走各的方向，非反播）。
+                    // 方向按目标 tab + 子项 key 判定：只有一言文本可见，
+                    // 回主页=文本进场，离主页=文本出场。
+                    transitionBuilder: (child, animation) {
+                      final isText =
+                          child.key == const ValueKey('hitokoto_text');
+                      if (!isText) {
+                        // 空占位不可见，线性淡入淡出即可
+                        return FadeTransition(
+                          opacity: animation,
+                          child: child,
+                        );
+                      }
+                      // 进场用 easeOut、出场用 easeIn，保证两边都是“快起”：
+                      // 出场 t 从 1→0，若用 easeOut 则前半段几乎不动。
+                      final curve =
+                          isHomeTab ? Curves.easeOutCubic : Curves.easeInCubic;
+                      final curved = CurvedAnimation(
+                        parent: animation,
+                        curve: curve,
+                      );
+                      final slide = isHomeTab
+                          // 回主页：从下方滑入
+                          ? Tween<Offset>(
+                              begin: const Offset(0, 0.5), end: Offset.zero)
+                              .animate(curved)
+                          // 离主页：向上滑出
+                          : Tween<Offset>(
+                              begin: const Offset(0, -0.5),
+                              end: Offset.zero)
+                              .animate(curved);
+                      return FadeTransition(
+                        opacity: curved,
+                        child: SlideTransition(
+                          position: slide,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: isHomeTab
+                        ? Text(
+                            _hitokoto ?? context.l10n.defaultHitokoto,
+                            key: const ValueKey('hitokoto_text'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                              fontSize: 16,
+                              height: 1.2,
+                              color:
+                                  isDark ? Colors.white54 : Colors.grey[800],
+                            ),
+                          )
+                        : const SizedBox.shrink(
+                            key: ValueKey('hitokoto_empty')),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _enterAiMode,
+                  behavior: HitTestBehavior.opaque,
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Center(
+                      child: SvgPicture.asset(
+                        'assets/images/ai_button.svg',
+                        width: 24,
+                        height: 24,
+                        colorFilter: ColorFilter.mode(
+                          isDark ? Colors.white54 : Colors.grey,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child:
+                      _buildAvatar(context, authState, hasTimetable, isDark),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     // 白条高度：默认 60，点击后展开到 120（2 倍）；整体高度联动 +60，保持边距不变
-    final barHeight = overrideBarHeight ?? 60.0;
+    // 能走到这里 overrideBarHeight 必非空（空已在 plain 分支返回）
+    final double barHeight = overrideBarHeight;
     final prefHeight = 88.0 + (barHeight - 60.0);
 
     return PreferredSize(
@@ -719,115 +842,15 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                               width: 40,
                               height: 40,
                             )
-                          : Stack(
-                              key: const ValueKey('profile_avatar'),
-                              clipBehavior: Clip.none,
-                              alignment: Alignment.topCenter,
-                              children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    _dismissReminder(); // 点击后标记为已看
-                                    Navigator.push(
-                                      context,
-                                      createSlideUpRoute(const ProfileScreen()),
-                                    );
-                                  },
-                                  child: SizedBox(
-                                    width: 40,
-                                    height: 40,
-                                    child: Stack(
-                                      alignment: Alignment.center,
-                                      children: [
-                                        if (authState.status == AuthStatus.authenticating)
-                                          const SizedBox(
-                                            width: 40,
-                                            height: 40,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor: AlwaysStoppedAnimation(Colors.orange),
-                                            ),
-                                          )
-                                        else
-                                          Container(
-                                            width: 40,
-                                            height: 40,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: _getAuthStatusColor(authState.status),
-                                                width: 2,
-                                              ),
-                                            ),
-                                          ),
-                                        CircleAvatar(
-                                          radius: 16,
-                                          backgroundColor: isDark ? Colors.white10 : const Color(0xFFEEEEEE),
-                                          backgroundImage: _getAvatarImage(authState),
-                                          child: _getAvatarImage(authState) == null
-                                              ? const Icon(Icons.person, size: 20, color: Colors.grey)
-                                              : null,
-                                        ),
-                                        // 登录失败/身份过期显示感叹号
-                                        if (authState.status == AuthStatus.unauthenticated && authState.hasAccount)
-                                          Positioned(
-                                            right: 0,
-                                            bottom: 0,
-                                            child: Container(
-                                              padding: const EdgeInsets.all(2),
-                                              decoration: const BoxDecoration(
-                                                color: Colors.red,
-                                                shape: BoxShape.circle,
-                                              ),
-                                              child: const Icon(
-                                                Icons.priority_high_rounded,
-                                                color: Colors.white,
-                                                size: 10,
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                if (hasTimetable && !_hasSeenReminder && authState.status == AuthStatus.authenticated)
-                                  Positioned(
-                                    top: 42,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        CustomPaint(
-                                          size: const Size(10, 6),
-                                          painter: TrianglePainter(
-                                            color: isDark ? Colors.grey.withOpacity(0.4) : Colors.black54,
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                          decoration: BoxDecoration(
-                                            color: isDark ? Colors.grey.withOpacity(0.4) : Colors.black54,
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            context.l10n.enableClassReminderHere,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                            ),
+                          : _buildAvatar(context, authState, hasTimetable, isDark,
+                              key: const ValueKey('profile_avatar')),
                     ),
                   ),
                 ],
                       ), // Row
                     ), // 顶部 60px 行：返回按钮 + 输入框保持原位
                     // 已选图片预览缩略图
-                    if (_isAiMode && overrideBarHeight != null && _selectedImagePath != null)
+                    if (_isAiMode && _selectedImagePath != null)
                       Positioned(
                         top: 10 + (barHeight - 60),
                         left: 42,
@@ -875,7 +898,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                         ),
                       ),
                     // 图片按钮与发送按钮：随展开从顶部下移到底部右下角
-                    if (_isAiMode && overrideBarHeight != null)
+                    if (_isAiMode)
                       Positioned(
                         top: 10 + (barHeight - 60),
                         right: 0,
@@ -944,6 +967,123 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
           ),
         ),
       ),
+    );
+  }
+
+  /// 头像（含登录状态圆环、提醒气泡）， plain 顶栏与卡片顶栏共用
+  Widget _buildAvatar(
+      BuildContext context, AuthState authState, bool hasTimetable, bool isDark,
+      {Key? key}) {
+    return Stack(
+      key: key,
+      clipBehavior: Clip.none,
+      alignment: Alignment.topCenter,
+      children: [
+        GestureDetector(
+          onTap: () {
+            _dismissReminder(); // 点击后标记为已看
+            Navigator.push(
+              context,
+              createSlideUpRoute(const ProfileScreen()),
+            );
+          },
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (authState.status == AuthStatus.authenticating)
+                  const SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(Colors.orange),
+                    ),
+                  )
+                else
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: _getAuthStatusColor(authState.status),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor:
+                      isDark ? Colors.white10 : const Color(0xFFEEEEEE),
+                  backgroundImage: _getAvatarImage(authState),
+                  child: _getAvatarImage(authState) == null
+                      ? const Icon(Icons.person, size: 20, color: Colors.grey)
+                      : null,
+                ),
+                // 登录失败/身份过期显示感叹号
+                if (authState.status == AuthStatus.unauthenticated &&
+                    authState.hasAccount)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.priority_high_rounded,
+                        color: Colors.white,
+                        size: 10,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        if (hasTimetable &&
+            !_hasSeenReminder &&
+            authState.status == AuthStatus.authenticated)
+          Positioned(
+            top: 42,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CustomPaint(
+                  size: const Size(10, 6),
+                  painter: TrianglePainter(
+                    color: isDark
+                        ? Colors.grey.withOpacity(0.4)
+                        : Colors.black54,
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.grey.withOpacity(0.4)
+                        : Colors.black54,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    context.l10n.enableClassReminderHere,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 

@@ -185,6 +185,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get funcRepairs => 'Demandes de réparation';
 
   @override
+  String get repairWorkOrders => '报修工单';
+
+  @override
+  String get quickActions => '快捷功能';
+
+  @override
   String get funcGym => 'Réservation de salles de sport';
 
   @override
@@ -227,6 +233,30 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get functionsButtonsTitle => 'Boutons de services';
+
+  @override
+  String get groupPayment => '支付';
+
+  @override
+  String get groupStudy => '学习';
+
+  @override
+  String get groupLife => '生活';
+
+  @override
+  String get groupTravel => '出行';
+
+  @override
+  String get groupTools => '工具';
+
+  @override
+  String get groupMiniApps => '小程序';
+
+  @override
+  String get feedButtonsSetting => '信息流排序与隐藏';
+
+  @override
+  String get feedButtonsTitle => '信息流设置';
 
   @override
   String get visibleFunctions => 'Services affichés';
@@ -540,6 +570,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get todayTimetable => 'Emploi du temps d\'aujourd\'hui';
+
+  @override
+  String get tomorrowAgenda => '明日日程';
+
+  @override
+  String get todayAgenda => '今日日程';
 
   @override
   String get timetableLoginRequiredTitle =>
@@ -1733,6 +1769,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get studentWorkQuestionnaire => 'Questionnaires étudiants';
+
+  @override
+  String get pendingQuestionnaires => '待完成的问卷';
 
   @override
   String get statusSubmitted => 'Soumis';

@@ -183,6 +183,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get funcRepairs => '报修平台';
 
   @override
+  String get repairWorkOrders => '报修工单';
+
+  @override
+  String get quickActions => '快捷功能';
+
+  @override
   String get funcGym => '场馆预约';
 
   @override
@@ -219,10 +225,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeButtonsTitle => '首页按钮设置';
 
   @override
-  String get functionsButtonsSetting => '功能页按钮排序与隐藏';
+  String get functionsButtonsSetting => '功能排序与隐藏';
 
   @override
-  String get functionsButtonsTitle => '功能页按钮设置';
+  String get functionsButtonsTitle => '功能排序';
+
+  @override
+  String get groupPayment => '支付';
+
+  @override
+  String get groupStudy => '学习';
+
+  @override
+  String get groupLife => '生活';
+
+  @override
+  String get groupTravel => '出行';
+
+  @override
+  String get groupTools => '工具';
+
+  @override
+  String get groupMiniApps => '小程序';
+
+  @override
+  String get feedButtonsSetting => '信息流排序与隐藏';
+
+  @override
+  String get feedButtonsTitle => '信息流设置';
 
   @override
   String get visibleFunctions => '显示中的功能';
@@ -521,6 +551,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get todayTimetable => '今日课表';
+
+  @override
+  String get tomorrowAgenda => '明日日程';
+
+  @override
+  String get todayAgenda => '今日日程';
 
   @override
   String get timetableLoginRequiredTitle => '需要登录以查看课表';
@@ -1655,6 +1691,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get studentWorkQuestionnaire => '学工问卷';
+
+  @override
+  String get pendingQuestionnaires => '待完成的问卷';
 
   @override
   String get statusSubmitted => '已提交';
@@ -7105,6 +7144,12 @@ class AppLocalizationsZhHefei extends AppLocalizationsZh {
   String get funcRepairs => '报修平台';
 
   @override
+  String get repairWorkOrders => '报修工单';
+
+  @override
+  String get quickActions => '快捷功能';
+
+  @override
   String get funcGym => '场馆预订';
 
   @override
@@ -7141,10 +7186,34 @@ class AppLocalizationsZhHefei extends AppLocalizationsZh {
   String get homeButtonsTitle => '头页按键设定';
 
   @override
-  String get functionsButtonsSetting => '功能页按键排序与藏';
+  String get functionsButtonsSetting => '功能按键排序与藏';
 
   @override
-  String get functionsButtonsTitle => '功能页按键设定';
+  String get functionsButtonsTitle => '功能排序';
+
+  @override
+  String get groupPayment => '支付';
+
+  @override
+  String get groupStudy => '学习';
+
+  @override
+  String get groupLife => '生活';
+
+  @override
+  String get groupTravel => '出行';
+
+  @override
+  String get groupTools => '工具';
+
+  @override
+  String get groupMiniApps => '小程序';
+
+  @override
+  String get feedButtonsSetting => '信息流按键排序与藏';
+
+  @override
+  String get feedButtonsTitle => '信息流设定';
 
   @override
   String get visibleFunctions => '已显用处';
@@ -7444,6 +7513,12 @@ class AppLocalizationsZhHefei extends AppLocalizationsZh {
 
   @override
   String get todayTimetable => '街个课表';
+
+  @override
+  String get tomorrowAgenda => '明个日程';
+
+  @override
+  String get todayAgenda => '街个日程';
 
   @override
   String get timetableLoginRequiredTitle => '要登上以瞅课表';
@@ -8553,6 +8628,9 @@ class AppLocalizationsZhHefei extends AppLocalizationsZh {
 
   @override
   String get studentWorkQuestionnaire => '学工问话单';
+
+  @override
+  String get pendingQuestionnaires => '待填的问话单';
 
   @override
   String get statusSubmitted => '交上去了';

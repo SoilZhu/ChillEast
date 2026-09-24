@@ -467,6 +467,18 @@ abstract class AppLocalizations {
   /// **'报修平台'**
   String get funcRepairs;
 
+  /// No description provided for @repairWorkOrders.
+  ///
+  /// In zh, this message translates to:
+  /// **'报修工单'**
+  String get repairWorkOrders;
+
+  /// No description provided for @quickActions.
+  ///
+  /// In zh, this message translates to:
+  /// **'快捷功能'**
+  String get quickActions;
+
   /// No description provided for @funcGym.
   ///
   /// In zh, this message translates to:
@@ -542,14 +554,62 @@ abstract class AppLocalizations {
   /// No description provided for @functionsButtonsSetting.
   ///
   /// In zh, this message translates to:
-  /// **'功能页按钮排序与隐藏'**
+  /// **'功能排序与隐藏'**
   String get functionsButtonsSetting;
 
   /// No description provided for @functionsButtonsTitle.
   ///
   /// In zh, this message translates to:
-  /// **'功能页按钮设置'**
+  /// **'功能排序'**
   String get functionsButtonsTitle;
+
+  /// No description provided for @groupPayment.
+  ///
+  /// In zh, this message translates to:
+  /// **'支付'**
+  String get groupPayment;
+
+  /// No description provided for @groupStudy.
+  ///
+  /// In zh, this message translates to:
+  /// **'学习'**
+  String get groupStudy;
+
+  /// No description provided for @groupLife.
+  ///
+  /// In zh, this message translates to:
+  /// **'生活'**
+  String get groupLife;
+
+  /// No description provided for @groupTravel.
+  ///
+  /// In zh, this message translates to:
+  /// **'出行'**
+  String get groupTravel;
+
+  /// No description provided for @groupTools.
+  ///
+  /// In zh, this message translates to:
+  /// **'工具'**
+  String get groupTools;
+
+  /// No description provided for @groupMiniApps.
+  ///
+  /// In zh, this message translates to:
+  /// **'小程序'**
+  String get groupMiniApps;
+
+  /// No description provided for @feedButtonsSetting.
+  ///
+  /// In zh, this message translates to:
+  /// **'信息流排序与隐藏'**
+  String get feedButtonsSetting;
+
+  /// No description provided for @feedButtonsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'信息流设置'**
+  String get feedButtonsTitle;
 
   /// No description provided for @visibleFunctions.
   ///
@@ -1102,6 +1162,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'今日课表'**
   String get todayTimetable;
+
+  /// No description provided for @tomorrowAgenda.
+  ///
+  /// In zh, this message translates to:
+  /// **'明日日程'**
+  String get tomorrowAgenda;
+
+  /// No description provided for @todayAgenda.
+  ///
+  /// In zh, this message translates to:
+  /// **'今日日程'**
+  String get todayAgenda;
 
   /// No description provided for @timetableLoginRequiredTitle.
   ///
@@ -3236,6 +3308,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'学工问卷'**
   String get studentWorkQuestionnaire;
+
+  /// No description provided for @pendingQuestionnaires.
+  ///
+  /// In zh, this message translates to:
+  /// **'待完成的问卷'**
+  String get pendingQuestionnaires;
 
   /// No description provided for @statusSubmitted.
   ///

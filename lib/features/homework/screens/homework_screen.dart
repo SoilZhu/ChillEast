@@ -71,7 +71,7 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
               : Theme.of(context).cardTheme.color ?? const Color(0xFF1E1E1E),
           child: Icon(
             Icons.add, 
-            color: Theme.of(context).brightness == Brightness.light ? const Color(0xFF00E676) : Colors.white
+            color: Theme.of(context).brightness == Brightness.light ? const Color(0xFF09C489) : Colors.white
           ),
         ),
       ),
@@ -146,7 +146,7 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
         tabAlignment: TabAlignment.start,
         padding: EdgeInsets.zero,
         labelPadding: const EdgeInsets.symmetric(horizontal: 16),
-        labelColor: const Color(0xFF00E676),
+        labelColor: const Color(0xFF09C489),
         unselectedLabelColor: Theme.of(context).brightness == Brightness.dark ? Colors.white60 : Colors.grey[600],
         labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         unselectedLabelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
@@ -155,7 +155,7 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
         indicator: UnderlineTabIndicator(
           borderSide: const BorderSide(
             width: 4,
-            color: Color(0xFF00E676),
+            color: Color(0xFF09C489),
           ),
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(4),
@@ -347,7 +347,7 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
                       ref.read(homeworkProvider.notifier).toggleStatus(item.id);
                     }
                   },
-                  activeColor: const Color(0xFF00E676),
+                  activeColor: const Color(0xFF09C489),
                   checkColor: Colors.white,
                   side: BorderSide(color: Colors.grey[400]!, width: 1.5),
                   shape: const CircleBorder(),
@@ -488,7 +488,7 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
                       icon: Icon(
                         Icons.history_edu_rounded, 
                         size: 22, 
-                        color: course.isNotEmpty ? const Color(0xFF00E676) : Colors.grey
+                        color: course.isNotEmpty ? const Color(0xFF09C489) : Colors.grey
                       ),
                       onPressed: () async {
                         if (course.isNotEmpty) {
@@ -503,7 +503,7 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
                       icon: Icon(
                         Icons.schedule_rounded, 
                         size: 22, 
-                        color: endTime != null ? const Color(0xFF00E676) : Colors.grey
+                        color: endTime != null ? const Color(0xFF09C489) : Colors.grey
                       ),
                       onPressed: () async {
                         if (endTime != null) {
@@ -526,7 +526,7 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
                       icon: Icon(
                         Icons.notes, 
                         size: 22, 
-                        color: remarks.isNotEmpty ? const Color(0xFF00E676) : Colors.grey
+                        color: remarks.isNotEmpty ? const Color(0xFF09C489) : Colors.grey
                       ),
                       onPressed: () async {
                         if (remarks.isNotEmpty) {
@@ -545,7 +545,7 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
                           Navigator.pop(context);
                         }
                       },
-                      child: Text(context.l10n.save, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF00E676))),
+                      child: Text(context.l10n.save, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF09C489))),
                     ),
                   ],
                 ),

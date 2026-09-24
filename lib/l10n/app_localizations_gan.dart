@@ -183,6 +183,12 @@ class AppLocalizationsGan extends AppLocalizations {
   String get funcRepairs => '报修平台';
 
   @override
+  String get repairWorkOrders => '报修工单';
+
+  @override
+  String get quickActions => '快捷功能';
+
+  @override
   String get funcGym => '场馆预约';
 
   @override
@@ -223,6 +229,30 @@ class AppLocalizationsGan extends AppLocalizations {
 
   @override
   String get functionsButtonsTitle => '功能页按钮设置';
+
+  @override
+  String get groupPayment => '支付';
+
+  @override
+  String get groupStudy => '学习';
+
+  @override
+  String get groupLife => '生活';
+
+  @override
+  String get groupTravel => '出行';
+
+  @override
+  String get groupTools => '工具';
+
+  @override
+  String get groupMiniApps => '小程序';
+
+  @override
+  String get feedButtonsSetting => '信息流排序与隐藏';
+
+  @override
+  String get feedButtonsTitle => '信息流设置';
 
   @override
   String get visibleFunctions => '现显示个功能';
@@ -521,6 +551,12 @@ class AppLocalizationsGan extends AppLocalizations {
 
   @override
   String get todayTimetable => '今朝课表';
+
+  @override
+  String get tomorrowAgenda => '明日日程';
+
+  @override
+  String get todayAgenda => '今日日程';
 
   @override
   String get timetableLoginRequiredTitle => '要登录以望下课表';
@@ -1655,6 +1691,9 @@ class AppLocalizationsGan extends AppLocalizations {
 
   @override
   String get studentWorkQuestionnaire => '学工问卷';
+
+  @override
+  String get pendingQuestionnaires => '待完成的问卷';
 
   @override
   String get statusSubmitted => '已提交';

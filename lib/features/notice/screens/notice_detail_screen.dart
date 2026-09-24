@@ -124,29 +124,41 @@ class _NoticeDetailScreenState extends ConsumerState<NoticeDetailScreen> {
           const SizedBox(height: 16),
           
           // 发布信息栏
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 12,
-                backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-                child: Icon(Icons.person, size: 14, color: Theme.of(context).primaryColor),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.person_outline,
+                      size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 6),
+                  Text(
+                    sender,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w500, fontSize: 13),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Text(
-                sender,
-                style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-              ),
-              const Spacer(),
-              Text(
-                time,
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.schedule,
+                      size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 6),
+                  Text(
+                    time,
+                    style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                        color: Colors.grey[600]),
+                  ),
+                ],
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Divider(thickness: 1, height: 1),
-          ),
+          const SizedBox(height: 20),
           
           // 正文渲染 (原生 Text 实现)
           Text(
