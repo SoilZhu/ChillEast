@@ -57,8 +57,7 @@ class HomeworkNotifier extends StateNotifier<AsyncValue<List<HomeworkModel>>> {
   /// 无感刷新
   Future<void> _silentRefresh(String studentId) async {
     try {
-      final current = state.value ?? [];
-      final manual = current.where((e) => e.isManual).toList();
+      final manual = await _collectManualUnion();
       final scraped = await _ref.read(homeworkServiceProvider).fetchHomeworkList(studentId);
       
       final merged = [...manual, ...scraped];
@@ -73,8 +72,7 @@ class HomeworkNotifier extends StateNotifier<AsyncValue<List<HomeworkModel>>> {
   /// 手动刷新 (显示 loading)
   Future<void> refresh(String studentId) async {
     try {
-      final current = state.value ?? [];
-      final manual = current.where((e) => e.isManual).toList();
+      final manual = await _collectManualUnion();
       
       state = const AsyncValue.loading();
       final scraped = await _ref.read(homeworkServiceProvider).fetchHomeworkList(studentId);
@@ -91,8 +89,7 @@ class HomeworkNotifier extends StateNotifier<AsyncValue<List<HomeworkModel>>> {
 
   /// 退出登录时清除 (仅清除爬取的，保留手动的)
   Future<void> clearAll() async {
-    final current = state.value ?? [];
-    final manual = current.where((e) => e.isManual).toList();
+    final manual = await _collectManualUnion();
     await _ref.read(homeworkStorageProvider).saveHomeworkList(manual);
     state = AsyncValue.data(manual);
     _rescheduleAll();
@@ -170,6 +167,37 @@ class HomeworkNotifier extends StateNotifier<AsyncValue<List<HomeworkModel>>> {
     await _ref.read(homeworkStorageProvider).saveHomeworkList(oldList);
     state = AsyncValue.data(oldList);
     _rescheduleAll();
+  }
+
+  /// Agent/MCP 工具直接写 HomeworkStorage 后调用，
+  /// 把文件最新内容重新载入到内存 state，保证作业页立刻可见。
+  Future<void> reloadFromStorage() async {
+    try {
+      final list = await _ref.read(homeworkStorageProvider).readHomeworkList();
+      state = AsyncValue.data(list);
+      _scheduleReminders(list);
+    } catch (e) {
+      _logger.w('⚠️ Reload homework from storage failed: $e');
+    }
+  }
+
+  /// 合并内存 state 与文件中的手动作业（以文件为准 + 保留仅存在于内存的），
+  /// 避免 Agent 添加后被 refresh/_silentRefresh 用旧 state 覆盖丢失。
+  Future<List<HomeworkModel>> _collectManualUnion() async {
+    final fromState =
+        (state.value ?? []).where((e) => e.isManual).toList();
+    List<HomeworkModel> fromStorage = [];
+    try {
+      fromStorage = (await _ref
+              .read(homeworkStorageProvider)
+              .readHomeworkList())
+          .where((e) => e.isManual)
+          .toList();
+    } catch (_) {}
+    final storageIds = fromStorage.map((e) => e.id).toSet();
+    final stateOnly =
+        fromState.where((e) => !storageIds.contains(e.id)).toList();
+    return [...fromStorage, ...stateOnly];
   }
 
   void _rescheduleAll() {

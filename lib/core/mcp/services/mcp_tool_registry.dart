@@ -23,6 +23,7 @@ import '../../../features/sunshine/services/sunshine_service.dart';
 import '../../../features/questionnaire/services/questionnaire_service.dart';
 import '../../../features/leave/services/leave_service.dart';
 import '../../../features/repairs/services/repair_service.dart';
+import '../../../features/homework/providers/homework_provider.dart';
 
 /// MCP Tool Registry Provider
 final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
@@ -34,8 +35,15 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
   final leaveService = ref.watch(leaveServiceProvider);
   final transactionService = ref.watch(transactionServiceProvider);
   final repairService = ref.watch(repairServiceProvider);
+  final homeworkStorage = ref.watch(homeworkStorageProvider);
 
   final registry = McpToolRegistry();
+
+  Future<void> reloadHomework() async {
+    try {
+      await ref.read(homeworkProvider.notifier).reloadFromStorage();
+    } catch (_) {}
+  }
 
   // 注册标准 MCP 工具
   // 1. 课表查询
@@ -45,13 +53,23 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
   registry.register(TimetableRuleTool.create());
 
   // 2. 作业查询
-  registry.register(HomeworkQueryTool.create());
+  registry.register(HomeworkQueryTool.create(storage: homeworkStorage));
 
-  // 3. 作业添加
-  registry.register(HomeworkAddTool.create());
+  // 3. 作业添加（写文件后刷新 homeworkProvider，否则作业页看不到）
+  registry.register(
+    HomeworkAddTool.create(
+      storage: homeworkStorage,
+      onChanged: reloadHomework,
+    ),
+  );
 
   // 4. 作业完成（仅限手动添加）
-  registry.register(HomeworkCompleteTool.create());
+  registry.register(
+    HomeworkCompleteTool.create(
+      storage: homeworkStorage,
+      onChanged: reloadHomework,
+    ),
+  );
 
   // 5. 空教室查询
   registry.register(ClassroomTool.create());
