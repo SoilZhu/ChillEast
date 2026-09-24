@@ -84,6 +84,22 @@ class LeaveRecord {
     if (startTime.isEmpty || endTime.isEmpty) return '';
     return '$startTime ~ $endTime';
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'ID': id,
+      'LXMC': typeName,
+      'KSSJ': startTime,
+      'JSSJ': endTime,
+      'TS': days,
+      'HOUR': hours,
+      'QJSY': reason,
+      'SHZT': auditStatus,
+      'SHZTMC': auditStatusName,
+      'SHJGMC': auditResultName,
+      'HAS_FILE': hasFile ? '1' : '0',
+    };
+  }
 }
 
 /// 下拉字典项（请假类别等，selects 接口 id/text 结构）

@@ -57,6 +57,20 @@ class AppearanceSettingsScreen extends StatelessWidget {
               );
             },
           ),
+          _buildSettingItem(
+            context,
+            icon: Icons.view_agenda_outlined,
+            title: l10n.feedButtonsSetting,
+            onTap: () {
+              Navigator.push(
+                context,
+                createSlideUpRoute(ButtonReorderScreen(
+                  title: l10n.feedButtonsTitle,
+                  listType: 'feed',
+                )),
+              );
+            },
+          ),
         ],
       ),
     );

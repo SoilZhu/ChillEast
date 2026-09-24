@@ -185,6 +185,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get funcRepairs => 'Mantenimiento y averías';
 
   @override
+  String get repairWorkOrders => '报修工单';
+
+  @override
+  String get quickActions => '快捷功能';
+
+  @override
   String get funcGym => 'Reserva de instalaciones';
 
   @override
@@ -225,6 +231,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get functionsButtonsTitle => 'Accesos de Servicios';
+
+  @override
+  String get feedButtonsSetting => '信息流排序与隐藏';
+
+  @override
+  String get feedButtonsTitle => '信息流设置';
 
   @override
   String get visibleFunctions => 'Servicios visibles';

@@ -467,6 +467,18 @@ abstract class AppLocalizations {
   /// **'报修平台'**
   String get funcRepairs;
 
+  /// No description provided for @repairWorkOrders.
+  ///
+  /// In zh, this message translates to:
+  /// **'报修工单'**
+  String get repairWorkOrders;
+
+  /// No description provided for @quickActions.
+  ///
+  /// In zh, this message translates to:
+  /// **'快捷功能'**
+  String get quickActions;
+
   /// No description provided for @funcGym.
   ///
   /// In zh, this message translates to:
@@ -550,6 +562,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'功能页按钮设置'**
   String get functionsButtonsTitle;
+
+  /// No description provided for @feedButtonsSetting.
+  ///
+  /// In zh, this message translates to:
+  /// **'信息流排序与隐藏'**
+  String get feedButtonsSetting;
+
+  /// No description provided for @feedButtonsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'信息流设置'**
+  String get feedButtonsTitle;
 
   /// No description provided for @visibleFunctions.
   ///

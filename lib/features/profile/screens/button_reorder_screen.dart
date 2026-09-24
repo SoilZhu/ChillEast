@@ -21,7 +21,9 @@ class ButtonReorderScreen extends ConsumerWidget {
     final appearance = ref.watch(appearanceProvider);
     
     // 获取当前列表并按可见性排序
-    final rawItems = listType == 'home' ? appearance.homeItems : appearance.functionItems;
+    final rawItems = listType == 'home'
+        ? appearance.homeItems
+        : (listType == 'feed' ? appearance.feedItems : appearance.functionItems);
     final visibleItems = rawItems.where((e) => e.isVisible).toList();
     final hiddenItems = rawItems.where((e) => !e.isVisible).toList();
 

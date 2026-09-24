@@ -48,19 +48,23 @@ class FunctionItem {
 class AppearanceState {
   final List<FunctionItem> homeItems;
   final List<FunctionItem> functionItems;
+  final List<FunctionItem> feedItems;
 
   const AppearanceState({
     required this.homeItems,
     required this.functionItems,
+    required this.feedItems,
   });
 
   AppearanceState copyWith({
     List<FunctionItem>? homeItems,
     List<FunctionItem>? functionItems,
+    List<FunctionItem>? feedItems,
   }) {
     return AppearanceState(
       homeItems: homeItems ?? this.homeItems,
       functionItems: functionItems ?? this.functionItems,
+      feedItems: feedItems ?? this.feedItems,
     );
   }
 }
@@ -105,6 +109,18 @@ extension FunctionItemLocalization on FunctionItem {
         return l10n.funcCsBus;
       case 'campus_bus_route':
         return l10n.funcCampusBusRoute;
+      case 'feed_quick':
+        return l10n.quickActions;
+      case 'feed_library':
+        return l10n.libraryReservation;
+      case 'feed_agenda':
+        return l10n.todayAgenda;
+      case 'feed_questionnaire':
+        return l10n.pendingQuestionnaires;
+      case 'feed_leave':
+        return l10n.funcLeave;
+      case 'feed_repair':
+        return l10n.repairWorkOrders;
       default:
         return label;
     }

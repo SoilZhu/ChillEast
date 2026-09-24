@@ -184,6 +184,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get funcRepairs => 'Campus Repairs';
 
   @override
+  String get repairWorkOrders => 'Repair work orders';
+
+  @override
+  String get quickActions => 'Quick actions';
+
+  @override
   String get funcGym => 'Gym Booking';
 
   @override
@@ -224,6 +230,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get functionsButtonsTitle => 'Service Buttons';
+
+  @override
+  String get feedButtonsSetting => 'Feed Layout & Visibility';
+
+  @override
+  String get feedButtonsTitle => 'Home Feed';
 
   @override
   String get visibleFunctions => 'Visible Services';

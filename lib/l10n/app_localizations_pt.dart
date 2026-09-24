@@ -184,6 +184,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get funcRepairs => 'Reparos do Campus';
 
   @override
+  String get repairWorkOrders => '报修工单';
+
+  @override
+  String get quickActions => '快捷功能';
+
+  @override
   String get funcGym => 'Reserva de Espaços';
 
   @override
@@ -226,6 +232,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get functionsButtonsTitle => 'Botões de Serviços';
+
+  @override
+  String get feedButtonsSetting => '信息流排序与隐藏';
+
+  @override
+  String get feedButtonsTitle => '信息流设置';
 
   @override
   String get visibleFunctions => 'Serviços Visíveis';

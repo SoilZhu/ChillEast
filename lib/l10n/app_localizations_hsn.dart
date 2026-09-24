@@ -183,6 +183,12 @@ class AppLocalizationsHsn extends AppLocalizations {
   String get funcRepairs => '报修平台';
 
   @override
+  String get repairWorkOrders => '报修工单';
+
+  @override
+  String get quickActions => '快捷功能';
+
+  @override
   String get funcGym => '场馆约位';
 
   @override
@@ -223,6 +229,12 @@ class AppLocalizationsHsn extends AppLocalizations {
 
   @override
   String get functionsButtonsTitle => '功能页按钮设好';
+
+  @override
+  String get feedButtonsSetting => '信息流排位和隐藏';
+
+  @override
+  String get feedButtonsTitle => '信息流设好';
 
   @override
   String get visibleFunctions => '显示中的功能';

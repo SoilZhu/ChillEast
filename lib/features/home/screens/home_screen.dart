@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../sunshine/screens/sunshine_screen.dart';
 import '../../repairs/screens/repair_screen.dart';
+import '../../repairs/screens/repair_detail_screen.dart';
+import '../../repairs/models/repair_models.dart';
+import '../../repairs/providers/repair_cache_provider.dart';
 import '../../questionnaire/screens/questionnaire_list_screen.dart';
 import '../../questionnaire/screens/questionnaire_detail_screen.dart';
 import '../../questionnaire/models/questionnaire_models.dart';
 import '../../questionnaire/providers/questionnaire_cache_provider.dart';
 import '../../leave/screens/leave_list_screen.dart';
+import '../../leave/screens/leave_detail_screen.dart';
+import '../../leave/models/leave_models.dart';
+import '../../leave/providers/leave_cache_provider.dart';
 import '../../../core/state/auth_state.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../timetable/services/timetable_storage.dart';
@@ -166,21 +172,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 快捷功能 2x3 网格（报修平台卡片风格）
-            _buildQuickActions(context, authState),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 8),
-                  // 图书馆当天预约卡片（如果有缓存）
-                  _buildLibrarySeatCard(context),
-                  // 今日课表预览
-                  _buildTodayTimetablePreview(context),
-                  // 待完成的问卷（有待填写才展示）
-                  _buildPendingQuestionnaires(context),
+                  // 信息流区块（顺序与显隐来自外观设置，可配置）
+                  for (final section in ref
+                      .watch(appearanceProvider)
+                      .feedItems
+                      .where((e) => e.isVisible))
+                    switch (section.id) {
+                      'feed_quick' => _buildQuickActions(context, authState),
+                      'feed_library' => _buildLibrarySeatCard(context),
+                      'feed_agenda' => _buildTodayTimetablePreview(context),
+                      'feed_questionnaire' =>
+                        _buildPendingQuestionnaires(context),
+                      'feed_leave' => _buildOngoingLeaves(context),
+                      'feed_repair' => _buildOngoingRepairs(context),
+                      _ => const SizedBox.shrink(),
+                    },
                   const SizedBox(height: 24),
                 ],
               ),
@@ -203,7 +215,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (visibleItems.length <= 5) {
       final displayItems = visibleItems.toList();
       return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        // 在信息流内渲染，横向内边距由父级提供
+        padding: const EdgeInsets.only(top: 8, bottom: 8),
         child: _buildQuickGrid(
           context,
           items: displayItems,
@@ -230,7 +243,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      // 在信息流内渲染，横向内边距由父级提供
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -545,31 +559,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildLibrarySeatCard(BuildContext context) {
     final cachedReservesAsync = ref.watch(cachedLibraryReserveProvider);
     final reserves = cachedReservesAsync.value ?? [];
-    // TODO(temp): 图书馆卡片调试用假数据（含待签到+使用中两种按钮状态），看完删除
-    final now = DateTime.now();
-    final testReserves = reserves.isEmpty
-        ? [
-            LibraryReserveModel(
-              id: -1,
-              roomId: 0,
-              deptId: 0,
-              seatNum: '012',
-              startTime: DateTime(now.year, now.month, now.day, 14, 0),
-              endTime: DateTime(now.year, now.month, now.day, 16, 0),
-              status: 0,
-              firstLevelName: '图书馆',
-              secondLevelName: '5楼',
-              thirdLevelName: '读者自习室505',
-              today: DateFormat('yyyy-MM-dd').format(now),
-            ),
-          ]
-        : reserves;
-    if (testReserves.isEmpty) {
+    if (reserves.isEmpty) {
       return const SizedBox.shrink();
     }
 
+    final now = DateTime.now();
     final todayStr = DateFormat('yyyy-MM-dd').format(now);
-    final todayReserves = testReserves.where((reserve) {
+    final todayReserves = reserves.where((reserve) {
       return reserve.today == todayStr ||
           (reserve.startTime.year == now.year &&
               reserve.startTime.month == now.month &&
@@ -1170,35 +1166,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildPendingQuestionnaires(BuildContext context) {
-    final cachedAsync = ref.watch(questionnaireCacheProvider);
-    final pending = (cachedAsync.value ?? [])
-        .where((q) => !q.isSubmitted && !q.isExpired)
-        .toList();
-    // TODO(temp): 测试问卷区 UI 用的假数据，联调完删除下面整个 block
-    final testPending = pending.isEmpty
-        ? const [
-            QuestionnaireItem(
-              dm: '__test_1__',
-              title: '2026年秋季学期学生思想动态调查问卷',
-              startTime: '2026-09-20 00:00',
-              endTime: '2026-09-30 23:59',
-              taskTimeM: '',
-            ),
-            QuestionnaireItem(
-              dm: '__test_2__',
-              title: '大学生心理健康状况普查问卷',
-              startTime: '2026-09-22 00:00',
-              endTime: '2026-10-07 23:59',
-              taskTimeM: '',
-            ),
-          ]
-        : pending;
-    if (testPending.isEmpty) return const SizedBox.shrink();
-
-    // 首页最多展示 3 条，其余进问卷页看
-    final display = testPending.take(3).toList();
-
+  /// 首页通用合并大卡片区块：标题 + > + 一张大卡（条目无分割线）
+  Widget _buildMergedSection({
+    required String title,
+    required VoidCallback onMore,
+    required List<Widget> items,
+  }) {
+    if (items.isEmpty) return const SizedBox.shrink();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1207,26 +1182,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              context.l10n.pendingQuestionnaires,
+              title,
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
             GestureDetector(
-              onTap: () {
-                Navigator.push(context,
-                    createSlideUpRoute(const QuestionnaireListScreen()));
-              },
+              onTap: onMore,
               behavior: HitTestBehavior.opaque,
               child: Padding(
                 padding: const EdgeInsets.all(6),
                 child: Icon(
                   Icons.chevron_right_rounded,
                   size: 22,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white54
-                      : Colors.grey,
+                  color: isDark ? Colors.white54 : Colors.grey,
                 ),
               ),
             ),
@@ -1237,12 +1207,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1E1E1E)
-                : Colors.white,
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: Theme.of(context).brightness == Brightness.dark
+              color: isDark
                   ? Colors.white.withValues(alpha: 0.12)
                   : const Color(0xFFE0E0E0),
               width: 1,
@@ -1254,23 +1222,124 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                for (int i = 0; i < display.length; i++) ...[
+                for (int i = 0; i < items.length; i++) ...[
                   if (i > 0) const SizedBox(height: 16),
-                  InkWell(
-                    borderRadius: BorderRadius.circular(4),
-                    onTap: () => _openQuestionnaireDetail(context, display[i]),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: _buildPendingQuestionnaireContent(
-                          context, display[i]),
-                    ),
-                  ),
+                  items[i],
                 ],
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+
+  /// 卡片内条目行：左侧图标（与标题顶部对齐）+ 标题 + 时间（+ 可选状态行）
+  Widget _buildSectionRow({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String time,
+    String status = '',
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 22, color: iconColor),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF222222),
+                ),
+              ),
+              if (time.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  time,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.white60 : Colors.black54,
+                  ),
+                ),
+              ],
+              if (status.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  status,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.white60 : Colors.black54,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 条目水波纹包装（保留独立点击）
+  Widget _buildSectionItem({
+    required VoidCallback onTap,
+    required Widget child,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(4),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: child,
+      ),
+    );
+  }
+
+  Widget _buildPendingQuestionnaires(BuildContext context) {
+    final cachedAsync = ref.watch(questionnaireCacheProvider);
+    final pending = (cachedAsync.value ?? [])
+        .where((q) => !q.isSubmitted && !q.isExpired)
+        .toList();
+    if (pending.isEmpty) return const SizedBox.shrink();
+
+    // 首页最多展示 3 条，其余进问卷页看
+    final display = pending.take(3).toList();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return _buildMergedSection(
+      title: context.l10n.pendingQuestionnaires,
+      onMore: () {
+        Navigator.push(
+            context, createSlideUpRoute(const QuestionnaireListScreen()));
+      },
+      items: display
+          .map((item) => _buildSectionItem(
+                onTap: () => _openQuestionnaireDetail(context, item),
+                child: _buildSectionRow(
+                  icon: Icons.assignment_outlined,
+                  iconColor: isDark
+                      ? const Color(0xFF81C784)
+                      : const Color(0xFF2E7D32),
+                  title: item.title.isEmpty
+                      ? context.l10n.unnamedQuestionnaire
+                      : item.title,
+                  time: item.timeRange,
+                ),
+              ))
+          .toList(),
     );
   }
 
@@ -1285,49 +1354,105 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  Widget _buildPendingQuestionnaireContent(
-      BuildContext context, QuestionnaireItem item) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          Icons.assignment_outlined,
-          size: 22,
-          color: isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.title.isEmpty
-                    ? context.l10n.unnamedQuestionnaire
-                    : item.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : const Color(0xFF222222),
-                ),
-              ),
-              if (item.timeRange.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  item.timeRange,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? Colors.white60 : Colors.black54,
-                  ),
-                ),
-              ],
-            ],
+  bool _isOngoingLeave(LeaveRecord record) {
+    final start = DateTime.tryParse(record.startTime);
+    final end = DateTime.tryParse(record.endTime);
+    if (start == null || end == null) return false;
+    final now = DateTime.now();
+    return start.isBefore(now) && end.isAfter(now);
+  }
+
+  Widget _buildOngoingLeaves(BuildContext context) {
+    final cachedAsync = ref.watch(leaveCacheProvider);
+    final ongoing = (cachedAsync.value ?? []).where(_isOngoingLeave).toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    if (ongoing.isEmpty) return const SizedBox.shrink();
+
+    final display = ongoing.take(3).toList();
+
+    return _buildMergedSection(
+      title: context.l10n.funcLeave,
+      onMore: () {
+        Navigator.push(
+            context, createSlideUpRoute(const LeaveListScreen()));
+      },
+      items: display.map((record) {
+        final duration = record.getLocalizedDuration(context);
+        final title = duration.isNotEmpty
+            ? '${record.typeName} · $duration'
+            : (record.typeName.isEmpty
+                ? context.l10n.leaveApplication
+                : record.typeName);
+        return _buildSectionItem(
+          onTap: () => _openLeaveDetail(context, record),
+          child: _buildSectionRow(
+            icon: Icons.event_note_outlined,
+            iconColor: const Color(0xFF009688),
+            title: title,
+            time: record.timeRange,
           ),
-        ),
-      ],
+        );
+      }).toList(),
     );
+  }
+
+  Future<void> _openLeaveDetail(
+      BuildContext context, LeaveRecord record) async {
+    final changed = await Navigator.push<bool>(
+      context,
+      createSlideUpRoute(LeaveDetailScreen(item: record)),
+    );
+    if (changed == true && context.mounted) {
+      ref.read(leaveCacheProvider.notifier).refresh();
+    }
+  }
+
+  String _repairDateLabel(RepairOrder order) {
+    final createdAt = order.createdAt;
+    if (createdAt == null) return '';
+    final m = createdAt.month.toString().padLeft(2, '0');
+    final d = createdAt.day.toString().padLeft(2, '0');
+    return '${createdAt.year}/$m/$d';
+  }
+
+  Widget _buildOngoingRepairs(BuildContext context) {
+    final cachedAsync = ref.watch(repairCacheProvider);
+    final ongoing = cachedAsync.value ?? [];
+    if (ongoing.isEmpty) return const SizedBox.shrink();
+
+    final display = ongoing.take(3).toList();
+
+    return _buildMergedSection(
+      title: context.l10n.repairWorkOrders,
+      onMore: () {
+        Navigator.push(context, createSlideUpRoute(const RepairScreen()));
+      },
+      items: display
+          .map((order) => _buildSectionItem(
+                onTap: () => _openRepairDetail(context, order),
+                child: _buildSectionRow(
+                  icon: Icons.handyman_outlined,
+                  iconColor: Colors.blueGrey,
+                  title: order.title.isEmpty
+                      ? context.l10n.repairsUnnamedOrder
+                      : order.title,
+                  time: _repairDateLabel(order),
+                  status: order.status,
+                ),
+              ))
+          .toList(),
+    );
+  }
+
+  Future<void> _openRepairDetail(
+      BuildContext context, RepairOrder order) async {
+    await Navigator.push(
+      context,
+      createSlideUpRoute(RepairDetailScreen(order: order)),
+    );
+    if (context.mounted) {
+      ref.read(repairCacheProvider.notifier).refresh();
+    }
   }
 
   void _navigateToTab(BuildContext context, int index) {

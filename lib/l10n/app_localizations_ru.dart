@@ -185,6 +185,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get funcRepairs => 'Ремонтная служба';
 
   @override
+  String get repairWorkOrders => '报修工单';
+
+  @override
+  String get quickActions => '快捷功能';
+
+  @override
   String get funcGym => 'Бронь спортзала';
 
   @override
@@ -225,6 +231,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get functionsButtonsTitle => 'Кнопки сервисов';
+
+  @override
+  String get feedButtonsSetting => '信息流排序与隐藏';
+
+  @override
+  String get feedButtonsTitle => '信息流设置';
 
   @override
   String get visibleFunctions => 'Отображаемые сервисы';
