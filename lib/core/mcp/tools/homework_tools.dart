@@ -153,13 +153,14 @@ class HomeworkAddTool {
 
   static McpTool create({
     HomeworkStorage? storage,
+    Future<void> Function()? onChanged,
   }) {
     final homeworkStorage = storage ?? HomeworkStorage();
 
     return McpTool(
       name: toolName,
       description:
-          '手动添加一条作业或待办事项。可以指定作业标题、所属课程、截止日期时间以及备注。',
+          '手动添加一条作业或待办事项。当用户说"添加/记一笔/新增作业或待办"时必须调用本工具，而不是只用文字回复。可以指定作业标题、所属课程、截止日期时间以及备注。',
       inputSchema: {
         'type': 'object',
         'properties': {
@@ -173,7 +174,8 @@ class HomeworkAddTool {
           },
           'endTime': {
             'type': 'string',
-            'description': '截止时间（可选，格式如 "2026-09-01 23:59:00" 或 ISO8601 字符串 "2026-09-01T23:59:00"）。',
+            'description':
+                '截止时间（可选，必须是 "YYYY-MM-DD HH:MM:SS" 或 ISO8601，例如 "2026-09-01 23:59:00"。当前时间由系统提示词给出，请把"明天/下周一"等换算成绝对时间后再传入）。',
           },
           'remarks': {
             'type': 'string',
@@ -193,13 +195,17 @@ class HomeworkAddTool {
         final endTimeStr = arguments['endTime'] as String?;
 
         DateTime? parsedEndTime;
+        String rawTimeStr = '';
         if (endTimeStr != null && endTimeStr.trim().isNotEmpty) {
           final trimmed = endTimeStr.trim();
-          parsedEndTime = DateTime.tryParse(trimmed) ?? DateTime.tryParse(trimmed.replaceFirst(' ', 'T'));
+          rawTimeStr = trimmed;
+          parsedEndTime = DateTime.tryParse(trimmed) ??
+              DateTime.tryParse(trimmed.replaceFirst(' ', 'T')) ??
+              DateTime.tryParse(trimmed.replaceAll('/', '-'));
         }
 
         final newItem = HomeworkModel(
-          id: 'manual_${DateTime.now().millisecondsSinceEpoch}',
+          id: 'manual_${DateTime.now().microsecondsSinceEpoch}',
           title: title.trim(),
           courseName: courseName,
           endTime: parsedEndTime,
@@ -208,15 +214,23 @@ class HomeworkAddTool {
           isManual: true,
           createdAt: DateTime.now(),
           remarks: remarks,
+          rawTimeStr: parsedEndTime == null ? rawTimeStr : '',
         );
 
         final currentList = await homeworkStorage.readHomeworkList();
         final updatedList = [newItem, ...currentList];
         await homeworkStorage.saveHomeworkList(updatedList);
+        if (onChanged != null) {
+          try {
+            await onChanged();
+          } catch (_) {}
+        }
 
         return McpToolResult.json({
           'success': true,
-          'message': '作业添加成功',
+          'message': parsedEndTime == null && rawTimeStr.isNotEmpty
+              ? '作业添加成功，但截止时间 "$rawTimeStr" 无法解析，已作为无截止时间保存'
+              : '作业添加成功',
           'homework': {
             'id': newItem.id,
             'title': newItem.title,
@@ -239,6 +253,7 @@ class HomeworkCompleteTool {
 
   static McpTool create({
     HomeworkStorage? storage,
+    Future<void> Function()? onChanged,
   }) {
     final homeworkStorage = storage ?? HomeworkStorage();
 
@@ -319,6 +334,11 @@ class HomeworkCompleteTool {
         updatedList[targetIndex] = updatedItem;
 
         await homeworkStorage.saveHomeworkList(updatedList);
+        if (onChanged != null) {
+          try {
+            await onChanged();
+          } catch (_) {}
+        }
 
         return McpToolResult.json({
           'success': true,

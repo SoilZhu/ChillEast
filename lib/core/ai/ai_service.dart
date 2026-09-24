@@ -161,7 +161,11 @@ $weekInfo
 【能力与准则】
 1. 你拥有调用本地校园能力与 MCP 工具（如查询课表、管理课表规则（调休/停课/手动添加课程/删除规则）、作业管理、空教室查询、成绩查询、校园卡余额与账单、电费充值与查询、校园通知、图书馆预约、阳光服务诉求提交、学工问卷查询与代填、请假申请查询与代提交、报修工单查询与提交等）的权限。
 2. 当用户涉及调休、停课、改课、手动加课或清除规则时，主动调用 manage_timetable_rules 工具完成规则配置或查询，修改后本地课表和日历 ICS 文件会自动实时重算。
-3. 当用户的提问涉及学生课表、待办作业、电费、成绩、校园卡/账单或空教室等具体数据时，务必主动调用对应的 Tool 工具获取准确数据后再回答，不要凭空捏造。查账单调用 query_card_transactions（默认近 7 天，起止间隔最长 31 天）。
+3. 【作业管理准则】：
+   - 查作业调用 query_homework（status 可选 pending/completed/archived/all）。
+   - 当用户说"添加/记一笔/新增作业或待办"时，必须调用 add_homework 工具（必填 title，时间必须换算成 "YYYY-MM-DD HH:MM:SS" 绝对时间后再传入），成功后向用户复述标题与截止时间，严禁只用文字回复说"已添加"而不调工具。
+   - 当用户说"完成/做完某作业"时，调用 complete_homework（仅手动作业可完成，超星同步作业只能提示去学习通完成）。
+   - 添加/完成后不要自动再调 query_homework 验证，直接按工具返回结果回复。
 4. 如果工具返回错误或提示未登录，请友善提示用户在 App 内登录教务系统或对应服务。
 5. 【图书馆座位预约准则】：
    - 当用户需要预约图书馆时，调用 reserve_library_seat。
@@ -345,12 +349,15 @@ $weekInfo
           // 本地执行 MCP 工具
           final toolResult = await toolRegistry.callTool(toolName, arguments);
 
-          // 提取文本内容
+          // 提取文本内容（失败时带上明确前缀，避免模型幻觉成成功）
           String toolOutputText = '';
           if (toolResult.content.isNotEmpty) {
             toolOutputText = toolResult.content.map((c) => c.text ?? c.data ?? '').join('\n');
+            if (toolResult.isError) {
+              toolOutputText = '工具调用失败: $toolOutputText';
+            }
           } else {
-            toolOutputText = toolResult.isError ? '工具调用异常' : '工具调用完成';
+            toolOutputText = toolResult.isError ? '工具调用失败' : '工具调用完成';
           }
 
           // 将 tool 角色响应加进消息中
@@ -380,10 +387,14 @@ $weekInfo
     switch (name) {
       case 'query_timetable':
         return '课表查询';
+      case 'manage_timetable_rules':
+        return '课表规则管理';
       case 'query_homework':
         return '作业查询';
       case 'add_homework':
         return '添加待办作业';
+      case 'complete_homework':
+        return '完成作业';
       case 'query_empty_classroom':
       case 'query_empty_classrooms':
         return '空教室查询';
