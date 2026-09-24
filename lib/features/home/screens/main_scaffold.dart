@@ -553,9 +553,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
     // 非 AI 模式：去掉白色卡片顶栏，一言左对齐（无左侧 icon），头像右对齐
     // 注：正常顶栏不区分 AI 模式，永远 plain；AI 浮层输入条走下面的卡片分支
     if (overrideBarHeight == null) {
-      // AI 入口图标颜色：浅色用品牌绿，深色用亮绿，保证对比度
-      final aiIconColor =
-          isDark ? const Color(0xFF4ADE80) : const Color(0xFF09C489);
+      // AI 入口图标颜色：#1976D2
+      const aiIconColor = Color(0xFF1976D2);
       // 一言只在主页 tab 显示。controller 在点击帧就同步翻 index，
       // listener 无条件重绘，所以这里与页面翻页是同一帧，并行动画。
       final isHomeTab = _tabController.index == 0;
@@ -650,8 +649,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                     child: Center(
                       child: SvgPicture.asset(
                         'assets/images/ai_button.svg',
-                        width: 22,
-                        height: 22,
+                        width: 24,
                         colorFilter: ColorFilter.mode(
                             aiIconColor, BlendMode.srcIn),
                       ),
@@ -673,7 +671,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
     }
     // 白条高度：默认 60，点击后展开到 120（2 倍）；整体高度联动 +60，保持边距不变
     // 能走到这里 overrideBarHeight 必非空（空已在 plain 分支返回）
-    final barHeight = overrideBarHeight!;
+    final double barHeight = overrideBarHeight;
     final prefHeight = 88.0 + (barHeight - 60.0);
 
     return PreferredSize(
