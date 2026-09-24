@@ -265,8 +265,6 @@ class _RepairDetailScreenState extends ConsumerState<RepairDetailScreen> {
             _row(context.l10n.repairsDepartment, order.department),
           if (order.handler.isNotEmpty)
             _row(context.l10n.repairsHandler, order.handler),
-          if (order.handleResult.isNotEmpty)
-            _row(context.l10n.repairsHandleResult, order.handleResult),
           _row(context.l10n.repairsCreatedAt, _formatDate(order.createdAt)),
           if (order.closedAt != null)
             _row(context.l10n.repairsCompletedAt, _formatDate(order.closedAt)),
@@ -289,6 +287,18 @@ class _RepairDetailScreenState extends ConsumerState<RepairDetailScreen> {
               : order.description,
           style: const TextStyle(height: 1.6),
         ),
+        if (order.handleResult.trim().isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Text(
+            context.l10n.repairsHandleResult,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+          const SizedBox(height: 8),
+          SelectableText(
+            order.handleResult,
+            style: const TextStyle(height: 1.6),
+          ),
+        ],
         if (order.supplement.isNotEmpty) ...[
           const SizedBox(height: 14),
           Text(
