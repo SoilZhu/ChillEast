@@ -235,6 +235,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get functionsButtonsTitle => 'Boutons de services';
 
   @override
+  String get groupPayment => '支付';
+
+  @override
+  String get groupStudy => '学习';
+
+  @override
+  String get groupLife => '生活';
+
+  @override
+  String get groupTravel => '出行';
+
+  @override
+  String get groupTools => '工具';
+
+  @override
+  String get groupMiniApps => '小程序';
+
+  @override
   String get feedButtonsSetting => '信息流排序与隐藏';
 
   @override

@@ -19,7 +19,12 @@ class ButtonReorderScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final appearance = ref.watch(appearanceProvider);
-    
+
+    // 功能排序按支付/学习/生活/出行/工具/小程序分组展示
+    if (listType == 'functions') {
+      return _buildGroupedFunctions(context, ref, appearance, isDark);
+    }
+
     // 获取当前列表并按可见性排序
     final rawItems = listType == 'home'
         ? appearance.homeItems
@@ -92,6 +97,143 @@ class ButtonReorderScreen extends ConsumerWidget {
     );
   }
 
+  /// 功能排序：6 个大模块，拖过隐藏线切换显隐（与首页排序同手势）
+  Widget _buildGroupedFunctions(BuildContext context, WidgetRef ref,
+      AppearanceState appearance, bool isDark) {
+    final hiddenSet = appearance.hiddenFunctionGroups.toSet();
+    final visibleKeys = appearance.functionGroupOrder
+        .where((k) => !hiddenSet.contains(k))
+        .toList();
+    final hiddenKeys = appearance.functionGroupOrder
+        .where((k) => hiddenSet.contains(k))
+        .toList();
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(title),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          color: isDark ? Colors.white : const Color(0xFF202124),
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+        iconTheme: IconThemeData(
+          color: isDark ? Colors.white : Colors.black87,
+        ),
+      ),
+      body: Column(
+        children: [
+          _buildInfoBanner(context, isDark),
+          Expanded(
+            child: ReorderableListView(
+              padding: const EdgeInsets.only(bottom: 60),
+              proxyDecorator:
+                  (Widget child, int index, Animation<double> animation) {
+                return AnimatedBuilder(
+                  animation: animation,
+                  builder: (BuildContext context, Widget? child) {
+                    final double animValue =
+                        Curves.easeInOut.transform(animation.value);
+                    final double elevation = lerpDouble(0, 6, animValue)!;
+                    return Material(
+                      elevation: elevation,
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      borderRadius: BorderRadius.circular(animValue * 8),
+                      child: child,
+                    );
+                  },
+                  child: child,
+                );
+              },
+              onReorder: (oldIndex, newIndex) {
+                ref
+                    .read(appearanceProvider.notifier)
+                    .reorderFunctionGroups(oldIndex, newIndex);
+              },
+              children: [
+                ...visibleKeys.map((key) => _buildGroupTile(
+                      context,
+                      key,
+                      isDark: isDark,
+                    )),
+                _buildSectionHeader(
+                  context,
+                  context.l10n.hiddenFunctions,
+                  Icons.visibility_off_outlined,
+                  key: const ValueKey('header_hidden'),
+                ),
+                ...hiddenKeys.map((key) => _buildGroupTile(
+                      context,
+                      key,
+                      isDark: isDark,
+                    )),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  ({IconData icon, Color color}) _groupVisual(String titleKey) {
+    return switch (titleKey) {
+      'groupPayment' =>
+        (icon: Icons.payments_outlined, color: Colors.orange),
+      'groupStudy' =>
+        (icon: Icons.school_outlined, color: const Color(0xFF795548)),
+      'groupLife' =>
+        (icon: Icons.favorite_outline, color: const Color(0xFFE63476)),
+      'groupTravel' =>
+        (icon: Icons.directions_bus_outlined, color: const Color(0xFF2196F3)),
+      'groupTools' =>
+        (icon: Icons.build_outlined, color: const Color(0xFF607D8B)),
+      _ => (icon: Icons.apps_outlined, color: const Color(0xFF09C489)),
+    };
+  }
+
+  Widget _buildGroupTile(
+    BuildContext context,
+    String titleKey, {
+    required bool isDark,
+  }) {
+    final visual = _groupVisual(titleKey);
+    return Container(
+      key: ValueKey(titleKey),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      color: Colors.transparent,
+      child: Row(
+        children: [
+          const Icon(Icons.drag_indicator_rounded,
+              color: Color(0xFFBDBDBD), size: 24),
+          const SizedBox(width: 20),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: visual.color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(visual.icon, color: visual.color, size: 22),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              functionGroupTitle(context, titleKey),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: isDark ? Colors.white : const Color(0xFF202124),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInfoBanner(BuildContext context, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -135,16 +277,21 @@ class ButtonReorderScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildReorderItem(BuildContext context, WidgetRef ref, FunctionItem item) {
+  Widget _buildReorderItem(
+    BuildContext context,
+    WidgetRef ref,
+    FunctionItem item,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       key: ValueKey(item.id),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       color: Colors.transparent,
       child: Row(
         children: [
-          const Icon(Icons.drag_indicator_rounded, color: Color(0xFFBDBDBD), size: 24),
+          const Icon(Icons.drag_indicator_rounded,
+              color: Color(0xFFBDBDBD), size: 24),
           const SizedBox(width: 20),
           Container(
             width: 44,

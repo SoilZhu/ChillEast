@@ -226,10 +226,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeButtonsTitle => 'Home Buttons';
 
   @override
-  String get functionsButtonsSetting => 'Service Button Layout & Visibility';
+  String get functionsButtonsSetting => 'Function Order & Visibility';
 
   @override
-  String get functionsButtonsTitle => 'Service Buttons';
+  String get functionsButtonsTitle => 'Function Order';
+
+  @override
+  String get groupPayment => 'Payment';
+
+  @override
+  String get groupStudy => 'Study';
+
+  @override
+  String get groupLife => 'Life';
+
+  @override
+  String get groupTravel => 'Travel';
+
+  @override
+  String get groupTools => 'Tools';
+
+  @override
+  String get groupMiniApps => 'Mini apps';
 
   @override
   String get feedButtonsSetting => 'Feed Layout & Visibility';

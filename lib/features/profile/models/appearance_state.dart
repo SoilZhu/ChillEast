@@ -49,23 +49,77 @@ class AppearanceState {
   final List<FunctionItem> homeItems;
   final List<FunctionItem> functionItems;
   final List<FunctionItem> feedItems;
+  final List<String> functionGroupOrder;
+  final List<String> hiddenFunctionGroups;
 
   const AppearanceState({
     required this.homeItems,
     required this.functionItems,
     required this.feedItems,
+    required this.functionGroupOrder,
+    required this.hiddenFunctionGroups,
   });
 
   AppearanceState copyWith({
     List<FunctionItem>? homeItems,
     List<FunctionItem>? functionItems,
     List<FunctionItem>? feedItems,
+    List<String>? functionGroupOrder,
+    List<String>? hiddenFunctionGroups,
   }) {
     return AppearanceState(
       homeItems: homeItems ?? this.homeItems,
       functionItems: functionItems ?? this.functionItems,
       feedItems: feedItems ?? this.feedItems,
+      functionGroupOrder: functionGroupOrder ?? this.functionGroupOrder,
+      hiddenFunctionGroups: hiddenFunctionGroups ?? this.hiddenFunctionGroups,
     );
+  }
+}
+
+/// 功能页分组：成员 id 固定归属，组内展示顺序来自 functionItems
+class FunctionGroup {
+  final String titleKey;
+  final List<String> ids;
+  const FunctionGroup({required this.titleKey, required this.ids});
+}
+
+const List<FunctionGroup> functionGroups = [
+  FunctionGroup(
+      titleKey: 'groupPayment',
+      ids: ['payment_code', 'recharge', 'ele_recharge']),
+  FunctionGroup(
+      titleKey: 'groupStudy',
+      ids: ['library', 'empty_classroom', 'score']),
+  FunctionGroup(
+      titleKey: 'groupLife',
+      ids: ['repairs', 'leave', 'questionnaire', 'sunshine']),
+  FunctionGroup(
+      titleKey: 'groupTravel',
+      ids: ['bus', 'cs_bus', 'campus_bus_route']),
+  FunctionGroup(titleKey: 'groupTools', ids: ['vpn']),
+  FunctionGroup(
+      titleKey: 'groupMiniApps',
+      ids: ['xgxt', 'teaching_eval', 'gym', 'campus_card']),
+];
+
+String functionGroupTitle(BuildContext context, String titleKey) {
+  final l10n = context.l10n;
+  switch (titleKey) {
+    case 'groupPayment':
+      return l10n.groupPayment;
+    case 'groupStudy':
+      return l10n.groupStudy;
+    case 'groupLife':
+      return l10n.groupLife;
+    case 'groupTravel':
+      return l10n.groupTravel;
+    case 'groupTools':
+      return l10n.groupTools;
+    case 'groupMiniApps':
+      return l10n.groupMiniApps;
+    default:
+      return '';
   }
 }
 

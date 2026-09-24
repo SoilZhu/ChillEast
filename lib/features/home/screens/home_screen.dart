@@ -332,7 +332,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         // 更多 (第一页末尾固定占位)
         return _buildQuickActionCard(
           context,
-          icon: Icons.grid_view_rounded,
+          icon: Icons.grid_view_outlined,
           label: context.l10n.more,
           iconColor: const Color(0xFFE6A334),
           isDark: isDark,

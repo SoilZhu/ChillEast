@@ -12,6 +12,8 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
   static const String _homeItemsKey = 'home_function_items';
   static const String _functionItemsKey = 'function_page_items';
   static const String _feedItemsKey = 'home_feed_items';
+  static const String _groupOrderKey = 'function_group_order';
+  static const String _hiddenGroupsKey = 'hidden_function_groups';
 
   static final List<FunctionItem> _masterPool = [
     const FunctionItem(id: 'sunshine', label: '阳光服务', icon: Icons.wb_sunny_outlined, color: Color(0xFF09C489)),
@@ -38,8 +40,14 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     homeItems: _getDefaultHomeItems(),
     functionItems: _getDefaultFunctionItems(),
     feedItems: _getDefaultFeedItems(),
+    functionGroupOrder: _defaultGroupOrder(),
+    hiddenFunctionGroups: const [],
   )) {
     _loadSettings();
+  }
+
+  static List<String> _defaultGroupOrder() {
+    return functionGroups.map((g) => g.titleKey).toList();
   }
 
   static const List<String> _defaultVisibleHomeIds = ['payment_code', 'library', 'empty_classroom', 'xgxt', 'repairs', 'bus', 'score'];
@@ -120,6 +128,47 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     }
 
     state = state.copyWith(homeItems: homeItems, functionItems: funcItems, feedItems: feedItems);
+
+    final groupOrderJson = prefs.getString(_groupOrderKey);
+    final hiddenGroupsJson = prefs.getString(_hiddenGroupsKey);
+    if (groupOrderJson != null) {
+      try {
+        state = state.copyWith(functionGroupOrder: _mergeGroupOrder(json.decode(groupOrderJson)));
+      } catch (e) {
+        debugPrint('Error loading group order: $e');
+      }
+    }
+    if (hiddenGroupsJson != null) {
+      try {
+        final decoded = json.decode(hiddenGroupsJson);
+        if (decoded is List) {
+          state = state.copyWith(
+            hiddenFunctionGroups:
+                decoded.map((e) => e.toString()).toList(),
+          );
+        }
+      } catch (e) {
+        debugPrint('Error loading hidden groups: $e');
+      }
+    }
+  }
+
+  /// 分组顺序合并：保留用户顺序，新分组追加到末尾
+  List<String> _mergeGroupOrder(dynamic decoded) {
+    final validKeys = functionGroups.map((g) => g.titleKey).toSet();
+    final order = <String>[];
+    if (decoded is List) {
+      for (final e in decoded) {
+        final key = e.toString();
+        if (validKeys.contains(key) && !order.contains(key)) {
+          order.add(key);
+        }
+      }
+    }
+    for (final key in validKeys) {
+      if (!order.contains(key)) order.add(key);
+    }
+    return order;
   }
 
   List<FunctionItem> _mergeWithMaster(List decoded, {required bool isHome}) {
@@ -198,6 +247,8 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     await prefs.setString(_homeItemsKey, json.encode(state.homeItems.map((e) => e.toJson()).toList()));
     await prefs.setString(_functionItemsKey, json.encode(state.functionItems.map((e) => e.toJson()).toList()));
     await prefs.setString(_feedItemsKey, json.encode(state.feedItems.map((e) => e.toJson()).toList()));
+    await prefs.setString(_groupOrderKey, json.encode(state.functionGroupOrder));
+    await prefs.setString(_hiddenGroupsKey, json.encode(state.hiddenFunctionGroups));
   }
 
   void toggleItemVisibility(String listType, String itemId) {
@@ -284,5 +335,38 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     } else {
       updateFunctionItems(items);
     }
+  }
+
+  /// 功能排序（大模块模式）：整组拖拽排序，拖过隐藏线切换显隐
+  /// [oldIndex]/[newIndex] 为 UI 层索引（含 header_hidden 占位）
+  void reorderFunctionGroups(int oldIndex, int newIndex) {
+    final hiddenSet = state.hiddenFunctionGroups.toSet();
+    final visible = state.functionGroupOrder
+        .where((k) => !hiddenSet.contains(k))
+        .toList();
+    final hidden = state.functionGroupOrder
+        .where((k) => hiddenSet.contains(k))
+        .toList();
+    final visibleCount = visible.length;
+    if (oldIndex == visibleCount) return; // 拖动的是标题，忽略
+
+    final all = [...visible, ...hidden];
+    int realOldIndex = oldIndex > visibleCount ? oldIndex - 1 : oldIndex;
+    if (realOldIndex < 0 || realOldIndex >= all.length) return;
+    int realNewIndex = newIndex > visibleCount ? newIndex - 1 : newIndex;
+    if (realNewIndex > realOldIndex) realNewIndex -= 1;
+    final moving = all.removeAt(realOldIndex);
+    all.insert(realNewIndex.clamp(0, all.length), moving);
+
+    if (newIndex <= visibleCount) {
+      hiddenSet.remove(moving);
+    } else {
+      hiddenSet.add(moving);
+    }
+    state = state.copyWith(
+      functionGroupOrder: all,
+      hiddenFunctionGroups: hiddenSet.toList(),
+    );
+    _saveSettings();
   }
 }

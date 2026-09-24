@@ -554,14 +554,50 @@ abstract class AppLocalizations {
   /// No description provided for @functionsButtonsSetting.
   ///
   /// In zh, this message translates to:
-  /// **'功能页按钮排序与隐藏'**
+  /// **'功能排序与隐藏'**
   String get functionsButtonsSetting;
 
   /// No description provided for @functionsButtonsTitle.
   ///
   /// In zh, this message translates to:
-  /// **'功能页按钮设置'**
+  /// **'功能排序'**
   String get functionsButtonsTitle;
+
+  /// No description provided for @groupPayment.
+  ///
+  /// In zh, this message translates to:
+  /// **'支付'**
+  String get groupPayment;
+
+  /// No description provided for @groupStudy.
+  ///
+  /// In zh, this message translates to:
+  /// **'学习'**
+  String get groupStudy;
+
+  /// No description provided for @groupLife.
+  ///
+  /// In zh, this message translates to:
+  /// **'生活'**
+  String get groupLife;
+
+  /// No description provided for @groupTravel.
+  ///
+  /// In zh, this message translates to:
+  /// **'出行'**
+  String get groupTravel;
+
+  /// No description provided for @groupTools.
+  ///
+  /// In zh, this message translates to:
+  /// **'工具'**
+  String get groupTools;
+
+  /// No description provided for @groupMiniApps.
+  ///
+  /// In zh, this message translates to:
+  /// **'小程序'**
+  String get groupMiniApps;
 
   /// No description provided for @feedButtonsSetting.
   ///

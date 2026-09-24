@@ -225,10 +225,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeButtonsTitle => '首页按钮设置';
 
   @override
-  String get functionsButtonsSetting => '功能页按钮排序与隐藏';
+  String get functionsButtonsSetting => '功能排序与隐藏';
 
   @override
-  String get functionsButtonsTitle => '功能页按钮设置';
+  String get functionsButtonsTitle => '功能排序';
+
+  @override
+  String get groupPayment => '支付';
+
+  @override
+  String get groupStudy => '学习';
+
+  @override
+  String get groupLife => '生活';
+
+  @override
+  String get groupTravel => '出行';
+
+  @override
+  String get groupTools => '工具';
+
+  @override
+  String get groupMiniApps => '小程序';
 
   @override
   String get feedButtonsSetting => '信息流排序与隐藏';
@@ -7168,10 +7186,28 @@ class AppLocalizationsZhHefei extends AppLocalizationsZh {
   String get homeButtonsTitle => '头页按键设定';
 
   @override
-  String get functionsButtonsSetting => '功能页按键排序与藏';
+  String get functionsButtonsSetting => '功能按键排序与藏';
 
   @override
-  String get functionsButtonsTitle => '功能页按键设定';
+  String get functionsButtonsTitle => '功能排序';
+
+  @override
+  String get groupPayment => '支付';
+
+  @override
+  String get groupStudy => '学习';
+
+  @override
+  String get groupLife => '生活';
+
+  @override
+  String get groupTravel => '出行';
+
+  @override
+  String get groupTools => '工具';
+
+  @override
+  String get groupMiniApps => '小程序';
 
   @override
   String get feedButtonsSetting => '信息流按键排序与藏';

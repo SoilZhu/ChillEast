@@ -225,10 +225,28 @@ class AppLocalizationsHsn extends AppLocalizations {
   String get homeButtonsTitle => '首页按钮设好';
 
   @override
-  String get functionsButtonsSetting => '功能页按钮排位和隐藏';
+  String get functionsButtonsSetting => '功能排位和隐藏';
 
   @override
-  String get functionsButtonsTitle => '功能页按钮设好';
+  String get functionsButtonsTitle => '功能排序';
+
+  @override
+  String get groupPayment => '支付';
+
+  @override
+  String get groupStudy => '学习';
+
+  @override
+  String get groupLife => '生活';
+
+  @override
+  String get groupTravel => '出行';
+
+  @override
+  String get groupTools => '工具';
+
+  @override
+  String get groupMiniApps => '小程序';
 
   @override
   String get feedButtonsSetting => '信息流排位和隐藏';

@@ -225,10 +225,28 @@ class AppLocalizationsWuu extends AppLocalizations {
   String get homeButtonsTitle => '头一页按钮设定';
 
   @override
-  String get functionsButtonsSetting => '功能页按钮排序搭隐藏';
+  String get functionsButtonsSetting => '功能排序搭隐藏';
 
   @override
-  String get functionsButtonsTitle => '功能页按钮设定';
+  String get functionsButtonsTitle => '功能排序';
+
+  @override
+  String get groupPayment => '支付';
+
+  @override
+  String get groupStudy => '学习';
+
+  @override
+  String get groupLife => '生活';
+
+  @override
+  String get groupTravel => '出行';
+
+  @override
+  String get groupTools => '工具';
+
+  @override
+  String get groupMiniApps => '小程序';
 
   @override
   String get feedButtonsSetting => '信息流排序搭隐藏';
