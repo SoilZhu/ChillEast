@@ -493,7 +493,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w400,
                       color: isDark ? Colors.white : Colors.black87,
                     ),
                   ),
