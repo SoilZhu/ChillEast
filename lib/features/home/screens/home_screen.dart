@@ -1149,7 +1149,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '$timeRange @ ${course.classroom}',
+                  [
+                    timeRange,
+                    course.classroom.trim(),
+                  ].where((s) => s.isNotEmpty).join(' @ '),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
