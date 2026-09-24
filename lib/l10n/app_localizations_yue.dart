@@ -524,6 +524,12 @@ class AppLocalizationsYue extends AppLocalizations {
   String get todayTimetable => '今日课表';
 
   @override
+  String get tomorrowAgenda => '听日日程';
+
+  @override
+  String get todayAgenda => '今日日程';
+
+  @override
   String get timetableLoginRequiredTitle => '要登入先可以查看课表';
 
   @override
@@ -1656,6 +1662,9 @@ class AppLocalizationsYue extends AppLocalizations {
 
   @override
   String get studentWorkQuestionnaire => '学工问卷';
+
+  @override
+  String get pendingQuestionnaires => '待完成嘅问卷';
 
   @override
   String get statusSubmitted => '已提交';

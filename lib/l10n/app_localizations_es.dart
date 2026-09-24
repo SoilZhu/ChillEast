@@ -542,6 +542,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get todayTimetable => 'Horario de hoy';
 
   @override
+  String get tomorrowAgenda => '明日日程';
+
+  @override
+  String get todayAgenda => '今日日程';
+
+  @override
   String get timetableLoginRequiredTitle => 'Inicia sesión para ver tu horario';
 
   @override
@@ -1728,6 +1734,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get studentWorkQuestionnaire => 'Cuestionarios estudiantiles';
+
+  @override
+  String get pendingQuestionnaires => '待完成的问卷';
 
   @override
   String get statusSubmitted => 'Enviado';

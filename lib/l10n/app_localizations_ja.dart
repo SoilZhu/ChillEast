@@ -529,6 +529,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get todayTimetable => '今日の時間割';
 
   @override
+  String get tomorrowAgenda => '明日日程';
+
+  @override
+  String get todayAgenda => '今日日程';
+
+  @override
   String get timetableLoginRequiredTitle => '時間割を表示するにはログインが必要です';
 
   @override
@@ -1670,6 +1676,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get studentWorkQuestionnaire => '学生アンケート';
+
+  @override
+  String get pendingQuestionnaires => '待完成的问卷';
 
   @override
   String get statusSubmitted => '提出済み';

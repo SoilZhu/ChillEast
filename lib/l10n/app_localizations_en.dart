@@ -536,6 +536,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todayTimetable => 'Today\'s Schedule';
 
   @override
+  String get tomorrowAgenda => 'Tomorrow\'s agenda';
+
+  @override
+  String get todayAgenda => 'Today\'s agenda';
+
+  @override
   String get timetableLoginRequiredTitle => 'Login Required for Schedule';
 
   @override
@@ -1701,6 +1707,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get studentWorkQuestionnaire => 'Student Questionnaire';
+
+  @override
+  String get pendingQuestionnaires => 'Pending questionnaires';
 
   @override
   String get statusSubmitted => 'Submitted';

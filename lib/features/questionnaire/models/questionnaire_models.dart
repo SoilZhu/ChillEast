@@ -42,6 +42,20 @@ class QuestionnaireItem {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'DM': dm,
+      'MC': title,
+      'KSSJ': startTime,
+      'JSSJ': endTime,
+      'TASK_TIME_M': taskTimeM,
+      'DONE_IND': doneInd,
+      'FLAG': flag,
+      'ZT': zt,
+      'SHZT': shzt,
+    };
+  }
+
   bool get isSubmitted => zt == '1' || shzt == '1' || doneInd == '1';
 
   bool get isExpired {

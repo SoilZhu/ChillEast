@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../sunshine/screens/sunshine_screen.dart';
 import '../../repairs/screens/repair_screen.dart';
 import '../../questionnaire/screens/questionnaire_list_screen.dart';
+import '../../questionnaire/screens/questionnaire_detail_screen.dart';
+import '../../questionnaire/models/questionnaire_models.dart';
+import '../../questionnaire/providers/questionnaire_cache_provider.dart';
 import '../../leave/screens/leave_list_screen.dart';
 import '../../../core/state/auth_state.dart';
 import '../../auth/screens/login_screen.dart';
@@ -11,6 +14,8 @@ import '../../timetable/utils/ics_parser.dart';
 import '../../timetable/models/course_model.dart';
 import '../../timetable/utils/date_calculator.dart';
 import '../../timetable/utils/week_parser.dart';
+import '../../homework/providers/homework_provider.dart';
+import '../../homework/models/homework_model.dart';
 import '../../../core/utils/location_helper.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_constants.dart';
@@ -35,10 +40,9 @@ import '../../library/providers/library_provider.dart';
 import '../../library/screens/library_home_screen.dart';
 import '../../campus_bus/screens/campus_bus_map_screen.dart';
 
-
 class HomeScreen extends ConsumerStatefulWidget {
   final Function(int)? onNavigateToTab;
-  
+
   const HomeScreen({super.key, this.onNavigateToTab});
 
   @override
@@ -49,6 +53,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<CourseModel> _todayCourses = [];
   bool _isLoadingTimetable = false;
   bool _isShowingTomorrow = false;
+  // 预览的目标日期（22 点后为明天），作业按此日期匹配截止时间
+  DateTime _previewDate = DateTime.now();
   final PageController _quickPageController = PageController();
   int _quickPageIndex = 0;
 
@@ -63,58 +69,63 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _quickPageController.dispose();
     super.dispose();
   }
-  
+
   /// 加载预览课程（晚上10点后展示明天，0点后恢复今天）
   Future<void> _loadPreviewCourses() async {
     setState(() {
       _isLoadingTimetable = true;
     });
-    
+
     try {
       final storage = TimetableStorage();
       final hasTimetable = await storage.hasLocalTimetable();
-      
+
       if (hasTimetable) {
         final icsContent = await storage.readTimetable();
         final metadata = await storage.readMetadata();
-        
+
         if (icsContent != null) {
           final allCourses = IcsParser.parse(icsContent);
-          
+
           final now = DateTime.now();
           // 如果晚上10点以后，则显示明天的课表
           final bool isAfter10PM = now.hour >= 22;
-          final targetDate = isAfter10PM ? now.add(const Duration(days: 1)) : now;
-          
+          final targetDate =
+              isAfter10PM ? now.add(const Duration(days: 1)) : now;
+
           final dayOfWeek = targetDate.weekday; // 1=周一, 7=周日
-          
+
           // 计算目标周次
           int targetWeek = 0;
           if (metadata != null && metadata['firstWeekMonday'] != null) {
-            final firstWeekMonday = DateTime.parse(metadata['firstWeekMonday'] as String);
-            targetWeek = DateCalculator.getCurrentWeekNumber(firstWeekMonday, targetDate);
+            final firstWeekMonday =
+                DateTime.parse(metadata['firstWeekMonday'] as String);
+            targetWeek = DateCalculator.getCurrentWeekNumber(
+                firstWeekMonday, targetDate);
           }
-          
+
           // 筛选课程
           final previewCourses = allCourses.where((course) {
             if (course.dayOfWeek != dayOfWeek) return false;
-            
+
             if (targetWeek > 0) {
               final courseWeeks = WeekParser.parseWeeks(course.weeks);
               return courseWeeks.contains(targetWeek);
             }
             return true;
           }).toList();
-          
+
           // 只有在显示“今天”时，才根据当前时间过滤已结束的课
           final upcomingCourses = <CourseModel>[];
           if (!isAfter10PM) {
             final currentTime = TimeOfDay.fromDateTime(now);
             for (final course in previewCourses) {
-              final endTime = DateCalculator.getSectionTime(course.endPeriod)['end'];
+              final endTime =
+                  DateCalculator.getSectionTime(course.endPeriod)['end'];
               if (endTime != null) {
                 final endMinutes = endTime.hour * 60 + endTime.minute;
-                final currentMinutes = currentTime.hour * 60 + currentTime.minute;
+                final currentMinutes =
+                    currentTime.hour * 60 + currentTime.minute;
                 if (endMinutes > currentMinutes) {
                   upcomingCourses.add(course);
                 }
@@ -124,13 +135,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // 明天的课表全量展示
             upcomingCourses.addAll(previewCourses);
           }
-          
+
           // 按开始时间排序
-          upcomingCourses.sort((a, b) => a.startPeriod.compareTo(b.startPeriod));
-          
+          upcomingCourses
+              .sort((a, b) => a.startPeriod.compareTo(b.startPeriod));
+
           setState(() {
             _todayCourses = upcomingCourses;
             _isShowingTomorrow = isAfter10PM;
+            _previewDate =
+                DateTime(targetDate.year, targetDate.month, targetDate.day);
           });
         }
       }
@@ -142,10 +156,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
-    
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
@@ -153,7 +168,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             // 快捷功能 2x3 网格（报修平台卡片风格）
             _buildQuickActions(context, authState),
-            
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
@@ -164,6 +179,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   _buildLibrarySeatCard(context),
                   // 今日课表预览
                   _buildTodayTimetablePreview(context),
+                  // 待完成的问卷（有待填写才展示）
+                  _buildPendingQuestionnaires(context),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -173,13 +190,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
-  
 
-  
   Widget _buildQuickActions(BuildContext context, AuthState authState) {
     final isLoggedIn = authState.status == AuthStatus.authenticated;
     final appearance = ref.watch(appearanceProvider);
-    final visibleItems = appearance.homeItems.where((item) => item.isVisible).toList();
+    final visibleItems =
+        appearance.homeItems.where((item) => item.isVisible).toList();
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -312,86 +328,101 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  void _handleActionTap(BuildContext context, String id, bool isLoggedIn) async {
+  void _handleActionTap(
+      BuildContext context, String id, bool isLoggedIn) async {
     switch (id) {
       case 'payment_code':
-        isLoggedIn 
-            ? Navigator.push(context, createSlideUpRoute(const PaymentCodeScreen()))
+        isLoggedIn
+            ? Navigator.push(
+                context, createSlideUpRoute(const PaymentCodeScreen()))
             : _showLoginDialog(context);
         break;
       case 'recharge':
-        isLoggedIn 
-            ? Navigator.push(context, createSlideUpRoute(const CampusCardRechargeScreen()))
+        isLoggedIn
+            ? Navigator.push(
+                context, createSlideUpRoute(const CampusCardRechargeScreen()))
             : _showLoginDialog(context);
         break;
       case 'ele_recharge':
         isLoggedIn
-            ? Navigator.push(context, createSlideUpRoute(const ElectricityRechargeScreen()))
+            ? Navigator.push(
+                context, createSlideUpRoute(const ElectricityRechargeScreen()))
             : _showLoginDialog(context);
         break;
       case 'library':
-        isLoggedIn 
-            ? Navigator.push(context, createSlideUpRoute(const LibraryHomeScreen()))
+        isLoggedIn
+            ? Navigator.push(
+                context, createSlideUpRoute(const LibraryHomeScreen()))
             : _showLoginDialog(context);
         break;
       case 'empty_classroom':
-        isLoggedIn 
-            ? Navigator.push(context, createSlideUpRoute(const ClassroomInquiryScreen()))
+        isLoggedIn
+            ? Navigator.push(
+                context, createSlideUpRoute(const ClassroomInquiryScreen()))
             : _showLoginDialog(context);
         break;
       case 'xgxt':
-        isLoggedIn 
-            ? Navigator.push(context, createSlideUpRoute(WebViewDetailScreen(
-                title: context.l10n.funcXgxt,
-                url: AppConstants.xgxtWapUrl,
-                showAppBar: false,
-                showWebBack: false,
-                appBarColor: const Color(0xFF3C8DBC),
-            )))
+        isLoggedIn
+            ? Navigator.push(
+                context,
+                createSlideUpRoute(WebViewDetailScreen(
+                  title: context.l10n.funcXgxt,
+                  url: AppConstants.xgxtWapUrl,
+                  showAppBar: false,
+                  showWebBack: false,
+                  appBarColor: const Color(0xFF3C8DBC),
+                )))
             : _showLoginDialog(context);
         break;
       case 'sunshine':
         isLoggedIn
-            ? Navigator.push(context, createSlideUpRoute(const SunshineScreen()))
+            ? Navigator.push(
+                context, createSlideUpRoute(const SunshineScreen()))
             : _showLoginDialog(context);
         break;
       case 'questionnaire':
         isLoggedIn
-            ? Navigator.push(context, createSlideUpRoute(const QuestionnaireListScreen()))
+            ? Navigator.push(
+                context, createSlideUpRoute(const QuestionnaireListScreen()))
             : _showLoginDialog(context);
         break;
       case 'leave':
         isLoggedIn
-            ? Navigator.push(context, createSlideUpRoute(const LeaveListScreen()))
+            ? Navigator.push(
+                context, createSlideUpRoute(const LeaveListScreen()))
             : _showLoginDialog(context);
         break;
       case 'repairs':
-        isLoggedIn 
+        isLoggedIn
             ? Navigator.push(context, createSlideUpRoute(const RepairScreen()))
             : _showLoginDialog(context);
         break;
       case 'gym':
-        isLoggedIn 
-            ? Navigator.push(context, createSlideUpRoute(WebViewDetailScreen(
-                title: context.l10n.funcGym,
-                url: AppConstants.gymReservationUrl,
-                showWebBack: true,
-            )))
+        isLoggedIn
+            ? Navigator.push(
+                context,
+                createSlideUpRoute(WebViewDetailScreen(
+                  title: context.l10n.funcGym,
+                  url: AppConstants.gymReservationUrl,
+                  showWebBack: true,
+                )))
             : _showLoginDialog(context);
         break;
       case 'teaching_eval':
-        isLoggedIn 
-            ? Navigator.push(context, createSlideUpRoute(WebViewDetailScreen(
-                title: context.l10n.funcTeachingEval,
-                url: AppConstants.teachingEvalUrl,
-                showAppBar: false,
-                showWebBack: false,
-                appBarColor: Colors.white,
-            )))
+        isLoggedIn
+            ? Navigator.push(
+                context,
+                createSlideUpRoute(WebViewDetailScreen(
+                  title: context.l10n.funcTeachingEval,
+                  url: AppConstants.teachingEvalUrl,
+                  showAppBar: false,
+                  showWebBack: false,
+                  appBarColor: Colors.white,
+                )))
             : _showLoginDialog(context);
         break;
       case 'score':
-        isLoggedIn 
+        isLoggedIn
             ? Navigator.push(context, createSlideUpRoute(const ScoreScreen()))
             : _showLoginDialog(context);
         break;
@@ -400,21 +431,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         break;
       case 'campus_card':
         if (isLoggedIn) {
-          await [Permission.camera, Permission.photos, Permission.storage].request();
+          await [Permission.camera, Permission.photos, Permission.storage]
+              .request();
           final service = ref.read(campusCardServiceProvider);
           final url = service.getCampusCardHomeUrl();
-          
+
           if (!context.mounted) return;
-          Navigator.push(context, createSlideUpRoute(
-            WebViewDetailScreen(
-              title: context.l10n.funcCampusCard,
-              url: url,
-              userAgent: AppConstants.campusCardUA,
-              showWebBack: false,
-              showAppBar: false,
-              appBarColor: const Color(0xFF008268),
-            ),
-          ));
+          Navigator.push(
+              context,
+              createSlideUpRoute(
+                WebViewDetailScreen(
+                  title: context.l10n.funcCampusCard,
+                  url: url,
+                  userAgent: AppConstants.campusCardUA,
+                  showWebBack: false,
+                  showAppBar: false,
+                  appBarColor: const Color(0xFF008268),
+                ),
+              ));
         } else {
           _showLoginDialog(context);
         }
@@ -429,15 +463,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final hasPermission = await LocationHelper.requestPermission();
         if (hasPermission) {
           if (!context.mounted) return;
-          Navigator.push(context, createSlideUpRoute(
-            WebViewDetailScreen(
-              title: context.l10n.funcCsBus,
-              url: AppConstants.changshaBusUrl,
-              showWebBack: true,
-              showAppBar: true,
-              appBarColor: const Color(0xFFF4F4F4),
-            ),
-          ));
+          Navigator.push(
+              context,
+              createSlideUpRoute(
+                WebViewDetailScreen(
+                  title: context.l10n.funcCsBus,
+                  url: AppConstants.changshaBusUrl,
+                  showWebBack: true,
+                  showAppBar: true,
+                  appBarColor: const Color(0xFFF4F4F4),
+                ),
+              ));
         } else {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -505,17 +541,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
-  
+
   Widget _buildLibrarySeatCard(BuildContext context) {
     final cachedReservesAsync = ref.watch(cachedLibraryReserveProvider);
     final reserves = cachedReservesAsync.value ?? [];
-    if (reserves.isEmpty) {
+    // TODO(temp): 图书馆卡片调试用假数据（含待签到+使用中两种按钮状态），看完删除
+    final now = DateTime.now();
+    final testReserves = reserves.isEmpty
+        ? [
+            LibraryReserveModel(
+              id: -1,
+              roomId: 0,
+              deptId: 0,
+              seatNum: '012',
+              startTime: DateTime(now.year, now.month, now.day, 14, 0),
+              endTime: DateTime(now.year, now.month, now.day, 16, 0),
+              status: 0,
+              firstLevelName: '图书馆',
+              secondLevelName: '5楼',
+              thirdLevelName: '读者自习室505',
+              today: DateFormat('yyyy-MM-dd').format(now),
+            ),
+          ]
+        : reserves;
+    if (testReserves.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    final now = DateTime.now();
     final todayStr = DateFormat('yyyy-MM-dd').format(now);
-    final todayReserves = reserves.where((reserve) {
+    final todayReserves = testReserves.where((reserve) {
       return reserve.today == todayStr ||
           (reserve.startTime.year == now.year &&
               reserve.startTime.month == now.month &&
@@ -539,7 +593,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         for (int i = 0; i < todayReserves.length; i++) ...[
           _buildSingleLibrarySeatItem(context, todayReserves[i], isDark),
           const SizedBox(height: 12),
@@ -577,114 +631,132 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           },
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. 座位与阅览室名称
-                Text(
-                  '${reserve.seatNum}@${reserve.fullRoomName}',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : const Color(0xFF222222),
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                Icon(
+                  Icons.local_library_outlined,
+                  size: 22,
+                  color: isDark ? Colors.white70 : Colors.grey[600],
                 ),
-                const SizedBox(height: 8),
-
-                // 2. 时间与右下角操作按钮
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      timeRange,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark ? Colors.white54 : Colors.black54,
-                        fontWeight: FontWeight.w500,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. 座位与阅览室名称
+                      Text(
+                        '${reserve.seatNum}@${reserve.fullRoomName}',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color:
+                              isDark ? Colors.white : const Color(0xFF222222),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    if (!canSignBack)
+                      const SizedBox(height: 8),
+
+                      // 2. 时间与右下角操作按钮
                       Row(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          TextButton(
-                            style: TextButton.styleFrom(
-                              foregroundColor:
-                                  isDark ? Colors.white60 : Colors.black54,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          Text(
+                            timeRange,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark ? Colors.white54 : Colors.black54,
+                              fontWeight: FontWeight.w500,
                             ),
-                            onPressed: () =>
-                                _handleCancelLibraryReserve(context, reserve),
-                            child: Text(context.l10n.cancel,
-                                style: const TextStyle(fontSize: 13)),
                           ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF09C489),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              minimumSize: const Size(0, 36),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                            ),
-                            onPressed: () =>
-                                _handleSignInLibraryReserve(context, reserve),
-                            child: Row(
+                          if (!canSignBack)
+                            Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.check_circle_outline_rounded,
-                                    size: 16),
-                                const SizedBox(width: 4),
-                                Text(
-                                  context.l10n.signIn,
-                                  style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold),
+                                TextButton(
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: isDark
+                                        ? Colors.white60
+                                        : Colors.black54,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 6),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  onPressed: () => _handleCancelLibraryReserve(
+                                      context, reserve),
+                                  child: Text(context.l10n.cancel,
+                                      style: const TextStyle(fontSize: 13)),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF09C489),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 8),
+                                    minimumSize: const Size(0, 36),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                  ),
+                                  onPressed: () => _handleSignInLibraryReserve(
+                                      context, reserve),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                          Icons.check_circle_outline_rounded,
+                                          size: 16),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        context.l10n.signIn,
+                                        style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
+                            )
+                          else
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFF4D4F),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                minimumSize: const Size(0, 36),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                              onPressed: () => _handleSignBackLibraryReserve(
+                                  context, reserve),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.logout_rounded, size: 16),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    context.l10n.signBack,
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
                         ],
-                      )
-                    else
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF4D4F),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          minimumSize: const Size(0, 36),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                        ),
-                        onPressed: () =>
-                            _handleSignBackLibraryReserve(context, reserve),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.logout_rounded, size: 16),
-                            const SizedBox(width: 4),
-                            Text(
-                              context.l10n.signBack,
-                              style: const TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -763,7 +835,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(l10n.confirmSignBack,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -805,8 +878,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        title: Text(l10n.cancelReserveConfirmTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        content: Text(l10n.cancelReserveConfirmContent(reserve.thirdLevelName, reserve.seatNum)),
+        title: Text(l10n.cancelReserveConfirmTitle,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        content: Text(l10n.cancelReserveConfirmContent(
+            reserve.thirdLevelName, reserve.seatNum)),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           TextButton(
@@ -856,8 +931,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(
-                    l10n.cancelFailed(e.toString().replaceAll('Exception:', '').trim()))),
+                content: Text(l10n.cancelFailed(
+                    e.toString().replaceAll('Exception:', '').trim()))),
           );
         }
       }
@@ -866,12 +941,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildTodayTimetablePreview(BuildContext context) {
     final authState = ref.watch(authStateProvider);
-    if (authState.status == AuthStatus.unauthenticated && !authState.hasAccount) {
+    if (authState.status == AuthStatus.unauthenticated &&
+        !authState.hasAccount) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _isShowingTomorrow ? context.l10n.tomorrowTimetable : context.l10n.todayTimetable,
+            _isShowingTomorrow
+                ? context.l10n.tomorrowAgenda
+                : context.l10n.todayAgenda,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
@@ -885,6 +963,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
+    // 当天待办作业（截止时间为预览日期），排在课程前面，日程页同款
+    final homeworkAsync = ref.watch(homeworkProvider);
+    final dayHomework = homeworkAsync.maybeWhen(
+      data: (list) {
+        final items = list
+            .where((h) =>
+                h.status == HomeworkStatus.pending &&
+                h.endTime != null &&
+                h.endTime!.year == _previewDate.year &&
+                h.endTime!.month == _previewDate.month &&
+                h.endTime!.day == _previewDate.day)
+            .toList();
+        items.sort((a, b) => a.endTime!.compareTo(b.endTime!));
+        return items;
+      },
+      orElse: () => <HomeworkModel>[],
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -892,20 +988,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              _isShowingTomorrow ? context.l10n.tomorrowTimetable : context.l10n.todayTimetable,
+              _isShowingTomorrow
+                  ? context.l10n.tomorrowAgenda
+                  : context.l10n.todayAgenda,
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            TextButton(
-              onPressed: () => _navigateToTab(context, 1),
-              child: Text(context.l10n.viewAll),
+            GestureDetector(
+              onTap: () => _navigateToTab(context, 1),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(6),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  size: 22,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white54
+                      : Colors.grey,
+                ),
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        
+        const SizedBox(height: 12),
         if (_isLoadingTimetable)
           const Center(
             child: Padding(
@@ -913,17 +1020,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: CircularProgressIndicator(),
             ),
           )
-        else if (_todayCourses.isEmpty)
+        else if (_todayCourses.isEmpty && dayHomework.isEmpty)
           Container(
             padding: const EdgeInsets.all(16),
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1E1E1E)
+                  : Colors.grey[50],
               borderRadius: BorderRadius.circular(6),
             ),
             child: Center(
               child: Text(
-                _isShowingTomorrow ? context.l10n.noCoursesTomorrow : context.l10n.noCoursesToday,
+                _isShowingTomorrow
+                    ? context.l10n.noCoursesTomorrow
+                    : context.l10n.noCoursesToday,
                 style: const TextStyle(
                   fontSize: 14,
                   color: Colors.grey,
@@ -932,27 +1043,81 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           )
         else
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _todayCourses.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 4),
-            itemBuilder: (context, index) {
-              final course = _todayCourses[index];
-              return _buildCourseItem(course);
-            },
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (int i = 0; i < dayHomework.length; i++) ...[
+                if (i > 0) const SizedBox(height: 12),
+                _buildHomeworkTask(dayHomework[i]),
+              ],
+              for (int i = 0; i < _todayCourses.length; i++) ...[
+                if (i > 0 || dayHomework.isNotEmpty) const SizedBox(height: 12),
+                _buildCourseItem(_todayCourses[i]),
+              ],
+            ],
           ),
       ],
     );
   }
-  
+
+  /// 日程页同款作业卡片（黄色底 + 截止时间）
+  Widget _buildHomeworkTask(HomeworkModel item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF3D3D29) : const Color(0xFFFFF9E6),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.assignment_late_outlined,
+              size: 22, color: Color(0xFFF39C12)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                    color: isDark ? Colors.white : const Color(0xFF2D3436),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${item.courseName} · ${context.l10n.deadlinePrefix} ${item.endTime != null ? DateFormat('HH:mm').format(item.endTime!) : context.l10n.noDeadline}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.2,
+                    color: isDark ? Colors.white70 : const Color(0xFF7F8C8D),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCourseItem(CourseModel course) {
     final baseColor = CourseColorUtils.getColorForCourse(course.name);
-    final startTime = DateCalculator.getSectionTime(course.startPeriod)['start']!;
+    final startTime =
+        DateCalculator.getSectionTime(course.startPeriod)['start']!;
     final endTime = DateCalculator.getSectionTime(course.endPeriod)['end']!;
-    
-    final timeRange = '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}-'
-                      '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
+
+    final timeRange =
+        '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}-'
+        '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
 
     return Container(
       width: double.infinity,
@@ -962,43 +1127,214 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         color: baseColor,
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
         children: [
-          Text(
-            course.name,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              height: 1.2,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          const Icon(
+            Icons.history_edu,
+            color: Colors.white,
+            size: 22,
           ),
-          const SizedBox(height: 2),
-          Text(
-            '$timeRange @ ${course.classroom}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              height: 1.2,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  course.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$timeRange @ ${course.classroom}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    height: 1.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
     );
   }
-  
+
+  Widget _buildPendingQuestionnaires(BuildContext context) {
+    final cachedAsync = ref.watch(questionnaireCacheProvider);
+    final pending = (cachedAsync.value ?? [])
+        .where((q) => !q.isSubmitted && !q.isExpired)
+        .toList();
+    // TODO(temp): 测试问卷区 UI 用的假数据，联调完删除下面整个 block
+    final testPending = pending.isEmpty
+        ? const [
+            QuestionnaireItem(
+              dm: '__test_1__',
+              title: '2026年秋季学期学生思想动态调查问卷',
+              startTime: '2026-09-20 00:00',
+              endTime: '2026-09-30 23:59',
+              taskTimeM: '',
+            ),
+            QuestionnaireItem(
+              dm: '__test_2__',
+              title: '大学生心理健康状况普查问卷',
+              startTime: '2026-09-22 00:00',
+              endTime: '2026-10-07 23:59',
+              taskTimeM: '',
+            ),
+          ]
+        : pending;
+    if (testPending.isEmpty) return const SizedBox.shrink();
+
+    // 首页最多展示 3 条，其余进问卷页看
+    final display = testPending.take(3).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              context.l10n.pendingQuestionnaires,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(context,
+                    createSlideUpRoute(const QuestionnaireListScreen()));
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(6),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  size: 22,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white54
+                      : Colors.grey,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1E1E1E)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white.withValues(alpha: 0.12)
+                  : const Color(0xFFE0E0E0),
+              width: 1,
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (int i = 0; i < display.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 16),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(4),
+                    onTap: () => _openQuestionnaireDetail(context, display[i]),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: _buildPendingQuestionnaireContent(
+                          context, display[i]),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openQuestionnaireDetail(
+      BuildContext context, QuestionnaireItem item) async {
+    final changed = await Navigator.push<bool>(
+      context,
+      createSlideUpRoute(QuestionnaireDetailScreen(item: item)),
+    );
+    if (changed == true && context.mounted) {
+      ref.read(questionnaireCacheProvider.notifier).refresh();
+    }
+  }
+
+  Widget _buildPendingQuestionnaireContent(
+      BuildContext context, QuestionnaireItem item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.assignment_outlined,
+          size: 22,
+          color: isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.title.isEmpty
+                    ? context.l10n.unnamedQuestionnaire
+                    : item.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF222222),
+                ),
+              ),
+              if (item.timeRange.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  item.timeRange,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.white60 : Colors.black54,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   void _navigateToTab(BuildContext context, int index) {
     if (widget.onNavigateToTab != null) {
       widget.onNavigateToTab!(index);
     }
   }
-  
 
   void _showLoginDialog(BuildContext context) {
     if (ref.read(authStateProvider).status == AuthStatus.authenticating) {

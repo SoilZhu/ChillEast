@@ -1103,6 +1103,18 @@ abstract class AppLocalizations {
   /// **'今日课表'**
   String get todayTimetable;
 
+  /// No description provided for @tomorrowAgenda.
+  ///
+  /// In zh, this message translates to:
+  /// **'明日日程'**
+  String get tomorrowAgenda;
+
+  /// No description provided for @todayAgenda.
+  ///
+  /// In zh, this message translates to:
+  /// **'今日日程'**
+  String get todayAgenda;
+
   /// No description provided for @timetableLoginRequiredTitle.
   ///
   /// In zh, this message translates to:
@@ -3236,6 +3248,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'学工问卷'**
   String get studentWorkQuestionnaire;
+
+  /// No description provided for @pendingQuestionnaires.
+  ///
+  /// In zh, this message translates to:
+  /// **'待完成的问卷'**
+  String get pendingQuestionnaires;
 
   /// No description provided for @statusSubmitted.
   ///

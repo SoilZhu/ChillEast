@@ -12,6 +12,7 @@ import '../../features/timetable/services/timetable_storage.dart';
 import '../../features/timetable/services/timetable_service.dart';
 import '../../features/workspace/services/campus_card_service.dart';
 import '../../features/library/providers/library_provider.dart';
+import '../../features/questionnaire/providers/questionnaire_cache_provider.dart';
 import '../constants/app_constants.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -274,6 +275,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     // 退出登录时删除本地作业数据
     await _ref.read(homeworkProvider.notifier).clearAll();
+
+    // 退出登录时清空问卷缓存
+    await _ref.read(questionnaireCacheProvider.notifier).clear();
 
     state = const AuthState.initial();
   }

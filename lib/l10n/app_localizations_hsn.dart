@@ -523,6 +523,12 @@ class AppLocalizationsHsn extends AppLocalizations {
   String get todayTimetable => '今朝课表';
 
   @override
+  String get tomorrowAgenda => '明朝日程';
+
+  @override
+  String get todayAgenda => '今朝日程';
+
+  @override
   String get timetableLoginRequiredTitle => '需要登进来以瞄哈看课表';
 
   @override
@@ -1655,6 +1661,9 @@ class AppLocalizationsHsn extends AppLocalizations {
 
   @override
   String get studentWorkQuestionnaire => '学工问卷';
+
+  @override
+  String get pendingQuestionnaires => '等着填的问卷';
 
   @override
   String get statusSubmitted => '提交哒';
