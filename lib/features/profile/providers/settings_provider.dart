@@ -109,6 +109,9 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     await rescheduleNotifications();
   }
 
+  /// 备份导入后重新从持久化层加载并刷新通知排程。
+  Future<void> reload() => _loadSettings();
+
   Future<void> setReminderMinutes(int minutes) async {
     _settingsRevision++;
     final prefs = await SharedPreferences.getInstance();

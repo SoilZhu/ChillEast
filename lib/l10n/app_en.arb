@@ -762,5 +762,17 @@
   "repairsDeleteImage": "Delete Photo",
   "repairsDeleteConfirm": "Delete this photo?",
   "repairsSubmitTicket": "Submit Repair Ticket",
-  "repairsSelectCategory": "Select Repair Category"
+  "repairsSelectCategory": "Select Repair Category",
+  "dataBackup": "Data backup",
+  "backupSecurityTip": "Backup excludes login credentials, but includes your custom AI key. Keep it safe.",
+  "backupShareText": "My ChillEast data backup",
+  "backupExportSuccess": "Backup exported, choose where to save or share",
+  "backupExportFailed": "Export failed: {error}",
+  "dataImport": "Restore backup",
+  "dataImportConfirmTitle": "Confirm restore?",
+  "dataImportConfirmMessage": "Restoring will overwrite current settings and local data. Continue?",
+  "dataImportSuccess": "Backup restored",
+  "dataImportFailed": "Restore failed: {error}",
+  "dataImportInvalidFile": "Not a valid backup file",
+  "dataImportVersionTooNew": "Backup was created by a newer app version, please update first"
 }

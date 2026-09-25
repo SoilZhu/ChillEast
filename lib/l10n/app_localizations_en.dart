@@ -2533,4 +2533,48 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get repairsSelectCategory => 'Select Repair Category';
+
+  @override
+  String get dataBackup => 'Data backup';
+
+  @override
+  String get backupSecurityTip =>
+      'Backup excludes login credentials, but includes your custom AI key. Keep it safe.';
+
+  @override
+  String get backupShareText => 'My ChillEast data backup';
+
+  @override
+  String get backupExportSuccess =>
+      'Backup exported, choose where to save or share';
+
+  @override
+  String backupExportFailed(String error) {
+    return 'Export failed: $error';
+  }
+
+  @override
+  String get dataImport => 'Restore backup';
+
+  @override
+  String get dataImportConfirmTitle => 'Confirm restore?';
+
+  @override
+  String get dataImportConfirmMessage =>
+      'Restoring will overwrite current settings and local data. Continue?';
+
+  @override
+  String get dataImportSuccess => 'Backup restored';
+
+  @override
+  String dataImportFailed(String error) {
+    return 'Restore failed: $error';
+  }
+
+  @override
+  String get dataImportInvalidFile => 'Not a valid backup file';
+
+  @override
+  String get dataImportVersionTooNew =>
+      'Backup was created by a newer app version, please update first';
 }

@@ -4700,6 +4700,78 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'选择报修类型'**
   String get repairsSelectCategory;
+
+  /// 数据备份设置项
+  ///
+  /// In zh, this message translates to:
+  /// **'数据备份'**
+  String get dataBackup;
+
+  /// 备份安全提示
+  ///
+  /// In zh, this message translates to:
+  /// **'备份不含登录密码，含自定义 AI Key，请妥善保管'**
+  String get backupSecurityTip;
+
+  /// 备份分享文案
+  ///
+  /// In zh, this message translates to:
+  /// **'我的自在东湖数据备份'**
+  String get backupShareText;
+
+  /// 备份导出成功提示
+  ///
+  /// In zh, this message translates to:
+  /// **'备份已导出，可选择保存或分享'**
+  String get backupExportSuccess;
+
+  /// 备份导出失败提示
+  ///
+  /// In zh, this message translates to:
+  /// **'导出失败: {error}'**
+  String backupExportFailed(String error);
+
+  /// 导入备份设置项
+  ///
+  /// In zh, this message translates to:
+  /// **'导入备份'**
+  String get dataImport;
+
+  /// 导入备份确认标题
+  ///
+  /// In zh, this message translates to:
+  /// **'确认导入？'**
+  String get dataImportConfirmTitle;
+
+  /// 导入备份确认内容
+  ///
+  /// In zh, this message translates to:
+  /// **'导入将覆盖当前设置与本地资料，是否继续？'**
+  String get dataImportConfirmMessage;
+
+  /// 备份导入成功提示
+  ///
+  /// In zh, this message translates to:
+  /// **'备份已导入'**
+  String get dataImportSuccess;
+
+  /// 备份导入失败提示
+  ///
+  /// In zh, this message translates to:
+  /// **'导入失败: {error}'**
+  String dataImportFailed(String error);
+
+  /// 无效备份文件提示
+  ///
+  /// In zh, this message translates to:
+  /// **'不是有效的备份文件'**
+  String get dataImportInvalidFile;
+
+  /// 备份版本过新提示
+  ///
+  /// In zh, this message translates to:
+  /// **'备份版本过新，请先升级 App 后再导入'**
+  String get dataImportVersionTooNew;
 }
 
 class _AppLocalizationsDelegate
