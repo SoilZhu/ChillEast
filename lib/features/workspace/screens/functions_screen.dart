@@ -37,6 +37,20 @@ class FunctionsScreen extends ConsumerStatefulWidget {
 class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
   bool _isNavigating = false;
 
+  @override
+  void initState() {
+    super.initState();
+    // 预热付款码：功能页可见时后台拉一次 openVirtualcard，
+    // 命中服务层 55s 缓存，点进付款码页直接秒开；失败静默忽略。
+    // 缓存本身会去重，重复进页不会多打请求。
+    final svc = ref.read(campusCardServiceProvider);
+    Future(() async {
+      try {
+        await svc.fetchPaymentCode();
+      } catch (_) {}
+    });
+  }
+
   void _safeNavigate(Widget screen) async {
     if (_isNavigating) return;
     
