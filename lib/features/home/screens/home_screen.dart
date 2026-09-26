@@ -248,33 +248,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            height: gridHeight,
-            child: PageView.builder(
-              controller: _quickPageController,
-              itemCount: pageCount,
-              onPageChanged: (i) => setState(() => _quickPageIndex = i),
-              itemBuilder: (context, page) {
-                if (page == 0) {
-                  return _buildQuickGrid(
-                    context,
-                    items: firstPageItems,
-                    showMore: true,
-                    isDark: isDark,
-                    isLoggedIn: isLoggedIn,
-                  );
-                }
-                final start = (page - 1) * perPage;
-                final end = (start + perPage).clamp(0, remaining.length);
-                return _buildQuickGrid(
-                  context,
-                  items: remaining.sublist(start, end),
-                  showMore: false,
-                  isDark: isDark,
-                  isLoggedIn: isLoggedIn,
-                );
-              },
-            ),
+          // 页间隙 10px（与格内 crossAxisSpacing 一致），同时保证静止时
+          // 卡片外沿与单页布局对齐：PageView 本体比父宽 10px（两侧各外溢 5px），
+          // 每页内对称 Padding 5px 抵消。用 OverflowBox 实现外溢，避免负边距。
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const pageGap = 10.0;
+              const halfGap = pageGap / 2;
+              final viewWidth = constraints.maxWidth + pageGap;
+              return SizedBox(
+                height: gridHeight,
+                child: OverflowBox(
+                  maxWidth: viewWidth,
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    width: viewWidth,
+                    height: gridHeight,
+                    child: PageView.builder(
+                      controller: _quickPageController,
+                      itemCount: pageCount,
+                      onPageChanged: (i) =>
+                          setState(() => _quickPageIndex = i),
+                      itemBuilder: (context, page) {
+                        Widget grid;
+                        if (page == 0) {
+                          grid = _buildQuickGrid(
+                            context,
+                            items: firstPageItems,
+                            showMore: true,
+                            isDark: isDark,
+                            isLoggedIn: isLoggedIn,
+                          );
+                        } else {
+                          final start = (page - 1) * perPage;
+                          final end =
+                              (start + perPage).clamp(0, remaining.length);
+                          grid = _buildQuickGrid(
+                            context,
+                            items: remaining.sublist(start, end),
+                            showMore: false,
+                            isDark: isDark,
+                            isLoggedIn: isLoggedIn,
+                          );
+                        }
+                        return Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: halfGap),
+                          child: grid,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 8),
           Row(
