@@ -2528,4 +2528,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get cloudBackupAutoSyncSubtitle => '通过学习通网盘';
+
+  @override
+  String get cloudSyncPromptTitle => '开启自动同步';
+
+  @override
+  String get cloudSyncPromptMessage => '自动把课表、作业等本地数据同步到学习通网盘，换机也不丢，随时可在设置里关闭。';
+
+  @override
+  String get cloudSyncPromptEnable => '立即开启';
 }

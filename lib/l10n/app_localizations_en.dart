@@ -2586,4 +2586,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cloudBackupAutoSyncSubtitle => 'Via Chaoxing cloud disk';
+
+  @override
+  String get cloudSyncPromptTitle => 'Enable auto sync';
+
+  @override
+  String get cloudSyncPromptMessage =>
+      'Auto-sync timetable, homework and other local data to Chaoxing cloud disk. You can turn it off anytime in Settings.';
+
+  @override
+  String get cloudSyncPromptEnable => 'Enable now';
 }

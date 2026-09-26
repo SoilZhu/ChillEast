@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/notification_service.dart';
@@ -228,17 +226,20 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   }
 
   /// 云备份自动同步总开关（默认关）。
-  /// 打开后立即同步一次；之后本地数据变更经 markDirty 去抖同步。
-  Future<void> setCloudBackupAutoSyncEnabled(bool enabled) async {
+  /// 打开后先拉云端最新覆盖本地，云上没有才推本地上去；
+  /// 之后本地数据变更经 markDirty 去抖同步。
+  /// 返回首次同步结果，调用方在 pulled 时刷新 Provider。
+  Future<InitialSyncResult?> setCloudBackupAutoSyncEnabled(
+      bool enabled) async {
     _settingsRevision++;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(cloudBackupAutoSyncKey, enabled);
     state = state.copyWith(cloudBackupAutoSyncEnabled: enabled);
 
     if (enabled) {
-      // 不等待，后台同步；失败静默（manager 内打日志）
-      unawaited(CloudBackupManager.instance.syncNow());
+      return CloudBackupManager.instance.initialSync();
     }
+    return null;
   }
 
   Future<int> getPendingNotificationCount() {

@@ -4790,6 +4790,24 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'通过学习通网盘'**
   String get cloudBackupAutoSyncSubtitle;
+
+  /// 登录后同步推荐页标题
+  ///
+  /// In zh, this message translates to:
+  /// **'开启自动同步'**
+  String get cloudSyncPromptTitle;
+
+  /// 登录后同步推荐页说明
+  ///
+  /// In zh, this message translates to:
+  /// **'自动把课表、作业等本地数据同步到学习通网盘，换机也不丢，随时可在设置里关闭。'**
+  String get cloudSyncPromptMessage;
+
+  /// 登录后同步推荐页开启按钮
+  ///
+  /// In zh, this message translates to:
+  /// **'立即开启'**
+  String get cloudSyncPromptEnable;
 }
 
 class _AppLocalizationsDelegate

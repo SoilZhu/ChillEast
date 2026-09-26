@@ -86,6 +86,51 @@ void main() {
     });
   });
 
+  group('CloudBackupManager.pickLatestBackupEntry', () {
+    List<Map<String, dynamic>> entries() => [
+          {
+            'id': 'old-resid',
+            'name': 'chilleast-backup-a-20260925-220000.json',
+            'encryptedId': 'enc-old',
+            'puid': '1',
+          },
+          {
+            'id': 'new-resid',
+            'name': 'chilleast-backup-b-20260926-093015.json',
+            'encryptedId': 'enc-new',
+            'puid': '1',
+          },
+          {
+            'id': 'other',
+            'name': 'pubspec.yaml',
+            'encryptedId': 'enc-x',
+            'puid': '1',
+          },
+          {
+            'id': 'broken',
+            'name': 'chilleast-backup-a-20260927-000000.json',
+            'encryptedId': '',
+            'puid': '1',
+          },
+        ];
+
+    test('picks newest by stamp, ignores foreign and broken entries', () {
+      final latest = CloudBackupManager.pickLatestBackupEntry(entries());
+      expect(latest, isNotNull);
+      expect(latest!['resid'], 'new-resid');
+      expect(latest['slot'], 'b');
+    });
+
+    test('returns null when no backup exists', () {
+      expect(
+        CloudBackupManager.pickLatestBackupEntry([
+          {'id': 'x', 'name': 'pubspec.yaml', 'encryptedId': 'e', 'puid': '1'},
+        ]),
+        isNull,
+      );
+    });
+  });
+
   group('CloudiskService.parseSession', () {
     const html = '''
       <script>

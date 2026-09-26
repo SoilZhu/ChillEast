@@ -777,5 +777,8 @@
   "dataImportInvalidFile": "Not a valid backup file",
   "dataImportVersionTooNew": "Backup was created by a newer app version, please update first",
   "cloudBackupAutoSync": "Auto sync",
-  "cloudBackupAutoSyncSubtitle": "Via Chaoxing cloud disk"
+  "cloudBackupAutoSyncSubtitle": "Via Chaoxing cloud disk",
+  "cloudSyncPromptTitle": "Enable auto sync",
+  "cloudSyncPromptMessage": "Auto-sync timetable, homework and other local data to Chaoxing cloud disk. You can turn it off anytime in Settings.",
+  "cloudSyncPromptEnable": "Enable now"
 }

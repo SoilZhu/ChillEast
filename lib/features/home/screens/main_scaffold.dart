@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../cloudisk/screens/cloud_sync_prompt_screen.dart';
 import '../../../core/utils/route_utils.dart';
 import '../../../core/services/update_service.dart';
 import '../../../core/services/home_widget_service.dart';
@@ -91,6 +92,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
 
   // AI 助理交互状态
   bool _isAiMode = false;
+  bool _promptPushed = false;
   String? _selectedImagePath;
   final TextEditingController _aiInputController = TextEditingController();
   final FocusNode _aiInputFocusNode = FocusNode();
@@ -169,6 +171,20 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
     } else {
       ref.read(widgetActionProvider.notifier).state = null;
     }
+  }
+
+  /// 把同步推荐页推到顶层（全屏弹窗），避免被主页/登录残留路由盖住。
+  void _pushCloudSyncPrompt() {
+    if (_promptPushed) return;
+    _promptPushed = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!ref.read(cloudSyncPromptPendingProvider)) {
+        _promptPushed = false;
+        return;
+      }
+      Navigator.of(context).push(CloudSyncPromptScreen.route());
+    });
   }
 
   void _enterAiMode() {
@@ -409,6 +425,18 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
         _loadReminderState();
       }
     });
+
+    // 登录后同步推荐：以顶层弹窗盖在主页之上，同一会话只推一次
+    ref.listen<bool>(cloudSyncPromptPendingProvider, (previous, next) {
+      if (next == true) {
+        _pushCloudSyncPrompt();
+      } else {
+        _promptPushed = false;
+      }
+    });
+    if (ref.watch(cloudSyncPromptPendingProvider) && !_promptPushed) {
+      _pushCloudSyncPrompt();
+    }
 
     return PopScope(
       canPop: !_isAiMode,

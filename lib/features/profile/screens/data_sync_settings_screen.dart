@@ -1,14 +1,12 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/ai/ai_provider.dart';
-import '../../../core/state/locale_provider.dart';
 import '../../../core/utils/l10n_extension.dart';
 import '../../../core/widgets/brand_switch.dart';
-import '../../homework/providers/homework_provider.dart';
-import '../providers/appearance_provider.dart';
+import '../../cloudisk/services/cloud_backup_manager.dart';
 import '../providers/settings_provider.dart';
 import '../services/backup_export_service.dart';
+import '../services/backup_provider_refresh.dart';
 
 /// 数据同步页：云备份自动同步开关 + 手动备份导出 + 备份导入。
 class DataSyncSettingsScreen extends ConsumerStatefulWidget {
@@ -153,28 +151,7 @@ class _DataSyncSettingsScreenState
     setState(() => _importing = true);
     try {
       await BackupExportService.applyBackupData(backup);
-      // 写回后刷新各 Provider，界面立即生效
-      final settings = backup['settings'] is Map
-          ? backup['settings'] as Map
-          : const {};
-      final langCode = settings['languageCode'];
-      if (langCode is String) {
-        try {
-          await ref.read(localeProvider.notifier).setLocaleByCode(langCode);
-        } catch (_) {}
-      }
-      try {
-        await ref.read(settingsProvider.notifier).reload();
-      } catch (_) {}
-      try {
-        await ref.read(appearanceProvider.notifier).reload();
-      } catch (_) {}
-      try {
-        await ref.read(aiAssistantProvider.notifier).loadSettings();
-      } catch (_) {}
-      try {
-        await ref.read(homeworkProvider.notifier).reloadFromStorage();
-      } catch (_) {}
+      await BackupProviderRefresh.refreshAfterRestore(ref, backup);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -249,10 +226,26 @@ class _DataSyncSettingsScreenState
             value: ref.watch(
               settingsProvider.select((s) => s.cloudBackupAutoSyncEnabled),
             ),
-            onChanged: (v) {
-              ref
+            onChanged: (v) async {
+              final result = await ref
                   .read(settingsProvider.notifier)
                   .setCloudBackupAutoSyncEnabled(v);
+              // 开启后若从云端拉了最新，先刷新界面再提示
+              if (v &&
+                  result?.outcome == InitialSyncOutcome.pulled &&
+                  result?.backup != null &&
+                  context.mounted) {
+                await BackupProviderRefresh.refreshAfterRestore(
+                    ref, result!.backup!);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(context.l10n.dataImportSuccess),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              }
             },
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),

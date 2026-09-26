@@ -317,6 +317,57 @@ class CloudiskService {
       }
     });
   }
+
+  /// 下载文件字节（见下载 HAR）。
+  /// 先 GET /download/downloadFileV2 拿 302 签名地址（d0.cldisk.com），
+  /// 再跟过去拿字节。签名 URL 自带鉴权，d0 域无需 Cookie。
+  Future<List<int>> downloadBytes({
+    required String resid,
+    required String encryptedId,
+    required String puid,
+    required String folderId,
+  }) async {
+    return _withSessionRetry((s) async {
+      final resp = await _dio.get(
+        '$host/download/downloadFileV2',
+        queryParameters: {
+          'fleid': resid,
+          'puid': puid,
+          'currentFolderId': folderId,
+          'p_auth_token': '',
+          'encryptedId': encryptedId,
+          'auditRecordIdEnc': '',
+        },
+        options: Options(
+          responseType: ResponseType.plain,
+          followRedirects: false,
+          validateStatus: (_) => true,
+          headers: {'Referer': '$host/?_puid=${s.puid}'},
+        ),
+      );
+      _throwIfHttpAuth(resp);
+      final loc = resp.headers.value('location');
+      if ((resp.statusCode ?? 0) != 302 || loc == null || loc.isEmpty) {
+        throw const CloudiskException('获取下载地址失败');
+      }
+      final url = Uri.parse('$host/').resolve(loc).toString();
+      final fileResp = await _dio.get<List<int>>(
+        url,
+        options: Options(
+          responseType: ResponseType.bytes,
+          followRedirects: true,
+          validateStatus: (_) => true,
+          headers: {'Referer': '$host/?_puid=${s.puid}'},
+        ),
+      );
+      _throwIfHttpAuth(fileResp);
+      final bytes = fileResp.data;
+      if ((fileResp.statusCode ?? 0) != 200 || bytes == null) {
+        throw CloudiskException('下载失败 HTTP ${fileResp.statusCode}');
+      }
+      return bytes;
+    });
+  }
 }
 
 class CloudiskSession {
