@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../cloudisk/services/cloud_backup_manager.dart';
 import '../models/course_model.dart';
 import '../models/timetable_rule_model.dart';
 
@@ -41,6 +42,7 @@ class TimetableStorage {
     try {
       final file = await _getFile();
       await file.writeAsString(icsContent);
+      CloudBackupManager.instance.markDirty();
     } catch (e) {
       throw Exception('保存课表失败: $e');
     }
@@ -100,6 +102,7 @@ class TimetableStorage {
       };
 
       await metaFile.writeAsString(jsonEncode(metadata));
+      CloudBackupManager.instance.markDirty();
     } catch (e) {
       throw Exception('保存课表元数据失败: $e');
     }
@@ -142,6 +145,7 @@ class TimetableStorage {
       final file = File('${directory.path}/$_courseListFileName');
       final jsonList = courses.map((c) => c.toJson()).toList();
       await file.writeAsString(jsonEncode(jsonList));
+      CloudBackupManager.instance.markDirty();
     } catch (e) {
       throw Exception('保存课程列表失败: $e');
     }
@@ -185,6 +189,7 @@ class TimetableStorage {
       final file = File('${directory.path}/$_rawCourseListFileName');
       final jsonList = courses.map((c) => c.toJson()).toList();
       await file.writeAsString(jsonEncode(jsonList));
+      CloudBackupManager.instance.markDirty();
     } catch (e) {
       throw Exception('保存原始课程列表失败: $e');
     }
@@ -241,6 +246,7 @@ class TimetableStorage {
       final file = File('${directory.path}/$_rulesFileName');
       final jsonList = rules.map((r) => r.toJson()).toList();
       await file.writeAsString(jsonEncode(jsonList));
+      CloudBackupManager.instance.markDirty();
     } catch (e) {
       throw Exception('保存课表规则失败: $e');
     }

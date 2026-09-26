@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../cloudisk/services/cloud_backup_manager.dart';
 
 /// 处理中报修工单本地缓存（首页“报修工单”展示用）
 /// 直接存工单原始 JSON，恢复时走 RepairOrder.fromJson。
@@ -27,6 +28,7 @@ class RepairCacheStorage {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_cachedItemsKey, jsonEncode(raws));
+      CloudBackupManager.instance.markDirty();
       _logger.d('💾 Saved ${raws.length} repairs to local cache');
     } catch (e) {
       _logger.e('❌ Failed to save repairs to cache: $e');

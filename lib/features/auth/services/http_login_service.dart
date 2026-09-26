@@ -427,6 +427,9 @@ class _HttpLoginAttempt {
         if (referer != null && nextUri.origin != referer.origin) {
           referer = Uri.parse('${referer.origin}/');
         }
+        // 只记域名+路径，不记 query（票据敏感）。
+        onProgress?.call('HTTP 登录[$_stage] 跳转 → '
+            '${nextUri.scheme}://${nextUri.host}${nextUri.path}');
         uri = nextUri;
         continue;
       }

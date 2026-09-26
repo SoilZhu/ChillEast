@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../cloudisk/services/cloud_backup_manager.dart';
 import '../models/questionnaire_models.dart';
 
 /// 学工问卷列表本地缓存（首页“待完成的问卷”展示用）
@@ -33,6 +34,7 @@ class QuestionnaireStorage {
         _cachedItemsKey,
         jsonEncode(items.map((e) => e.toJson()).toList()),
       );
+      CloudBackupManager.instance.markDirty();
       _logger.d('💾 Saved ${items.length} questionnaires to local cache');
     } catch (e) {
       _logger.e('❌ Failed to save questionnaires to cache: $e');

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import '../../cloudisk/services/cloud_backup_manager.dart';
 import '../models/homework_model.dart';
 
 class HomeworkStorage {
@@ -16,6 +17,7 @@ class HomeworkStorage {
       final file = await _getFile();
       final jsonList = homeworks.map((h) => h.toJson()).toList();
       await file.writeAsString(jsonEncode(jsonList));
+      CloudBackupManager.instance.markDirty();
     } catch (e) {
       // 忽略
     }

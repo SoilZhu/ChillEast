@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/utils/app_logger.dart';
+import '../../../../features/cloudisk/services/cloud_backup_manager.dart';
 import '../../../../core/utils/dkyw_crypto.dart';
 import 'campus_card_service.dart';
 import '../models/electricity_model.dart';
@@ -379,6 +380,7 @@ class ElectricityService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_savedRoomKey, jsonEncode(room.toJson()));
+      CloudBackupManager.instance.markDirty();
       _logger.d('💾 Saved electricity room: ${room.areaName} - ${room.buildingName} - ${room.roomName}');
     } catch (e) {
       _logger.w('Failed to save electricity room: $e');

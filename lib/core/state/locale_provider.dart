@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../features/cloudisk/services/cloud_backup_manager.dart';
 import '../utils/l10n_extension.dart';
 
 /// 语言项配置模型
@@ -212,6 +213,7 @@ class LocaleNotifier extends StateNotifier<Locale?> {
     state = locale;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(localeKey, localeToCode(locale));
+    CloudBackupManager.instance.markDirty();
   }
 
   /// 通过标识码切换（'system' / 'zh' / 'en' / 'zh_HK' ...）

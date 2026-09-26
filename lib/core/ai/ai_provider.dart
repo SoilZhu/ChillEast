@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../state/locale_provider.dart';
 import '../mcp/services/mcp_tool_registry.dart';
 import '../mcp/tools/repair_tool.dart';
+import '../../features/cloudisk/services/cloud_backup_manager.dart';
 import '../utils/secure_storage_helper.dart';
 import 'ai_service.dart';
 
@@ -140,6 +141,7 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
   Future<void> setApiKey(String apiKey) async {
     await _storage.saveAiApiKey(apiKey);
     state = state.copyWith(apiKey: apiKey.trim());
+    CloudBackupManager.instance.markDirty();
   }
 
   /// 更新并保存 API URL（空字符串表示跟随默认）
@@ -150,6 +152,7 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
       await _storage.clearAiApiUrl();
     }
     state = state.copyWith(apiUrl: url.trim());
+    CloudBackupManager.instance.markDirty();
   }
 
   /// 更新并保存模型（空字符串表示跟随默认）
@@ -160,6 +163,7 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
       await _storage.clearAiModel();
     }
     state = state.copyWith(model: model.trim());
+    CloudBackupManager.instance.markDirty();
   }
 
   /// 保存完整设置 (URL + Model + Key)，留空表示跟随默认（Worker 中转）
@@ -190,6 +194,7 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
       apiKey: trimmedKey.isNotEmpty ? trimmedKey : null,
       clearApiKey: trimmedKey.isEmpty,
     );
+    CloudBackupManager.instance.markDirty();
   }
 
   /// 恢复默认设置

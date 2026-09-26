@@ -4701,10 +4701,16 @@ abstract class AppLocalizations {
   /// **'选择报修类型'**
   String get repairsSelectCategory;
 
-  /// 数据备份设置项
+  /// 数据同步设置入口
   ///
   /// In zh, this message translates to:
-  /// **'数据备份'**
+  /// **'数据同步'**
+  String get dataSyncSettings;
+
+  /// 数据导出设置项
+  ///
+  /// In zh, this message translates to:
+  /// **'数据导出'**
   String get dataBackup;
 
   /// 备份安全提示
@@ -4731,10 +4737,10 @@ abstract class AppLocalizations {
   /// **'导出失败: {error}'**
   String backupExportFailed(String error);
 
-  /// 导入备份设置项
+  /// 数据导入设置项
   ///
   /// In zh, this message translates to:
-  /// **'导入备份'**
+  /// **'数据导入'**
   String get dataImport;
 
   /// 导入备份确认标题
@@ -4772,6 +4778,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'备份版本过新，请先升级 App 后再导入'**
   String get dataImportVersionTooNew;
+
+  /// 自动同步开关
+  ///
+  /// In zh, this message translates to:
+  /// **'自动同步'**
+  String get cloudBackupAutoSync;
+
+  /// 自动同步副标题
+  ///
+  /// In zh, this message translates to:
+  /// **'通过学习通网盘'**
+  String get cloudBackupAutoSyncSubtitle;
 }
 
 class _AppLocalizationsDelegate

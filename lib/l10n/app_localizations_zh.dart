@@ -2461,7 +2461,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get repairsSelectCategory => '选择报修类型';
 
   @override
-  String get dataBackup => '数据备份';
+  String get dataSyncSettings => '数据同步';
+
+  @override
+  String get dataBackup => '数据导出';
 
   @override
   String get backupSecurityTip => '备份不含登录密码，含自定义 AI Key，请妥善保管';
@@ -2478,7 +2481,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get dataImport => '导入备份';
+  String get dataImport => '数据导入';
 
   @override
   String get dataImportConfirmTitle => '确认导入？';
@@ -2499,6 +2502,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dataImportVersionTooNew => '备份版本过新，请先升级 App 后再导入';
+
+  @override
+  String get cloudBackupAutoSync => '自动同步';
+
+  @override
+  String get cloudBackupAutoSyncSubtitle => '通过学习通网盘';
 }
 
 /// The translations for Chinese, as used in Hong Kong (`zh_HK`).

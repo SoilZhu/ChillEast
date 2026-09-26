@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/home_widget_service.dart';
+import '../../cloudisk/services/cloud_backup_manager.dart';
 import '../models/appearance_state.dart';
 
 final appearanceProvider = StateNotifierProvider<AppearanceNotifier, AppearanceState>((ref) {
@@ -336,6 +337,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     } catch (e) {
       debugPrint('Error syncing widget items to HomeWidgetService: $e');
     }
+    CloudBackupManager.instance.markDirty();
   }
 
   void toggleItemVisibility(String listType, String itemId) {

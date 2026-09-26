@@ -2535,7 +2535,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get repairsSelectCategory => 'Select Repair Category';
 
   @override
-  String get dataBackup => 'Data backup';
+  String get dataSyncSettings => 'Data sync';
+
+  @override
+  String get dataBackup => 'Export data';
 
   @override
   String get backupSecurityTip =>
@@ -2554,7 +2557,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get dataImport => 'Restore backup';
+  String get dataImport => 'Import data';
 
   @override
   String get dataImportConfirmTitle => 'Confirm restore?';
@@ -2577,4 +2580,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get dataImportVersionTooNew =>
       'Backup was created by a newer app version, please update first';
+
+  @override
+  String get cloudBackupAutoSync => 'Auto sync';
+
+  @override
+  String get cloudBackupAutoSyncSubtitle => 'Via Chaoxing cloud disk';
 }

@@ -1382,9 +1382,13 @@
   "repairsDeleteConfirm": "确认删除此图片？",
   "repairsSubmitTicket": "填写报修单",
   "repairsSelectCategory": "选择报修类型",
-  "dataBackup": "数据备份",
+  "dataSyncSettings": "数据同步",
+  "@dataSyncSettings": {
+    "description": "数据同步设置入口"
+  },
+  "dataBackup": "数据导出",
   "@dataBackup": {
-    "description": "数据备份设置项"
+    "description": "数据导出设置项"
   },
   "backupSecurityTip": "备份不含登录密码，含自定义 AI Key，请妥善保管",
   "@backupSecurityTip": {
@@ -1405,9 +1409,9 @@
       "error": { "type": "String" }
     }
   },
-  "dataImport": "导入备份",
+  "dataImport": "数据导入",
   "@dataImport": {
-    "description": "导入备份设置项"
+    "description": "数据导入设置项"
   },
   "dataImportConfirmTitle": "确认导入？",
   "@dataImportConfirmTitle": {
@@ -1435,5 +1439,13 @@
   "dataImportVersionTooNew": "备份版本过新，请先升级 App 后再导入",
   "@dataImportVersionTooNew": {
     "description": "备份版本过新提示"
+  },
+  "cloudBackupAutoSync": "自动同步",
+  "@cloudBackupAutoSync": {
+    "description": "自动同步开关"
+  },
+  "cloudBackupAutoSyncSubtitle": "通过学习通网盘",
+  "@cloudBackupAutoSyncSubtitle": {
+    "description": "自动同步副标题"
   }
 }

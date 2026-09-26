@@ -1,228 +1,21 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/ai/ai_provider.dart';
 import '../../../core/state/locale_provider.dart';
 import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/route_utils.dart';
-import '../../homework/providers/homework_provider.dart';
-import '../providers/appearance_provider.dart';
-import '../providers/settings_provider.dart';
-import '../services/backup_export_service.dart';
 import 'notification_settings_screen.dart';
 import 'appearance_settings_screen.dart';
 import 'button_reorder_screen.dart';
 import 'ai_settings_screen.dart';
+import 'data_sync_settings_screen.dart';
 import 'language_settings_screen.dart';
 import 'timetable_settings_screen.dart';
 
-class SettingsScreen extends ConsumerStatefulWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  bool _exporting = false;
-  bool _importing = false;
-
-  Future<void> _handleExportBackup() async {
-    if (_exporting || _importing) return;
-    setState(() => _exporting = true);
-    try {
-      await BackupExportService.exportAndShare(
-        shareText: context.l10n.backupShareText,
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.backupExportSuccess),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.backupExportFailed(e.toString())),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _exporting = false);
-    }
-  }
-
-  Future<void> _handleImportBackup() async {
-    if (_exporting || _importing) return;
-    final l10n = context.l10n;
-
-    FilePickerResult? picked;
-    try {
-      picked = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.dataImportFailed(e.toString())),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      return;
-    }
-    if (picked == null || picked.files.isEmpty) return; // 用户取消
-    final path = picked.files.single.path;
-    if (path == null || !mounted) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.dataImportInvalidFile),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      return;
-    }
-
-    late final Map<String, dynamic> backup;
-    try {
-      backup = await BackupExportService.readBackupFile(path);
-    } on FormatException {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.dataImportInvalidFile),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      return;
-    } on UnsupportedError {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.dataImportVersionTooNew),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      return;
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.dataImportFailed(e.toString())),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      return;
-    }
-
-    if (!mounted) return;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.dataImportConfirmTitle),
-        content: Text(l10n.dataImportConfirmMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.confirm),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-
-    setState(() => _importing = true);
-    try {
-      await BackupExportService.applyBackupData(backup);
-      // 写回后刷新各 Provider，界面立即生效
-      final settings = backup['settings'] is Map
-          ? backup['settings'] as Map
-          : const {};
-      final langCode = settings['languageCode'];
-      if (langCode is String) {
-        try {
-          await ref.read(localeProvider.notifier).setLocaleByCode(langCode);
-        } catch (_) {}
-      }
-      try {
-        await ref.read(settingsProvider.notifier).reload();
-      } catch (_) {}
-      try {
-        await ref.read(appearanceProvider.notifier).reload();
-      } catch (_) {}
-      try {
-        await ref.read(aiAssistantProvider.notifier).loadSettings();
-      } catch (_) {}
-      try {
-        await ref.read(homeworkProvider.notifier).reloadFromStorage();
-      } catch (_) {}
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.dataImportSuccess),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } on FormatException {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.dataImportInvalidFile),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } on UnsupportedError {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.dataImportVersionTooNew),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.dataImportFailed(e.toString())),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _importing = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
     final currentLocale = ref.watch(localeProvider);
@@ -328,35 +121,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               );
             },
           ),
-          const Divider(height: 1, indent: 16, endIndent: 16),
           _buildSettingItem(
             context,
-            icon: Icons.backup_outlined,
-            title: l10n.dataBackup,
-            subtitle: l10n.backupSecurityTip,
-            trailing: _exporting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : null,
-            showChevron: !_exporting,
-            onTap: _handleExportBackup,
-          ),
-          _buildSettingItem(
-            context,
-            icon: Icons.restore_outlined,
-            title: l10n.dataImport,
-            trailing: _importing
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : null,
-            showChevron: !_importing,
-            onTap: _handleImportBackup,
+            icon: Icons.sync_rounded,
+            title: l10n.dataSyncSettings,
+            onTap: () {
+              Navigator.push(
+                context,
+                createSlideUpRoute(const DataSyncSettingsScreen()),
+              );
+            },
           ),
         ],
       ),
