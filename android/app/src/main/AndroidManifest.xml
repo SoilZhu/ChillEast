@@ -96,6 +96,11 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/combo_widget_info" />
         </receiver>
+        <!-- 今日日程列表数据源（ListView 滑动展示全量未发生日程） -->
+        <service
+            android:name="su.soilzhu.chilleast.AgendaWidgetService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

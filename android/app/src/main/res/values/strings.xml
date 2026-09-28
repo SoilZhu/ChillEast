@@ -5,6 +5,6 @@
     <string name="widget_quick_label">快捷功能</string>
     <string name="widget_quick_desc">一键直达常用校园功能</string>
     <string name="widget_combo_label">日程 + 快捷</string>
-    <string name="widget_combo_desc">日程与快捷功能合一的长条组件</string>
+    <string name="widget_combo_desc">左侧日程右侧快捷的组合组件</string>
     <string name="widget_open_hint">打开 App 同步数据后显示</string>
 </resources>

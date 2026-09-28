@@ -27,7 +27,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:text="@string/widget_agenda_label"
-            android:textColor="#222222"
+            android:textColor="@color/widget_title"
             android:textSize="15sp"
             android:textStyle="bold" />
 
@@ -37,144 +37,36 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="#757575"
+            android:textColor="@color/widget_sub"
             android:textSize="12sp" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/widget_agenda_empty"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:gravity="center"
-        android:text="@string/widget_open_hint"
-        android:textColor="#9E9E9E"
-        android:textSize="13sp"
-        android:visibility="gone" />
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_weight="1">
 
-    <LinearLayout
-        android:id="@+id/widget_agenda_item_0"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        <ListView
+            android:id="@+id/widget_agenda_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:divider="@null"
+            android:dividerHeight="6dp"
+            android:overScrollMode="always"
+            android:scrollbars="vertical"
+            android:verticalScrollbarPosition="right" />
 
-        <FrameLayout
-            android:id="@+id/widget_agenda_bar_0"
-            android:layout_width="4dp"
-            android:layout_height="32dp"
-            android:background="#09C489" />
-
-        <LinearLayout
+        <TextView
+            android:id="@+id/widget_agenda_empty"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/widget_agenda_item_title_0"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="#222222"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/widget_agenda_item_sub_0"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="#757575"
-                android:textSize="12sp" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/widget_agenda_item_1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <FrameLayout
-            android:id="@+id/widget_agenda_bar_1"
-            android:layout_width="4dp"
-            android:layout_height="32dp"
-            android:background="#09C489" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/widget_agenda_item_title_1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="#222222"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/widget_agenda_item_sub_1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="#757575"
-                android:textSize="12sp" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/widget_agenda_item_2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <FrameLayout
-            android:id="@+id/widget_agenda_bar_2"
-            android:layout_width="4dp"
-            android:layout_height="32dp"
-            android:background="#09C489" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/widget_agenda_item_title_2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="#222222"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/widget_agenda_item_sub_2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="#757575"
-                android:textSize="12sp" />
-        </LinearLayout>
-    </LinearLayout>
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="@string/widget_open_hint"
+            android:textColor="@color/widget_hint"
+            android:textSize="13sp"
+            android:visibility="gone" />
+    </FrameLayout>
 </LinearLayout>

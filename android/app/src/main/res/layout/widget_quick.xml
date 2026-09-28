@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 快捷功能 2x2：无底色，大图标 + 功能名，点击整格直达。 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -25,7 +26,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:text="@string/widget_quick_label"
-            android:textColor="#222222"
+            android:textColor="@color/widget_title"
             android:textSize="15sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -33,74 +34,130 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="6dp"
         android:layout_weight="1"
         android:baselineAligned="false"
         android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/widget_quick_btn_0"
+        <LinearLayout
+            android:id="@+id/widget_quick_cell_0"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginEnd="5dp"
             android:layout_weight="1"
-            android:background="@drawable/widget_button"
-            android:ellipsize="end"
             android:gravity="center"
-            android:maxLines="2"
-            android:text="@string/widget_open_hint"
-            android:textColor="#222222"
-            android:textSize="13sp" />
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/widget_quick_btn_1"
+            <ImageView
+                android:id="@+id/widget_quick_icon_0"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:contentDescription="@string/widget_quick_label"
+                android:src="@drawable/widget_ic_payment_code" />
+
+            <TextView
+                android:id="@+id/widget_quick_label_0"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="@string/widget_open_hint"
+                android:textColor="@color/widget_title"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_quick_cell_1"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="5dp"
             android:layout_weight="1"
-            android:background="@drawable/widget_button"
-            android:ellipsize="end"
             android:gravity="center"
-            android:maxLines="2"
-            android:text=""
-            android:textColor="#222222"
-            android:textSize="13sp" />
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/widget_quick_icon_1"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:contentDescription="@string/widget_quick_label"
+                android:src="@drawable/widget_ic_library" />
+
+            <TextView
+                android:id="@+id/widget_quick_label_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text=""
+                android:textColor="@color/widget_title"
+                android:textSize="12sp" />
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="6dp"
         android:layout_weight="1"
         android:baselineAligned="false"
         android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/widget_quick_btn_2"
+        <LinearLayout
+            android:id="@+id/widget_quick_cell_2"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginEnd="5dp"
             android:layout_weight="1"
-            android:background="@drawable/widget_button"
-            android:ellipsize="end"
             android:gravity="center"
-            android:maxLines="2"
-            android:text=""
-            android:textColor="#222222"
-            android:textSize="13sp" />
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/widget_quick_btn_3"
+            <ImageView
+                android:id="@+id/widget_quick_icon_2"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:contentDescription="@string/widget_quick_label"
+                android:src="@drawable/widget_ic_empty_classroom" />
+
+            <TextView
+                android:id="@+id/widget_quick_label_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text=""
+                android:textColor="@color/widget_title"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_quick_cell_3"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="5dp"
             android:layout_weight="1"
-            android:background="@drawable/widget_button"
-            android:ellipsize="end"
             android:gravity="center"
-            android:maxLines="2"
-            android:text=""
-            android:textColor="#222222"
-            android:textSize="13sp" />
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/widget_quick_icon_3"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:contentDescription="@string/widget_quick_label"
+                android:src="@drawable/widget_ic_bus" />
+
+            <TextView
+                android:id="@+id/widget_quick_label_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text=""
+                android:textColor="@color/widget_title"
+                android:textSize="12sp" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

@@ -24,6 +24,31 @@ class QuickWidgetProvider : AppWidgetProvider() {
         private const val TAG = "QuickWidget"
         private const val REQ_BASE = 9100
 
+        /// 功能 id → 与 App 内 Material 图标一致的矢量图。
+        fun iconResFor(id: String): Int {
+            return when (id) {
+                "sunshine" -> R.drawable.widget_ic_sunshine
+                "questionnaire" -> R.drawable.widget_ic_questionnaire
+                "leave" -> R.drawable.widget_ic_leave
+                "payment_code" -> R.drawable.widget_ic_payment_code
+                "recharge" -> R.drawable.widget_ic_recharge
+                "library" -> R.drawable.widget_ic_library
+                "empty_classroom" -> R.drawable.widget_ic_empty_classroom
+                "xgxt" -> R.drawable.widget_ic_xgxt
+                "repairs" -> R.drawable.widget_ic_repairs
+                "gym" -> R.drawable.widget_ic_gym
+                "teaching_eval" -> R.drawable.widget_ic_teaching_eval
+                "score" -> R.drawable.widget_ic_score
+                "vpn" -> R.drawable.widget_ic_vpn
+                "campus_card" -> R.drawable.widget_ic_campus_card
+                "ele_recharge" -> R.drawable.widget_ic_ele_recharge
+                "bus" -> R.drawable.widget_ic_bus
+                "cs_bus" -> R.drawable.widget_ic_cs_bus
+                "campus_bus_route" -> R.drawable.widget_ic_campus_bus_route
+                else -> R.drawable.widget_ic_payment_code
+            }
+        }
+
         fun updateAll(context: Context) {
             try {
                 val ids = HomeWidgets.idsFor(context, QuickWidgetProvider::class.java)
@@ -53,29 +78,43 @@ class QuickWidgetProvider : AppWidgetProvider() {
             val data = WidgetData.readQuick(context)
             Log.i(TAG, "buildViews: items=${data?.items?.size ?: 0}")
 
-            val btnIds = intArrayOf(
-                R.id.widget_quick_btn_0,
-                R.id.widget_quick_btn_1,
-                R.id.widget_quick_btn_2,
-                R.id.widget_quick_btn_3,
+            val cellIds = intArrayOf(
+                R.id.widget_quick_cell_0,
+                R.id.widget_quick_cell_1,
+                R.id.widget_quick_cell_2,
+                R.id.widget_quick_cell_3,
+            )
+            val iconIds = intArrayOf(
+                R.id.widget_quick_icon_0,
+                R.id.widget_quick_icon_1,
+                R.id.widget_quick_icon_2,
+                R.id.widget_quick_icon_3,
+            )
+            val labelIds = intArrayOf(
+                R.id.widget_quick_label_0,
+                R.id.widget_quick_label_1,
+                R.id.widget_quick_label_2,
+                R.id.widget_quick_label_3,
             )
             // 默认缺省文案（Flutter 尚未同步时展示）
             val fallbackIds = listOf("payment_code", "library", "empty_classroom", "bus")
             val fallbackLabels = listOf("付款码", "图书馆", "空教室", "实时校车")
-            val fallbackEmoji = listOf("💳", "📚", "🚪", "🚌")
+            val fallbackColors = listOf(
+                0xFF00C853.toInt(),
+                0xFF795548.toInt(),
+                0xFF9C27B0.toInt(),
+                0xFF34E676.toInt(),
+            )
 
-            for (i in btnIds.indices) {
+            for (i in cellIds.indices) {
                 val item = data?.items?.getOrNull(i)
                 val action = item?.id ?: fallbackIds[i]
-                val label = if (item != null) {
-                    val prefix = if (item.emoji.isNotEmpty()) "${item.emoji} " else ""
-                    "$prefix${item.label}"
-                } else {
-                    "${fallbackEmoji[i]} ${fallbackLabels[i]}"
-                }
-                views.setTextViewText(btnIds[i], label)
+                val label = item?.label ?: fallbackLabels[i]
+                views.setImageViewResource(iconIds[i], iconResFor(action))
+                views.setInt(iconIds[i], "setColorFilter", item?.color ?: fallbackColors[i])
+                views.setTextViewText(labelIds[i], label)
                 views.setOnClickPendingIntent(
-                    btnIds[i],
+                    cellIds[i],
                     WidgetIntents.launchIntent(context, action, -1, REQ_BASE + i),
                 )
             }

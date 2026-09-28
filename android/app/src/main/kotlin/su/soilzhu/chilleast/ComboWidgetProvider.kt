@@ -3,10 +3,12 @@ package su.soilzhu.chilleast
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import android.widget.RemoteViews
 
-/// 「日程 + 快捷」长条小组件：顶部下一条日程 + 底部四个快捷入口。
+/// 「日程 + 快捷」4x2 组合小组件：左 2 格日程（标题 + 可滑动列表，复用今日日程样式），
+/// 右 2 格快捷 2x2（大图标 + 功能名，复用快捷功能样式）。
 class ComboWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(
         context: Context,
@@ -30,6 +32,13 @@ class ComboWidgetProvider : AppWidgetProvider() {
                 val ids = HomeWidgets.idsFor(context, ComboWidgetProvider::class.java)
                 if (ids.isEmpty()) return
                 val manager = AppWidgetManager.getInstance(context)
+                try {
+                    for (id in ids) {
+                        manager.notifyAppWidgetViewDataChanged(id, R.id.widget_combo_agenda_list)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "notifyAppWidgetViewDataChanged failed", e)
+                }
                 val views = try {
                     buildViews(context)
                 } catch (e: Exception) {
@@ -52,15 +61,14 @@ class ComboWidgetProvider : AppWidgetProvider() {
         fun buildViews(context: Context): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_combo)
 
-            views.setOnClickPendingIntent(
-                R.id.widget_combo_top,
-                WidgetIntents.launchIntent(
-                    context,
-                    WidgetIntents.ACTION_AGENDA,
-                    1,
-                    REQ_TOP,
-                ),
+            val agendaClick = WidgetIntents.launchIntent(
+                context,
+                WidgetIntents.ACTION_AGENDA,
+                1,
+                REQ_TOP,
             )
+            // 左侧日程区点击直达课表
+            views.setOnClickPendingIntent(R.id.widget_combo_agenda_panel, agendaClick)
 
             val agenda = WidgetData.readAgenda(context)
             val quick = WidgetData.readQuick(context)
@@ -74,40 +82,53 @@ class ComboWidgetProvider : AppWidgetProvider() {
                     views.setTextViewText(R.id.widget_combo_title, agenda.title)
                 }
                 views.setTextViewText(R.id.widget_combo_date, agenda.dateLine)
-                val first = agenda.items.firstOrNull()
-                if (first != null) {
-                    val room = if (first.sub.isNotEmpty()) " · ${first.sub}" else ""
-                    views.setTextViewText(
-                        R.id.widget_combo_next,
-                        "${first.title}$room",
-                    )
-                    views.setInt(R.id.widget_combo_bar, "setBackgroundColor", first.color)
-                } else if (agenda.emptyText.isNotEmpty()) {
-                    views.setTextViewText(R.id.widget_combo_next, agenda.emptyText)
+                if (agenda.emptyText.isNotEmpty()) {
+                    views.setTextViewText(R.id.widget_combo_agenda_empty, agenda.emptyText)
                 }
             }
 
-            val btnIds = intArrayOf(
-                R.id.widget_combo_btn_0,
-                R.id.widget_combo_btn_1,
-                R.id.widget_combo_btn_2,
-                R.id.widget_combo_btn_3,
+            // 左侧可滑动的日程列表（与今日日程同数据源同样式）
+            val svcIntent = Intent(context, AgendaWidgetService::class.java)
+            views.setRemoteAdapter(R.id.widget_combo_agenda_list, svcIntent)
+            views.setEmptyView(R.id.widget_combo_agenda_list, R.id.widget_combo_agenda_empty)
+            views.setPendingIntentTemplate(R.id.widget_combo_agenda_list, agendaClick)
+
+            // 右侧快捷 2x2（与快捷功能同图标同配色）
+            val cellIds = intArrayOf(
+                R.id.widget_combo_cell_0,
+                R.id.widget_combo_cell_1,
+                R.id.widget_combo_cell_2,
+                R.id.widget_combo_cell_3,
+            )
+            val iconIds = intArrayOf(
+                R.id.widget_combo_icon_0,
+                R.id.widget_combo_icon_1,
+                R.id.widget_combo_icon_2,
+                R.id.widget_combo_icon_3,
+            )
+            val labelIds = intArrayOf(
+                R.id.widget_combo_label_0,
+                R.id.widget_combo_label_1,
+                R.id.widget_combo_label_2,
+                R.id.widget_combo_label_3,
             )
             val fallbackIds = listOf("payment_code", "library", "empty_classroom", "bus")
             val fallbackLabels = listOf("付款码", "图书馆", "空教室", "实时校车")
-            val fallbackEmoji = listOf("💳", "📚", "🚪", "🚌")
-            for (i in btnIds.indices) {
+            val fallbackColors = listOf(
+                0xFF00C853.toInt(),
+                0xFF795548.toInt(),
+                0xFF9C27B0.toInt(),
+                0xFF34E676.toInt(),
+            )
+            for (i in cellIds.indices) {
                 val item = quick?.items?.getOrNull(i)
                 val action = item?.id ?: fallbackIds[i]
-                val label = if (item != null) {
-                    val prefix = if (item.emoji.isNotEmpty()) "${item.emoji}\n" else ""
-                    "$prefix${item.label}"
-                } else {
-                    "${fallbackEmoji[i]}\n${fallbackLabels[i]}"
-                }
-                views.setTextViewText(btnIds[i], label)
+                val label = item?.label ?: fallbackLabels[i]
+                views.setImageViewResource(iconIds[i], QuickWidgetProvider.iconResFor(action))
+                views.setInt(iconIds[i], "setColorFilter", item?.color ?: fallbackColors[i])
+                views.setTextViewText(labelIds[i], label)
                 views.setOnClickPendingIntent(
-                    btnIds[i],
+                    cellIds[i],
                     WidgetIntents.launchIntent(context, action, -1, REQ_BASE + i),
                 )
             }

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 与 App 内 Icons.connect_without_contact_outlined（学工系统）一致 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    <group android:translateY="960">
+        <path
+        android:fillColor="#FF000000"
+        android:pathData="M640-80v-90q-56-18-94-64t-44-106h80q8,43 40.5,71.5T700-240h120q25,0 42.5,17.5T880-180v100H640Zm120-200q-33,0 -56.5-23.5T680-360q0-33,23.5-56.5T760-440q33,0 56.5,23.5T840-360q0-33,-23.5,56.5T760-280ZM360-400q0-150,105-255t255-105v80q-117,0 -198.5,81.5T440-400h-80Zm160,0q0-83,58.5-141.5T720-600v80q-50,0 -85,35t-35,85h-80ZM80-520v-100q0-25,17.5-42.5T140-680h120q45,0 77.5-28.5T378-780h80q-6,60 -44,106t-94,64v90H80Zm120-200q-33,0 -56.5-23.5T120-800q0-33,23.5-56.5T200-880q33,0 56.5,23.5T280-800q0-33,-23.5,56.5T200-720Z" />
+    </group>
+</vector>

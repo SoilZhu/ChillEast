@@ -9,6 +9,7 @@ import '../../features/homework/models/homework_model.dart';
 import '../../features/homework/services/homework_storage.dart';
 import '../../features/timetable/models/course_model.dart';
 import '../../features/timetable/services/timetable_storage.dart';
+import '../../features/timetable/utils/course_color_utils.dart';
 import '../../features/timetable/utils/date_calculator.dart';
 import '../../features/timetable/utils/ics_parser.dart';
 import '../../features/timetable/utils/week_parser.dart';
@@ -60,7 +61,7 @@ class HomeWidgetService {
     'campus_bus_route',
   ];
 
-  /// 按钮 emoji（原生 RemoteViews 不便使用 Flutter Icon，用 emoji 代替）。
+  /// 按钮 emoji（保留给「日程 + 快捷」长条组件使用；2x2 快捷组件已改用与 App 一致的矢量图标）。
   static const Map<String, String> functionEmoji = {
     'payment_code': '💳',
     'recharge': '👛',
@@ -82,23 +83,69 @@ class HomeWidgetService {
     'xgxt': '🏫',
   };
 
-  /// 课程配色（与应用内 CourseColorUtils 同色系，稳定哈希保证多次同步一致）。
+  /// 功能配色（与外观设置 _masterPool 一致，原生侧为矢量图标着色）。
+  static const Map<String, int> functionColors = {
+    'sunshine': 0xFF09C489,
+    'questionnaire': 0xFF3476E6,
+    'leave': 0xFF009688,
+    'payment_code': 0xFF00C853,
+    'recharge': 0xFFFF9800,
+    'library': 0xFF795548,
+    'empty_classroom': 0xFF9C27B0,
+    'xgxt': 0xFF3476E6,
+    'repairs': 0xFF607D8B,
+    'gym': 0xFFE91E63,
+    'teaching_eval': 0xFF00BCD4,
+    'score': 0xFFE63476,
+    'vpn': 0xFF607D8B,
+    'campus_card': 0xFF008268,
+    'ele_recharge': 0xFFFFEB3B,
+    'bus': 0xFF34E676,
+    'cs_bus': 0xFF2196F3,
+    'campus_bus_route': 0xFF00A86B,
+  };
+
+  /// 课程配色（与应用内 [CourseColorUtils] 同一色板，保证小组件与课表日程页同色）。
   static const List<int> coursePalette = [
     0xFFEF5350,
     0xFFE53935,
+    0xFFD32F2F,
     0xFFEC407A,
+    0xFFD81B60,
+    0xFFC2185B,
     0xFFAB47BC,
+    0xFF8E24AA,
+    0xFF7B1FA2,
     0xFF7E57C2,
+    0xFF5E35B1,
+    0xFF512DA8,
     0xFF5C6BC0,
+    0xFF3949AB,
+    0xFF303F9F,
     0xFF42A5F5,
+    0xFF1E88E5,
+    0xFF1976D2,
     0xFF03A9F4,
+    0xFF0288D1,
     0xFF00BCD4,
+    0xFF0097A7,
     0xFF26A69A,
+    0xFF00897B,
+    0xFF00796B,
     0xFF66BB6A,
+    0xFF43A047,
+    0xFF388E3C,
     0xFF8BC34A,
+    0xFF689F38,
+    0xFFC0CA33,
+    0xFF9E9D24,
     0xFFFFA000,
     0xFFFF9800,
+    0xFFFB8C00,
+    0xFFF57C00,
     0xFFFF7043,
+    0xFFF4511E,
+    0xFFE64A19,
     0xFF8D6E63,
   ];
 
@@ -171,9 +218,9 @@ class HomeWidgetService {
     return hash;
   }
 
+  /// 与课表日程页同色：直接委托 [CourseColorUtils]，避免两端配色分叉。
   static int courseColorFor(String courseName) {
-    if (courseName.isEmpty) return coursePalette[0];
-    return coursePalette[stableHash(courseName) % coursePalette.length];
+    return CourseColorUtils.getColorForCourse(courseName).toARGB32();
   }
 
   static String courseTimeRange(CourseModel course) {
@@ -184,7 +231,8 @@ class HomeWidgetService {
         '${two(end.hour)}:${two(end.minute)}';
   }
 
-  /// 组装日程数据（作业在前、课程在后，最多 [maxItems] 条）。
+  /// 组装日程数据（作业在前、课程在后，默认展示全部未发生日程，
+  /// [maxItems] 仅作兜底上限，避免极端数据撑爆小组件）。
   static Map<String, dynamic> buildAgendaMap({
     required String title,
     required String dateLine,
@@ -194,7 +242,7 @@ class HomeWidgetService {
     required List<CourseModel> dayCourses,
     required String deadlinePrefix,
     required String noDeadline,
-    int maxItems = 4,
+    int maxItems = 20,
   }) {
     final items = <Map<String, dynamic>>[];
     for (final h in dayHomework) {
@@ -209,18 +257,24 @@ class HomeWidgetService {
         'kind': 'homework',
         'title': h.title,
         'sub': course.isEmpty ? '$deadlinePrefix $time' : '$course · $deadlinePrefix $time',
+        'room': '',
         'color': homeworkAccent,
       });
     }
     for (final c in dayCourses) {
       if (items.length >= maxItems) break;
+      // 小组件三行样式：标题课程名 / `@教室` / 副文本`时间段, 老师`
       final room = c.classroom.trim();
+      final teacher = c.teacher.trim();
+      final sub = [
+        courseTimeRange(c),
+        teacher,
+      ].where((s) => s.isNotEmpty).join(', ');
       items.add({
         'kind': 'course',
         'title': c.name,
-        'sub': room.isEmpty
-            ? courseTimeRange(c)
-            : '${courseTimeRange(c)} @ $room',
+        'room': room,
+        'sub': sub,
         'color': courseColorFor(c.name),
       });
     }
@@ -248,6 +302,7 @@ class HomeWidgetService {
           'id': id,
           'label': labelOf(id),
           'emoji': functionEmoji[id] ?? '🔹',
+          'color': functionColors[id] ?? 0xFF09C489,
         }).toList();
     return {'title': title, 'items': items};
   }

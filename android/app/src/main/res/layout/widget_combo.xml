@@ -1,135 +1,220 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 日程 + 快捷 4x2：左 2 格为日程（标题 + 可滑动列表），右 2 格为快捷 2x2（大图标 + 功能名）。 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
-    android:orientation="vertical"
+    android:baselineAligned="false"
+    android:orientation="horizontal"
     android:padding="14dp">
 
     <LinearLayout
-        android:id="@+id/widget_combo_top"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <FrameLayout
-            android:id="@+id/widget_combo_bar"
-            android:layout_width="4dp"
-            android:layout_height="36dp"
-            android:background="#09C489" />
+        android:id="@+id/widget_combo_agenda_panel"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_marginEnd="7dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:orientation="vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/widget_combo_title"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:text="@string/widget_combo_label"
-                    android:textColor="#222222"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/widget_combo_date"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:textColor="#757575"
-                    android:textSize="12sp" />
-            </LinearLayout>
+            <FrameLayout
+                android:layout_width="4dp"
+                android:layout_height="16dp"
+                android:background="#09C489" />
 
             <TextView
-                android:id="@+id/widget_combo_next"
-                android:layout_width="match_parent"
+                android:id="@+id/widget_combo_title"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="@string/widget_open_hint"
-                android:textColor="#757575"
-                android:textSize="13sp" />
+                android:text="@string/widget_combo_label"
+                android:textColor="@color/widget_title"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_combo_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/widget_sub"
+                android:textSize="12sp" />
         </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="8dp"
+            android:layout_weight="1">
+
+            <ListView
+                android:id="@+id/widget_combo_agenda_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:divider="@null"
+                android:dividerHeight="6dp"
+                android:overScrollMode="always"
+                android:scrollbars="vertical"
+                android:verticalScrollbarPosition="right" />
+
+            <TextView
+                android:id="@+id/widget_combo_agenda_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/widget_open_hint"
+                android:textColor="@color/widget_hint"
+                android:textSize="12sp"
+                android:visibility="gone" />
+        </FrameLayout>
     </LinearLayout>
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="10dp"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_marginStart="7dp"
         android:layout_weight="1"
         android:baselineAligned="false"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/widget_combo_btn_0"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="4dp"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="@drawable/widget_button"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="2"
-            android:text=""
-            android:textColor="#222222"
-            android:textSize="12sp" />
+            android:baselineAligned="false"
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/widget_combo_btn_1"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:layout_weight="1"
-            android:background="@drawable/widget_button"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="2"
-            android:text=""
-            android:textColor="#222222"
-            android:textSize="12sp" />
+            <LinearLayout
+                android:id="@+id/widget_combo_cell_0"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/widget_combo_btn_2"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:layout_weight="1"
-            android:background="@drawable/widget_button"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="2"
-            android:text=""
-            android:textColor="#222222"
-            android:textSize="12sp" />
+                <ImageView
+                    android:id="@+id/widget_combo_icon_0"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:contentDescription="@string/widget_quick_label"
+                    android:src="@drawable/widget_ic_payment_code" />
 
-        <TextView
-            android:id="@+id/widget_combo_btn_3"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginStart="4dp"
+                <TextView
+                    android:id="@+id/widget_combo_label_0"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:text=""
+                    android:textColor="@color/widget_title"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/widget_combo_cell_1"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/widget_combo_icon_1"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:contentDescription="@string/widget_quick_label"
+                    android:src="@drawable/widget_ic_library" />
+
+                <TextView
+                    android:id="@+id/widget_combo_label_1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:text=""
+                    android:textColor="@color/widget_title"
+                    android:textSize="11sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="6dp"
             android:layout_weight="1"
-            android:background="@drawable/widget_button"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="2"
-            android:text=""
-            android:textColor="#222222"
-            android:textSize="12sp" />
+            android:baselineAligned="false"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/widget_combo_cell_2"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/widget_combo_icon_2"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:contentDescription="@string/widget_quick_label"
+                    android:src="@drawable/widget_ic_empty_classroom" />
+
+                <TextView
+                    android:id="@+id/widget_combo_label_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:text=""
+                    android:textColor="@color/widget_title"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/widget_combo_cell_3"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/widget_combo_icon_3"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:contentDescription="@string/widget_quick_label"
+                    android:src="@drawable/widget_ic_bus" />
+
+                <TextView
+                    android:id="@+id/widget_combo_label_3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:text=""
+                    android:textColor="@color/widget_title"
+                    android:textSize="11sp" />
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

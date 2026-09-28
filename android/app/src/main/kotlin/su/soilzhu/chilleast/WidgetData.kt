@@ -6,6 +6,7 @@ import org.json.JSONObject
 data class AgendaItem(
     val kind: String,
     val title: String,
+    val room: String,
     val sub: String,
     val color: Int,
 )
@@ -22,6 +23,7 @@ data class QuickItem(
     val id: String,
     val label: String,
     val emoji: String,
+    val color: Int,
 )
 
 data class QuickData(
@@ -54,6 +56,7 @@ object WidgetData {
                     AgendaItem(
                         kind = o.optString("kind", "course"),
                         title = o.optString("title", ""),
+                        room = o.optString("room", ""),
                         sub = o.optString("sub", ""),
                         color = o.optInt("color", 0xFF09C489.toInt()),
                     ),
@@ -86,6 +89,7 @@ object WidgetData {
                         id = id,
                         label = o.optString("label", id),
                         emoji = o.optString("emoji", ""),
+                        color = o.optInt("color", 0xFF09C489.toInt()),
                     ),
                 )
             }
