@@ -59,6 +59,10 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "updateWidgets" -> {
                         try {
+                            val alarms = call.argument<List<Number>>("alarms")?.map { it.toLong() }
+                            if (alarms != null) {
+                                WidgetAlarmScheduler.schedule(ctx, alarms)
+                            }
                             HomeWidgets.updateAll(ctx)
                             result.success(true)
                         } catch (e: Exception) {

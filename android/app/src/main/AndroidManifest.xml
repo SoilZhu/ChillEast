@@ -96,6 +96,16 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/combo_widget_info" />
         </receiver>
+        <!-- 桌面小组件定时刷新闹钟与开机恢复 -->
+        <receiver android:exported="false" android:name="su.soilzhu.chilleast.WidgetAlarmReceiver">
+            <intent-filter>
+                <action android:name="su.soilzhu.chilleast.WIDGET_ALARM" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
         <!-- 今日日程列表数据源（ListView 滑动展示全量未发生日程） -->
         <service
             android:name="su.soilzhu.chilleast.AgendaWidgetService"

@@ -138,6 +138,101 @@ void main() {
       expect(items[2]['kind'], 'course');
       expect((items[2]['sub'] as String).contains('08:00-09:40'), isTrue);
     });
+
+    test('传入 targetDate 时正确生成 endTimeMs', () {
+      final target = DateTime(2026, 9, 28);
+      final hwDeadline = DateTime(2026, 9, 28, 20, 0);
+      final map = HomeWidgetService.buildAgendaMap(
+        title: '今日日程',
+        dateLine: '9月28日 周一',
+        isTomorrow: false,
+        emptyText: '无课',
+        dayHomework: [
+          homework(title: '作业1', endTime: hwDeadline),
+        ],
+        dayCourses: [
+          // 1-2 节，结束于 09:40
+          course(name: '数学', dayOfWeek: 1, weeks: '1-16(周)', start: 1, end: 2),
+        ],
+        deadlinePrefix: '截止',
+        noDeadline: '无截止',
+        targetDate: target,
+      );
+      final items = map['items'] as List;
+      expect(items[0]['endTimeMs'], hwDeadline.millisecondsSinceEpoch);
+      final expectedCourseEnd = DateTime(2026, 9, 28, 9, 40).millisecondsSinceEpoch;
+      expect(items[1]['endTimeMs'], expectedCourseEnd);
+    });
+  });
+
+  group('extractAlarmTimestamps', () {
+    test('正确提取并过滤未来的闹钟节点（下课时刻、作业截止、22:00、00:00）', () {
+      final now = DateTime(2026, 9, 28, 10, 0);
+      final days = [
+        {
+          'date': '2026-09-28',
+          'dateLine': '9月28日 星期一',
+          'items': [
+            // 已过期的早课 09:40
+            {
+              'kind': 'course',
+              'title': '早课',
+              'endTimeMs': DateTime(2026, 9, 28, 9, 40).millisecondsSinceEpoch,
+            },
+            // 未过期的午课 11:45
+            {
+              'kind': 'course',
+              'title': '午课',
+              'endTimeMs': DateTime(2026, 9, 28, 11, 45).millisecondsSinceEpoch,
+            },
+            // 未过期的晚作业 21:00
+            {
+              'kind': 'homework',
+              'title': '晚作业',
+              'endTimeMs': DateTime(2026, 9, 28, 21, 0).millisecondsSinceEpoch,
+            },
+          ],
+        },
+        {
+          'date': '2026-09-29',
+          'dateLine': '9月29日 星期二',
+          'items': [
+            {
+              'kind': 'course',
+              'title': '明日早课',
+              'endTimeMs': DateTime(2026, 9, 29, 9, 40).millisecondsSinceEpoch,
+            },
+          ],
+        },
+      ];
+
+      final alarms = HomeWidgetService.extractAlarmTimestamps(now: now, days: days);
+
+      // 早课 09:40 已经过去，不应该出现在闹钟中
+      final pastCourseAlarm = DateTime(2026, 9, 28, 9, 40, 1).millisecondsSinceEpoch;
+      expect(alarms.contains(pastCourseAlarm), isFalse);
+
+      // 9/28 11:45 + 1s 的下课闹钟
+      final lunchCourseAlarm = DateTime(2026, 9, 28, 11, 45, 1).millisecondsSinceEpoch;
+      expect(alarms.contains(lunchCourseAlarm), isTrue);
+
+      // 9/28 21:00 + 1s 的作业截止闹钟
+      final hwAlarm = DateTime(2026, 9, 28, 21, 0, 1).millisecondsSinceEpoch;
+      expect(alarms.contains(hwAlarm), isTrue);
+
+      // 9/28 22:00:01 的切明日闹钟
+      final tonightAlarm = DateTime(2026, 9, 28, 22, 0, 1).millisecondsSinceEpoch;
+      expect(alarms.contains(tonightAlarm), isTrue);
+
+      // 9/29 00:00:01 的跨天闹钟
+      final tomorrowMidnightAlarm = DateTime(2026, 9, 29, 0, 0, 1).millisecondsSinceEpoch;
+      expect(alarms.contains(tomorrowMidnightAlarm), isTrue);
+
+      // 闹钟列表必须升序排列
+      for (int i = 0; i < alarms.length - 1; i++) {
+        expect(alarms[i] <= alarms[i + 1], isTrue);
+      }
+    });
   });
 
   group('courseColorFor', () {

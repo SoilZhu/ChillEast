@@ -242,6 +242,7 @@ class HomeWidgetService {
     required List<CourseModel> dayCourses,
     required String deadlinePrefix,
     required String noDeadline,
+    DateTime? targetDate,
     int maxItems = 20,
   }) {
     final items = <Map<String, dynamic>>[];
@@ -259,6 +260,7 @@ class HomeWidgetService {
         'sub': course.isEmpty ? '$deadlinePrefix $time' : '$course · $deadlinePrefix $time',
         'room': '',
         'color': homeworkAccent,
+        'endTimeMs': end?.millisecondsSinceEpoch ?? 0,
       });
     }
     for (final c in dayCourses) {
@@ -270,12 +272,27 @@ class HomeWidgetService {
         courseTimeRange(c),
         teacher,
       ].where((s) => s.isNotEmpty).join(', ');
+      int endTimeMs = 0;
+      if (targetDate != null) {
+        final endSection = DateCalculator.getSectionTime(c.endPeriod)['end'];
+        if (endSection != null) {
+          final endDt = DateTime(
+            targetDate.year,
+            targetDate.month,
+            targetDate.day,
+            endSection.hour,
+            endSection.minute,
+          );
+          endTimeMs = endDt.millisecondsSinceEpoch;
+        }
+      }
       items.add({
         'kind': 'course',
         'title': c.name,
         'room': room,
         'sub': sub,
         'color': courseColorFor(c.name),
+        'endTimeMs': endTimeMs,
       });
     }
     return {
@@ -285,6 +302,54 @@ class HomeWidgetService {
       'emptyText': emptyText,
       'items': items,
     };
+  }
+
+  /// 提取关键闹钟唤醒时刻（下课时刻、作业截止、每日 22:00 切明日、每日 00:00 跨天）。
+  static List<int> extractAlarmTimestamps({
+    required DateTime now,
+    required List<Map<String, dynamic>> days,
+  }) {
+    final nowMs = now.millisecondsSinceEpoch;
+    final alarmSet = <int>{};
+
+    for (final day in days) {
+      final dateStr = day['date'] as String?;
+      if (dateStr == null) continue;
+      final parts = dateStr.split('-');
+      if (parts.length != 3) continue;
+      final year = int.tryParse(parts[0]);
+      final month = int.tryParse(parts[1]);
+      final dayNum = int.tryParse(parts[2]);
+      if (year == null || month == null || dayNum == null) continue;
+
+      // 1. 每日 22:00:01（切明日）
+      final switchTomorrow = DateTime(year, month, dayNum, 22, 0, 1).millisecondsSinceEpoch;
+      if (switchTomorrow > nowMs) {
+        alarmSet.add(switchTomorrow);
+      }
+
+      // 2. 每日 00:00:01（跨天）
+      final switchMidnight = DateTime(year, month, dayNum, 0, 0, 1).millisecondsSinceEpoch;
+      if (switchMidnight > nowMs) {
+        alarmSet.add(switchMidnight);
+      }
+
+      // 3. 课程下课时刻与作业截止时刻（+1秒，保证到点时已过期）
+      final items = day['items'] as List<dynamic>?;
+      if (items != null) {
+        for (final item in items) {
+          if (item is Map) {
+            final endMs = item['endTimeMs'] as int? ?? 0;
+            if (endMs > nowMs) {
+              alarmSet.add(endMs + 1000);
+            }
+          }
+        }
+      }
+    }
+
+    final sorted = alarmSet.toList()..sort();
+    return sorted.take(30).toList();
   }
 
   /// 组装快捷功能数据（固定补齐/截断到 4 个，保证原生布局稳定）。
@@ -468,6 +533,7 @@ class HomeWidgetService {
 
   /// 全量同步：重新计算日程 + 快捷按钮并通知原生刷新。
   Future<void> syncWidgets({SharedPreferences? prefs}) async {
+    List<int> alarms = [];
     try {
       final sp = prefs ?? await SharedPreferences.getInstance();
       final l10n = await _resolveLocalizations(sp);
@@ -481,63 +547,126 @@ class HomeWidgetService {
       await sp.setString(quickJsonKey, jsonEncode(quick));
 
       final agenda = await buildAgendaData(l10n);
+      alarms = (agenda['alarms'] as List<dynamic>?)?.cast<int>() ?? [];
       await sp.setString(agendaJsonKey, jsonEncode(agenda));
       await sp.setInt(updatedAtKey, DateTime.now().millisecondsSinceEpoch);
     } catch (e) {
       debugPrint('⚠️ HomeWidget sync failed: $e');
     }
     try {
-      await _channel.invokeMethod('updateWidgets');
+      await _channel.invokeMethod('updateWidgets', {
+        'alarms': alarms,
+      });
     } catch (_) {
       // 原生侧尚未就绪（如桌面暂无小组件）时忽略
     }
   }
 
-  /// 从 TimetableStorage / HomeworkStorage 计算当前应展示的日程。
+  /// 从 TimetableStorage / HomeworkStorage 计算当前应展示的日程及未来 7 天日程。
   Future<Map<String, dynamic>> buildAgendaData(AppLocalizations l10n) async {
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     final target = previewDateFor(now);
     final isTomorrow = isTomorrowPreview(now);
 
-    List<CourseModel> dayCourses = [];
+    List<CourseModel> allCourses = [];
+    DateTime? firstWeekMonday;
     try {
       final storage = TimetableStorage();
       if (await storage.hasLocalTimetable()) {
         final icsContent = await storage.readTimetable();
         if (icsContent != null) {
-          final allCourses = IcsParser.parse(icsContent);
-          int week = 0;
+          allCourses = IcsParser.parse(icsContent);
           try {
-            final monday = await storage.resolveFirstWeekMonday();
-            week = DateCalculator.getCurrentWeekNumber(monday, target);
+            firstWeekMonday = await storage.resolveFirstWeekMonday();
           } catch (_) {}
-          dayCourses = filterDayCourses(allCourses, target.weekday, week);
-          if (!isTomorrow) {
-            dayCourses =
-                filterFinishedCourses(dayCourses, TimeOfDay.fromDateTime(now));
-          }
         }
       }
     } catch (_) {}
 
-    List<HomeworkModel> dayHomework = [];
+    List<HomeworkModel> allHomework = [];
     try {
-      final all = await HomeworkStorage().readHomeworkList();
-      dayHomework = filterDayHomework(all, target);
+      allHomework = await HomeworkStorage().readHomeworkList();
     } catch (_) {}
 
-    final dateLine =
+    // 1. 单日传统数据（供老逻辑及顶层字段兼容）
+    int currentWeek = 0;
+    if (firstWeekMonday != null) {
+      try {
+        currentWeek = DateCalculator.getCurrentWeekNumber(firstWeekMonday, target);
+      } catch (_) {}
+    }
+    var dayCourses = filterDayCourses(allCourses, target.weekday, currentWeek);
+    if (!isTomorrow) {
+      dayCourses =
+          filterFinishedCourses(dayCourses, TimeOfDay.fromDateTime(now));
+    }
+    final dayHomework = filterDayHomework(allHomework, target);
+
+    final singleDateLine =
         '${target.month}月${target.day}日 ${weekdayName(l10n, target.weekday)}';
-    return buildAgendaMap(
+    final singleMap = buildAgendaMap(
       title: isTomorrow ? l10n.tomorrowAgenda : l10n.todayAgenda,
-      dateLine: dateLine,
+      dateLine: singleDateLine,
       isTomorrow: isTomorrow,
       emptyText: isTomorrow ? l10n.noCoursesTomorrow : l10n.noCoursesToday,
       dayHomework: dayHomework,
       dayCourses: dayCourses,
       deadlinePrefix: l10n.deadlinePrefix,
       noDeadline: l10n.noDeadline,
+      targetDate: target,
     );
+
+    // 2. 多日结构（未来 7 天全量待办与课程，附带 endTimeMs）
+    String two(int v) => v.toString().padLeft(2, '0');
+    final days = <Map<String, dynamic>>[];
+
+    for (int i = 0; i < 7; i++) {
+      final dayDate = today.add(Duration(days: i));
+      int w = 0;
+      if (firstWeekMonday != null) {
+        try {
+          w = DateCalculator.getCurrentWeekNumber(firstWeekMonday, dayDate);
+        } catch (_) {}
+      }
+      final coursesForDay = filterDayCourses(allCourses, dayDate.weekday, w);
+      final homeworkForDay = filterDayHomework(allHomework, dayDate);
+      final dl =
+          '${dayDate.month}月${dayDate.day}日 ${weekdayName(l10n, dayDate.weekday)}';
+      final dateStr =
+          '${dayDate.year}-${two(dayDate.month)}-${two(dayDate.day)}';
+
+      final dayMap = buildAgendaMap(
+        title: '',
+        dateLine: dl,
+        isTomorrow: false,
+        emptyText: '',
+        dayHomework: homeworkForDay,
+        dayCourses: coursesForDay,
+        deadlinePrefix: l10n.deadlinePrefix,
+        noDeadline: l10n.noDeadline,
+        targetDate: dayDate,
+      );
+
+      days.add({
+        'date': dateStr,
+        'dateLine': dl,
+        'items': dayMap['items'],
+      });
+    }
+
+    // 3. 提取所有关键时间节点闹钟
+    final alarms = extractAlarmTimestamps(now: now, days: days);
+
+    return {
+      ...singleMap,
+      'todayTitle': l10n.todayAgenda,
+      'tomorrowTitle': l10n.tomorrowAgenda,
+      'todayEmptyText': l10n.noCoursesToday,
+      'tomorrowEmptyText': l10n.noCoursesTomorrow,
+      'days': days,
+      'alarms': alarms,
+    };
   }
 
   /// 取出原生侧暂存的小组件点击动作（取后即清）。
