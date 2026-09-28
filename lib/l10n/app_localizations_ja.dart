@@ -264,7 +264,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get dragToReorderTip => 'アイコンを長押ししてドラッグすると、並び替えや表示・非表示を設定できます';
 
   @override
-  String get widgetSettings => '桌面小组件';
+  String get widgetSettings => '小组件设置';
 
   @override
   String get widgetQuickTitle => '快捷功能（选择 4 个）';

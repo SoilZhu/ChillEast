@@ -35,8 +35,8 @@ class HomeWidgetService {
   static const List<String> defaultQuickIds = [
     'payment_code',
     'library',
+    'repairs',
     'empty_classroom',
-    'bus',
   ];
 
   /// 所有可选功能 id（与外观设置共用同一套 id）。
@@ -352,18 +352,14 @@ class HomeWidgetService {
     return sorted.take(30).toList();
   }
 
-  /// 组装快捷功能数据（固定补齐/截断到 4 个，保证原生布局稳定）。
+  /// 组装快捷功能数据（按传入的 ids 顺序最多取 4 个；少于 4 个不再自动补齐，原生组件上留空）。
   static Map<String, dynamic> buildQuickMap({
     required List<String> ids,
     required String Function(String id) labelOf,
     String title = '',
   }) {
-    final picked = ids.where(allFunctionIds.contains).toList();
-    for (final fallback in defaultQuickIds) {
-      if (picked.length >= 4) break;
-      if (!picked.contains(fallback)) picked.add(fallback);
-    }
-    final items = picked.take(4).map((id) => {
+    final picked = ids.where(allFunctionIds.contains).take(4).toList();
+    final items = picked.map((id) => {
           'id': id,
           'label': labelOf(id),
           'emoji': functionEmoji[id] ?? '🔹',
@@ -476,7 +472,6 @@ class HomeWidgetService {
       if (decoded is! List) return List<String>.from(defaultQuickIds);
       final ids =
           decoded.map((e) => e.toString()).where(allFunctionIds.contains).toList();
-      if (ids.isEmpty) return List<String>.from(defaultQuickIds);
       return ids;
     } catch (_) {
       return List<String>.from(defaultQuickIds);

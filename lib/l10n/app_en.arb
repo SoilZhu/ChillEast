@@ -85,7 +85,7 @@
   "visibleFunctions": "Visible Services",
   "hiddenFunctions": "Hidden Services (Drag here to hide)",
   "dragToReorderTip": "Long press and drag icons to reorder, show, or hide services",
-  "widgetSettings": "Home widgets",
+  "widgetSettings": "Widget Settings",
   "widgetQuickTitle": "Quick actions (pick 4)",
   "widgetQuickHint": "Widget shortcuts are separate from Home and can be configured independently",
   "widgetHowToAdd": "Long-press an empty area on your home screen to add the Agenda, Quick actions, or Combo widgets",

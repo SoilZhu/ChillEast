@@ -5,6 +5,7 @@ import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/route_utils.dart';
 import 'notification_settings_screen.dart';
 import 'appearance_settings_screen.dart';
+import 'button_reorder_screen.dart';
 import 'ai_settings_screen.dart';
 import 'language_settings_screen.dart';
 import 'timetable_settings_screen.dart';
@@ -80,6 +81,20 @@ class SettingsScreen extends ConsumerWidget {
               Navigator.push(
                 context,
                 createSlideUpRoute(const AppearanceSettingsScreen()),
+              );
+            },
+          ),
+          _buildSettingItem(
+            context,
+            icon: Icons.widgets_outlined,
+            title: l10n.widgetSettings,
+            onTap: () {
+              Navigator.push(
+                context,
+                createSlideUpRoute(ButtonReorderScreen(
+                  title: l10n.widgetSettings,
+                  listType: 'widget',
+                )),
               );
             },
           ),

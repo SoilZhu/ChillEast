@@ -632,7 +632,7 @@ abstract class AppLocalizations {
   /// No description provided for @widgetSettings.
   ///
   /// In zh, this message translates to:
-  /// **'桌面小组件'**
+  /// **'小组件设置'**
   String get widgetSettings;
 
   /// No description provided for @widgetQuickTitle.

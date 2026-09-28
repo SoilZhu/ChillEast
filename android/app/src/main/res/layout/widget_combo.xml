@@ -173,7 +173,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:contentDescription="@string/widget_quick_label"
-                    android:src="@drawable/widget_ic_empty_classroom" />
+                    android:src="@drawable/widget_ic_repairs" />
 
                 <TextView
                     android:id="@+id/widget_combo_label_2"
@@ -201,7 +201,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:contentDescription="@string/widget_quick_label"
-                    android:src="@drawable/widget_ic_bus" />
+                    android:src="@drawable/widget_ic_empty_classroom" />
 
                 <TextView
                     android:id="@+id/widget_combo_label_3"

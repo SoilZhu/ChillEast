@@ -266,7 +266,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Long press and drag icons to reorder, show, or hide services';
 
   @override
-  String get widgetSettings => 'Home widgets';
+  String get widgetSettings => 'Widget Settings';
 
   @override
   String get widgetQuickTitle => 'Quick actions (pick 4)';

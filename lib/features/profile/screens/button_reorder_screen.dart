@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/services/home_widget_service.dart';
 import '../providers/appearance_provider.dart';
 import '../models/appearance_state.dart';
 import '../../../core/utils/l10n_extension.dart';
@@ -28,7 +29,11 @@ class ButtonReorderScreen extends ConsumerWidget {
     // 获取当前列表并按可见性排序
     final rawItems = listType == 'home'
         ? appearance.homeItems
-        : (listType == 'feed' ? appearance.feedItems : appearance.functionItems);
+        : (listType == 'feed'
+            ? appearance.feedItems
+            : (listType == 'widget'
+                ? appearance.widgetItems
+                : appearance.functionItems));
     final visibleItems = rawItems.where((e) => e.isVisible).toList();
     final hiddenItems = rawItems.where((e) => !e.isVisible).toList();
 
@@ -47,6 +52,22 @@ class ButtonReorderScreen extends ConsumerWidget {
         iconTheme: IconThemeData(
           color: isDark ? Colors.white : Colors.black87,
         ),
+        actions: listType == 'widget'
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.refresh_rounded),
+                  tooltip: context.l10n.widgetRefresh,
+                  onPressed: () async {
+                    await HomeWidgetService().syncWidgets();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(context.l10n.widgetRefreshed)),
+                      );
+                    }
+                  },
+                ),
+              ]
+            : null,
       ),
       body: Column(
         children: [
@@ -54,7 +75,12 @@ class ButtonReorderScreen extends ConsumerWidget {
           Expanded(
             child: ReorderableListView(
               padding: const EdgeInsets.only(top: 0, bottom: 60), // 增加底部边距，方便拖拽到最后
-              header: _buildSectionHeader(context, context.l10n.visibleFunctions, Icons.visibility_outlined, isFixed: true),
+              header: _buildSectionHeader(
+                context,
+                context.l10n.visibleFunctions,
+                Icons.visibility_outlined,
+                isFixed: true,
+              ),
               proxyDecorator: (Widget child, int index, Animation<double> animation) {
                 return AnimatedBuilder(
                   animation: animation,

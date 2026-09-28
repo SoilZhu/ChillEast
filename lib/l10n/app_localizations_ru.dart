@@ -267,7 +267,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Удерживайте и перетаскивайте значки для изменения порядка, отображения или скрытия';
 
   @override
-  String get widgetSettings => '桌面小组件';
+  String get widgetSettings => '小组件设置';
 
   @override
   String get widgetQuickTitle => '快捷功能（选择 4 个）';

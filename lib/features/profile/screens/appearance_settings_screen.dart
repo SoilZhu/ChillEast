@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../core/utils/route_utils.dart';
 import '../../../core/utils/l10n_extension.dart';
 import 'button_reorder_screen.dart';
-import 'widget_settings_screen.dart';
 
 class AppearanceSettingsScreen extends StatelessWidget {
   const AppearanceSettingsScreen({super.key});
@@ -79,7 +78,10 @@ class AppearanceSettingsScreen extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                createSlideUpRoute(const WidgetSettingsScreen()),
+                createSlideUpRoute(ButtonReorderScreen(
+                  title: l10n.widgetSettings,
+                  listType: 'widget',
+                )),
               );
             },
           ),

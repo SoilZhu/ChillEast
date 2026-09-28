@@ -246,14 +246,25 @@ void main() {
   });
 
   group('buildQuickMap', () {
-    test('非法 id 被过滤并补齐到 4 个', () {
+    test('非法 id 被过滤，少于 4 个不自动补齐（留空）', () {
       final map = HomeWidgetService.buildQuickMap(
         ids: const ['vpn', 'not_exist'],
         labelOf: (id) => id,
       );
       final items = map['items'] as List;
-      expect(items.length, 4);
+      expect(items.length, 1);
       expect(items[0]['id'], 'vpn');
+    });
+
+    test('少于 4 个时保留指定数量（留空）', () {
+      final map = HomeWidgetService.buildQuickMap(
+        ids: const ['payment_code', 'library'],
+        labelOf: (id) => id,
+      );
+      final items = map['items'] as List;
+      expect(items.length, 2);
+      expect(items[0]['id'], 'payment_code');
+      expect(items[1]['id'], 'library');
     });
 
     test('超过 4 个时截断', () {

@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.util.Log
+import android.view.View
 import android.widget.RemoteViews
 
 /// 「快捷功能」小组件：2x2 四个入口，点击直达对应功能页。
@@ -97,26 +98,42 @@ class QuickWidgetProvider : AppWidgetProvider() {
                 R.id.widget_quick_label_3,
             )
             // 默认缺省文案（Flutter 尚未同步时展示）
-            val fallbackIds = listOf("payment_code", "library", "empty_classroom", "bus")
-            val fallbackLabels = listOf("付款码", "图书馆", "空教室", "实时校车")
+            val fallbackIds = listOf("payment_code", "library", "repairs", "empty_classroom")
+            val fallbackLabels = listOf("付款码", "图书馆", "报修平台", "空教室")
             val fallbackColors = listOf(
                 0xFF00C853.toInt(),
                 0xFF795548.toInt(),
+                0xFF607D8B.toInt(),
                 0xFF9C27B0.toInt(),
-                0xFF34E676.toInt(),
             )
 
             for (i in cellIds.indices) {
-                val item = data?.items?.getOrNull(i)
-                val action = item?.id ?: fallbackIds[i]
-                val label = item?.label ?: fallbackLabels[i]
-                views.setImageViewResource(iconIds[i], iconResFor(action))
-                views.setInt(iconIds[i], "setColorFilter", item?.color ?: fallbackColors[i])
-                views.setTextViewText(labelIds[i], label)
-                views.setOnClickPendingIntent(
-                    cellIds[i],
-                    WidgetIntents.launchIntent(context, action, -1, REQ_BASE + i),
-                )
+                if (data == null) {
+                    val action = fallbackIds[i]
+                    views.setViewVisibility(cellIds[i], View.VISIBLE)
+                    views.setImageViewResource(iconIds[i], iconResFor(action))
+                    views.setInt(iconIds[i], "setColorFilter", fallbackColors[i])
+                    views.setTextViewText(labelIds[i], fallbackLabels[i])
+                    views.setOnClickPendingIntent(
+                        cellIds[i],
+                        WidgetIntents.launchIntent(context, action, -1, REQ_BASE + i),
+                    )
+                } else {
+                    val item = data.items.getOrNull(i)
+                    if (item != null) {
+                        views.setViewVisibility(cellIds[i], View.VISIBLE)
+                        views.setImageViewResource(iconIds[i], iconResFor(item.id))
+                        views.setInt(iconIds[i], "setColorFilter", item.color)
+                        views.setTextViewText(labelIds[i], item.label)
+                        views.setOnClickPendingIntent(
+                            cellIds[i],
+                            WidgetIntents.launchIntent(context, item.id, -1, REQ_BASE + i),
+                        )
+                    } else {
+                        views.setViewVisibility(cellIds[i], View.INVISIBLE)
+                        views.setOnClickPendingIntent(cellIds[i], null)
+                    }
+                }
             }
             if (data != null && data.title.isNotEmpty()) {
                 views.setTextViewText(R.id.widget_quick_title, data.title)

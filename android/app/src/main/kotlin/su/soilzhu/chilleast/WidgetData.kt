@@ -185,7 +185,6 @@ object WidgetData {
                     ),
                 )
             }
-            if (items.isEmpty()) return null
             QuickData(
                 title = json.optString("title", ""),
                 items = items,

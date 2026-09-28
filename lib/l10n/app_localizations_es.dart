@@ -268,7 +268,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Mantén presionado y arrastra para reordenar, mostrar u ocultar servicios';
 
   @override
-  String get widgetSettings => '桌面小组件';
+  String get widgetSettings => '小组件设置';
 
   @override
   String get widgetQuickTitle => '快捷功能（选择 4 个）';

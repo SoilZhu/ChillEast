@@ -264,7 +264,7 @@ class AppLocalizationsGan extends AppLocalizations {
   String get dragToReorderTip => '长按拖动图标，移入不同区域可显示或隐藏功能';
 
   @override
-  String get widgetSettings => '桌面小组件';
+  String get widgetSettings => '小组件设置';
 
   @override
   String get widgetQuickTitle => '快捷功能（选择 4 个）';
