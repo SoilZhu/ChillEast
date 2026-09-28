@@ -266,6 +266,32 @@ class AppLocalizationsEn extends AppLocalizations {
       'Long press and drag icons to reorder, show, or hide services';
 
   @override
+  String get widgetSettings => 'Widget Settings';
+
+  @override
+  String get widgetQuickTitle => 'Quick actions (pick 4)';
+
+  @override
+  String get widgetQuickHint =>
+      'Widget shortcuts are separate from Home and can be configured independently';
+
+  @override
+  String get widgetHowToAdd =>
+      'Long-press an empty area on your home screen to add the Agenda, Quick actions, or Combo widgets';
+
+  @override
+  String get widgetNeedFour => 'Please select 4 functions';
+
+  @override
+  String get widgetSaved => 'Saved, widgets will refresh automatically';
+
+  @override
+  String get widgetRefreshed => 'Widget data refreshed';
+
+  @override
+  String get widgetRefresh => 'Refresh widgets now';
+
+  @override
   String get loginRequiredTitle => 'Login Required';
 
   @override

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 import '../../sunshine/screens/sunshine_screen.dart';
 import '../../repairs/screens/repair_screen.dart';
 import '../../repairs/screens/repair_detail_screen.dart';
@@ -36,6 +37,7 @@ import '../../../core/utils/route_utils.dart';
 import '../../profile/providers/appearance_provider.dart';
 import '../../profile/models/appearance_state.dart';
 import '../../../core/utils/l10n_extension.dart';
+import '../../../core/services/home_widget_service.dart';
 import '../../workspace/screens/campus_card_recharge_screen.dart';
 import '../../workspace/screens/electricity_recharge_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -63,6 +65,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   DateTime _previewDate = DateTime.now();
   final PageController _quickPageController = PageController();
   int _quickPageIndex = 0;
+  // 小组件同步节流
+  DateTime _lastWidgetSync = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
   void initState() {
@@ -170,12 +174,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       setState(() {
         _isLoadingTimetable = false;
       });
+      _syncWidgetsDebounced();
     }
+  }
+
+  /// 课表/作业就绪后同步桌面小组件（30 秒节流，失败静默）
+  void _syncWidgetsDebounced() {
+    final now = DateTime.now();
+    if (now.difference(_lastWidgetSync).inSeconds < 30) return;
+    _lastWidgetSync = now;
+    unawaited(HomeWidgetService().syncWidgets());
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
+
+    // 作业后到时也同步一次小组件（与课表加载时的同步共用 30 秒节流）
+    ref.listen(homeworkProvider, (previous, next) {
+      next.whenData((list) {
+        if (list.isNotEmpty && !_isLoadingTimetable && mounted) {
+          _syncWidgetsDebounced();
+        }
+      });
+    });
 
     return Scaffold(
       body: SingleChildScrollView(

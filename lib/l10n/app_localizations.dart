@@ -629,6 +629,54 @@ abstract class AppLocalizations {
   /// **'长按拖动图标，移入不同区域可显示或隐藏功能'**
   String get dragToReorderTip;
 
+  /// No description provided for @widgetSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'小组件设置'**
+  String get widgetSettings;
+
+  /// No description provided for @widgetQuickTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'快捷功能（选择 4 个）'**
+  String get widgetQuickTitle;
+
+  /// No description provided for @widgetQuickHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'小组件的快捷入口独立于首页，可单独配置'**
+  String get widgetQuickHint;
+
+  /// No description provided for @widgetHowToAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'回到手机桌面，长按空白处添加「今日日程」「快捷功能」「日程 + 快捷」小组件'**
+  String get widgetHowToAdd;
+
+  /// No description provided for @widgetNeedFour.
+  ///
+  /// In zh, this message translates to:
+  /// **'请选择 4 个功能'**
+  String get widgetNeedFour;
+
+  /// No description provided for @widgetSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'已保存，小组件将自动刷新'**
+  String get widgetSaved;
+
+  /// No description provided for @widgetRefreshed.
+  ///
+  /// In zh, this message translates to:
+  /// **'小组件数据已刷新'**
+  String get widgetRefreshed;
+
+  /// No description provided for @widgetRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即刷新小组件'**
+  String get widgetRefresh;
+
   /// No description provided for @loginRequiredTitle.
   ///
   /// In zh, this message translates to:

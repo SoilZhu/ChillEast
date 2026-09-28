@@ -49,6 +49,7 @@ class AppearanceState {
   final List<FunctionItem> homeItems;
   final List<FunctionItem> functionItems;
   final List<FunctionItem> feedItems;
+  final List<FunctionItem> widgetItems;
   final List<String> functionGroupOrder;
   final List<String> hiddenFunctionGroups;
 
@@ -56,6 +57,7 @@ class AppearanceState {
     required this.homeItems,
     required this.functionItems,
     required this.feedItems,
+    required this.widgetItems,
     required this.functionGroupOrder,
     required this.hiddenFunctionGroups,
   });
@@ -64,6 +66,7 @@ class AppearanceState {
     List<FunctionItem>? homeItems,
     List<FunctionItem>? functionItems,
     List<FunctionItem>? feedItems,
+    List<FunctionItem>? widgetItems,
     List<String>? functionGroupOrder,
     List<String>? hiddenFunctionGroups,
   }) {
@@ -71,6 +74,7 @@ class AppearanceState {
       homeItems: homeItems ?? this.homeItems,
       functionItems: functionItems ?? this.functionItems,
       feedItems: feedItems ?? this.feedItems,
+      widgetItems: widgetItems ?? this.widgetItems,
       functionGroupOrder: functionGroupOrder ?? this.functionGroupOrder,
       hiddenFunctionGroups: hiddenFunctionGroups ?? this.hiddenFunctionGroups,
     );

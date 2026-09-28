@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/services/home_widget_service.dart';
 import '../models/appearance_state.dart';
 
 final appearanceProvider = StateNotifierProvider<AppearanceNotifier, AppearanceState>((ref) {
@@ -9,9 +10,14 @@ final appearanceProvider = StateNotifierProvider<AppearanceNotifier, AppearanceS
 });
 
 class AppearanceNotifier extends StateNotifier<AppearanceState> {
+  /// 供桌面小组件配置页复用的全量功能池（含图标与配色）。
+  static List<FunctionItem> get masterPool =>
+      List<FunctionItem>.unmodifiable(_masterPool);
+
   static const String _homeItemsKey = 'home_function_items';
   static const String _functionItemsKey = 'function_page_items';
   static const String _feedItemsKey = 'home_feed_items';
+  static const String _widgetItemsKey = 'widget_function_items';
   static const String _groupOrderKey = 'function_group_order';
   static const String _hiddenGroupsKey = 'hidden_function_groups';
 
@@ -40,6 +46,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     homeItems: _getDefaultHomeItems(),
     functionItems: _getDefaultFunctionItems(),
     feedItems: _getDefaultFeedItems(),
+    widgetItems: _getDefaultWidgetItems(),
     functionGroupOrder: _defaultGroupOrder(),
     hiddenFunctionGroups: const [],
   )) {
@@ -51,6 +58,31 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
   }
 
   static const List<String> _defaultVisibleHomeIds = ['payment_code', 'library', 'empty_classroom', 'xgxt', 'repairs', 'bus', 'score'];
+
+  static List<FunctionItem> _getDefaultWidgetItems([List<String>? visibleIds]) {
+    final activeIds = visibleIds ?? HomeWidgetService.defaultQuickIds;
+    final List<FunctionItem> items = [];
+    for (final id in activeIds) {
+      final template = _masterPool.firstWhere(
+        (item) => item.id == id,
+        orElse: () => const FunctionItem(
+          id: 'unknown',
+          label: '未知',
+          icon: Icons.help_outline,
+          color: Colors.grey,
+        ),
+      );
+      if (template.id != 'unknown') {
+        items.add(template.copyWith(isVisible: true));
+      }
+    }
+    for (final masterItem in _masterPool) {
+      if (!items.any((item) => item.id == masterItem.id)) {
+        items.add(masterItem.copyWith(isVisible: false));
+      }
+    }
+    return items;
+  }
 
   /// 首页信息流区块（默认全显示，顺序即展示顺序）
   static final List<FunctionItem> _feedPool = [
@@ -95,10 +127,12 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     final homeJson = prefs.getString(_homeItemsKey);
     final funcJson = prefs.getString(_functionItemsKey);
     final feedJson = prefs.getString(_feedItemsKey);
+    final widgetJson = prefs.getString(_widgetItemsKey);
 
     List<FunctionItem> homeItems = state.homeItems;
     List<FunctionItem> funcItems = state.functionItems;
     List<FunctionItem> feedItems = state.feedItems;
+    List<FunctionItem> widgetItems = state.widgetItems;
 
     if (homeJson != null) {
       try {
@@ -127,7 +161,43 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
       }
     }
 
-    state = state.copyWith(homeItems: homeItems, functionItems: funcItems, feedItems: feedItems);
+    if (widgetJson != null) {
+      try {
+        final decoded = json.decode(widgetJson) as List;
+        widgetItems = _mergeWithMaster(decoded, isHome: false, isWidget: true);
+      } catch (e) {
+        debugPrint('Error loading widget items: $e');
+      }
+    } else {
+      final oldQuickIds = prefs.getString(HomeWidgetService.quickIdsKey);
+      if (oldQuickIds != null) {
+        try {
+          final decoded = json.decode(oldQuickIds) as List;
+          final ids = decoded.map((e) => e.toString()).where(HomeWidgetService.allFunctionIds.contains).toList();
+          if (ids.isNotEmpty) {
+            widgetItems = _getDefaultWidgetItems(ids);
+          }
+        } catch (e) {
+          debugPrint('Error migrating old widget quick ids: $e');
+        }
+      }
+    }
+
+    // 确保小组件显示中的功能最多只有 4 个，多余的挤入隐藏列表
+    final widgetVisible = widgetItems.where((e) => e.isVisible).toList();
+    final widgetHidden = widgetItems.where((e) => !e.isVisible).toList();
+    while (widgetVisible.length > 4) {
+      final squeezed = widgetVisible.removeLast().copyWith(isVisible: false);
+      widgetHidden.insert(0, squeezed);
+    }
+    widgetItems = [...widgetVisible, ...widgetHidden];
+
+    state = state.copyWith(
+      homeItems: homeItems,
+      functionItems: funcItems,
+      feedItems: feedItems,
+      widgetItems: widgetItems,
+    );
 
     final groupOrderJson = prefs.getString(_groupOrderKey);
     final hiddenGroupsJson = prefs.getString(_hiddenGroupsKey);
@@ -171,7 +241,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     return order;
   }
 
-  List<FunctionItem> _mergeWithMaster(List decoded, {required bool isHome}) {
+  List<FunctionItem> _mergeWithMaster(List decoded, {required bool isHome, bool isWidget = false}) {
     List<FunctionItem> items = [];
     for (var data in decoded) {
       final id = data['id'];
@@ -185,10 +255,10 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     // 老用户已保存的首页列表只有 7 项，缺的 8 项会在这里补上并默认隐藏，实现迁移
     for (var masterItem in _masterPool) {
       if (!items.any((item) => item.id == masterItem.id)) {
-        // 功能页新增项默认显示，首页新增项默认隐藏（除非在首页默认显示名单里）
+        // 功能页新增项默认显示，首页/小组件新增项默认隐藏（除非在首页默认显示名单里）
         final defaultVisible = isHome
             ? _defaultVisibleHomeIds.contains(masterItem.id)
-            : true;
+            : (isWidget ? false : true);
         items.add(masterItem.copyWith(isVisible: defaultVisible));
       }
     }
@@ -242,13 +312,27 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     _saveSettings();
   }
 
+  Future<void> updateWidgetItems(List<FunctionItem> items) async {
+    state = state.copyWith(widgetItems: items);
+    _saveSettings();
+  }
+
   Future<void> _saveSettings() async {
+    final currentState = state;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_homeItemsKey, json.encode(state.homeItems.map((e) => e.toJson()).toList()));
-    await prefs.setString(_functionItemsKey, json.encode(state.functionItems.map((e) => e.toJson()).toList()));
-    await prefs.setString(_feedItemsKey, json.encode(state.feedItems.map((e) => e.toJson()).toList()));
-    await prefs.setString(_groupOrderKey, json.encode(state.functionGroupOrder));
-    await prefs.setString(_hiddenGroupsKey, json.encode(state.hiddenFunctionGroups));
+    await prefs.setString(_homeItemsKey, json.encode(currentState.homeItems.map((e) => e.toJson()).toList()));
+    await prefs.setString(_functionItemsKey, json.encode(currentState.functionItems.map((e) => e.toJson()).toList()));
+    await prefs.setString(_feedItemsKey, json.encode(currentState.feedItems.map((e) => e.toJson()).toList()));
+    await prefs.setString(_widgetItemsKey, json.encode(currentState.widgetItems.map((e) => e.toJson()).toList()));
+    await prefs.setString(_groupOrderKey, json.encode(currentState.functionGroupOrder));
+    await prefs.setString(_hiddenGroupsKey, json.encode(currentState.hiddenFunctionGroups));
+
+    final visibleWidgetIds = currentState.widgetItems.where((e) => e.isVisible).map((e) => e.id).toList();
+    try {
+      await HomeWidgetService().saveWidgetQuickIds(visibleWidgetIds);
+    } catch (e) {
+      debugPrint('Error syncing widget items to HomeWidgetService: $e');
+    }
   }
 
   void toggleItemVisibility(String listType, String itemId) {
@@ -268,6 +352,23 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
         return item;
       }).toList();
       updateFeedItems(newItems);
+    } else if (listType == 'widget') {
+      final newItems = state.widgetItems.map((item) {
+        if (item.id == itemId) {
+          return item.copyWith(isVisible: !item.isVisible);
+        }
+        return item;
+      }).toList();
+      final visible = newItems.where((e) => e.isVisible).toList();
+      final hidden = newItems.where((e) => !e.isVisible).toList();
+      while (visible.length > 4) {
+        final int squeezeIndex = (visible.last.id == itemId && visible.length > 1)
+            ? visible.length - 2
+            : visible.length - 1;
+        final squeezed = visible.removeAt(squeezeIndex).copyWith(isVisible: false);
+        hidden.insert(0, squeezed);
+      }
+      updateWidgetItems([...visible, ...hidden]);
     } else {
       final newItems = state.functionItems.map((item) {
         if (item.id == itemId) {
@@ -283,7 +384,11 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     final items = List<FunctionItem>.from(
       listType == 'home'
           ? state.homeItems
-          : (listType == 'feed' ? state.feedItems : state.functionItems),
+          : (listType == 'feed'
+              ? state.feedItems
+              : (listType == 'widget'
+                  ? state.widgetItems
+                  : state.functionItems)),
     );
     final visibleCount = items.where((e) => e.isVisible).length;
     
@@ -328,12 +433,29 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
       return 0;
     });
 
+    List<FunctionItem> finalItems = items;
+    if (listType == 'widget') {
+      final visible = items.where((e) => e.isVisible).toList();
+      final hidden = items.where((e) => !e.isVisible).toList();
+      while (visible.length > 4) {
+        // 如果新拖入的项位于显示区末尾，则挤出原本末尾项；否则挤出当前的最后一个功能
+        final int squeezeIndex = (newVisibility && visible.last.id == updatedItem.id && visible.length > 1)
+            ? visible.length - 2
+            : visible.length - 1;
+        final squeezed = visible.removeAt(squeezeIndex).copyWith(isVisible: false);
+        hidden.insert(0, squeezed);
+      }
+      finalItems = [...visible, ...hidden];
+    }
+
     if (listType == 'home') {
-      updateHomeItems(items);
+      updateHomeItems(finalItems);
     } else if (listType == 'feed') {
-      updateFeedItems(items);
+      updateFeedItems(finalItems);
+    } else if (listType == 'widget') {
+      updateWidgetItems(finalItems);
     } else {
-      updateFunctionItems(items);
+      updateFunctionItems(finalItems);
     }
   }
 

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 桌面小组件：深色模式（跟随应用内深色配色 #121212 / #1E1E1E） -->
+    <color name="widget_background">#1E1E1E</color>
+    <color name="widget_stroke">#333333</color>
+    <color name="widget_button">#2C2C2C</color>
+    <color name="widget_title">#F5F5F5</color>
+    <color name="widget_sub">#B0B0B0</color>
+    <color name="widget_hint">#9E9E9E</color>
+</resources>

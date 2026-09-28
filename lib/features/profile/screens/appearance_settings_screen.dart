@@ -71,6 +71,20 @@ class AppearanceSettingsScreen extends StatelessWidget {
               );
             },
           ),
+          _buildSettingItem(
+            context,
+            icon: Icons.widgets_outlined,
+            title: l10n.widgetSettings,
+            onTap: () {
+              Navigator.push(
+                context,
+                createSlideUpRoute(ButtonReorderScreen(
+                  title: l10n.widgetSettings,
+                  listType: 'widget',
+                )),
+              );
+            },
+          ),
         ],
       ),
     );

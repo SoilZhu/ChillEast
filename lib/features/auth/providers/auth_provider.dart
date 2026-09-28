@@ -109,6 +109,38 @@ class AuthService {
     return null;
   }
 
+  /// 轻量探测持久化 Cookie 对应的会话是否仍然有效。
+  /// 只读、不清理、不重登，供启动时决定直接复用还是走完整静默登录。
+  /// 判定顺序：先找"已登录"的正向证明（解析门户身份），再看被踢下线的
+  /// 反向信号。顺序不能反——已登录页内也可能内嵌 cas/login 字符串。
+  /// 任何异常（无网络等）都视为无效，走静默登录兜底。
+  Future<bool> hasValidPersistedSession() async {
+    try {
+      final dio = DioClient().dio;
+      final response = await dio.get<String>(
+        AppConstants.portalIndexUrl,
+        options: Options(
+          responseType: ResponseType.plain,
+          followRedirects: true,
+          validateStatus: (status) => status != null && status < 500,
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      );
+      final body = response.data ?? '';
+      final identity = PortalIdentity.parse(body);
+      final kickedToLogin =
+          response.realUri.path.contains('/cas/login') ||
+              body.contains('/cas/login');
+      _logger.i('Session probe: status=${response.statusCode} '
+          'finalUri=${response.realUri} bodyLen=${body.length} '
+          'identity=${identity != null} kickedToLogin=$kickedToLogin');
+      return identity != null;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// 核心登录入口
   Future<void> login(String username, String password) async {
     final total = Stopwatch()..start();
