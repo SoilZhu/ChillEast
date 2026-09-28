@@ -176,6 +176,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _logger.i('📱 Profile restored, marked as initialized');
     FlutterNativeSplash.remove();
 
+    // 启动只做轻量会话探测：持久化 Cookie 仍然有效就直接复用，
+    // 跳过整套登录链；只有探测到失效才走完整静默登录（会先清旧 Cookie 再重登）。
+    try {
+      if (await _ref.read(authServiceProvider).hasValidPersistedSession()) {
+        _logger.i('✅ Persisted session valid, reusing cookies');
+        state = state.copyWith(status: AuthStatus.authenticated);
+        _schedulePostLoginWork(username, includeLibrary: false);
+        return;
+      }
+      _logger.i('⚠️ Persisted session expired, silent re-login...');
+    } catch (e) {
+      _logger.w('⚠️ Session probe failed ($e), falling back to silent login');
+    }
+
     // 3. 异步尝试自动登录 (不影响/阻塞初始化状态)
     try {
       state = state.copyWith(status: AuthStatus.authenticating);

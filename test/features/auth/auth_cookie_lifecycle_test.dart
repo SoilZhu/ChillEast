@@ -331,6 +331,82 @@ void main() {
         container.read(authStateProvider).status, AuthStatus.unauthenticated);
   });
 
+  test('startup reuses a valid persisted session without HTTP login', () async {
+    await SecureStorageHelper().saveUsername('test-user');
+    await SecureStorageHelper().savePassword('test-password');
+    // 残留旧会话 Cookie：探测与复用都不得清理
+    await manager.dioCookieJar.saveFromResponse(
+        sso, [io.Cookie('TGC', 'kept')..path = '/cas']);
+    var attempts = 0;
+    final auth = AuthService(httpLoginService: _HttpStub((_, __) async {
+      attempts++;
+      return {
+        sso: [io.Cookie('TGC', 'fresh')..path = '/cas']
+      };
+    }));
+    profileAdapter.handler = (options) async {
+      if (options.uri.host == 'portal.hunau.edu.cn') {
+        return ResponseBody.fromString(_validPortalHtml, 200, headers: {
+          Headers.contentTypeHeader: ['text/html']
+        });
+      }
+      throw StateError('Unexpected probe request: ${options.uri}');
+    };
+    final container = ProviderContainer(
+        overrides: [authServiceProvider.overrideWithValue(auth)]);
+    addTearDown(container.dispose);
+    final authenticated = Completer<void>();
+    container.listen(authStateProvider, (previous, next) {
+      if (next.status == AuthStatus.authenticated &&
+          !authenticated.isCompleted) {
+        authenticated.complete();
+      }
+    });
+    await authenticated.future.timeout(const Duration(seconds: 15));
+    // 未触发整套登录：无登录尝试、无 Cookie 清理、旧会话原样保留
+    expect(attempts, 0);
+    expect(browserCookies.clearCount, 0);
+    expect((await manager.dioCookieJar.loadForRequest(sso)).single.value,
+        'kept');
+    expect(container.read(authStateProvider).username, 'test-user');
+  });
+
+  test('startup re-logs in when the persisted session expired', () async {
+    await SecureStorageHelper().saveUsername('test-user');
+    await SecureStorageHelper().savePassword('test-password');
+    await manager.dioCookieJar.saveFromResponse(
+        sso, [io.Cookie('TGC', 'stale')..path = '/cas']);
+    final auth = AuthService(httpLoginService: _HttpStub((username, password) async {
+      expect(username, 'test-user');
+      expect(password, 'test-password');
+      // 静默重登前旧 Cookie 已被清理
+      expect(await manager.dioCookieJar.loadForRequest(sso), isEmpty);
+      return {
+        sso: [io.Cookie('TGC', 'fresh')..path = '/cas']
+      };
+    }));
+    profileAdapter.handler = (options) async {
+      // 返回登录页：会话已失效
+      return ResponseBody.fromString(_expiredPortalHtml, 200, headers: {
+        Headers.contentTypeHeader: ['text/html']
+      });
+    };
+    final container = ProviderContainer(
+        overrides: [authServiceProvider.overrideWithValue(auth)]);
+    addTearDown(container.dispose);
+    final authenticated = Completer<void>();
+    container.listen(authStateProvider, (previous, next) {
+      if (next.status == AuthStatus.authenticated &&
+          !authenticated.isCompleted) {
+        authenticated.complete();
+      }
+    });
+    await authenticated.future.timeout(const Duration(seconds: 15));
+    expect((await manager.dioCookieJar.loadForRequest(sso)).single.value,
+        'fresh');
+    expect(browserCookies.clearCount, 1);
+  });
+
   test('guest startup still clears stale cookies', () async {
     await manager.dioCookieJar
         .saveFromResponse(sso, [io.Cookie('OLD', 'x')..path = '/cas']);
@@ -418,6 +494,17 @@ void main() {
     expect(await SecureStorageHelper().getUsername(), isNull);
   });
 }
+
+/// 探测用的门户页面：已登录态（能解析出身份）。
+/// 注意内嵌了一个 cas/login 字符串：已登录页也可能包含它（JS 跳转地址等），
+/// 探测必须以身份解析为准，不能被它误判为失效。
+const _validPortalHtml =
+    '<html><body><div class="infoTxt"><em>测试同学</em><span>学号：20210001</span></div>'
+    '<script>var CAS_LOGIN="/cas/login";</script></body></html>';
+
+/// 探测用的门户页面：已失效（登录表单）
+const _expiredPortalHtml =
+    '<html><body><form action="/cas/login"><input type="password" name="password" /></form></body></html>';
 
 class _HttpStub extends HttpLoginService {
   _HttpStub(this.callback);
