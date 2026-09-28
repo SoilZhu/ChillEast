@@ -31,14 +31,39 @@ class _PaymentCodeScreenState extends ConsumerState<PaymentCodeScreen> with Widg
   
   Timer? _refreshTimer;
   Timer? _statusTimer;
-  
+
   int _refreshCountdown = 60;
   bool _isPolling = false;
+  // HAR 显示空闲轮询约 250-500ms/次，长期 3s 高频浪费电量/服务端压力。
+  // 连续空闲后退避到 5s，有状态变化立刻恢复 3s。
+  int _idlePollCount = 0;
+  int _statusIntervalSec = 3;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // 缓存秒开：55s 内的旧码先直接渲染首帧，后台再静默拉新码
+    final svc = ref.read(campusCardServiceProvider);
+    final cached = svc.getCachedPaymentCode();
+    if (cached != null) {
+      _qrBase64 = cached['qrBase64'] as String?;
+      if (_qrBase64 != null) {
+        try {
+          _qrBytes = base64Decode(_qrBase64!);
+        } catch (_) {
+          _qrBytes = null;
+        }
+      }
+      _paycode = cached['paycode'] as String?;
+      _userInfo = cached['info'] as String?;
+      if (_qrBytes != null && _paycode != null) {
+        _isLoading = false;
+        _refreshCountdown = svc.paymentCodeRemainingSeconds();
+        _loadPaymentCode(isSilent: true);
+        return;
+      }
+    }
     _loadPaymentCode();
   }
 
@@ -72,7 +97,9 @@ class _PaymentCodeScreenState extends ConsumerState<PaymentCodeScreen> with Widg
 
     try {
       final service = ref.read(campusCardServiceProvider);
-      final data = await service.fetchPaymentCode();
+      // 页面内的刷新（倒计时归零/点码/支付后）一律强制走网络，
+      // 秒开只靠 initState 的缓存种子
+      final data = await service.fetchPaymentCode(forceRefresh: true);
       
       if (mounted) {
         setState(() {
@@ -105,6 +132,8 @@ class _PaymentCodeScreenState extends ConsumerState<PaymentCodeScreen> with Widg
   void _startTimers() {
     _refreshTimer?.cancel();
     _statusTimer?.cancel();
+    _idlePollCount = 0;
+    _statusIntervalSec = 3;
 
     _refreshTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
@@ -117,31 +146,59 @@ class _PaymentCodeScreenState extends ConsumerState<PaymentCodeScreen> with Widg
       });
     });
 
-    _statusTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+    _scheduleStatusTimer();
+  }
+
+  void _scheduleStatusTimer() {
+    _statusTimer?.cancel();
+    _statusTimer = Timer.periodic(Duration(seconds: _statusIntervalSec), (timer) {
       _queryStatus();
     });
   }
 
   Future<void> _queryStatus() async {
     if (_paycode == null || _isPolling || !mounted) return;
-    
+
     _isPolling = true;
     try {
       final service = ref.read(campusCardServiceProvider);
       final res = await service.queryOrderStatus(_paycode!);
-      
+
       if (res['success'] == true) {
-        final status = res['resultData']['status'];
-        if (status == "1") {
-          _handlePaymentSuccess(res['resultData']);
-        } else if (["2", "4", "6", "7"].contains(status)) {
-           _handlePaymentError(res['resultData']['message'] ?? context.l10n.paymentFailed);
+        final resultData = res['resultData'];
+        final status = resultData is Map
+            ? resultData['status']?.toString()
+            : null;
+        if (status == '1') {
+          _idlePollCount = 0;
+          _handlePaymentSuccess(Map<String, dynamic>.from(resultData as Map));
+          return;
+        } else if (['2', '4', '6', '7'].contains(status)) {
+          // HAR 实测 status=5 是“付款码未使用”的空闲态，必须继续轮询，
+          // 不能按失败弹层；只有 2/4/6/7 按失败处理。
+          _idlePollCount = 0;
+          final msg = resultData is Map
+              ? (resultData['message']?.toString() ?? context.l10n.paymentFailed)
+              : context.l10n.paymentFailed;
+          _handlePaymentError(msg);
+          return;
         }
       }
+      _markIdleAndMaybeBackoff();
     } catch (e) {
       _logger.w('Query status error: $e');
+      _markIdleAndMaybeBackoff();
     } finally {
       _isPolling = false;
+    }
+  }
+
+  void _markIdleAndMaybeBackoff() {
+    _idlePollCount++;
+    // 连续 5 次空闲（约 15s 无人付款）后从 3s 退避到 5s + 抖动由 Timer 自然产生
+    if (_idlePollCount >= 5 && _statusIntervalSec != 5) {
+      _statusIntervalSec = 5;
+      if (mounted) _scheduleStatusTimer();
     }
   }
 

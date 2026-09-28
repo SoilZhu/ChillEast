@@ -186,11 +186,30 @@ class AppCookieManager {
     }
   }
   
+  /// 仅同步单个 URL 的 WebView Cookie 到 Dio（付款码授权等轻量场景用，
+  /// 避免全量 20+ 域名串行扫描）。
+  Future<int> syncCookiesFromWebViewUrl(String url) async {
+    if (!_initialized) await initialize();
+    final cookies = await _webViewCookieManager.getCookies(
+      url: webview.WebUri(url),
+    );
+    for (final cookie in cookies) {
+      _logger.d(
+          '🔍 WebView Cookie(narrow): [${cookie.name}] domain=${cookie.domain} path=${cookie.path}');
+      final dioCookie = io.Cookie(cookie.name, cookie.value);
+      dioCookie.domain = cookie.domain ?? Uri.parse(url).host;
+      dioCookie.path = cookie.path ?? '/';
+      await _dioCookieJar.saveFromResponse(Uri.parse(url), [dioCookie]);
+    }
+    _logger.d('🍪 Synced ${cookies.length} cookies from $url (narrow)');
+    return cookies.length;
+  }
+
   /// 从 WebView 同步多个域名的 Cookie 到 Dio
   /// [currentUrl] 可选，传入当前正在访问的 URL 以确保捕获特定路径下的 Cookie (如 /relax/)
   Future<void> syncMultiDomainCookiesFromWebView([String? currentUrl]) async {
     if (!_initialized) await initialize();
-    
+
     try {
       // 1. 扩充需要同步的域名列表
       final domains = [
@@ -222,22 +241,38 @@ class AppCookieManager {
       if (currentUrl != null && !domains.contains(currentUrl)) {
         domains.add(currentUrl);
       }
-      
+
+      // 二阶段同步：先并行读 WebView（IPC 耗时大头），再串行写入
+      // jar，避免 PersistCookieJar 并发写文件竞态。
+      final readResults = await Future.wait(
+        domains.map((domain) async {
+          try {
+            final cookies = await _webViewCookieManager.getCookies(
+              url: webview.WebUri(domain),
+            );
+            return MapEntry(domain, cookies);
+          } catch (e) {
+            _logger.w('⚠️ Failed to sync cookies from $domain: $e');
+            return const MapEntry<String, List<dynamic>>( '', <dynamic>[]);
+          }
+        }),
+        eagerError: false,
+      );
+
       int totalSynced = 0;
-      
-      for (final domain in domains) {
+
+      for (final entry in readResults) {
+        final domain = entry.key;
+        if (domain.isEmpty) continue;
+        final cookies = entry.value;
         try {
-          final cookies = await _webViewCookieManager.getCookies(
-            url: webview.WebUri(domain),
-          );
-          
           for (final cookie in cookies) {
             // 调试日志：打印具体抓到的 Cookie (只看关键信息)
             _logger.d('🔍 WebView Cookie: [${cookie.name}] domain=${cookie.domain} path=${cookie.path}');
 
             // 创建 Dio Cookie
             final dioCookie = io.Cookie(cookie.name, cookie.value);
-            
+
             // 修正 Domain：如果 WebView 返回的 domain 带点 (如 .hunau.edu.cn)
             // 确保保存到 Dio 时也保留这个特性，以便子域名能共享
             if (cookie.domain != null) {
@@ -247,7 +282,7 @@ class AppCookieManager {
             }
 
             dioCookie.path = cookie.path ?? '/';
-            
+
             await _dioCookieJar.saveFromResponse(
               Uri.parse(domain),
               [dioCookie],
@@ -256,13 +291,13 @@ class AppCookieManager {
             // ✨ Cookie 镜像逻辑：
             // 如果是在 WebVPN 域名下发现的密钥，强行拷贝一份给 Portal 域名
             // 这样当代码请求不带前缀的 portal.hunau.edu.cn 时，Dio 也会带上 WebVPN 的身份凭证
-            if (domain.contains('webvpn.hunau.edu.cn') && 
+            if (domain.contains('webvpn.hunau.edu.cn') &&
                 (cookie.name.contains('vpn_ticket') || cookie.name.contains('webvpn_key'))) {
               final mirroredCookie = io.Cookie(cookie.name, cookie.value)
                 ..domain = 'portal.hunau.edu.cn'
                 ..path = '/'
                 ..httpOnly = true;
-              
+
               await _dioCookieJar.saveFromResponse(
                 Uri.parse(AppConstants.portalBaseUrl),
                 [mirroredCookie],
@@ -272,13 +307,13 @@ class AppCookieManager {
 
             totalSynced++;
           }
-          
+
           _logger.d('🍪 Synced ${cookies.length} cookies from $domain');
         } catch (e) {
-          _logger.w('⚠️ Failed to sync cookies from $domain: $e');
+          _logger.w('⚠️ Failed to save cookies from $domain: $e');
         }
       }
-      
+
       _logger.i('✅ Total synced $totalSynced cookies from all domains');
     } catch (e) {
       _logger.e('Failed to sync multi-domain cookies from WebView: $e');

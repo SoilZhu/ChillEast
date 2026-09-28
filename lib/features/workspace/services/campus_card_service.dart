@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/cookie_manager.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/utils/dkyw_crypto.dart';
 
 final campusCardServiceProvider = Provider((ref) => CampusCardService());
 
@@ -75,84 +75,166 @@ class CampusCardService {
   CampusCardInfo? _cachedInfo;
   CampusCardInfo? get cachedInfo => _cachedInfo;
 
-  /// 授权并获取 OpenID 和 Cookie
+  // 付款码缓存：服务端 60s 刷新一次，这里 55s TTL，命中则秒开，
+  // 后台再静默刷新（stale-while-revalidate）。
+  Map<String, dynamic>? _cachedPaymentCode;
+  DateTime? _paymentCodeFetchedAt;
+  static const _paymentCodeTtl = Duration(seconds: 55);
+
+  /// 55s 内有效的付款码缓存，命中可直接渲染首帧
+  Map<String, dynamic>? getCachedPaymentCode() {
+    final cache = _cachedPaymentCode;
+    final at = _paymentCodeFetchedAt;
+    if (cache == null || at == null) return null;
+    if (DateTime.now().difference(at) > _paymentCodeTtl) return null;
+    if (cache['openid'] != _openid) return null;
+    return cache;
+  }
+
+  /// 缓存剩余有效秒数（用于恢复倒计时，避免旧码显示满 60s）
+  int paymentCodeRemainingSeconds() {
+    final at = _paymentCodeFetchedAt;
+    if (_cachedPaymentCode == null || at == null) return 0;
+    return (60 - DateTime.now().difference(at).inSeconds).clamp(0, 60);
+  }
+
+  /// 授权并获取 OpenID（纯 HTTP，不再使用 WebView）
+  ///
+  /// 对齐 `debug/付款码/finserv授权.har`：整条链是纯 302 跳转，不需要执行 JS：
+  /// `auth.chaoxing/authorize -> homecx/openCXOAuthPage -> homeCX/openHomePage?openid=..`。
+  /// Dio 跟随跳转即可拿到 `openid`，会话 Cookie 由 Dio CookieJar 自动沉淀。
+  /// 落到 `errorPage`（资源受限/页面丢失）即判失败，不提取上面的旧 openid。
   Future<String?> authenticate() async {
-    _logger.i('🚀 Starting background authentication for Campus Card...');
-    
-    final completer = Completer<String?>();
-    HeadlessInAppWebView? webView;
-
+    _logger.i('🚀 Starting HTTP authentication for Campus Card...');
     try {
-      webView = HeadlessInAppWebView(
-        initialUrlRequest: URLRequest(url: WebUri(AppConstants.campusCardUrl)),
-        initialSettings: InAppWebViewSettings(
-          javaScriptEnabled: true,
-          domStorageEnabled: true,
-          userAgent: AppConstants.campusCardUA,
-          loadsImagesAutomatically: false,
-        ),
-        onLoadStart: (controller, url) async {
-          final urlString = url?.toString() ?? '';
-          _logger.d('🔗 OAuth LoadStart: $urlString');
-          
-          if (urlString.contains('fin-serv.hunau.edu.cn/home/openHomePage')) {
-            final uri = Uri.parse(urlString);
-            final id = uri.queryParameters['openid'];
-            if (id != null) {
-              _openid = id;
-              _logger.i('✅ Extracted OpenID: $_openid');
-              
-              // 同步 Cookie
-              await AppCookieManager().syncMultiDomainCookiesFromWebView(urlString);
-              if (!completer.isCompleted) completer.complete(_openid);
-            }
-          }
-        },
-        onLoadStop: (controller, url) async {
-           final urlString = url?.toString() ?? '';
-           _logger.d('🏁 OAuth LoadStop: $urlString');
-           
-           if (urlString.contains('openid=')) {
-              final uri = Uri.parse(urlString);
-              final id = uri.queryParameters['openid'];
-              if (id != null && !completer.isCompleted) {
-                _openid = id;
-                _logger.i('✅ Extracted OpenID (onLoadStop): $_openid');
-                await AppCookieManager().syncMultiDomainCookiesFromWebView(urlString);
-                completer.complete(_openid);
-              }
-           }
-        }
-      );
+      final dio = DioClient().dio;
 
-      await webView.run();
-      
-      // 30秒超时
-      final result = await completer.future.timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          _logger.e('❌ Campus Card Authentication timeout');
-          return null;
-        },
-      );
-      
-      return result;
-    } catch (e) {
-      _logger.e('❌ Campus Card Authentication failed: $e');
+      // 诊断：超星登录态还在不在？auth 302 依赖 Chaoxing Cookie，
+      // 为 0 基本就是登录过期，fin-serv 必回 errorPage。
+      try {
+        final chaoxingCookies = await AppCookieManager()
+            .dioCookieJar
+            .loadForRequest(Uri.parse('https://auth.chaoxing.com/'));
+        _logger
+            .d('🔗 Chaoxing cookies for auth: ${chaoxingCookies.length}');
+      } catch (_) {}
+
+      // 手动跟随 302（HAR 共 4 跳：auth.chaoxing -> http homecx ->
+      // https homecx -> http homeCX -> https homeCX），逐跳打日志，
+      // 才能定位到底哪一跳开始偏离 HAR。
+      String? url = AppConstants.campusCardUrl;
+      String? referer;
+      Response? lastResponse;
+      for (var step = 0; step < 10 && url != null; step++) {
+        final response = await dio.get(
+          url,
+          options: Options(
+            headers: {
+              'User-Agent': AppConstants.campusCardUA,
+              'Accept':
+                  'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+              'Accept-Language': 'zh-CN,zh;q=0.9',
+              'Upgrade-Insecure-Requests': '1',
+              if (referer != null) 'Referer': referer,
+            },
+            followRedirects: false,
+            maxRedirects: 0,
+            responseType: ResponseType.plain,
+            validateStatus: (status) => status != null && status < 500,
+          ),
+        );
+        final status = response.statusCode ?? 0;
+        final location = response.headers.value('location') ?? '';
+        final setCookies = response.headers['set-cookie'] ?? [];
+        final cookieNames = setCookies
+            .map((c) => c.split(';').first.split('=').first.trim())
+            .where((n) => n.isNotEmpty)
+            .join(',');
+        final bodyLen = response.data?.toString().length ?? 0;
+        _logger.d(
+            '🔗 auth step $step: $status $url -> ${location.isEmpty ? '(body $bodyLen chars)' : location} [set-cookie: ${cookieNames.isEmpty ? 'none' : cookieNames}]');
+        lastResponse = response;
+        if (status >= 300 && status < 400 && location.isNotEmpty) {
+          referer = url;
+          url = Uri.parse(url).resolve(location).toString();
+          if (url.contains('errorPage')) {
+            _logger.w('⚠️ HTTP auth hit errorPage at step $step: $url');
+            return null;
+          }
+          continue;
+        }
+        url = null;
+      }
+
+      final finalUri = lastResponse?.realUri ?? Uri.parse('');
+      final body = lastResponse?.data?.toString() ?? '';
+      _logger.d('🔗 HTTP auth final URL: $finalUri');
+
+      if (finalUri.path.contains('errorPage') ||
+          body.contains('资源受限') ||
+          body.contains('页面丢失')) {
+        _logger.w('⚠️ HTTP auth landed on errorPage (resource limited)');
+        return null;
+      }
+
+      String? openid = finalUri.queryParameters['openid'];
+      openid ??= RegExp(r'openHomePage\?openid=([A-Za-z0-9]+)')
+          .firstMatch(body)
+          ?.group(1);
+      openid ??= RegExp(r'''openid["'=:\s]+([A-Fa-f0-9]{32,})''')
+          .firstMatch('$body $finalUri')
+          ?.group(1);
+
+      if (openid != null && openid.isNotEmpty) {
+        _openid = openid;
+        _logger.i('✅ HTTP auth extracted OpenID: $_openid');
+        return _openid;
+      }
+
+      _logger.w('⚠️ HTTP auth: no openid in $finalUri');
       return null;
-    } finally {
-      webView?.dispose();
+    } catch (e) {
+      _logger.w('⚠️ HTTP auth error: $e');
+      return null;
     }
   }
 
   /// 获取付款码详情 (Base64 和 PayCode)
-  Future<Map<String, dynamic>> fetchPaymentCode({bool isRetry = false}) async {
+  ///
+  /// [forceRefresh] 为 true 时跳过 55s 缓存（倒计时归零、手动点码刷新、
+  /// 支付完成后重拉走这条）；首进页面传 false 以便缓存秒开。
+  Future<Map<String, dynamic>> fetchPaymentCode(
+      {bool isRetry = false, bool forceRefresh = false}) async {
     // 确保已授权
-    if (_openid == null) {
+    final justAuthenticated = _openid == null;
+    if (justAuthenticated) {
       final authResult = await authenticate();
       if (authResult == null) throw Exception('授权失败，无法获取付款码');
+      // 刚建好会话后，先用 Dio 摸一下 openHomePage 把 fin-serv 会话预热起来，
+      // 再打 openVirtualcard，否则大概率 errorPage/资源受限。
+      try {
+        await DioClient().dio.get(
+          'https://fin-serv.hunau.edu.cn/homeCX/openHomePage?openid=$_openid&usertype=2',
+          options: Options(
+            headers: {'User-Agent': AppConstants.campusCardUA},
+            responseType: ResponseType.plain,
+            validateStatus: (status) => status != null && status < 500,
+          ),
+        );
+      } catch (e) {
+        _logger.w('⚠️ Session warmup failed (non-fatal): $e');
+      }
     }
-    
+
+    // 55s 缓存命中则秒开（调用方后台再静默刷新）；重试/强制刷新跳过
+    if (!isRetry && !forceRefresh) {
+      final cached = getCachedPaymentCode();
+      if (cached != null) {
+        _logger.d('⚡ Payment code served from cache');
+        return cached;
+      }
+    }
+
     final dio = DioClient().dio;
     final url = 'https://fin-serv.hunau.edu.cn/virtualcard/openVirtualcard?openid=$_openid&displayflag=1&id=27';
     
@@ -164,22 +246,39 @@ class CampusCardService {
         options: Options(
           headers: {
             'User-Agent': AppConstants.campusCardUA,
-            'Referer': 'https://fin-serv.hunau.edu.cn/home/openHomePage?openid=$_openid',
+            'Referer':
+                'https://fin-serv.hunau.edu.cn/homeCX/openHomePage?openid=$_openid&usertype=2',
           },
+          responseType: ResponseType.plain,
+          validateStatus: (status) => status != null && status < 500,
         ),
       );
 
       if (response.statusCode == 200 && response.data != null) {
         final html = response.data.toString();
-        
+        // Dio 默认跟随 302：会话失效时最终会落到 errorPage（200 + 资源受限文案），
+        // 必须连 realUri 一起判，否则仅查 body 容易漏。
+        final landedOnErrorPage =
+            response.realUri.path.contains('errorPage');
+        final isResourceLimited =
+            html.contains('资源受限') || html.contains('页面丢失');
+
         // ✨ 检测会话过期：如果 HTML 包含登录关键字且不包含支付码关键字
-        if (((html.contains('cas/login') || html.contains('统一身份认证')) && !html.contains('id="qrcode"')) || 
-            html.contains('资源受限') || html.contains('页面丢失')) {
-          _logger.w('⚠️ Session expired or error page detected in fetchPaymentCode: ${html.contains('资源受限') ? '资源受限' : '会话过期'}');
+        if (((html.contains('cas/login') || html.contains('统一身份认证')) && !html.contains('id="qrcode"')) ||
+            landedOnErrorPage ||
+            isResourceLimited) {
+          _logger.w('⚠️ Session expired or error page detected in fetchPaymentCode: ${isResourceLimited ? '资源受限' : landedOnErrorPage ? 'errorPage:${response.realUri}' : '会话过期'}');
           if (!isRetry) {
             _openid = null; // 清除无效的 OpenID
+            _cachedPaymentCode = null; // 会话失效，旧码不可再用
+            _paymentCodeFetchedAt = null;
             await _clearDomainCookies(); // ✨ 清除该域名的 Cookie 强制重新授权
             return fetchPaymentCode(isRetry: true);
+          }
+          // 重试一次仍是资源受限：服务端限流而非客户端 Cookie 问题，
+          // 抛可读错误让 UI 直接展示，不再进通用“解析失败”。
+          if (isResourceLimited || landedOnErrorPage) {
+            throw Exception('资源受限，页面丢失，请稍后重试');
           }
         }
 
@@ -209,17 +308,23 @@ class CampusCardService {
           // 如果还是解析不到，且不是重试，则尝试重试一次
           if (!isRetry) {
             _openid = null;
+            _cachedPaymentCode = null;
+            _paymentCodeFetchedAt = null;
             return fetchPaymentCode(isRetry: true);
           }
           throw Exception('解析付款码页面失败');
         }
 
-        return {
+        final result = {
           'qrBase64': qrBase64,
           'paycode': paycode,
           'info': infoText ?? _cachedInfo?.toString(),
           'openid': _openid,
         };
+        // 成功即缓存，供下次进页秒开（55s TTL，服务端 60s 刷新）
+        _cachedPaymentCode = result;
+        _paymentCodeFetchedAt = DateTime.now();
+        return result;
       }
       
       throw Exception('网络请求失败: ${response.statusCode}');
@@ -284,8 +389,11 @@ class CampusCardService {
         options: Options(
           headers: {
             'User-Agent': AppConstants.campusCardUA,
-            'Referer': 'https://fin-serv.hunau.edu.cn/home/openHomePage?openid=$_openid',
+            'Referer':
+                'https://fin-serv.hunau.edu.cn/homeCX/openHomePage?openid=$_openid&usertype=2',
           },
+          responseType: ResponseType.plain,
+          validateStatus: (status) => status != null && status < 500,
         ),
       );
 
@@ -317,12 +425,16 @@ class CampusCardService {
           _deepScanInfo(html);
         }
 
-        // 3. 如果还是没有满意的结果，尝试请求主页 (Home Page) 
+        // 3. 如果还是没有满意的结果，尝试请求主页 (Home Page)
         if (_cachedInfo == null || _cachedInfo!.balance == '0.00' || _cachedInfo!.balance.isEmpty) {
           _logger.w('⚠️ Balance still missing, trying openHomePage...');
           final homeResponse = await dio.get(
-            'https://fin-serv.hunau.edu.cn/home/openHomePage?openid=$_openid',
-            options: Options(headers: {'User-Agent': AppConstants.campusCardUA}),
+            'https://fin-serv.hunau.edu.cn/homeCX/openHomePage?openid=$_openid&usertype=2',
+            options: Options(
+              headers: {'User-Agent': AppConstants.campusCardUA},
+              responseType: ResponseType.plain,
+              validateStatus: (status) => status != null && status < 500,
+            ),
           );
           if (homeResponse.data != null) {
              _deepScanInfo(homeResponse.data.toString());
@@ -621,36 +733,52 @@ class CampusCardService {
   }
 
   /// 查询订单状态
+  ///
+  /// 对齐 HAR（`debug/付款码/付款码.har` entry 2-5）：
+  /// 请求为 `GET queryOrderStatus?openid=..&connect_redirect=1&datajson=..`，
+  /// 其中 `datajson = DkywCrypto.encryptPayload({'paycode': .., 'openid': ..})`；
+  /// 响应为 `{"datajson": ".."}`，需 `DkywCrypto.decryptServerResponse` 解出
+  /// `{"success": true, "resultData": {"status": "5/1/.."}}`。
+  /// `status`: `1` 成功，`5` 未使用（空闲，继续轮询），其它按失败处理。
   Future<Map<String, dynamic>> queryOrderStatus(String paycode) async {
     if (_openid == null) throw Exception('未授权 (OpenID 为空)');
-    
+
     final dio = DioClient().dio;
     const url = 'https://fin-serv.hunau.edu.cn/virtualcard/queryOrderStatus';
-    
+    final payload = {'paycode': paycode, 'openid': _openid};
+
     try {
       final response = await dio.get(
         url,
         queryParameters: {
           'openid': _openid,
-          'paycode': paycode,
           'connect_redirect': '1',
+          'datajson': DkywCrypto.encryptPayload(payload),
         },
         options: Options(
           headers: {
             'User-Agent': AppConstants.campusCardUA,
             'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
             'Referer': 'https://fin-serv.hunau.edu.cn/virtualcard/openVirtualcard?openid=$_openid&displayflag=1&id=27',
           },
+          responseType: ResponseType.plain,
+          validateStatus: (status) => status != null && status < 500,
         ),
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        if (response.data is String) {
-          return jsonDecode(response.data as String) as Map<String, dynamic>;
+        final decrypted =
+            DkywCrypto.decryptServerResponse(response.data.toString());
+        if (decrypted is Map<String, dynamic>) return decrypted;
+        if (decrypted is Map) return Map<String, dynamic>.from(decrypted);
+        // 兼容服务端直接返回明文 JSON 的情况
+        if (response.data is Map) {
+          return Map<String, dynamic>.from(response.data as Map);
         }
-        return response.data as Map<String, dynamic>;
+        throw Exception('查询状态失败：响应格式异常');
       }
-      
+
       throw Exception('查询状态失败: ${response.statusCode}');
     } catch (e) {
       _logger.e('❌ queryOrderStatus error: $e');
@@ -660,23 +788,18 @@ class CampusCardService {
 
   String getCampusCardHomeUrl() {
     if (_openid == null) return AppConstants.campusCardUrl;
-    return 'https://fin-serv.hunau.edu.cn/home/openHomePage?openid=$_openid';
+    return 'https://fin-serv.hunau.edu.cn/homeCX/openHomePage?openid=$_openid&usertype=2';
   }
 
-  /// 清除该业务域名的所有 Cookie
+  /// 清除该业务域名的所有 Cookie（纯 HTTP：只清 Dio jar）
   Future<void> _clearDomainCookies() async {
     try {
       _logger.i('🧹 Clearing fin-serv.hunau.edu.cn cookies...');
       final cookieManager = AppCookieManager();
       final dioCookieJar = cookieManager.dioCookieJar;
-      
-      // 1. 清除 Dio Cookie
+
       await dioCookieJar.delete(Uri.parse('https://fin-serv.hunau.edu.cn'));
-      
-      // 2. 清除 WebView Cookie
-      final webViewCookieManager = CookieManager.instance();
-      await webViewCookieManager.deleteCookies(url: WebUri('https://fin-serv.hunau.edu.cn'));
-      
+
       _logger.i('✅ Domain cookies cleared');
     } catch (e) {
       _logger.w('⚠️ Failed to clear domain cookies: $e');

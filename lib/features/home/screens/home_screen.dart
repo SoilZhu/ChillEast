@@ -68,6 +68,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     _loadPreviewCourses();
+    // 预热付款码：进 App 即后台拉一次 openVirtualcard，
+    // 点进付款码页直接秒开（服务层 55s 缓存去重，未登录则静默跳过）。
+    if (ref.read(authStateProvider).status == AuthStatus.authenticated) {
+      final svc = ref.read(campusCardServiceProvider);
+      Future(() async {
+        try {
+          await svc.fetchPaymentCode();
+        } catch (_) {}
+      });
+    }
   }
 
   @override
