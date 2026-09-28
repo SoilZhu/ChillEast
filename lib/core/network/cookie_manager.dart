@@ -353,6 +353,8 @@ class AppCookieManager {
   Future<void> injectAllChaoxingCookies() async {
     if (!_initialized) await initialize();
     final domains = [
+      'https://auth.chaoxing.com',
+      'http://auth.chaoxing.com',
       'http://chaoxing.com',
       'https://chaoxing.com',
       'https://passport2.chaoxing.com',
