@@ -279,29 +279,29 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
 
   void _handleTodayClick() {
     if (_tabController.index == 0) {
-      _scrollToToday();
+      _scrollToToday(animate: true);
     } else {
       _weeklyKey.currentState?.jumpToToday();
     }
   }
 
-  void _scrollToToday() {
+  void _scrollToToday({bool animate = false}) {
     if (_todayIndex <= 0 || !mounted) return;
 
     // 立即尝试跳转（如果已经有 clients）
     if (_agendaScrollController.hasClients) {
-      _performScroll();
+      _performScroll(animate: animate);
     }
 
     // 保底：在下一帧再次尝试（确保内容已渲染）
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _agendaScrollController.hasClients) {
-        _performScroll();
+        _performScroll(animate: animate);
       }
     });
   }
 
-  void _performScroll() {
+  void _performScroll({bool animate = false}) {
     double offset = 0;
     for (int i = 0; i < _todayIndex; i++) {
       // 月份标题高度 (40px)
@@ -315,7 +315,15 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
       if (sectionHeight < 84) sectionHeight = 84;
       offset += sectionHeight;
     }
-    _agendaScrollController.jumpTo(offset);
+    if (animate) {
+      _agendaScrollController.animateTo(
+        offset,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+      );
+    } else {
+      _agendaScrollController.jumpTo(offset);
+    }
   }
 
   /// 手动刷新课表（不受自动同步开关影响，关闭自动同步后仍可用）
@@ -560,11 +568,13 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
     return TabBarView(
       controller: _tabController,
       children: [
-        _buildAgendaView(),
-        WeeklyCalendarView(
-          key: _weeklyKey,
-          courses: _courses,
-          firstWeekMonday: _firstWeekMonday!,
+        _KeepAliveWrapper(child: _buildAgendaView()),
+        _KeepAliveWrapper(
+          child: WeeklyCalendarView(
+            key: _weeklyKey,
+            courses: _courses,
+            firstWeekMonday: _firstWeekMonday!,
+          ),
         ),
       ],
     );
@@ -859,3 +869,26 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
     );
   }
 }
+
+/// 用于在 TabBarView 中保活子页面状态的包装组件
+class _KeepAliveWrapper extends StatefulWidget {
+  final Widget child;
+
+  const _KeepAliveWrapper({required this.child});
+
+  @override
+  State<_KeepAliveWrapper> createState() => _KeepAliveWrapperState();
+}
+
+class _KeepAliveWrapperState extends State<_KeepAliveWrapper>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
+  }
+}
+

@@ -29,7 +29,9 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
     // 0: 存档, 1: 已完成, 2: 未完成. 初始选中 2
     _tabController = TabController(length: 3, vsync: this, initialIndex: 2);
     _tabController.addListener(() {
-      setState(() {}); // 移除 indexIsChanging 判断，使动画并行执行
+      if (!_tabController.indexIsChanging) {
+        setState(() {});
+      }
     });
   }
 
@@ -172,29 +174,58 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
     );
   }
 
-  Tab _buildDynamicTab({required int index, required IconData icon, required String label}) {
-    final bool isActive = _tabController.index == index;
-    return Tab(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 20),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOutCubic,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 200),
-              opacity: isActive ? 1.0 : 0.0,
-              child: isActive 
-                ? Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: Text(label, style: const TextStyle(fontSize: 16)),
-                  )
-                : const SizedBox.shrink(),
-            ),
+  Widget _buildDynamicTab({required int index, required IconData icon, required String label}) {
+    return AnimatedBuilder(
+      animation: _tabController.animation!,
+      builder: (context, _) {
+        final double value = _tabController.animation?.value ?? _tabController.index.toDouble();
+        double progress;
+        if (_tabController.indexIsChanging) {
+          final int from = _tabController.previousIndex;
+          final int to = _tabController.index;
+          if (from == to) {
+            progress = (index == to) ? 1.0 : 0.0;
+          } else {
+            final double t = ((value - from) / (to - from)).clamp(0.0, 1.0);
+            if (index == to) {
+              progress = t;
+            } else if (index == from) {
+              progress = 1.0 - t;
+            } else {
+              progress = 0.0;
+            }
+          }
+        } else {
+          progress = (1.0 - (value - index).abs()).clamp(0.0, 1.0);
+        }
+
+        return Tab(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20),
+              ClipRect(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: progress,
+                  child: Opacity(
+                    opacity: progress,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Text(
+                        label,
+                        style: const TextStyle(fontSize: 16),
+                        maxLines: 1,
+                        softWrap: false,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
