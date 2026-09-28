@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/utils/route_utils.dart';
 import '../../../core/utils/l10n_extension.dart';
 import 'button_reorder_screen.dart';
+import 'widget_settings_screen.dart';
 
 class AppearanceSettingsScreen extends StatelessWidget {
   const AppearanceSettingsScreen({super.key});
@@ -68,6 +69,17 @@ class AppearanceSettingsScreen extends StatelessWidget {
                   title: l10n.feedButtonsTitle,
                   listType: 'feed',
                 )),
+              );
+            },
+          ),
+          _buildSettingItem(
+            context,
+            icon: Icons.widgets_outlined,
+            title: l10n.widgetSettings,
+            onTap: () {
+              Navigator.push(
+                context,
+                createSlideUpRoute(const WidgetSettingsScreen()),
               );
             },
           ),

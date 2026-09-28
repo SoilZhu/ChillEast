@@ -264,6 +264,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dragToReorderTip => '长按拖动图标，移入不同区域可显示或隐藏功能';
 
   @override
+  String get widgetSettings => '桌面小组件';
+
+  @override
+  String get widgetQuickTitle => '快捷功能（选择 4 个）';
+
+  @override
+  String get widgetQuickHint => '小组件的快捷入口独立于首页，可单独配置';
+
+  @override
+  String get widgetHowToAdd => '回到手机桌面，长按空白处添加「今日日程」「快捷功能」「日程 + 快捷」小组件';
+
+  @override
+  String get widgetNeedFour => '请选择 4 个功能';
+
+  @override
+  String get widgetSaved => '已保存，小组件将自动刷新';
+
+  @override
+  String get widgetRefreshed => '小组件数据已刷新';
+
+  @override
+  String get widgetRefresh => '立即刷新小组件';
+
+  @override
   String get loginRequiredTitle => '需要登录以查看内容';
 
   @override

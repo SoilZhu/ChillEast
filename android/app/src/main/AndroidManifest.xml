@@ -71,6 +71,32 @@
             </intent-filter>
         </receiver>
 
+        <!-- 桌面小组件：今日日程 / 快捷功能 / 日程+快捷长条 -->
+        <receiver android:exported="false" android:name="su.soilzhu.chilleast.AgendaWidgetProvider" android:label="@string/widget_agenda_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/agenda_widget_info" />
+        </receiver>
+        <receiver android:exported="false" android:name="su.soilzhu.chilleast.QuickWidgetProvider" android:label="@string/widget_quick_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/quick_widget_info" />
+        </receiver>
+        <receiver android:exported="false" android:name="su.soilzhu.chilleast.ComboWidgetProvider" android:label="@string/widget_combo_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/combo_widget_info" />
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileProvider"

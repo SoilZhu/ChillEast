@@ -12,10 +12,30 @@ class MainActivity : FlutterActivity() {
         private const val LIVE_CHANNEL = "course_live"
         private const val FLYME_CHANNEL = "flyme_live"
         private const val ALARM_CHANNEL = "live_alarm"
+        private const val WIDGET_CHANNEL = "home_widget"
+
+        /** 桌面小组件点进来的待处理动作，Flutter 侧取走后清空（进程死亡自动失效） */
+        @Volatile
+        var pendingWidgetAction: String? = null
+            private set
+
+        fun consumeWidgetAction(): String? {
+            val action = pendingWidgetAction
+            pendingWidgetAction = null
+            return action
+        }
+
+        private fun storeWidgetIntent(intent: android.content.Intent?) {
+            val action = intent?.getStringExtra(WidgetIntents.EXTRA_ACTION)
+            if (!action.isNullOrEmpty()) {
+                pendingWidgetAction = action
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        storeWidgetIntent(intent)
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             val isImagePickerCrash = throwable.stackTrace?.any {
@@ -33,6 +53,23 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, WIDGET_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                val ctx = applicationContext
+                when (call.method) {
+                    "updateWidgets" -> {
+                        try {
+                            HomeWidgets.updateAll(ctx)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.error("UPDATE_FAILED", e.message, null)
+                        }
+                    }
+                    "getInitialWidgetAction" ->
+                        result.success(consumeWidgetAction())
+                    else -> result.notImplemented()
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, LIVE_CHANNEL)
             .setMethodCallHandler { call, result ->
                 val ctx = applicationContext
@@ -130,5 +167,11 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        storeWidgetIntent(intent)
     }
 }

@@ -9,6 +9,10 @@ final appearanceProvider = StateNotifierProvider<AppearanceNotifier, AppearanceS
 });
 
 class AppearanceNotifier extends StateNotifier<AppearanceState> {
+  /// 供桌面小组件配置页复用的全量功能池（含图标与配色）。
+  static List<FunctionItem> get masterPool =>
+      List<FunctionItem>.unmodifiable(_masterPool);
+
   static const String _homeItemsKey = 'home_function_items';
   static const String _functionItemsKey = 'function_page_items';
   static const String _feedItemsKey = 'home_feed_items';
