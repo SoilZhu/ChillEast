@@ -1,9 +1,15 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/profile/providers/settings_provider.dart';
+import '../../features/cloudisk/screens/cloud_sync_prompt_screen.dart';
+import '../../features/cloudisk/services/cloud_backup_manager.dart';
+import '../../features/library/services/library_storage.dart';
+import '../../features/workspace/services/electricity_service.dart';
 import '../utils/secure_storage_helper.dart';
 import '../network/cookie_manager.dart';
 import '../../features/homework/providers/homework_provider.dart';
@@ -299,7 +305,45 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await _ref.read(leaveCacheProvider.notifier).clear();
     await _ref.read(repairCacheProvider.notifier).clear();
 
+    // 退出登录时清空图书馆预约、电费房间等剩余本地数据
+    await LibraryStorage.clearReserves();
+    try {
+      await _ref.read(electricityServiceProvider).clearSavedRoom();
+    } catch (e) {
+      _logger.w('⚠️ Clear saved electricity room on logout failed: $e');
+    }
+
+    // 退出登录时重置云备份状态（待同步任务、槽位定位、开关）
+    await CloudBackupManager.instance.resetOnLogout();
+    try {
+      await _ref.read(settingsProvider.notifier).reload();
+    } catch (e) {
+      _logger.w('⚠️ Reload settings after logout failed: $e');
+    }
+
+    // 退出登录时删除本地头像文件
+    await _deleteLocalAvatars();
+
     state = const AuthState.initial();
+  }
+
+  /// 删除文档目录下的本地头像缓存（avatar_<uid>.png）。
+  Future<void> _deleteLocalAvatars() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      await for (final entity in dir.list()) {
+        final name = entity.path.split(Platform.pathSeparator).last;
+        if (entity is File &&
+            name.startsWith('avatar_') &&
+            name.endsWith('.png')) {
+          try {
+            await entity.delete();
+          } catch (_) {}
+        }
+      }
+    } catch (e) {
+      _logger.w('⚠️ Delete local avatars on logout failed: $e');
+    }
   }
 
   /// 设置状态为正在登录
@@ -317,6 +361,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = AuthState.authenticated(username: username).copyWith(
         isInitialized: true,
       );
+
+      // 手动登录成功且未做过同步推荐决策时，推一屏推荐页
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        if (prefs.getBool(CloudBackupManager.promptDecidedKey) != true) {
+          _ref.read(cloudSyncPromptPendingProvider.notifier).state = true;
+        }
+      } catch (_) {}
 
       // 首帧之后再启动非认证业务，登录页可以立即关闭。
       _schedulePostLoginWork(username, includeLibrary: true);

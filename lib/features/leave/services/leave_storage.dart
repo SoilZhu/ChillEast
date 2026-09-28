@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../cloudisk/services/cloud_backup_manager.dart';
 import '../models/leave_models.dart';
 
 /// 请假记录本地缓存（首页“请假申请”展示用）
@@ -33,6 +34,7 @@ class LeaveStorage {
         _cachedItemsKey,
         jsonEncode(items.map((e) => e.toJson()).toList()),
       );
+      CloudBackupManager.instance.markDirty();
       _logger.d('💾 Saved ${items.length} leaves to local cache');
     } catch (e) {
       _logger.e('❌ Failed to save leaves to cache: $e');

@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/services/background_worker.dart';
 import '../../../core/services/live_scheduler.dart';
+import '../../cloudisk/services/cloud_backup_manager.dart';
 import '../../timetable/services/timetable_storage.dart';
 import '../../homework/services/homework_storage.dart';
 import '../../library/services/library_storage.dart';
@@ -14,6 +15,7 @@ class SettingsState {
   final bool courseLiveEnabled; // Android 16+ Live Updates 实时活动开关
   final bool flymeLiveEnabled; // Flyme 12+ 实况通知开关（与 courseLiveEnabled 互斥）
   final bool timetableAutoSyncEnabled; // 登录后自动同步课表总开关（默认开）
+  final bool cloudBackupAutoSyncEnabled; // 本地更改后自动同步备份到云盘（默认关）
   final String? manualFirstWeekMondayIso; // 手动指定的本学期第一周周一（ISO 日期，无则 null）
 
   SettingsState({
@@ -23,6 +25,7 @@ class SettingsState {
     this.courseLiveEnabled = false,
     this.flymeLiveEnabled = false,
     this.timetableAutoSyncEnabled = true,
+    this.cloudBackupAutoSyncEnabled = false,
     this.manualFirstWeekMondayIso,
   });
 
@@ -33,6 +36,7 @@ class SettingsState {
     bool? courseLiveEnabled,
     bool? flymeLiveEnabled,
     bool? timetableAutoSyncEnabled,
+    bool? cloudBackupAutoSyncEnabled,
     String? manualFirstWeekMondayIso,
   }) {
     return SettingsState(
@@ -45,6 +49,8 @@ class SettingsState {
       flymeLiveEnabled: flymeLiveEnabled ?? this.flymeLiveEnabled,
       timetableAutoSyncEnabled:
           timetableAutoSyncEnabled ?? this.timetableAutoSyncEnabled,
+      cloudBackupAutoSyncEnabled:
+          cloudBackupAutoSyncEnabled ?? this.cloudBackupAutoSyncEnabled,
       manualFirstWeekMondayIso:
           manualFirstWeekMondayIso ?? this.manualFirstWeekMondayIso,
     );
@@ -73,6 +79,10 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   /// 实际 key 定义在 TimetableStorage，这里只做别名。
   static const String timetableAutoSyncKey = TimetableStorage.autoSyncKey;
 
+  /// 云备份自动同步开关的持久化 key（默认关）。
+  /// 与 CloudBackupManager.toggleKey 同值，单源以 SharedPreferences 为准。
+  static const String cloudBackupAutoSyncKey = CloudBackupManager.toggleKey;
+
   SettingsNotifier([Ref? _])
       : super(SettingsState(
           reminderMinutes: 0,
@@ -91,6 +101,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     final liveEnabled = prefs.getBool(_courseLiveKey) ?? false;
     final flymeEnabled = prefs.getBool(_flymeLiveKey) ?? false;
     final autoSyncEnabled = prefs.getBool(timetableAutoSyncKey) ?? true;
+    final cloudBackupEnabled =
+        prefs.getBool(cloudBackupAutoSyncKey) ?? false;
     final storage = TimetableStorage();
     final manualMonday = await storage.readManualFirstWeekMonday();
     // 用户已在加载期间修改设置时，不能用旧快照覆盖新 state。
@@ -102,12 +114,16 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       courseLiveEnabled: liveEnabled,
       flymeLiveEnabled: flymeEnabled,
       timetableAutoSyncEnabled: autoSyncEnabled,
+      cloudBackupAutoSyncEnabled: cloudBackupEnabled,
       manualFirstWeekMondayIso: manualMonday?.toIso8601String(),
     );
 
     // 初始化时也尝试安排一次通知
     await rescheduleNotifications();
   }
+
+  /// 备份导入后重新从持久化层加载并刷新通知排程。
+  Future<void> reload() => _loadSettings();
 
   Future<void> setReminderMinutes(int minutes) async {
     _settingsRevision++;
@@ -117,6 +133,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
     // 更改设置后，立即重新安排通知
     await rescheduleNotifications();
+    CloudBackupManager.instance.markDirty();
   }
 
   Future<void> setHomeworkReminderHours(double hours) async {
@@ -127,6 +144,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
     // 更改设置后，立即重新安排通知
     await rescheduleNotifications();
+    CloudBackupManager.instance.markDirty();
   }
 
   Future<void> setLibraryReminderMinutes(int minutes) async {
@@ -137,6 +155,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
     // 更改设置后，立即重新安排通知
     await rescheduleNotifications();
+    CloudBackupManager.instance.markDirty();
   }
 
   /// Android 16+ Live Updates 实时活动总开关（仅做持久化，不触碰旧排程）。
@@ -153,6 +172,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     }
     // 传统通知静默/恢复 + 实时闹钟重编排都在 reschedule 里一并处理
     await rescheduleNotifications();
+    CloudBackupManager.instance.markDirty();
   }
 
   /// Flyme 12+ 实况通知总开关（仅做持久化）。
@@ -168,6 +188,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       state = state.copyWith(flymeLiveEnabled: false);
     }
     await rescheduleNotifications();
+    CloudBackupManager.instance.markDirty();
   }
 
   /// 课表自动同步总开关（默认开）。
@@ -188,6 +209,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       // 注意：保留 timetable_rules.json 和元数据（firstWeekMonday）
       await rescheduleNotifications();
     }
+    CloudBackupManager.instance.markDirty();
   }
 
   /// 手动指定本学期第一周周一（仅自动同步关闭时可在课表设置页修改）。
@@ -200,6 +222,24 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     state = state.copyWith(
       manualFirstWeekMondayIso: saved?.toIso8601String(),
     );
+    CloudBackupManager.instance.markDirty();
+  }
+
+  /// 云备份自动同步总开关（默认关）。
+  /// 打开后先拉云端最新覆盖本地，云上没有才推本地上去；
+  /// 之后本地数据变更经 markDirty 去抖同步。
+  /// 返回首次同步结果，调用方在 pulled 时刷新 Provider。
+  Future<InitialSyncResult?> setCloudBackupAutoSyncEnabled(
+      bool enabled) async {
+    _settingsRevision++;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(cloudBackupAutoSyncKey, enabled);
+    state = state.copyWith(cloudBackupAutoSyncEnabled: enabled);
+
+    if (enabled) {
+      return CloudBackupManager.instance.initialSync();
+    }
+    return null;
   }
 
   Future<int> getPendingNotificationCount() {

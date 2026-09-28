@@ -2533,4 +2533,67 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get repairsSelectCategory => 'Select Repair Category';
+
+  @override
+  String get dataSyncSettings => 'Data sync';
+
+  @override
+  String get dataBackup => 'Export data';
+
+  @override
+  String get backupSecurityTip =>
+      'Backup excludes login credentials, but includes your custom AI key. Keep it safe.';
+
+  @override
+  String get backupShareText => 'My ChillEast data backup';
+
+  @override
+  String get backupExportSuccess =>
+      'Backup exported, choose where to save or share';
+
+  @override
+  String backupExportFailed(String error) {
+    return 'Export failed: $error';
+  }
+
+  @override
+  String get dataImport => 'Import data';
+
+  @override
+  String get dataImportConfirmTitle => 'Confirm restore?';
+
+  @override
+  String get dataImportConfirmMessage =>
+      'Restoring will overwrite current settings and local data. Continue?';
+
+  @override
+  String get dataImportSuccess => 'Backup restored';
+
+  @override
+  String dataImportFailed(String error) {
+    return 'Restore failed: $error';
+  }
+
+  @override
+  String get dataImportInvalidFile => 'Not a valid backup file';
+
+  @override
+  String get dataImportVersionTooNew =>
+      'Backup was created by a newer app version, please update first';
+
+  @override
+  String get cloudBackupAutoSync => 'Auto sync';
+
+  @override
+  String get cloudBackupAutoSyncSubtitle => 'Via Chaoxing cloud disk';
+
+  @override
+  String get cloudSyncPromptTitle => 'Enable auto sync';
+
+  @override
+  String get cloudSyncPromptMessage =>
+      'Auto-sync timetable, homework and other local data to Chaoxing cloud disk. You can turn it off anytime in Settings.';
+
+  @override
+  String get cloudSyncPromptEnable => 'Enable now';
 }

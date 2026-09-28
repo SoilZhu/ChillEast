@@ -2459,4 +2459,62 @@ class AppLocalizationsGan extends AppLocalizations {
 
   @override
   String get repairsSelectCategory => '选择报修类型';
+
+  @override
+  String get dataSyncSettings => '数据同步';
+
+  @override
+  String get dataBackup => '数据导出';
+
+  @override
+  String get backupSecurityTip => '备份不含登录密码，含自定义 AI Key，请妥善保管';
+
+  @override
+  String get backupShareText => '我的自在东湖数据备份';
+
+  @override
+  String get backupExportSuccess => '备份已导出，可选择保存或分享';
+
+  @override
+  String backupExportFailed(String error) {
+    return '导出失败: $error';
+  }
+
+  @override
+  String get dataImport => '数据导入';
+
+  @override
+  String get dataImportConfirmTitle => '确认导入？';
+
+  @override
+  String get dataImportConfirmMessage => '导入将覆盖当前设置与本地资料，是否继续？';
+
+  @override
+  String get dataImportSuccess => '备份已导入';
+
+  @override
+  String dataImportFailed(String error) {
+    return '导入失败: $error';
+  }
+
+  @override
+  String get dataImportInvalidFile => '不是有效的备份文件';
+
+  @override
+  String get dataImportVersionTooNew => '备份版本过新，请先升级 App 后再导入';
+
+  @override
+  String get cloudBackupAutoSync => '自动同步';
+
+  @override
+  String get cloudBackupAutoSyncSubtitle => '通过学习通网盘';
+
+  @override
+  String get cloudSyncPromptTitle => '开启自动同步';
+
+  @override
+  String get cloudSyncPromptMessage => '自动把课表、作业等本地数据同步到学习通网盘，换机也不丢，随时可在设置里关闭。';
+
+  @override
+  String get cloudSyncPromptEnable => '立即开启';
 }

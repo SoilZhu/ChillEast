@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/home_widget_service.dart';
+import '../../cloudisk/services/cloud_backup_manager.dart';
 import '../models/appearance_state.dart';
 
 final appearanceProvider = StateNotifierProvider<AppearanceNotifier, AppearanceState>((ref) {
@@ -223,6 +224,18 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     }
   }
 
+  /// 备份导入后重新从持久化层加载（新功能自动合并追加）。
+  Future<void> reload() async {
+    await _loadSettings();
+    final visibleWidgetIds =
+        state.widgetItems.where((e) => e.isVisible).map((e) => e.id).toList();
+    try {
+      await HomeWidgetService().saveWidgetQuickIds(visibleWidgetIds);
+    } catch (e) {
+      debugPrint('Error syncing widget items to HomeWidgetService: $e');
+    }
+  }
+
   /// 分组顺序合并：保留用户顺序，新分组追加到末尾
   List<String> _mergeGroupOrder(dynamic decoded) {
     final validKeys = functionGroups.map((g) => g.titleKey).toSet();
@@ -333,6 +346,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     } catch (e) {
       debugPrint('Error syncing widget items to HomeWidgetService: $e');
     }
+    CloudBackupManager.instance.markDirty();
   }
 
   void toggleItemVisibility(String listType, String itemId) {
