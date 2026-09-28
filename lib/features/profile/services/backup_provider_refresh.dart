@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ai/ai_provider.dart';
+import '../../../core/services/home_widget_service.dart';
 import '../../../core/state/locale_provider.dart';
 import '../../homework/providers/homework_provider.dart';
 import '../providers/appearance_provider.dart';
@@ -31,6 +32,9 @@ class BackupProviderRefresh {
     } catch (_) {}
     try {
       await ref.read(homeworkProvider.notifier).reloadFromStorage();
+    } catch (_) {}
+    try {
+      await HomeWidgetService().syncWidgets();
     } catch (_) {}
   }
 }

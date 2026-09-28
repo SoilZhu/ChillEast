@@ -225,7 +225,16 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
   }
 
   /// 备份导入后重新从持久化层加载（新功能自动合并追加）。
-  Future<void> reload() => _loadSettings();
+  Future<void> reload() async {
+    await _loadSettings();
+    final visibleWidgetIds =
+        state.widgetItems.where((e) => e.isVisible).map((e) => e.id).toList();
+    try {
+      await HomeWidgetService().saveWidgetQuickIds(visibleWidgetIds);
+    } catch (e) {
+      debugPrint('Error syncing widget items to HomeWidgetService: $e');
+    }
+  }
 
   /// 分组顺序合并：保留用户顺序，新分组追加到末尾
   List<String> _mergeGroupOrder(dynamic decoded) {

@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/ai/ai_service.dart';
+import '../../../core/services/home_widget_service.dart';
 import '../../../core/utils/secure_storage_helper.dart';
 
 /// 设置与本地资料导出（备份为单个 JSON 文件）。
@@ -75,6 +76,7 @@ class BackupExportService {
           'homeItems': _decodeJson(prefs.getString('home_function_items')),
           'functionItems': _decodeJson(prefs.getString('function_page_items')),
           'feedItems': _decodeJson(prefs.getString('home_feed_items')),
+          'widgetItems': _decodeJson(prefs.getString('widget_function_items')),
           'functionGroupOrder':
               _decodeJson(prefs.getString('function_group_order')),
           'hiddenFunctionGroups':
@@ -213,9 +215,30 @@ class BackupExportService {
       await _writePrefsJson(
           prefs, 'home_feed_items', appearance, 'feedItems');
       await _writePrefsJson(
+          prefs, 'widget_function_items', appearance, 'widgetItems');
+      await _writePrefsJson(
           prefs, 'function_group_order', appearance, 'functionGroupOrder');
       await _writePrefsJson(prefs, 'hidden_function_groups', appearance,
           'hiddenFunctionGroups');
+
+      if (appearance.containsKey('widgetItems')) {
+        final widgetItems = appearance['widgetItems'];
+        if (widgetItems is List) {
+          final quickIds = widgetItems
+              .whereType<Map>()
+              .where((item) => item['isVisible'] == true)
+              .map((item) => item['id']?.toString())
+              .where((id) =>
+                  id != null && HomeWidgetService.allFunctionIds.contains(id))
+              .take(4)
+              .cast<String>()
+              .toList();
+          await prefs.setString(
+              HomeWidgetService.quickIdsKey, jsonEncode(quickIds));
+        } else if (widgetItems == null) {
+          await prefs.remove(HomeWidgetService.quickIdsKey);
+        }
+      }
     }
     // —— 电费房间 ——
     if (settings.containsKey('electricityRoom')) {
