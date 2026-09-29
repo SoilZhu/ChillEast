@@ -1459,5 +1459,32 @@
   "cloudSyncPromptEnable": "立即开启",
   "@cloudSyncPromptEnable": {
     "description": "登录后同步推荐页开启按钮"
-  }
+  },
+  "bookSearch": "图书查询",
+  "bookSearchSubtitle": "检索馆藏图书与借阅状态",
+  "bookSearchHint": "搜索书名、作者、主题或标准编码...",
+  "bookSearchTotalCount": "共找到 {count} 本图书",
+  "@bookSearchTotalCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bookSearchLoading": "正在加载...",
+  "bookSearchEmpty": "未检索到相关图书",
+  "bookDetailTitle": "图书详情",
+  "holdingsTitle": "馆藏信息",
+  "barcode": "条码号",
+  "callNumber": "索书号",
+  "holdingLocation": "典藏地",
+  "holdingStatus": "状态",
+  "holdingUnit": "馆藏单位",
+  "copyType": "单册类型",
+  "accessionNo": "登录号",
+  "searchTypeTitle": "书名",
+  "searchTypeAuthor": "作者",
+  "searchTypeSubject": "主题",
+  "searchTypeIdentifier": "标准编码",
+  "statusInLibrary": "在库",
+  "statusBorrowed": "借出",
+  "search": "搜索"
 }

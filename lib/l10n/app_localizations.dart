@@ -4808,6 +4808,138 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'立即开启'**
   String get cloudSyncPromptEnable;
+
+  /// No description provided for @bookSearch.
+  ///
+  /// In zh, this message translates to:
+  /// **'图书查询'**
+  String get bookSearch;
+
+  /// No description provided for @bookSearchSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'检索馆藏图书与借阅状态'**
+  String get bookSearchSubtitle;
+
+  /// No description provided for @bookSearchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索书名、作者、主题或标准编码...'**
+  String get bookSearchHint;
+
+  /// No description provided for @bookSearchTotalCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'共找到 {count} 本图书'**
+  String bookSearchTotalCount(int count);
+
+  /// No description provided for @bookSearchLoading.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在加载...'**
+  String get bookSearchLoading;
+
+  /// No description provided for @bookSearchEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'未检索到相关图书'**
+  String get bookSearchEmpty;
+
+  /// No description provided for @bookDetailTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'图书详情'**
+  String get bookDetailTitle;
+
+  /// No description provided for @holdingsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'馆藏信息'**
+  String get holdingsTitle;
+
+  /// No description provided for @barcode.
+  ///
+  /// In zh, this message translates to:
+  /// **'条码号'**
+  String get barcode;
+
+  /// No description provided for @callNumber.
+  ///
+  /// In zh, this message translates to:
+  /// **'索书号'**
+  String get callNumber;
+
+  /// No description provided for @holdingLocation.
+  ///
+  /// In zh, this message translates to:
+  /// **'典藏地'**
+  String get holdingLocation;
+
+  /// No description provided for @holdingStatus.
+  ///
+  /// In zh, this message translates to:
+  /// **'状态'**
+  String get holdingStatus;
+
+  /// No description provided for @holdingUnit.
+  ///
+  /// In zh, this message translates to:
+  /// **'馆藏单位'**
+  String get holdingUnit;
+
+  /// No description provided for @copyType.
+  ///
+  /// In zh, this message translates to:
+  /// **'单册类型'**
+  String get copyType;
+
+  /// No description provided for @accessionNo.
+  ///
+  /// In zh, this message translates to:
+  /// **'登录号'**
+  String get accessionNo;
+
+  /// No description provided for @searchTypeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'书名'**
+  String get searchTypeTitle;
+
+  /// No description provided for @searchTypeAuthor.
+  ///
+  /// In zh, this message translates to:
+  /// **'作者'**
+  String get searchTypeAuthor;
+
+  /// No description provided for @searchTypeSubject.
+  ///
+  /// In zh, this message translates to:
+  /// **'主题'**
+  String get searchTypeSubject;
+
+  /// No description provided for @searchTypeIdentifier.
+  ///
+  /// In zh, this message translates to:
+  /// **'标准编码'**
+  String get searchTypeIdentifier;
+
+  /// No description provided for @statusInLibrary.
+  ///
+  /// In zh, this message translates to:
+  /// **'在库'**
+  String get statusInLibrary;
+
+  /// No description provided for @statusBorrowed.
+  ///
+  /// In zh, this message translates to:
+  /// **'借出'**
+  String get statusBorrowed;
+
+  /// No description provided for @search.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索'**
+  String get search;
 }
 
 class _AppLocalizationsDelegate

@@ -2596,4 +2596,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cloudSyncPromptEnable => 'Enable now';
+
+  @override
+  String get bookSearch => 'Book Search';
+
+  @override
+  String get bookSearchSubtitle => 'Search library catalog & holdings';
+
+  @override
+  String get bookSearchHint =>
+      'Search by title, author, subject, or standard code...';
+
+  @override
+  String bookSearchTotalCount(int count) {
+    return 'Found $count books';
+  }
+
+  @override
+  String get bookSearchLoading => 'Loading...';
+
+  @override
+  String get bookSearchEmpty => 'No books found';
+
+  @override
+  String get bookDetailTitle => 'Book Details';
+
+  @override
+  String get holdingsTitle => 'Holdings';
+
+  @override
+  String get barcode => 'Barcode';
+
+  @override
+  String get callNumber => 'Call Number';
+
+  @override
+  String get holdingLocation => 'Location';
+
+  @override
+  String get holdingStatus => 'Status';
+
+  @override
+  String get holdingUnit => 'Library';
+
+  @override
+  String get copyType => 'Item Type';
+
+  @override
+  String get accessionNo => 'Accession No.';
+
+  @override
+  String get searchTypeTitle => 'Title';
+
+  @override
+  String get searchTypeAuthor => 'Author';
+
+  @override
+  String get searchTypeSubject => 'Subject';
+
+  @override
+  String get searchTypeIdentifier => 'Standard Code';
+
+  @override
+  String get statusInLibrary => 'Available';
+
+  @override
+  String get statusBorrowed => 'Checked Out';
+
+  @override
+  String get search => 'Search';
 }

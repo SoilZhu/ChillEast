@@ -2608,4 +2608,72 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get cloudSyncPromptEnable => '立即开启';
+
+  @override
+  String get bookSearch => '图书查询';
+
+  @override
+  String get bookSearchSubtitle => '检索馆藏图书与借阅状态';
+
+  @override
+  String get bookSearchHint => '搜索书名、作者、主题或标准编码...';
+
+  @override
+  String bookSearchTotalCount(int count) {
+    return '共找到 $count 本图书';
+  }
+
+  @override
+  String get bookSearchLoading => '正在加载...';
+
+  @override
+  String get bookSearchEmpty => '未检索到相关图书';
+
+  @override
+  String get bookDetailTitle => '图书详情';
+
+  @override
+  String get holdingsTitle => '馆藏信息';
+
+  @override
+  String get barcode => '条码号';
+
+  @override
+  String get callNumber => '索书号';
+
+  @override
+  String get holdingLocation => '典藏地';
+
+  @override
+  String get holdingStatus => '状态';
+
+  @override
+  String get holdingUnit => '馆藏单位';
+
+  @override
+  String get copyType => '单册类型';
+
+  @override
+  String get accessionNo => '登录号';
+
+  @override
+  String get searchTypeTitle => '书名';
+
+  @override
+  String get searchTypeAuthor => '作者';
+
+  @override
+  String get searchTypeSubject => '主题';
+
+  @override
+  String get searchTypeIdentifier => '标准编码';
+
+  @override
+  String get statusInLibrary => '在库';
+
+  @override
+  String get statusBorrowed => '借出';
+
+  @override
+  String get search => '搜索';
 }
