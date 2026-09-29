@@ -4,10 +4,59 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ChillEast/core/mcp/tools/library_tool.dart';
 import 'package:ChillEast/core/mcp/tools/sunshine_tool.dart';
 import 'package:ChillEast/features/library/models/library_models.dart';
+import 'package:ChillEast/features/library/models/library_book_models.dart';
 import 'package:ChillEast/features/library/services/library_service.dart';
+import 'package:ChillEast/features/library/services/library_book_service.dart';
 import 'package:ChillEast/features/library/utils/library_time_utils.dart';
 import 'package:ChillEast/features/sunshine/models/sunshine_models.dart';
 import 'package:ChillEast/features/sunshine/services/sunshine_service.dart';
+
+class FakeLibraryBookService extends LibraryBookService {
+  @override
+  Future<LibraryBookSearchResult> searchBooks({
+    required String keyword,
+    String searchType = 'title',
+    dynamic cancelToken,
+    void Function(int current, int total)? onProgress,
+  }) async {
+    return const LibraryBookSearchResult(
+      books: [
+        LibraryBook(
+          detailParam: '{"marc_no":"zyk0161024"}',
+          title: '美语阅读一日一篇',
+          author: '何庆权编著',
+          callNumber: 'H319.4/839',
+          publisher: '北京 中国国际广播音像出版社',
+          isbn: '7-88004-367-5',
+        ),
+      ],
+      totalCount: 1,
+      totalPages: 1,
+    );
+  }
+
+  @override
+  Future<LibraryBookDetail> fetchBookDetail(LibraryBook book) async {
+    return const LibraryBookDetail(
+      title: '美语阅读一日一篇',
+      author: '何庆权编著',
+      callNumber: 'H319.4/839',
+      subject: '英语阅读-教材',
+      isbn: '7-88004-367-5',
+      price: '18.00元',
+      publishInfo: '北京 中国国际广播音像出版社 [不详]',
+      holdings: [
+        LibraryBookHolding(
+          barcode: '00173443',
+          copyType: '文科图书',
+          status: '在库',
+          holdingUnit: '湖南农业大学文渊馆',
+          location: '文科图书二阅览室',
+        ),
+      ],
+    );
+  }
+}
 
 class FakeLibraryService extends LibraryService {
   final LibraryIndexData indexData;
@@ -148,12 +197,61 @@ void main() {
       expect(json['reservation']['seatNum'], equals('042'));
       expect(fakeService.submitCalled, isTrue); // 真正调用了提交
     });
+
+    test('search_library_books searches catalog and returns books', () async {
+      final fakeBookService = FakeLibraryBookService();
+      final tool = LibraryBookSearchTool.create(service: fakeBookService);
+
+      final result = await tool.execute({
+        'keyword': '美语阅读',
+        'searchType': 'title',
+      });
+
+      expect(result.isError, isFalse);
+      final json = jsonDecode(result.content.first.text!);
+      expect(json['totalCount'], equals(1));
+      expect(json['books'].length, equals(1));
+      expect(json['books'][0]['title'], equals('美语阅读一日一篇'));
+      expect(json['books'][0]['detailParam'], contains('zyk0161024'));
+    });
+
+    test('query_library_book_detail fetches book detail with holdings', () async {
+      final fakeBookService = FakeLibraryBookService();
+      final tool = LibraryBookDetailTool.create(service: fakeBookService);
+
+      final result = await tool.execute({
+        'detailParam': '{"marc_no":"zyk0161024"}',
+        'title': '美语阅读一日一篇',
+      });
+
+      expect(result.isError, isFalse);
+      final json = jsonDecode(result.content.first.text!);
+      expect(json['title'], equals('美语阅读一日一篇'));
+      expect(json['callNumber'], equals('H319.4/839'));
+      expect(json['holdings'].length, equals(1));
+      expect(json['holdings'][0]['status'], equals('在库'));
+      expect(json['availableHoldings'], equals(1));
+    });
+
+    test('query_library_book_detail auto-searches by title when detailParam is omitted', () async {
+      final fakeBookService = FakeLibraryBookService();
+      final tool = LibraryBookDetailTool.create(service: fakeBookService);
+
+      final result = await tool.execute({
+        'title': '美语阅读一日一篇',
+      });
+
+      expect(result.isError, isFalse);
+      final json = jsonDecode(result.content.first.text!);
+      expect(json['title'], equals('美语阅读一日一篇'));
+      expect(json['holdings'].length, equals(1));
+    });
   });
 
   group('Sunshine MCP Tools Tests', () {
-    final mockFormData = SunshineFormData(
-      const SunshineIdentity('20240001', '张三', '13800138000', 'zhangsan@hunau.edu.cn'),
-      const [
+    const mockFormData = SunshineFormData(
+      SunshineIdentity('20240001', '张三', '13800138000', 'zhangsan@hunau.edu.cn'),
+      [
         SunshineDepartment('1001', '后勤保卫部'),
         SunshineDepartment('1002', '教务处'),
         SunshineDepartment('1003', '学生工作部'),

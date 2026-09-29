@@ -30,6 +30,7 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
   final electricityService = ref.watch(electricityServiceProvider);
   final campusCardService = ref.watch(campusCardServiceProvider);
   final libraryService = ref.watch(libraryServiceProvider);
+  final libraryBookService = ref.watch(libraryBookServiceProvider);
   final sunshineService = ref.watch(sunshineServiceProvider);
   final questionnaireService = ref.watch(questionnaireServiceProvider);
   final leaveService = ref.watch(leaveServiceProvider);
@@ -92,6 +93,14 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
 
   // 11. 图书馆座位预约（支持默认上次座位与强制确认）
   registry.register(LibraryReserveTool.create(service: libraryService));
+
+  // 11.1 图书馆图书检索 (同时注册 search_library_books 与 query_books 别名)
+  registry.register(LibraryBookSearchTool.create(service: libraryBookService));
+  registry.register(LibraryBookSearchTool.create(service: libraryBookService, toolName: 'query_books'));
+
+  // 11.2 图书馆图书详情与馆藏查询 (同时注册 query_library_book_detail 与 query_book_detail 别名)
+  registry.register(LibraryBookDetailTool.create(service: libraryBookService));
+  registry.register(LibraryBookDetailTool.create(service: libraryBookService, toolName: 'query_book_detail'));
 
   // 12. 阳光服务受理部门查询
   registry.register(SunshineDepartmentsQueryTool.create(service: sunshineService));

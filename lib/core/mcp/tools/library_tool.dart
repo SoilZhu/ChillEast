@@ -1,6 +1,8 @@
 import 'package:intl/intl.dart';
 import '../../../features/library/models/library_models.dart';
+import '../../../features/library/models/library_book_models.dart';
 import '../../../features/library/services/library_service.dart';
+import '../../../features/library/services/library_book_service.dart';
 import '../../../features/library/services/library_storage.dart';
 import '../../../features/library/utils/library_time_utils.dart';
 import '../models/mcp_tool.dart';
@@ -261,3 +263,193 @@ class LibraryReserveTool {
     );
   }
 }
+
+/// MCP Tool: 检索图书馆图书 (search_library_books)
+class LibraryBookSearchTool {
+  static const String toolName = 'search_library_books';
+
+  static McpTool create({
+    LibraryBookService? service,
+    String toolName = toolName,
+  }) {
+    final bookService = service ?? LibraryBookService();
+
+    return McpTool(
+      name: toolName,
+      description:
+          '检索湖南农业大学图书馆馆藏图书。支持按题名(书名)、责任者(作者)、主题词、标准编码(ISBN)进行检索，返回匹配的图书列表、索书号、出版社、出版年、detailParam详情参数等。',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'keyword': {
+            'type': 'string',
+            'description': '检索关键词，如书名、作者、主题或标准编码/ISBN。',
+          },
+          'searchType': {
+            'type': 'string',
+            'description':
+                '检索方式。可选: "title"(题名/书名，默认), "author"(责任者/作者), "subject"(主题词), "Identifier"(标准编码/ISBN)。',
+            'enum': ['title', 'author', 'subject', 'Identifier'],
+            'default': 'title',
+          },
+        },
+        'required': ['keyword'],
+      },
+      handler: (arguments) async {
+        final keyword = (arguments['keyword'] as String?)?.trim() ?? '';
+        if (keyword.isEmpty) {
+          return McpToolResult.error('请提供有效的检索关键词');
+        }
+
+        final searchType = (arguments['searchType'] as String?)?.trim() ?? 'title';
+
+        try {
+          final result = await bookService.searchBooks(
+            keyword: keyword,
+            searchType: searchType,
+          );
+
+          return McpToolResult.json({
+            'keyword': keyword,
+            'searchType': searchType,
+            'totalCount': result.totalCount,
+            'totalPages': result.totalPages,
+            'bookCount': result.books.length,
+            'books': result.books.map((b) => {
+              'title': b.title,
+              'author': b.author,
+              'callNumber': b.callNumber,
+              'publisher': b.publisher,
+              'publishYear': b.publishYear,
+              'isbn': b.isbn,
+              'detailParam': b.detailParam,
+            }).toList(),
+          });
+        } catch (e) {
+          return McpToolResult.error('检索图书馆图书失败: $e');
+        }
+      },
+    );
+  }
+}
+
+/// MCP Tool: 查询图书馆图书详情与馆藏信息 (query_library_book_detail)
+class LibraryBookDetailTool {
+  static const String toolName = 'query_library_book_detail';
+
+  static McpTool create({
+    LibraryBookService? service,
+    String toolName = toolName,
+  }) {
+    final bookService = service ?? LibraryBookService();
+
+    return McpTool(
+      name: toolName,
+      description:
+          '查询图书馆具体图书的完整书目详情与馆藏副本分布信息（包括题名/责任者、索书号、出版项、载体形态、各个校区/馆藏地点的馆藏副本条码、单册类型、状态及是否在库）。'
+          '支持直接传入 detailParam，或者传入 title/keyword 自动检索后提取详情。',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'detailParam': {
+            'type': 'string',
+            'description':
+                '图书详情参数字符串（如 "{\\"marc_no\\":\\"zyk0161024\\"}"，由 search_library_books 搜索结果中的 detailParam 字段提供）。若未指定，需提供 title 或 keyword。',
+          },
+          'title': {
+            'type': 'string',
+            'description': '图书书名/题名（可选。若未提供 detailParam，系统将按此书名检索并查询首条图书详情）。',
+          },
+          'author': {
+            'type': 'string',
+            'description': '作者/责任者（可选）。',
+          },
+          'publisher': {
+            'type': 'string',
+            'description': '出版社（可选）。',
+          },
+          'callNumber': {
+            'type': 'string',
+            'description': '索书号（可选）。',
+          },
+        },
+      },
+      handler: (arguments) async {
+        String detailParam = (arguments['detailParam'] as String?)?.trim() ?? '';
+        String title = (arguments['title'] as String?)?.trim() ?? '';
+        String author = (arguments['author'] as String?)?.trim() ?? '';
+        String publisher = (arguments['publisher'] as String?)?.trim() ?? '';
+        String callNumber = (arguments['callNumber'] as String?)?.trim() ?? '';
+
+        try {
+          // 若未直接传入 detailParam，但提供了 title，先进行检索获取首本图书的 detailParam
+          if (detailParam.isEmpty) {
+            final query = title.isNotEmpty
+                ? title
+                : ((arguments['keyword'] as String?)?.trim() ?? '');
+            if (query.isEmpty) {
+              return McpToolResult.error('请提供 detailParam 或书名 title 以查询图书详情');
+            }
+
+            final searchResult = await bookService.searchBooks(
+              keyword: query,
+              searchType: 'title',
+            );
+            if (searchResult.books.isEmpty) {
+              return McpToolResult.error('未在图书馆检索到与 "$query" 匹配的图书');
+            }
+
+            final firstBook = searchResult.books.first;
+            detailParam = firstBook.detailParam;
+            if (title.isEmpty) title = firstBook.title;
+            if (author.isEmpty) author = firstBook.author;
+            if (publisher.isEmpty) publisher = firstBook.publisher;
+            if (callNumber.isEmpty) callNumber = firstBook.callNumber;
+          }
+
+          final book = LibraryBook(
+            detailParam: detailParam,
+            title: title,
+            author: author,
+            publisher: publisher,
+            callNumber: callNumber,
+          );
+
+          final detail = await bookService.fetchBookDetail(book);
+
+          return McpToolResult.json({
+            'title': detail.title,
+            'author': detail.author,
+            'callNumber': detail.callNumber,
+            'subject': detail.subject,
+            'isbn': detail.isbn,
+            'price': detail.price,
+            'publishInfo': detail.publishInfo,
+            'physicalDesc': detail.physicalDesc,
+            'series': detail.series,
+            'summary': detail.summary,
+            'catalogItems': detail.effectiveCatalogItems.map((e) => {
+              'label': e.key,
+              'value': e.value,
+            }).toList(),
+            'totalHoldings': detail.totalCount,
+            'availableHoldings': detail.availableCount,
+            'holdings': detail.holdings.map((h) => {
+              'barcode': h.barcode,
+              'accessionNo': h.accessionNo,
+              'copyType': h.copyType,
+              'status': h.status,
+              'price': h.price,
+              'holdingUnit': h.holdingUnit,
+              'location': h.location,
+              'isAvailable': h.isAvailable,
+            }).toList(),
+          });
+        } catch (e) {
+          return McpToolResult.error('查询图书详情失败: $e');
+        }
+      },
+    );
+  }
+}
+
