@@ -58,7 +58,16 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     return functionGroups.map((g) => g.titleKey).toList();
   }
 
-  static const List<String> _defaultVisibleHomeIds = ['payment_code', 'library', 'empty_classroom', 'xgxt', 'repairs', 'bus', 'score'];
+  static const List<String> defaultVisibleHomeIds = [
+    'payment_code',
+    'library',
+    'empty_classroom',
+    'xgxt',
+    'repairs',
+    'bus',
+    'score',
+  ];
+  static const List<String> _defaultVisibleHomeIds = defaultVisibleHomeIds;
 
   static List<FunctionItem> _getDefaultWidgetItems([List<String>? visibleIds]) {
     final activeIds = visibleIds ?? HomeWidgetService.defaultQuickIds;
@@ -94,6 +103,9 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     const FunctionItem(id: 'feed_leave', label: '请假申请', icon: Icons.event_note_outlined, color: Color(0xFF009688)),
     const FunctionItem(id: 'feed_repair', label: '报修工单', icon: Icons.handyman_outlined, color: Colors.blueGrey),
   ];
+
+  static List<FunctionItem> get feedPool =>
+      List<FunctionItem>.unmodifiable(_feedPool);
 
   static List<FunctionItem> _getDefaultFeedItems() {
     return List<FunctionItem>.from(_feedPool);

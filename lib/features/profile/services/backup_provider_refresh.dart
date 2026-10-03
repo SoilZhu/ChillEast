@@ -9,7 +9,7 @@ import '../providers/settings_provider.dart';
 /// 备份写回后的 Provider 刷新（导入 / 云端下拉共用），界面立即生效。
 class BackupProviderRefresh {
   static Future<void> refreshAfterRestore(
-    WidgetRef ref,
+    dynamic ref,
     Map<String, dynamic> backup,
   ) async {
     final settings = backup['settings'] is Map
