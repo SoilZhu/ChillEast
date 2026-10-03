@@ -101,5 +101,60 @@ void main() {
       expect(appearance['widgetItems'], isNotNull);
       expect((appearance['widgetItems'] as List).first['id'], 'bus');
     });
+
+    test('reconciles function items: drops unknown cloud items, keeps local-only items, overwrites matching items', () async {
+      SharedPreferences.setMockInitialValues({
+        'app_language_code': 'zh',
+        'course_reminder_minutes': 15,
+        'widget_function_items': jsonEncode([
+          {'id': 'bus', 'isVisible': true},
+          {'id': 'library', 'isVisible': true},
+        ]),
+      });
+      final prefs = await SharedPreferences.getInstance();
+
+      final cloudBackup = {
+        'format': 'chilleast-backup',
+        'version': 1,
+        'settings': {
+          'courseReminderMinutes': 30, // 覆盖本地为 30
+          // 未提供 languageCode：应继续保留本地的 'zh'
+          'appearance': {
+            'widgetItems': [
+              {'id': 'bus', 'isVisible': false}, // 覆盖本地 bus 为 false
+              {'id': 'score', 'isVisible': true}, // 云端新增的合法功能项
+              {'id': 'unknown_alien_feature', 'isVisible': true}, // 本地没有的未知项目：当它不存在
+            ],
+          },
+        },
+        'localData': {},
+      };
+
+      await BackupExportService.applyBackupData(cloudBackup);
+
+      // 1. 验证常规配置：云端有的覆盖，云端没有的保留本地
+      expect(prefs.getInt('course_reminder_minutes'), 30);
+      expect(prefs.getString('app_language_code'), 'zh');
+
+      // 2. 验证外观项目合并：
+      final widgetJson = prefs.getString('widget_function_items');
+      expect(widgetJson, isNotNull);
+      final widgetList = jsonDecode(widgetJson!) as List;
+
+      // unknown_alien_feature 应该被丢弃
+      expect(widgetList.any((e) => e['id'] == 'unknown_alien_feature'), isFalse);
+
+      // bus 应当被云端覆盖为 isVisible: false
+      final bus = widgetList.firstWhere((e) => e['id'] == 'bus');
+      expect(bus['isVisible'], isFalse);
+
+      // score 应当由云端添加为 isVisible: true
+      final score = widgetList.firstWhere((e) => e['id'] == 'score');
+      expect(score['isVisible'], isTrue);
+
+      // library 在云端没有，但本地有：继续使用本地项并保留其 isVisible: true
+      final library = widgetList.firstWhere((e) => e['id'] == 'library');
+      expect(library['isVisible'], isTrue);
+    });
   });
 }

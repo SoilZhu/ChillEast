@@ -208,6 +208,45 @@ class CloudBackupManager {
     }
   }
 
+  /// 应用启动并在静默登录后拉取云端最新备份并覆盖应用到本地。
+  /// 若未开启自动同步或无凭据或云端无备份，则静默返回 null。
+  Future<Map<String, dynamic>?> pullLatestOnStartup() async {
+    if (_running) {
+      return null;
+    }
+    _running = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if ((prefs.getBool(toggleKey) ?? false) == false) return null;
+      if (!await SecureStorageHelper().hasCredentials()) return null;
+
+      try {
+        return await _pullAndApply(prefs);
+      } on CloudiskAuthException {
+        _cloudisk.invalidateSession();
+        if (await _refreshChaoxingSession()) {
+          _cloudisk.invalidateSession();
+          try {
+            return await _pullAndApply(prefs);
+          } on CloudiskAuthException {
+            _cloudisk.invalidateSession();
+            return null;
+          }
+        }
+        return null;
+      }
+    } catch (e) {
+      _logger.w('☁️ Cloud backup startup pull failed: $e');
+      return null;
+    } finally {
+      _running = false;
+      if (_requeued) {
+        _requeued = false;
+        markDirty();
+      }
+    }
+  }
+
   /// 开启开关时的首次同步：云上有备份就拉最新覆盖本地，
   /// 云上没有才把本地推上去。调用方在 pulled 时需刷新各 Provider。
   Future<InitialSyncResult> initialSync() async {
@@ -250,13 +289,21 @@ class CloudBackupManager {
 
   /// 先找云端最新备份：有则下载覆盖本地，无则本地推上。
   Future<InitialSyncResult> _pullOrPush(SharedPreferences prefs) async {
+    final pulled = await _pullAndApply(prefs);
+    if (pulled != null) {
+      return InitialSyncResult(InitialSyncOutcome.pulled, pulled);
+    }
+    final ok = await _doSync(prefs);
+    return InitialSyncResult(
+        ok ? InitialSyncOutcome.pushed : InitialSyncOutcome.failed);
+  }
+
+  /// 下载云端最新备份并写回本地。若云端无备份返回 null。
+  Future<Map<String, dynamic>?> _pullAndApply(SharedPreferences prefs) async {
     final session = await _cloudisk.ensureSession();
     final latest = await _findLatestBackup(session);
-    if (latest == null) {
-      final ok = await _doSync(prefs);
-      return InitialSyncResult(
-          ok ? InitialSyncOutcome.pushed : InitialSyncOutcome.failed);
-    }
+    if (latest == null) return null;
+
     final bytes = await _cloudisk.downloadBytes(
       resid: latest['resid']!,
       encryptedId: latest['encryptedId']!,
@@ -271,7 +318,7 @@ class CloudBackupManager {
     await prefs.setString(_activeResidKey, latest['resid']!);
     await prefs.setString(_activeEncryptedIdKey, latest['encryptedId']!);
     _logger.i('☁️ Cloud backup pulled: ${latest['name']}');
-    return InitialSyncResult(InitialSyncOutcome.pulled, backup);
+    return backup;
   }
 
   /// 翻页找云端最新的备份文件（最多 5 页）。
