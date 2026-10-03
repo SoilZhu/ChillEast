@@ -100,15 +100,7 @@ class BackupExportService {
         'courses': await _readDocFileJson('courses.json'),
         'rawCourses': await _readDocFileJson('raw_courses.json'),
         'timetableRules': await _readDocFileJson('timetable_rules.json'),
-        'homeworkList': await _readDocFileJson('homework_list.json'),
-        'libraryReserves':
-            _decodeJson(prefs.getString('cached_library_reserves')) ??
-                _decodeJson(prefs.getString('cached_library_reserve')),
-        'leaveItems': _decodeJson(prefs.getString('cached_leave_items')),
-        'questionnaireItems':
-            _decodeJson(prefs.getString('cached_questionnaire_items')),
-        'repairItems':
-            _decodeJson(prefs.getString('cached_ongoing_repair_items')),
+        'homeworkList': await _readManualHomeworkJson(),
       },
     };
   }
@@ -319,28 +311,7 @@ class BackupExportService {
       }
     }
 
-    // —— 本地缓存（图书馆/请假/问卷/报修）——
-    if (localData.containsKey('libraryReserves') &&
-        localData['libraryReserves'] != null) {
-      await prefs.setString(
-          'cached_library_reserves', jsonEncode(localData['libraryReserves']));
-      await prefs.remove('cached_library_reserve');
-    }
-    if (localData.containsKey('leaveItems') && localData['leaveItems'] != null) {
-      await prefs.setString(
-          'cached_leave_items', jsonEncode(localData['leaveItems']));
-    }
-    if (localData.containsKey('questionnaireItems') &&
-        localData['questionnaireItems'] != null) {
-      await prefs.setString(
-          'cached_questionnaire_items', jsonEncode(localData['questionnaireItems']));
-    }
-    if (localData.containsKey('repairItems') && localData['repairItems'] != null) {
-      await prefs.setString(
-          'cached_ongoing_repair_items', jsonEncode(localData['repairItems']));
-    }
-
-    // —— 文档目录文件（课表/作业）——
+    // —— 文档目录文件（课表/手动作业）——
     await _writeDocFile(
         'current_timetable.ics', localData, 'timetableIcs');
     await _writeDocFile(
@@ -349,8 +320,7 @@ class BackupExportService {
     await _writeDocFile('raw_courses.json', localData, 'rawCourses');
     await _writeDocFile(
         'timetable_rules.json', localData, 'timetableRules');
-    await _writeDocFile(
-        'homework_list.json', localData, 'homeworkList');
+    await _applyManualHomeworkList(localData['homeworkList']);
 
     // —— AI 设置（SecureStorage）——
     final ai = settings['ai'] is Map
@@ -592,5 +562,78 @@ class BackupExportService {
       // 非 JSON 文件原样返回文本，避免备份失败
       return text;
     }
+  }
+
+  /// 仅读取本地手动作业（isManual == true），排除在线爬取的作业
+  static Future<List<Map<String, dynamic>>?> _readManualHomeworkJson() async {
+    final raw = await _readDocFileJson('homework_list.json');
+    if (raw is! List) return null;
+    final manualOnly = raw
+        .whereType<Map>()
+        .where((item) => item['isManual'] == true)
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+    return manualOnly;
+  }
+
+  /// 合并备份中的手动作业到本地：
+  /// - 云端手动作业覆盖/合并到本地手动作业列表（以 id 为准）
+  /// - 本地原有的爬取作业（isManual != true）不受影响继续保留
+  /// - 本地已有但云端没有的手动作业继续保留
+  static Future<void> _applyManualHomeworkList(dynamic cloudHomework) async {
+    if (cloudHomework == null || cloudHomework is! List) return;
+
+    final cloudManual = cloudHomework
+        .whereType<Map>()
+        .where((item) => item['isManual'] == true)
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/homework_list.json');
+
+    List<Map<String, dynamic>> localList = [];
+    if (await file.exists()) {
+      try {
+        final decoded = jsonDecode(await file.readAsString());
+        if (decoded is List) {
+          localList = decoded
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList();
+        }
+      } catch (_) {}
+    }
+
+    // 分离本地爬取作业和手动作业
+    final localScraped =
+        localList.where((item) => item['isManual'] != true).toList();
+    final localManual =
+        localList.where((item) => item['isManual'] == true).toList();
+
+    final mergedManual = <Map<String, dynamic>>[];
+    final addedIds = <String>{};
+
+    // 1. 云端手动作业覆盖本地
+    for (final item in cloudManual) {
+      final id = item['id']?.toString();
+      if (id != null && !addedIds.contains(id)) {
+        mergedManual.add(item);
+        addedIds.add(id);
+      }
+    }
+
+    // 2. 本地有但云端没有的手动作业：继续保留本地手动作业
+    for (final item in localManual) {
+      final id = item['id']?.toString();
+      if (id != null && !addedIds.contains(id)) {
+        mergedManual.add(item);
+        addedIds.add(id);
+      }
+    }
+
+    // 3. 保留本地爬取作业 + 合并后的手动作业
+    final finalHomework = [...mergedManual, ...localScraped];
+    await file.writeAsString(jsonEncode(finalHomework));
   }
 }
