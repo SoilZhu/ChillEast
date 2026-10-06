@@ -218,6 +218,45 @@ class AppLocalizationsRu extends AppLocalizations {
   String get funcCampusBusRoute => '校内公交线路';
 
   @override
+  String get funcDormitory => 'Моё общежитие';
+
+  @override
+  String get dormitoryBuilding => 'Корпус';
+
+  @override
+  String get dormitoryUnit => 'Секция';
+
+  @override
+  String get dormitoryFloor => 'Этаж';
+
+  @override
+  String get dormitoryRoom => 'Комната';
+
+  @override
+  String get dormitoryBed => 'Место';
+
+  @override
+  String get dormitoryAcademicYear => 'Учебный год';
+
+  @override
+  String get dormitoryTerm => 'Семестр';
+
+  @override
+  String get dormitoryNotAssigned => 'Место не назначено';
+
+  @override
+  String get dormitoryAssigned => 'Место назначено';
+
+  @override
+  String get dormitoryOpenWeb => 'Портал общежития';
+
+  @override
+  String get dormitoryDetail => 'Информация об общежитии';
+
+  @override
+  String get dormitoryBedPrompt => 'Перейдите на портал для отметки и услуг';
+
+  @override
   String get more => 'Еще';
 
   @override

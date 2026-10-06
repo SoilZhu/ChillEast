@@ -216,6 +216,45 @@ class AppLocalizationsZh extends AppLocalizations {
   String get funcCampusBusRoute => '校内公交线路';
 
   @override
+  String get funcDormitory => '我的宿舍';
+
+  @override
+  String get dormitoryBuilding => '宿舍楼';
+
+  @override
+  String get dormitoryUnit => '单元';
+
+  @override
+  String get dormitoryFloor => '楼层';
+
+  @override
+  String get dormitoryRoom => '宿舍';
+
+  @override
+  String get dormitoryBed => '床号';
+
+  @override
+  String get dormitoryAcademicYear => '学年';
+
+  @override
+  String get dormitoryTerm => '学期';
+
+  @override
+  String get dormitoryNotAssigned => '未安排床位';
+
+  @override
+  String get dormitoryAssigned => '已分配床位';
+
+  @override
+  String get dormitoryOpenWeb => '学生公寓平台';
+
+  @override
+  String get dormitoryDetail => '宿舍详情';
+
+  @override
+  String get dormitoryBedPrompt => '可前往学生公寓服务平台办理查寝签到或床位业务';
+
+  @override
   String get more => '更多';
 
   @override
@@ -2871,6 +2910,45 @@ class AppLocalizationsZhHk extends AppLocalizationsZh {
   String get funcCsBus => '長沙實時公交';
 
   @override
+  String get funcDormitory => '我的宿舍';
+
+  @override
+  String get dormitoryBuilding => '宿舍樓';
+
+  @override
+  String get dormitoryUnit => '單元';
+
+  @override
+  String get dormitoryFloor => '樓層';
+
+  @override
+  String get dormitoryRoom => '宿舍';
+
+  @override
+  String get dormitoryBed => '床號';
+
+  @override
+  String get dormitoryAcademicYear => '學年';
+
+  @override
+  String get dormitoryTerm => '學期';
+
+  @override
+  String get dormitoryNotAssigned => '未安排床位';
+
+  @override
+  String get dormitoryAssigned => '已分配床位';
+
+  @override
+  String get dormitoryOpenWeb => '學生公寓平台';
+
+  @override
+  String get dormitoryDetail => '宿舍詳情';
+
+  @override
+  String get dormitoryBedPrompt => '可前往學生公寓服務平台辦理查寢簽到或床位業務';
+
+  @override
   String get more => '更多';
 
   @override
@@ -5133,6 +5211,45 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get funcCsBus => '長沙即時公交';
+
+  @override
+  String get funcDormitory => '我的宿舍';
+
+  @override
+  String get dormitoryBuilding => '宿舍樓';
+
+  @override
+  String get dormitoryUnit => '單元';
+
+  @override
+  String get dormitoryFloor => '樓層';
+
+  @override
+  String get dormitoryRoom => '宿舍';
+
+  @override
+  String get dormitoryBed => '床號';
+
+  @override
+  String get dormitoryAcademicYear => '學年';
+
+  @override
+  String get dormitoryTerm => '學期';
+
+  @override
+  String get dormitoryNotAssigned => '未安排床位';
+
+  @override
+  String get dormitoryAssigned => '已分配床位';
+
+  @override
+  String get dormitoryOpenWeb => '學生公寓平台';
+
+  @override
+  String get dormitoryDetail => '宿舍詳情';
+
+  @override
+  String get dormitoryBedPrompt => '可前往學生公寓服務平台辦理查寢簽到或床位業務';
 
   @override
   String get more => '更多';
@@ -7406,6 +7523,45 @@ class AppLocalizationsZhHefei extends AppLocalizationsZh {
 
   @override
   String get funcCampusBusRoute => '校内公交车线路';
+
+  @override
+  String get funcDormitory => '俺的宿舍';
+
+  @override
+  String get dormitoryBuilding => '宿舍楼';
+
+  @override
+  String get dormitoryUnit => '单元';
+
+  @override
+  String get dormitoryFloor => '楼层';
+
+  @override
+  String get dormitoryRoom => '宿舍';
+
+  @override
+  String get dormitoryBed => '床号';
+
+  @override
+  String get dormitoryAcademicYear => '学年';
+
+  @override
+  String get dormitoryTerm => '学期';
+
+  @override
+  String get dormitoryNotAssigned => '还木有分床位';
+
+  @override
+  String get dormitoryAssigned => '已分床位';
+
+  @override
+  String get dormitoryOpenWeb => '学生公寓平台';
+
+  @override
+  String get dormitoryDetail => '宿舍详情';
+
+  @override
+  String get dormitoryBedPrompt => '可以去学生公寓平台办查寝签到或者床位事';
 
   @override
   String get more => '多些';

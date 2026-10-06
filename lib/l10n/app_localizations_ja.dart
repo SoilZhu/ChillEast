@@ -216,6 +216,45 @@ class AppLocalizationsJa extends AppLocalizations {
   String get funcCampusBusRoute => '校内公交线路';
 
   @override
+  String get funcDormitory => '学生寮';
+
+  @override
+  String get dormitoryBuilding => '寮棟';
+
+  @override
+  String get dormitoryUnit => 'ユニット';
+
+  @override
+  String get dormitoryFloor => '階層';
+
+  @override
+  String get dormitoryRoom => '部屋';
+
+  @override
+  String get dormitoryBed => 'ベッド番号';
+
+  @override
+  String get dormitoryAcademicYear => '学年';
+
+  @override
+  String get dormitoryTerm => '学期';
+
+  @override
+  String get dormitoryNotAssigned => 'ベッド未割り当て';
+
+  @override
+  String get dormitoryAssigned => 'ベッド割り当て済み';
+
+  @override
+  String get dormitoryOpenWeb => '学生寮ポータル';
+
+  @override
+  String get dormitoryDetail => '寮の詳細';
+
+  @override
+  String get dormitoryBedPrompt => '学生寮ポータルで点呼チェックインやベッド手続きが可能です';
+
+  @override
   String get more => 'その他';
 
   @override

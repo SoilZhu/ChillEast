@@ -42,6 +42,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     const FunctionItem(id: 'bus', label: '实时校车', icon: Icons.airport_shuttle_outlined, color: Color(0xFF34E676)),
     const FunctionItem(id: 'cs_bus', label: '长沙实时公交', icon: Icons.directions_bus_outlined, color: Color(0xFF2196F3)),
     const FunctionItem(id: 'campus_bus_route', label: '校内公交线路', icon: Icons.alt_route_rounded, color: Color(0xFF00A86B)),
+    const FunctionItem(id: 'dormitory', label: '我的宿舍', icon: Icons.hotel_outlined, color: Color(0xFF5C6BC0)),
   ];
 
   AppearanceNotifier() : super(AppearanceState(
@@ -123,7 +124,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     // 默认全选，按照指定顺序
     final functionIds = [
       'payment_code', 'recharge', 'ele_recharge', 'library', 'empty_classroom', 'repairs', 
-      'sunshine', 'questionnaire', 'leave', 'gym', 'xgxt', 'teaching_eval', 'score', 'vpn', 'campus_card', 'bus', 'cs_bus', 'campus_bus_route'
+      'sunshine', 'questionnaire', 'leave', 'dormitory', 'gym', 'xgxt', 'teaching_eval', 'score', 'vpn', 'campus_card', 'bus', 'cs_bus', 'campus_bus_route'
     ];
     final items = functionIds.map((id) => _masterPool.firstWhere((item) => item.id == id)).toList();
     // 兜底：只加了 _masterPool 忘记加 functionIds 的新功能，自动追加为可见，避免新装用户丢失

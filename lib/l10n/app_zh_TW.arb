@@ -684,7 +684,13 @@
   "repairsUnnamedOrder": "未命名工单",
   "repairsEnterValue": "请输入或粘贴平台选项值",
   "repairsRequiredField": "请填写{field}",
-  "@repairsRequiredField": {"placeholders": {"field": {"type": "String"}}},
+  "@repairsRequiredField": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
   "repairsSubmitSuccess": "提交成功",
   "repairsSubmitSuccessMessage": "工单已提交，处理进度可在“我的工单”中查看。",
   "repairsFormHint": "带 * 的字段为必填项。图片附件功能将随平台接口适配逐步开放。",
@@ -698,5 +704,18 @@
   "repairsDepartment": "处理部门",
   "repairsCreatedAt": "创建时间",
   "repairsDescription": "问题描述",
-  "repairsNoDescription": "暂无描述"
+  "repairsNoDescription": "暂无描述",
+  "funcDormitory": "我的宿舍",
+  "dormitoryBuilding": "宿舍樓",
+  "dormitoryUnit": "單元",
+  "dormitoryFloor": "樓層",
+  "dormitoryRoom": "宿舍",
+  "dormitoryBed": "床號",
+  "dormitoryAcademicYear": "學年",
+  "dormitoryTerm": "學期",
+  "dormitoryNotAssigned": "未安排床位",
+  "dormitoryAssigned": "已分配床位",
+  "dormitoryOpenWeb": "學生公寓平台",
+  "dormitoryDetail": "宿舍詳情",
+  "dormitoryBedPrompt": "可前往學生公寓服務平台辦理查寢簽到或床位業務"
 }

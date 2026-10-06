@@ -23,6 +23,7 @@ import '../../workspace/screens/payment_code_screen.dart';
 import '../../workspace/screens/vpn_converter_screen.dart';
 import '../../workspace/screens/webview_detail_screen.dart';
 import '../../workspace/services/campus_card_service.dart';
+import '../../dormitory/screens/dormitory_screen.dart';
 
 /// 小组件快捷入口路由：与首页快捷功能同款跳转逻辑，供桌面小组件点击复用。
 Future<void> openFunctionById(
@@ -98,6 +99,12 @@ Future<void> openFunctionById(
     case 'repairs':
       isLoggedIn
           ? Navigator.push(context, createSlideUpRoute(const RepairScreen()))
+          : _showLoginDialog(context, ref);
+      break;
+    case 'dormitory':
+      isLoggedIn
+          ? Navigator.push(
+              context, createSlideUpRoute(const DormitoryScreen()))
           : _showLoginDialog(context, ref);
       break;
     case 'ehall':

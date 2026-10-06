@@ -216,6 +216,45 @@ class AppLocalizationsGan extends AppLocalizations {
   String get funcCampusBusRoute => '校内公交线路';
 
   @override
+  String get funcDormitory => '我个宿舍';
+
+  @override
+  String get dormitoryBuilding => '宿舍楼';
+
+  @override
+  String get dormitoryUnit => '单元';
+
+  @override
+  String get dormitoryFloor => '楼层';
+
+  @override
+  String get dormitoryRoom => '宿舍';
+
+  @override
+  String get dormitoryBed => '床号';
+
+  @override
+  String get dormitoryAcademicYear => '学年';
+
+  @override
+  String get dormitoryTerm => '学期';
+
+  @override
+  String get dormitoryNotAssigned => '冇安排床位';
+
+  @override
+  String get dormitoryAssigned => '已安排床位';
+
+  @override
+  String get dormitoryOpenWeb => '学生公寓平台';
+
+  @override
+  String get dormitoryDetail => '宿舍详情';
+
+  @override
+  String get dormitoryBedPrompt => '去学生公寓服务平台办查寝签到或床位';
+
+  @override
   String get more => '多些';
 
   @override

@@ -24,6 +24,7 @@ import '../../../core/utils/location_helper.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../library/screens/library_home_screen.dart';
 import '../../campus_bus/screens/campus_bus_map_screen.dart';
+import '../../dormitory/screens/dormitory_screen.dart';
 
 /// 功能页 - 展示各种功能入口
 class FunctionsScreen extends ConsumerStatefulWidget {
@@ -218,6 +219,11 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
             ? _safeNavigate(
                 const RepairScreen(),
               )
+            : _showLoginDialog();
+        break;
+      case 'dormitory':
+        isLoggedIn
+            ? _safeNavigate(const DormitoryScreen())
             : _showLoginDialog();
         break;
       case 'gym':

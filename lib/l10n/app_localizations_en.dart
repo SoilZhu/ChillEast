@@ -217,6 +217,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get funcCampusBusRoute => 'Campus Bus Routes';
 
   @override
+  String get funcDormitory => 'My Dormitory';
+
+  @override
+  String get dormitoryBuilding => 'Building';
+
+  @override
+  String get dormitoryUnit => 'Unit';
+
+  @override
+  String get dormitoryFloor => 'Floor';
+
+  @override
+  String get dormitoryRoom => 'Room';
+
+  @override
+  String get dormitoryBed => 'Bed';
+
+  @override
+  String get dormitoryAcademicYear => 'Academic Year';
+
+  @override
+  String get dormitoryTerm => 'Semester';
+
+  @override
+  String get dormitoryNotAssigned => 'No bed assigned';
+
+  @override
+  String get dormitoryAssigned => 'Bed Assigned';
+
+  @override
+  String get dormitoryOpenWeb => 'Apartment Platform';
+
+  @override
+  String get dormitoryDetail => 'Dormitory Details';
+
+  @override
+  String get dormitoryBedPrompt =>
+      'Visit Student Apartment Platform for dorm check-in and bed operations';
+
+  @override
   String get more => 'More';
 
   @override

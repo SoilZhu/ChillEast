@@ -99,6 +99,15 @@ class AppConstants {
   static const String repairsBaseUrl = 'https://bxpt.hunau.edu.cn';
   static const String repairsIndexUrl = '$repairsBaseUrl/relax/mobile/index.html';
   static const String repairsSsoUrl = '$ssoLoginUrl?service=http%3A%2F%2Fbxpt.hunau.edu.cn%2Frelax%2Fsso%2Fcas%2Flogin';
+
+  // 学生公寓服务平台 (我的宿舍)
+  static const String dormitoryOAuthUrl =
+      'https://auth.chaoxing.com/connect/oauth2/authorize?appid=38dd1e4799a442628765c36f825e9a31&redirect_uri=https%3A%2F%2Fgy.hunau.edu.cn%2Fapp%2Fcontent%2Fmain%2Fsitemap%3FappId%3D38dd1e4799a442628765c36f825e9a31%26appKey%3DYnh108tM4EO5412U%26uid%3D22073114%26fidEnc%3Da915b52ee0aa18ad%26mappId%3D7710759%26formid%3D&response_type=code&scope=snsapi_base&state=128516';
+  static const String dormitoryBaseUrl = 'https://gy.hunau.edu.cn';
+  static const String dormitoryBedUrl =
+      '$dormitoryBaseUrl/wap/menu/gygl/ssap/client/stu/wyDorm';
+  static const String dormitoryWelcomeUrl = '$dormitoryBaseUrl/wap/main/welcome';
+  static const String dormitoryUA = campusCardUA;
   
   // 存储键名
   static const String storageUsernameKey = 'username';

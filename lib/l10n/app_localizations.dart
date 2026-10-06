@@ -533,6 +533,84 @@ abstract class AppLocalizations {
   /// **'校内公交线路'**
   String get funcCampusBusRoute;
 
+  /// No description provided for @funcDormitory.
+  ///
+  /// In zh, this message translates to:
+  /// **'我的宿舍'**
+  String get funcDormitory;
+
+  /// No description provided for @dormitoryBuilding.
+  ///
+  /// In zh, this message translates to:
+  /// **'宿舍楼'**
+  String get dormitoryBuilding;
+
+  /// No description provided for @dormitoryUnit.
+  ///
+  /// In zh, this message translates to:
+  /// **'单元'**
+  String get dormitoryUnit;
+
+  /// No description provided for @dormitoryFloor.
+  ///
+  /// In zh, this message translates to:
+  /// **'楼层'**
+  String get dormitoryFloor;
+
+  /// No description provided for @dormitoryRoom.
+  ///
+  /// In zh, this message translates to:
+  /// **'宿舍'**
+  String get dormitoryRoom;
+
+  /// No description provided for @dormitoryBed.
+  ///
+  /// In zh, this message translates to:
+  /// **'床号'**
+  String get dormitoryBed;
+
+  /// No description provided for @dormitoryAcademicYear.
+  ///
+  /// In zh, this message translates to:
+  /// **'学年'**
+  String get dormitoryAcademicYear;
+
+  /// No description provided for @dormitoryTerm.
+  ///
+  /// In zh, this message translates to:
+  /// **'学期'**
+  String get dormitoryTerm;
+
+  /// No description provided for @dormitoryNotAssigned.
+  ///
+  /// In zh, this message translates to:
+  /// **'未安排床位'**
+  String get dormitoryNotAssigned;
+
+  /// No description provided for @dormitoryAssigned.
+  ///
+  /// In zh, this message translates to:
+  /// **'已分配床位'**
+  String get dormitoryAssigned;
+
+  /// No description provided for @dormitoryOpenWeb.
+  ///
+  /// In zh, this message translates to:
+  /// **'学生公寓平台'**
+  String get dormitoryOpenWeb;
+
+  /// No description provided for @dormitoryDetail.
+  ///
+  /// In zh, this message translates to:
+  /// **'宿舍详情'**
+  String get dormitoryDetail;
+
+  /// No description provided for @dormitoryBedPrompt.
+  ///
+  /// In zh, this message translates to:
+  /// **'可前往学生公寓服务平台办理查寝签到或床位业务'**
+  String get dormitoryBedPrompt;
+
   /// No description provided for @more.
   ///
   /// In zh, this message translates to:

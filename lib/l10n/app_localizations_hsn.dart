@@ -216,6 +216,45 @@ class AppLocalizationsHsn extends AppLocalizations {
   String get funcCampusBusRoute => '校内公交走向';
 
   @override
+  String get funcDormitory => '我屋里寝室';
+
+  @override
+  String get dormitoryBuilding => '寝室楼';
+
+  @override
+  String get dormitoryUnit => '单元';
+
+  @override
+  String get dormitoryFloor => '楼层';
+
+  @override
+  String get dormitoryRoom => '寝室';
+
+  @override
+  String get dormitoryBed => '床号';
+
+  @override
+  String get dormitoryAcademicYear => '学年';
+
+  @override
+  String get dormitoryTerm => '学期';
+
+  @override
+  String get dormitoryNotAssigned => '莫安排床位';
+
+  @override
+  String get dormitoryAssigned => '已安排床位';
+
+  @override
+  String get dormitoryOpenWeb => '学生公寓平台';
+
+  @override
+  String get dormitoryDetail => '寝室详情';
+
+  @override
+  String get dormitoryBedPrompt => '克学生公寓服务平台办查寝签到跟床位';
+
+  @override
   String get more => '更多';
 
   @override

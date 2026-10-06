@@ -43,6 +43,7 @@ import '../../workspace/screens/electricity_recharge_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../workspace/services/campus_card_service.dart';
 import '../../workspace/screens/vpn_converter_screen.dart';
+import '../../dormitory/screens/dormitory_screen.dart';
 import '../../library/models/library_models.dart';
 import '../../library/providers/library_provider.dart';
 import '../../library/screens/library_home_screen.dart';
@@ -468,6 +469,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 'repairs':
         isLoggedIn
             ? Navigator.push(context, createSlideUpRoute(const RepairScreen()))
+            : _showLoginDialog(context);
+        break;
+      case 'dormitory':
+        isLoggedIn
+            ? Navigator.push(
+                context, createSlideUpRoute(const DormitoryScreen()))
             : _showLoginDialog(context);
         break;
       case 'ehall':

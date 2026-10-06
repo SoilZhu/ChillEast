@@ -218,6 +218,46 @@ class AppLocalizationsFr extends AppLocalizations {
   String get funcCampusBusRoute => '校内公交线路';
 
   @override
+  String get funcDormitory => 'Mon dortoir';
+
+  @override
+  String get dormitoryBuilding => 'Bâtiment';
+
+  @override
+  String get dormitoryUnit => 'Unité';
+
+  @override
+  String get dormitoryFloor => 'Étage';
+
+  @override
+  String get dormitoryRoom => 'Chambre';
+
+  @override
+  String get dormitoryBed => 'Lit';
+
+  @override
+  String get dormitoryAcademicYear => 'Année universitaire';
+
+  @override
+  String get dormitoryTerm => 'Semestre';
+
+  @override
+  String get dormitoryNotAssigned => 'Aucun lit attribué';
+
+  @override
+  String get dormitoryAssigned => 'Lit attribué';
+
+  @override
+  String get dormitoryOpenWeb => 'Portail de résidence';
+
+  @override
+  String get dormitoryDetail => 'Détails du dortoir';
+
+  @override
+  String get dormitoryBedPrompt =>
+      'Accédez au portail pour la présence et la chambre';
+
+  @override
   String get more => 'Plus';
 
   @override
