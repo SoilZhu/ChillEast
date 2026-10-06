@@ -2661,8 +2661,91 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusInLibrary => 'Available';
 
   @override
-  String get statusBorrowed => 'Checked Out';
+  String get statusBorrowed => '借出';
 
   @override
   String get search => 'Search';
+
+  @override
+  String get funcEhall => 'Service Hall';
+
+  @override
+  String get ehallSubtitle => 'Online affairs, approvals & campus services';
+
+  @override
+  String get ehallHotServices => 'Popular Services';
+
+  @override
+  String get ehallAllServices => 'All Services';
+
+  @override
+  String get ehallCategories => 'Categories';
+
+  @override
+  String get ehallDepartments => 'Departments';
+
+  @override
+  String get ehallMyOrders => 'My Applications';
+
+  @override
+  String get ehallSearchHint => 'Search service name, department...';
+
+  @override
+  String get ehallNoServicesFound => 'No matching services found';
+
+  @override
+  String get ehallApplyNow => 'Apply Now';
+
+  @override
+  String get ehallViewDetail => 'View Details';
+
+  @override
+  String get ehallServiceType => 'Service Type';
+
+  @override
+  String get ehallDepartment => 'Department';
+
+  @override
+  String get ehallVisits => 'Visits';
+
+  @override
+  String get ehallExternalLink => 'External Link';
+
+  @override
+  String get ehallProcessWorkflow => 'Online Workflow';
+
+  @override
+  String get ehallOpenInWeb => 'Open Web Portal';
+
+  @override
+  String get ehallOngoing => 'In Progress';
+
+  @override
+  String get ehallCompleted => 'Completed';
+
+  @override
+  String get ehallNoOrders => 'No application records yet';
+
+  @override
+  String get ehallFavorites => 'Favorites';
+
+  @override
+  String get ehallAddToFavorites => 'Favorite';
+
+  @override
+  String get ehallRemoveFromFavorites => 'Unfavorite';
+
+  @override
+  String get ehallServiceUnavailable =>
+      'Service Hall is temporarily unavailable, please try again later';
+
+  @override
+  String get ehallSessionExpired =>
+      'Service Hall session expired, please log in again';
+
+  @override
+  String get ehallExternalJumpPrompt => 'Opening external service';
+
+  @override
+  String get ehallOpenNativeLeave => 'Open in Native Leave App';
 }

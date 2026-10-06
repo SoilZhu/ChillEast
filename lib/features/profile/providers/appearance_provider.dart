@@ -30,6 +30,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     const FunctionItem(id: 'recharge', label: '校园卡充值', icon: Icons.account_balance_wallet_outlined, color: Colors.orange),
     const FunctionItem(id: 'library', label: '图书馆', icon: Icons.library_books_outlined, color: Color(0xFF795548)),
     const FunctionItem(id: 'empty_classroom', label: '空教室', icon: Icons.meeting_room_outlined, color: Color(0xFF9C27B0)),
+    const FunctionItem(id: 'ehall', label: '办事大厅', icon: Icons.account_balance_outlined, color: Color(0xFF1E88E5)),
     const FunctionItem(id: 'xgxt', label: '学工系统', icon: Icons.connect_without_contact_outlined, color: Color(0xFF3476E6)),
     const FunctionItem(id: 'repairs', label: '报修平台', icon: Icons.handyman_outlined, color: Colors.blueGrey),
     const FunctionItem(id: 'gym', label: '场馆预约', icon: Icons.sports_basketball_outlined, color: Colors.pink),

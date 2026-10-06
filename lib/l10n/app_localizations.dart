@@ -4940,6 +4940,168 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'搜索'**
   String get search;
+
+  /// No description provided for @funcEhall.
+  ///
+  /// In zh, this message translates to:
+  /// **'办事大厅'**
+  String get funcEhall;
+
+  /// No description provided for @ehallSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'线上办事、流程审批与综合服务'**
+  String get ehallSubtitle;
+
+  /// No description provided for @ehallHotServices.
+  ///
+  /// In zh, this message translates to:
+  /// **'热门服务'**
+  String get ehallHotServices;
+
+  /// No description provided for @ehallAllServices.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部服务'**
+  String get ehallAllServices;
+
+  /// No description provided for @ehallCategories.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务分类'**
+  String get ehallCategories;
+
+  /// No description provided for @ehallDepartments.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务部门'**
+  String get ehallDepartments;
+
+  /// No description provided for @ehallMyOrders.
+  ///
+  /// In zh, this message translates to:
+  /// **'我的办件'**
+  String get ehallMyOrders;
+
+  /// No description provided for @ehallSearchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索服务名称、部门或描述...'**
+  String get ehallSearchHint;
+
+  /// No description provided for @ehallNoServicesFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'未找到匹配的服务'**
+  String get ehallNoServicesFound;
+
+  /// No description provided for @ehallApplyNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'我要办理'**
+  String get ehallApplyNow;
+
+  /// No description provided for @ehallViewDetail.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看详情'**
+  String get ehallViewDetail;
+
+  /// No description provided for @ehallServiceType.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务类型'**
+  String get ehallServiceType;
+
+  /// No description provided for @ehallDepartment.
+  ///
+  /// In zh, this message translates to:
+  /// **'主办部门'**
+  String get ehallDepartment;
+
+  /// No description provided for @ehallVisits.
+  ///
+  /// In zh, this message translates to:
+  /// **'访问量'**
+  String get ehallVisits;
+
+  /// No description provided for @ehallExternalLink.
+  ///
+  /// In zh, this message translates to:
+  /// **'外部系统跳转'**
+  String get ehallExternalLink;
+
+  /// No description provided for @ehallProcessWorkflow.
+  ///
+  /// In zh, this message translates to:
+  /// **'线上审批流程'**
+  String get ehallProcessWorkflow;
+
+  /// No description provided for @ehallOpenInWeb.
+  ///
+  /// In zh, this message translates to:
+  /// **'网页版大厅'**
+  String get ehallOpenInWeb;
+
+  /// No description provided for @ehallOngoing.
+  ///
+  /// In zh, this message translates to:
+  /// **'进行中'**
+  String get ehallOngoing;
+
+  /// No description provided for @ehallCompleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'已办结'**
+  String get ehallCompleted;
+
+  /// No description provided for @ehallNoOrders.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无办件记录'**
+  String get ehallNoOrders;
+
+  /// No description provided for @ehallFavorites.
+  ///
+  /// In zh, this message translates to:
+  /// **'我的收藏'**
+  String get ehallFavorites;
+
+  /// No description provided for @ehallAddToFavorites.
+  ///
+  /// In zh, this message translates to:
+  /// **'收藏服务'**
+  String get ehallAddToFavorites;
+
+  /// No description provided for @ehallRemoveFromFavorites.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消收藏'**
+  String get ehallRemoveFromFavorites;
+
+  /// No description provided for @ehallServiceUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'办事大厅暂时不可用，请稍后重试'**
+  String get ehallServiceUnavailable;
+
+  /// No description provided for @ehallSessionExpired.
+  ///
+  /// In zh, this message translates to:
+  /// **'办事大厅登录态已过期，请重新登录'**
+  String get ehallSessionExpired;
+
+  /// No description provided for @ehallExternalJumpPrompt.
+  ///
+  /// In zh, this message translates to:
+  /// **'即将跳转至外部服务'**
+  String get ehallExternalJumpPrompt;
+
+  /// No description provided for @ehallOpenNativeLeave.
+  ///
+  /// In zh, this message translates to:
+  /// **'在请假小程序中办理'**
+  String get ehallOpenNativeLeave;
 }
 
 class _AppLocalizationsDelegate

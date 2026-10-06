@@ -104,7 +104,7 @@ const List<FunctionGroup> functionGroups = [
   FunctionGroup(titleKey: 'groupTools', ids: ['vpn']),
   FunctionGroup(
       titleKey: 'groupMiniApps',
-      ids: ['xgxt', 'teaching_eval', 'gym', 'campus_card']),
+      ids: ['ehall', 'xgxt', 'teaching_eval', 'gym', 'campus_card']),
 ];
 
 String functionGroupTitle(BuildContext context, String titleKey) {
@@ -131,6 +131,8 @@ extension FunctionItemLocalization on FunctionItem {
   String getLocalizedTitle(BuildContext context) {
     final l10n = context.l10n;
     switch (id) {
+      case 'ehall':
+        return l10n.funcEhall;
       case 'sunshine':
         return l10n.funcSunshine;
       case 'questionnaire':

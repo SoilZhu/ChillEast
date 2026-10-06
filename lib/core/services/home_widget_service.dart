@@ -48,6 +48,7 @@ class HomeWidgetService {
     'empty_classroom',
     'repairs',
     'sunshine',
+    'ehall',
     'questionnaire',
     'leave',
     'gym',
@@ -68,6 +69,7 @@ class HomeWidgetService {
     'ele_recharge': '⚡',
     'library': '📚',
     'empty_classroom': '🚪',
+    'ehall': '🏛️',
     'repairs': '🛠️',
     'sunshine': '☀️',
     'questionnaire': '📋',
@@ -86,6 +88,7 @@ class HomeWidgetService {
   /// 功能配色（与外观设置 _masterPool 一致，原生侧为矢量图标着色）。
   static const Map<String, int> functionColors = {
     'sunshine': 0xFF09C489,
+    'ehall': 0xFF1E88E5,
     'questionnaire': 0xFF3476E6,
     'leave': 0xFF009688,
     'payment_code': 0xFF00C853,
@@ -386,6 +389,8 @@ class HomeWidgetService {
         return l10n.funcLibrary;
       case 'empty_classroom':
         return l10n.funcEmptyClassroom;
+      case 'ehall':
+        return l10n.funcEhall;
       case 'xgxt':
         return l10n.funcXgxt;
       case 'repairs':

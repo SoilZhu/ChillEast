@@ -12,7 +12,6 @@ import '../../score/screens/score_screen.dart';
 import '../../home/screens/bus_tracking_screen.dart';
 import 'webview_detail_screen.dart';
 import 'vpn_converter_screen.dart';
-import 'workspace_screen.dart';
 import 'classroom_inquiry_screen.dart';
 import 'payment_code_screen.dart';
 import 'campus_card_recharge_screen.dart';
@@ -228,6 +227,20 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
                   title: context.l10n.funcGym,
                   url: AppConstants.gymReservationUrl,
                   showWebBack: true,
+                ),
+              )
+            : _showLoginDialog();
+        break;
+      case 'ehall':
+        isLoggedIn 
+            ? _safeNavigate(
+                WebViewDetailScreen(
+                  title: context.l10n.funcEhall,
+                  url: AppConstants.ehallUrl,
+                  userAgent: AppConstants.ehallUA,
+                  showAppBar: false,
+                  showWebBack: false,
+                  appBarColor: const Color(0xFF1E88E5),
                 ),
               )
             : _showLoginDialog();

@@ -80,6 +80,7 @@ class AppConstants {
   
   // 办事大厅 (超星授权)
   static const String ehallUrl = 'https://auth.chaoxing.com/connect/oauth2/authorize?appid=b90d1387d9ea42e7bba56450e6eb7087&redirect_uri=https%3A%2F%2Fehall.hunau.edu.cn%2Fmobile%2Findex.html%3Fuseragent%3Dchaoxing%26appId%3Db90d1387d9ea42e7bba56450e6eb7087%26appKey%3DI7JYq0kU87gKgF2b%26uid%3D22073114%26fidEnc%3Da915b52ee0aa18ad%26mappId%3D4311705%26formid%3D&response_type=code&scope=snsapi_base&state=128516';
+  static const String ehallUA = campusCardUA;
   // 图书馆预约 (超星座位系统)
   static const String libraryUrl = 'https://office.chaoxing.com/front/third/apps/seat/index?fidEnc=4dc85b11270eab26';
   // 校园卡 (超星授权)

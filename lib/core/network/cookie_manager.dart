@@ -219,6 +219,8 @@ class AppCookieManager {
         'https://hunau.edu.cn',
         'https://bxpt.hunau.edu.cn',
         'https://bxpt.hunau.edu.cn/relax/', // 👈 增加带路径的探测
+        'https://ehall.hunau.edu.cn',
+        'https://ehall.hunau.edu.cn/mobile/',
         'https://webvpn.hunau.edu.cn',
         'https://passport2.chaoxing.com',
         'https://passport2-api.chaoxing.com',
@@ -373,6 +375,7 @@ class AppCookieManager {
       'https://p.cldisk.com',
       'https://ananas.chaoxing.com',
       'https://fin-serv.hunau.edu.cn',
+      'https://ehall.hunau.edu.cn',
     ];
 
     for (final domain in domains) {

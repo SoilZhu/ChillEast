@@ -100,6 +100,20 @@ Future<void> openFunctionById(
           ? Navigator.push(context, createSlideUpRoute(const RepairScreen()))
           : _showLoginDialog(context, ref);
       break;
+    case 'ehall':
+      isLoggedIn
+          ? Navigator.push(
+              context,
+              createSlideUpRoute(WebViewDetailScreen(
+                title: context.l10n.funcEhall,
+                url: AppConstants.ehallUrl,
+                userAgent: AppConstants.ehallUA,
+                showAppBar: false,
+                showWebBack: false,
+                appBarColor: const Color(0xFF1E88E5),
+              )))
+          : _showLoginDialog(context, ref);
+      break;
     case 'gym':
       isLoggedIn
           ? Navigator.push(

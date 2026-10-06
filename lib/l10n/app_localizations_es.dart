@@ -2689,4 +2689,85 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get search => '搜索';
+
+  @override
+  String get funcEhall => '办事大厅';
+
+  @override
+  String get ehallSubtitle => '线上办事、流程审批与综合服务';
+
+  @override
+  String get ehallHotServices => '热门服务';
+
+  @override
+  String get ehallAllServices => '全部服务';
+
+  @override
+  String get ehallCategories => '服务分类';
+
+  @override
+  String get ehallDepartments => '服务部门';
+
+  @override
+  String get ehallMyOrders => '我的办件';
+
+  @override
+  String get ehallSearchHint => '搜索服务名称、部门或描述...';
+
+  @override
+  String get ehallNoServicesFound => '未找到匹配的服务';
+
+  @override
+  String get ehallApplyNow => '我要办理';
+
+  @override
+  String get ehallViewDetail => '查看详情';
+
+  @override
+  String get ehallServiceType => '服务类型';
+
+  @override
+  String get ehallDepartment => '主办部门';
+
+  @override
+  String get ehallVisits => '访问量';
+
+  @override
+  String get ehallExternalLink => '外部系统跳转';
+
+  @override
+  String get ehallProcessWorkflow => '线上审批流程';
+
+  @override
+  String get ehallOpenInWeb => '网页版大厅';
+
+  @override
+  String get ehallOngoing => '进行中';
+
+  @override
+  String get ehallCompleted => '已办结';
+
+  @override
+  String get ehallNoOrders => '暂无办件记录';
+
+  @override
+  String get ehallFavorites => '我的收藏';
+
+  @override
+  String get ehallAddToFavorites => '收藏服务';
+
+  @override
+  String get ehallRemoveFromFavorites => '取消收藏';
+
+  @override
+  String get ehallServiceUnavailable => '办事大厅暂时不可用，请稍后重试';
+
+  @override
+  String get ehallSessionExpired => '办事大厅登录态已过期，请重新登录';
+
+  @override
+  String get ehallExternalJumpPrompt => '即将跳转至外部服务';
+
+  @override
+  String get ehallOpenNativeLeave => '在请假小程序中办理';
 }
