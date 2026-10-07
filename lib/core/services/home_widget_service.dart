@@ -49,6 +49,7 @@ class HomeWidgetService {
     'repairs',
     'sunshine',
     'ehall',
+    'info_portal',
     'questionnaire',
     'leave',
     'gym',
@@ -71,6 +72,7 @@ class HomeWidgetService {
     'library': '📚',
     'empty_classroom': '🚪',
     'ehall': '🏛️',
+    'info_portal': '🌐',
     'repairs': '🛠️',
     'sunshine': '☀️',
     'questionnaire': '📋',
@@ -91,6 +93,7 @@ class HomeWidgetService {
   static const Map<String, int> functionColors = {
     'sunshine': 0xFF09C489,
     'ehall': 0xFF1E88E5,
+    'info_portal': 0xFF1976D2,
     'questionnaire': 0xFF3476E6,
     'leave': 0xFF009688,
     'payment_code': 0xFF00C853,
@@ -394,6 +397,8 @@ class HomeWidgetService {
         return l10n.funcEmptyClassroom;
       case 'ehall':
         return l10n.funcEhall;
+      case 'info_portal':
+        return l10n.funcInfoPortal;
       case 'xgxt':
         return l10n.funcXgxt;
       case 'repairs':

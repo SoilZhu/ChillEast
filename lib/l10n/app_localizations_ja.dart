@@ -177,6 +177,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get funcEmptyClassroom => '空き教室';
 
   @override
+  String get funcInfoPortal => '更多小程序';
+
+  @override
   String get funcXgxt => '学生事務システム';
 
   @override

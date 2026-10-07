@@ -251,6 +251,21 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
               )
             : _showLoginDialog();
         break;
+      case 'info_portal':
+        isLoggedIn 
+            ? _safeNavigate(
+                WebViewDetailScreen(
+                  title: context.l10n.funcInfoPortal,
+                  url: AppConstants.infoPortalUrl,
+                  homeUrl: AppConstants.infoPortalUrl,
+                  userAgent: AppConstants.infoPortalUA,
+                  showAppBar: false,
+                  showWebBack: false,
+                  appBarColor: Colors.white,
+                ),
+              )
+            : _showLoginDialog();
+        break;
       case 'xgxt':
         isLoggedIn 
             ? _safeNavigate(
@@ -287,6 +302,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
         break;
       case 'campus_card':
         if (isLoggedIn) {
+          final campusCardTitle = context.l10n.funcCampusCard;
           await [Permission.camera, Permission.photos, Permission.storage].request();
           final service = ref.read(campusCardServiceProvider);
           final url = service.getCampusCardHomeUrl();
@@ -294,7 +310,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
           if (!mounted) return;
           _safeNavigate(
             WebViewDetailScreen(
-              title: context.l10n.funcCampusCard,
+              title: campusCardTitle,
               url: url,
               userAgent: AppConstants.campusCardUA,
               showWebBack: false,
@@ -313,12 +329,14 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
         _safeNavigate(const CampusBusMapScreen());
         break;
       case 'cs_bus':
+        final csBusTitle = context.l10n.funcCsBus;
+        final needLocationMsg = context.l10n.needLocationForBus;
         final hasPermission = await LocationHelper.requestPermission();
         if (!mounted) return;
         if (hasPermission) {
           _safeNavigate(
             WebViewDetailScreen(
-              title: context.l10n.funcCsBus,
+              title: csBusTitle,
               url: AppConstants.changshaBusUrl,
               showWebBack: true,
               showAppBar: true,
@@ -329,7 +347,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(context.l10n.needLocationForBus),
+                content: Text(needLocationMsg),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -351,7 +369,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.12)
@@ -362,7 +380,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(8),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

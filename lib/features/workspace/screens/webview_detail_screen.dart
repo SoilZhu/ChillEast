@@ -11,11 +11,13 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'scanner_screen.dart';
 import '../../../core/utils/l10n_extension.dart';
+import '../utils/info_portal_theme.dart';
 
 /// WebView 详情页 - 终极重构版（带小程序胶囊菜单）
 class WebViewDetailScreen extends StatefulWidget {
   final String title;
   final String url;
+  final String? homeUrl;
   final bool showAppBar;
   final bool showWebBack;
   final String? userAgent;
@@ -27,6 +29,7 @@ class WebViewDetailScreen extends StatefulWidget {
     super.key,
     required this.title,
     required this.url,
+    this.homeUrl,
     this.showAppBar = true,
     this.showWebBack = false,
     this.userAgent,
@@ -34,6 +37,44 @@ class WebViewDetailScreen extends StatefulWidget {
     this.autoClickText,
     this.appBarColor,
   });
+
+  /// 判断目标 URL 是否属于信息门户首页 (https://portal.hunau.edu.cn/ydd/microService2/toApps2)
+  static bool isToApps2Url(String? url) {
+    if (url == null || url.isEmpty) return false;
+    try {
+      final uri = Uri.parse(url);
+      final targetUri = Uri.parse(AppConstants.infoPortalUrl);
+      final normPath = uri.path.replaceAll(RegExp(r'/+$'), '');
+      final normTarget = targetUri.path.replaceAll(RegExp(r'/+$'), '');
+      return uri.host == targetUri.host && normPath == normTarget;
+    } catch (_) {
+      final clean = url.split('?').first.split('#').first.replaceAll(RegExp(r'/+$'), '');
+      final target = AppConstants.infoPortalUrl.split('?').first.split('#').first.replaceAll(RegExp(r'/+$'), '');
+      return clean == target;
+    }
+  }
+
+  /// 解析目标页面的生效 User-Agent
+  /// 当未显式指定 userAgent 时：
+  /// - 17wanxiao 页面使用对应 Wanxiao UA
+  /// - 包含 chaoxing.com / hunau.edu.cn（包括信息门户 portal.hunau.edu.cn）/ zhanyun.org 统一模拟校园卡/超星原生环境 AppConstants.campusCardUA
+  /// - 其余页面使用标准移动端 Chrome UA
+  static String resolveUserAgent({String? userAgent, String? url}) {
+    if (userAgent != null && userAgent.isNotEmpty) {
+      return userAgent;
+    }
+    final targetUrl = url ?? '';
+    if (targetUrl.contains('17wanxiao')) {
+      return 'Mozilla/5.0 (Linux; Android 13; Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/121.0.6167.178 Mobile Safari/537.36 Wanxiao/6.0.2';
+    }
+    if (targetUrl.contains('chaoxing.com') ||
+        targetUrl.contains('portal.hunau.edu.cn') ||
+        targetUrl.contains('hunau.edu.cn') ||
+        targetUrl.contains('zhanyun.org')) {
+      return AppConstants.campusCardUA;
+    }
+    return 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Mobile Safari/537.36';
+  }
 
   @override
   State<WebViewDetailScreen> createState() => _WebViewDetailScreenState();
@@ -46,18 +87,67 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
   double _progress = 0;
   String? _errorMessage;
   Timer? _loadTimeoutTimer;
+  late String _currentUrl;
+
+  String get _effectiveUserAgent => WebViewDetailScreen.resolveUserAgent(
+        userAgent: widget.userAgent,
+        url: widget.url,
+      );
+
+  String? get _effectiveHomeUrl {
+    if (widget.homeUrl != null && widget.homeUrl!.isNotEmpty) {
+      return widget.homeUrl;
+    }
+    if (widget.url.contains('microService2/toApps2') ||
+        widget.url.contains('portal.hunau.edu.cn/ydd') ||
+        widget.title == '更多小程序' ||
+        widget.title == '信息门户') {
+      return AppConstants.infoPortalUrl;
+    }
+    return null;
+  }
+
+  bool get _shouldShowHomeCapsule {
+    final home = _effectiveHomeUrl;
+    if (home == null) return false;
+    return !WebViewDetailScreen.isToApps2Url(_currentUrl);
+  }
+
+  Future<void> _handleBack() async {
+    if (_webViewController != null && await _webViewController!.canGoBack()) {
+      _webViewController!.goBack();
+    } else {
+      final home = _effectiveHomeUrl;
+      if (home != null && !WebViewDetailScreen.isToApps2Url(_currentUrl)) {
+        _handleHome();
+      } else {
+        if (mounted) Navigator.pop(context);
+      }
+    }
+  }
+
+  void _handleHome() {
+    final home = _effectiveHomeUrl ?? AppConstants.infoPortalUrl;
+    _webViewController?.loadUrl(
+      urlRequest: URLRequest(
+        url: WebUri(home),
+        headers: {'User-Agent': _effectiveUserAgent},
+      ),
+    );
+  }
 
   static const int _loadTimeoutSeconds = 60; // 适当延长 SSO 超时
 
   @override
   void initState() {
     super.initState();
+    _currentUrl = widget.url;
     _startLoadTimeout();
   }
 
   void _startLoadTimeout() {
     _loadTimeoutTimer?.cancel();
-    _loadTimeoutTimer = Timer(Duration(seconds: _loadTimeoutSeconds), () {
+    _loadTimeoutTimer = Timer(const Duration(seconds: _loadTimeoutSeconds), () {
       if (_isLoading && mounted) {
         setState(() {
           _errorMessage = context.l10n.loadTimeoutCampusNetworkSlow;
@@ -90,39 +180,67 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
         automaticallyImplyLeading: false, // 禁用自动推断的返回按钮
         title: const Text(''),
         centerTitle: true,
-        leadingWidth: widget.showWebBack ? 70 : 0, // 动态调节宽度
-        leading: widget.showWebBack ? Padding(
+        leadingWidth: _shouldShowHomeCapsule ? 96 : (widget.showWebBack ? 70 : 0),
+        leading: _shouldShowHomeCapsule ? Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Center(
+            child: Container(
+              height: 32,
+              decoration: BoxDecoration(
+                color: isDarkBackground ? Colors.white.withValues(alpha: 0.15) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: dividerColor, width: 0.5),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _handleBack,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: iconColor),
+                    ),
+                  ),
+                  Container(width: 0.5, height: 16, color: dividerColor),
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _handleHome,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Icon(Icons.home_rounded, size: 18, color: iconColor),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ) : (widget.showWebBack ? Padding(
           padding: const EdgeInsets.only(left: 16),
           child: Center(
             child: Container(
               height: 32,
               width: 44,
               decoration: BoxDecoration(
-                color: isDarkBackground ? Colors.white.withOpacity(0.15) : Colors.white,
+                color: isDarkBackground ? Colors.white.withValues(alpha: 0.15) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: dividerColor, width: 0.5),
               ),
               child: IconButton(
                 padding: EdgeInsets.zero,
                 icon: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: iconColor),
-                onPressed: () async {
-                  if (_webViewController != null && await _webViewController!.canGoBack()) {
-                    _webViewController!.goBack();
-                  } else {
-                    if (context.mounted) Navigator.pop(context);
-                  }
-                },
+                onPressed: _handleBack,
               ),
             ),
           ),
-        ) : null,
+        ) : null),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Container(
               height: 32,
               decoration: BoxDecoration(
-                color: isDarkBackground ? Colors.white.withOpacity(0.15) : Colors.white,
+                color: isDarkBackground ? Colors.white.withValues(alpha: 0.15) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: dividerColor, width: 0.5),
               ),
@@ -165,11 +283,7 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
               canPop: false,
               onPopInvokedWithResult: (didPop, result) async {
                 if (didPop) return;
-                if (_webViewController != null && await _webViewController!.canGoBack()) {
-                  _webViewController!.goBack();
-                } else {
-                  if (context.mounted) Navigator.pop(context);
-                }
+                await _handleBack();
               },
         child: FutureBuilder<String?>(
         future: SecureStorageHelper().getToken(),
@@ -188,6 +302,25 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                         source: "try { localStorage.setItem('token', '$token'); sessionStorage.setItem('token', '$token'); } catch(e) {}",
                         injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
                       ),
+                    // 🛠️ 深度模拟：重写 navigator.userAgent 与 navigator.appVersion (从校园卡/超星原生环境获取)
+                    UserScript(
+                      source: """
+                        (function() {
+                          try {
+                            const customUA = ${jsonEncode(_effectiveUserAgent)};
+                            Object.defineProperty(navigator, 'userAgent', {
+                              get: function() { return customUA; },
+                              configurable: true
+                            });
+                            Object.defineProperty(navigator, 'appVersion', {
+                              get: function() { return customUA; },
+                              configurable: true
+                            });
+                          } catch(e) {}
+                        })();
+                      """,
+                      injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
+                    ),
                     // 🛠️ 终极修复：基于源码实现的超星标准安卓桥接器
                     UserScript(
                       source: """
@@ -277,6 +410,8 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                       """,
                       injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
                     ),
+                    // 🎨 注入信息门户 (toApps2) Material Design 2 自适应主题与排版脚本
+                    ...InfoPortalTheme.userScripts,
                   ]),
                   initialSettings: InAppWebViewSettings(
                     mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
@@ -286,11 +421,7 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                     supportZoom: true,
                     builtInZoomControls: true,
                     displayZoomControls: false,
-                    userAgent: widget.userAgent ?? (widget.url.contains('17wanxiao') 
-                        ? 'Mozilla/5.0 (Linux; Android 13; Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/121.0.6167.178 Mobile Safari/537.36 Wanxiao/6.0.2'
-                        : (widget.url.contains('chaoxing.com')
-                            ? 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Mobile Safari/537.36 (device:MEIZU 20) Language/zh_CN com.chaoxing.mobile.hunannongyedaxue/ChaoXingStudy_1000257_5.3_android_phone_53_234 (Kalimdor)'
-                            : 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Mobile Safari/537.36')),
+                    userAgent: _effectiveUserAgent,
                     allowsInlineMediaPlayback: true,
                     loadWithOverviewMode: true,
                     allowFileAccessFromFileURLs: true,
@@ -318,7 +449,12 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                             final cleanUrl = webUrl.replaceAll('#INNER', '');
                             _logger.i('🔗 [JSBridge] Navigating to: $cleanUrl');
                             // 在当前 WebView 中加载新 URL
-                            controller.loadUrl(urlRequest: URLRequest(url: WebUri(cleanUrl)));
+                            controller.loadUrl(
+                              urlRequest: URLRequest(
+                                url: WebUri(cleanUrl),
+                                headers: {'User-Agent': _effectiveUserAgent},
+                              ),
+                            );
                             return null;
                           }
                         }
@@ -406,12 +542,24 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                     );
 
                     if (widget.url.isNotEmpty) {
-                      // 重要：同步多域名 Cookie 才能通过 WebVPN
-                      await AppCookieManager().syncMultiDomainCookiesFromWebView();
                       if (widget.url.contains('chaoxing.com')) {
                         await AppCookieManager().injectAllChaoxingCookies();
+                      } else {
+                        // 快速同步当前目标 URL 与 SSO 的必要 Cookie（毫秒级，避免 20+ 域名全量串行扫描阻塞首屏）
+                        await AppCookieManager().syncCookiesToWebView(widget.url);
+                        if (widget.url.contains('hunau.edu.cn')) {
+                          await AppCookieManager().syncCookiesToWebView(AppConstants.ssoBaseUrl);
+                        }
                       }
-                      await controller.loadUrl(urlRequest: URLRequest(url: WebUri(widget.url)));
+                      await controller.loadUrl(
+                        urlRequest: URLRequest(
+                          url: WebUri(widget.url),
+                          headers: {'User-Agent': _effectiveUserAgent},
+                        ),
+                      );
+
+                      // 全量多域名 Cookie 同步移至后台异步执行，不阻塞页面首屏渲染
+                      unawaited(AppCookieManager().syncMultiDomainCookiesFromWebView());
                     }
                   },
                   onLoadStart: (controller, url) {
@@ -419,6 +567,7 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                       _isLoading = true; 
                       _errorMessage = null; 
                       _progress = 0;
+                      if (url != null) _currentUrl = url.toString();
                     });
                     _startLoadTimeout();
                     _logger.d('🛫 Loading: $url');
@@ -427,6 +576,11 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                     _cancelLoadTimeout();
                     
                     final urlString = url?.toString() ?? '';
+                    if (urlString.isNotEmpty && urlString != _currentUrl && mounted) {
+                      setState(() {
+                        _currentUrl = urlString;
+                      });
+                    }
                     
                     // 如果设置了目标 URL，只有到达目标后才关闭加载动画
                     if (widget.targetUrl != null) {
@@ -482,9 +636,29 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                         })();
                       """);
                     }
+
+                    // 针对信息门户 (toApps2) 的二次强化激活 (确保 SPA 渲染完成后即刻触发 MD2 排版)
+                    if (WebViewDetailScreen.isToApps2Url(urlString)) {
+                      await controller.evaluateJavascript(source: InfoPortalTheme.md2Js);
+                    }
                   },
                   onProgressChanged: (controller, progress) {
-                    setState(() => _progress = progress / 100);
+                    setState(() {
+                      _progress = progress / 100;
+                      if (widget.targetUrl == null && progress >= 70) {
+                        _isLoading = false;
+                      }
+                    });
+                  },
+                  onUpdateVisitedHistory: (controller, url, isReload) {
+                    if (url != null) {
+                      final urlString = url.toString();
+                      if (urlString.isNotEmpty && urlString != _currentUrl && mounted) {
+                        setState(() {
+                          _currentUrl = urlString;
+                        });
+                      }
+                    }
                   },
                   onReceivedError: (controller, request, error) {
                     final url = request.url.toString();
@@ -626,8 +800,8 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                 ),
               ),
 
-              // 进度条
-              if (_isLoading)
+              // 进度条 (未完成时持续显示)
+              if (_isLoading || (_progress > 0 && _progress < 1.0))
                 Positioned(
                   top: 0,
                   left: 0, right: 0,
@@ -663,8 +837,46 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                   ),
                 ),
               
-              // 🟢 浮动返回胶囊 (仅在没有 AppBar 且 showWebBack 为 true 时显示)
-              if (!widget.showAppBar && widget.showWebBack)
+              // 🟢 浮动「返回 | 首页」双胶囊 (用于信息门户等子页面)
+              if (!widget.showAppBar && _shouldShowHomeCapsule)
+                Positioned(
+                  top: 8,
+                  left: 16,
+                  child: Container(
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.black12, width: 0.5),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: _handleBack,
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 11),
+                            child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Colors.black87),
+                          ),
+                        ),
+                        Container(width: 0.5, height: 16, color: Colors.black12),
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: _handleHome,
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 11),
+                            child: Icon(Icons.home_rounded, size: 18, color: Colors.black87),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else if (!widget.showAppBar && widget.showWebBack)
                 Positioned(
                   top: 8,
                   left: 16,
@@ -672,23 +884,17 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                     height: 32,
                     width: 44,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.black12, width: 0.5),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
                       ],
                     ),
                     child: IconButton(
                       padding: EdgeInsets.zero,
                       icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Colors.black87),
-                      onPressed: () async {
-                        if (_webViewController != null && await _webViewController!.canGoBack()) {
-                          _webViewController!.goBack();
-                        } else {
-                          if (context.mounted) Navigator.pop(context);
-                        }
-                      },
+                      onPressed: _handleBack,
                     ),
                   ),
                 ),
@@ -701,11 +907,11 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                   child: Container(
                     height: 32,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.black12, width: 0.5),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
                       ],
                     ),
                     child: Row(

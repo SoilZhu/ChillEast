@@ -121,6 +121,21 @@ Future<void> openFunctionById(
               )))
           : _showLoginDialog(context, ref);
       break;
+    case 'info_portal':
+      isLoggedIn
+          ? Navigator.push(
+              context,
+              createSlideUpRoute(WebViewDetailScreen(
+                title: context.l10n.funcInfoPortal,
+                url: AppConstants.infoPortalUrl,
+                homeUrl: AppConstants.infoPortalUrl,
+                userAgent: AppConstants.infoPortalUA,
+                showAppBar: false,
+                showWebBack: false,
+                appBarColor: Colors.white,
+              )))
+          : _showLoginDialog(context, ref);
+      break;
     case 'gym':
       isLoggedIn
           ? Navigator.push(

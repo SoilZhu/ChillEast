@@ -491,6 +491,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 )))
             : _showLoginDialog(context);
         break;
+      case 'info_portal':
+        isLoggedIn
+            ? Navigator.push(
+                context,
+                createSlideUpRoute(WebViewDetailScreen(
+                  title: context.l10n.funcInfoPortal,
+                  url: AppConstants.infoPortalUrl,
+                  homeUrl: AppConstants.infoPortalUrl,
+                  userAgent: AppConstants.infoPortalUA,
+                  showAppBar: false,
+                  showWebBack: false,
+                  appBarColor: Colors.white,
+                )))
+            : _showLoginDialog(context);
+        break;
       case 'gym':
         isLoggedIn
             ? Navigator.push(
@@ -521,7 +536,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             : _showLoginDialog(context);
         break;
       case 'vpn':
-        Navigator.push(context, createSlideUpRoute(VpnConverterScreen()));
+        Navigator.push(context, createSlideUpRoute(const VpnConverterScreen()));
         break;
       case 'campus_card':
         if (isLoggedIn) {
@@ -593,7 +608,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.12)
@@ -604,7 +619,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(8),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

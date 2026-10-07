@@ -179,6 +179,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get funcEmptyClassroom => 'Aulas libres';
 
   @override
+  String get funcInfoPortal => '更多小程序';
+
+  @override
   String get funcXgxt => 'Asuntos estudiantiles';
 
   @override

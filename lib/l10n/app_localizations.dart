@@ -455,6 +455,12 @@ abstract class AppLocalizations {
   /// **'空教室'**
   String get funcEmptyClassroom;
 
+  /// No description provided for @funcInfoPortal.
+  ///
+  /// In zh, this message translates to:
+  /// **'更多小程序'**
+  String get funcInfoPortal;
+
   /// No description provided for @funcXgxt.
   ///
   /// In zh, this message translates to:

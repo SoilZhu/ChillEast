@@ -178,6 +178,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get funcEmptyClassroom => 'Available Classrooms';
 
   @override
+  String get funcInfoPortal => 'More Mini Programs';
+
+  @override
   String get funcXgxt => 'Student Affairs';
 
   @override

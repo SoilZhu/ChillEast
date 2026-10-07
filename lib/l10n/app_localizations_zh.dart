@@ -177,6 +177,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get funcEmptyClassroom => '空教室';
 
   @override
+  String get funcInfoPortal => '更多小程序';
+
+  @override
   String get funcXgxt => '学工系统';
 
   @override
@@ -2880,6 +2883,9 @@ class AppLocalizationsZhHk extends AppLocalizationsZh {
   String get funcEmptyClassroom => '空教室';
 
   @override
+  String get funcInfoPortal => '更多小程式';
+
+  @override
   String get funcXgxt => '學工系統';
 
   @override
@@ -5181,6 +5187,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get funcEmptyClassroom => '空教室';
+
+  @override
+  String get funcInfoPortal => '更多小程式';
 
   @override
   String get funcXgxt => '學工系統';

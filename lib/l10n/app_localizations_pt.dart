@@ -178,6 +178,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get funcEmptyClassroom => 'Salas Livres';
 
   @override
+  String get funcInfoPortal => '更多小程序';
+
+  @override
   String get funcXgxt => 'Assuntos Estudantis';
 
   @override

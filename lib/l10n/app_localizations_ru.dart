@@ -179,6 +179,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get funcEmptyClassroom => 'Свободные аудитории';
 
   @override
+  String get funcInfoPortal => '更多小程序';
+
+  @override
   String get funcXgxt => 'Студ. дела';
 
   @override

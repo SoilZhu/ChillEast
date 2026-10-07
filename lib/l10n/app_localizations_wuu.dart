@@ -177,6 +177,9 @@ class AppLocalizationsWuu extends AppLocalizations {
   String get funcEmptyClassroom => '空个教室';
 
   @override
+  String get funcInfoPortal => '更多小程序';
+
+  @override
   String get funcXgxt => '学工个系统';
 
   @override

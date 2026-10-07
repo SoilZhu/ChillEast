@@ -9,6 +9,9 @@ class AppConstants {
   static const String portalBaseUrl = 'https://portal.hunau.edu.cn';
   static const String portalIndexUrl = '$portalBaseUrl/index';
   static const String portalWorkspaceUrl = '$portalBaseUrl/fusion/workspace';
+  static const String portalAppsUrl = '$portalBaseUrl/ydd/microService2/toApps2';
+  static const String infoPortalUrl = portalAppsUrl;
+  static const String infoPortalUA = campusCardUA;
 
   // WebVPN
   static const String webvpnBaseUrl = 'https://webvpn.hunau.edu.cn';
