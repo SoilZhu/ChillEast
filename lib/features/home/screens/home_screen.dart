@@ -1574,21 +1574,61 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
+  DateTime? _parseLeaveDate(String str) {
+    if (str.isEmpty) return null;
+    return DateTime.tryParse(str) ??
+        DateTime.tryParse(str.replaceFirst(' ', 'T'));
+  }
+
   bool _isOngoingLeave(LeaveRecord record) {
-    final start = DateTime.tryParse(record.startTime);
-    final end = DateTime.tryParse(record.endTime);
+    final start = _parseLeaveDate(record.startTime);
+    final end = _parseLeaveDate(record.endTime);
     if (start == null || end == null) return false;
     final now = DateTime.now();
     return start.isBefore(now) && end.isAfter(now);
   }
 
+  bool _isLeaveWithin7Days(LeaveRecord record) {
+    final start = _parseLeaveDate(record.startTime);
+    final end = _parseLeaveDate(record.endTime);
+    if (start == null) return false;
+    final now = DateTime.now();
+    final sevenDaysAgo = now.subtract(const Duration(days: 7));
+    final sevenDaysLater = now.add(const Duration(days: 7));
+    if (start.isAfter(sevenDaysAgo) && start.isBefore(sevenDaysLater)) {
+      return true;
+    }
+    if (end != null && start.isBefore(now) && end.isAfter(now)) {
+      return true;
+    }
+    return false;
+  }
+
+  bool _shouldDisplayLeave(LeaveRecord record) {
+    // 待审核 (0) 和 审核中 (8)：展示 7 天内的
+    if (record.auditStatus == '0' ||
+        record.auditStatus == '8' ||
+        record.auditStatusName == '待审核' ||
+        record.auditStatusName == '审核中') {
+      return _isLeaveWithin7Days(record);
+    }
+    // 驳回 / 不通过的不在首页展示
+    if (record.auditResultName.contains('不通过') ||
+        record.auditResultName.contains('驳回') ||
+        record.auditResultName.contains('拒绝')) {
+      return false;
+    }
+    // 已通过：保持现在的已通过展示（即进行中的请假）
+    return _isOngoingLeave(record);
+  }
+
   Widget _buildOngoingLeaves(BuildContext context) {
     final cachedAsync = ref.watch(leaveCacheProvider);
-    final ongoing = (cachedAsync.value ?? []).where(_isOngoingLeave).toList()
+    final leaves = (cachedAsync.value ?? []).where(_shouldDisplayLeave).toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
-    if (ongoing.isEmpty) return const SizedBox.shrink();
+    if (leaves.isEmpty) return const SizedBox.shrink();
 
-    final display = ongoing.take(3).toList();
+    final display = leaves.take(3).toList();
 
     return _buildMergedSection(
       title: context.l10n.funcLeave,
@@ -1610,6 +1650,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             iconColor: const Color(0xFF009688),
             title: title,
             time: record.timeRange,
+            status: record.getLocalizedStatus(context),
           ),
         );
       }).toList(),
