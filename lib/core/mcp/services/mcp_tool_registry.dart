@@ -15,6 +15,7 @@ import '../tools/questionnaire_tool.dart';
 import '../tools/leave_tool.dart';
 import '../tools/transaction_tool.dart';
 import '../tools/repair_tool.dart';
+import '../tools/exam_tool.dart';
 import '../../../features/workspace/services/electricity_service.dart';
 import '../../../features/workspace/services/campus_card_service.dart';
 import '../../../features/workspace/services/transaction_service.dart';
@@ -24,6 +25,7 @@ import '../../../features/questionnaire/services/questionnaire_service.dart';
 import '../../../features/leave/services/leave_service.dart';
 import '../../../features/repairs/services/repair_service.dart';
 import '../../../features/homework/providers/homework_provider.dart';
+import '../../../features/exam/providers/exam_provider.dart';
 
 /// MCP Tool Registry Provider
 final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
@@ -37,6 +39,8 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
   final transactionService = ref.watch(transactionServiceProvider);
   final repairService = ref.watch(repairServiceProvider);
   final homeworkStorage = ref.watch(homeworkStorageProvider);
+  final examStorage = ref.watch(examStorageProvider);
+  final examService = ref.watch(examServiceProvider);
 
   final registry = McpToolRegistry();
 
@@ -142,6 +146,10 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
 
   // 24. 报修工单取消（需用户确认）
   registry.register(RepairCancelTool.create(service: repairService));
+
+  // 25. 考试日程与安排查询 (同时注册 query_exams 与 query_exam_schedule 别名)
+  registry.register(ExamQueryTool.create(storage: examStorage, service: examService));
+  registry.register(ExamQueryTool.create(storage: examStorage, service: examService, toolName: 'query_exam_schedule'));
 
   return registry;
 });
