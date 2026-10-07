@@ -2840,6 +2840,12 @@ abstract class AppLocalizations {
   /// **'当前充值房间'**
   String get currentRechargeRoom;
 
+  /// No description provided for @currentRechargeCard.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前充值卡片'**
+  String get currentRechargeCard;
+
   /// No description provided for @refreshing.
   ///
   /// In zh, this message translates to:

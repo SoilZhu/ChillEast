@@ -847,6 +847,7 @@
   "electricityRechargeFailed": "电费充值失败",
   "electricityRechargeTitle": "电费充值",
   "currentRechargeRoom": "当前充值房间",
+  "currentRechargeCard": "当前充值卡片",
   "refreshing": "刷新中",
   "noRoomSelectedYet": "尚未选择房间",
   "electricityBalance": "电费余额",

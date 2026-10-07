@@ -1445,6 +1445,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get currentRechargeRoom => '当前充值房间';
 
   @override
+  String get currentRechargeCard => '当前充值卡片';
+
+  @override
   String get refreshing => '刷新中';
 
   @override
@@ -2913,6 +2916,9 @@ class AppLocalizationsZhHk extends AppLocalizationsZh {
   String get funcRepairs => '報修平台';
 
   @override
+  String get campusCardBalance => '校園卡餘額';
+
+  @override
   String get funcGym => '場館預約';
 
   @override
@@ -4069,6 +4075,9 @@ class AppLocalizationsZhHk extends AppLocalizationsZh {
   String get currentRechargeRoom => '當前充值房間';
 
   @override
+  String get currentRechargeCard => '當前充值卡片';
+
+  @override
   String get refreshing => '重新整理中';
 
   @override
@@ -5217,6 +5226,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get funcRepairs => '報修平臺';
+
+  @override
+  String get campusCardBalance => '校園卡餘額';
 
   @override
   String get funcGym => '場館預約';
@@ -6375,6 +6387,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get currentRechargeRoom => '當前充值房間';
 
   @override
+  String get currentRechargeCard => '當前充值卡片';
+
+  @override
   String get refreshing => '重新整理中';
 
   @override
@@ -7523,6 +7538,9 @@ class AppLocalizationsZhHefei extends AppLocalizationsZh {
 
   @override
   String get repairWorkOrders => '报修工单';
+
+  @override
+  String get campusCardBalance => '校园卡余钱';
 
   @override
   String get quickActions => '快捷功能';
@@ -8716,6 +8734,9 @@ class AppLocalizationsZhHefei extends AppLocalizationsZh {
 
   @override
   String get currentRechargeRoom => '眼下充钱房间';
+
+  @override
+  String get currentRechargeCard => '眼下充钱卡片';
 
   @override
   String get refreshing => '刷下子中';

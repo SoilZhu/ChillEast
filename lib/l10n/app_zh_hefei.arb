@@ -417,6 +417,8 @@
   "electricityRechargeFailed": "电费充钱没弄成",
   "electricityRechargeTitle": "电费充钱",
   "currentRechargeRoom": "眼下充钱房间",
+  "currentRechargeCard": "眼下充钱卡片",
+  "campusCardBalance": "校园卡余钱",
   "refreshing": "刷下子中",
   "noRoomSelectedYet": "尚未选房间",
   "electricityBalance": "电费余钱",

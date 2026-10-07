@@ -193,7 +193,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get feedBalance => '余额';
 
   @override
-  String get campusCardBalance => '校园卡余额';
+  String get campusCardBalance => 'Saldo do Cartão';
 
   @override
   String get dormitoryElectricity => '宿舍电费';
@@ -1486,6 +1486,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get currentRechargeRoom => 'Quarto Atual';
+
+  @override
+  String get currentRechargeCard => 'Cartão Atual';
 
   @override
   String get refreshing => 'Atualizando';

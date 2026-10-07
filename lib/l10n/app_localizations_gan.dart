@@ -1445,6 +1445,9 @@ class AppLocalizationsGan extends AppLocalizations {
   String get currentRechargeRoom => '当前充值房间';
 
   @override
+  String get currentRechargeCard => '当前充值卡片';
+
+  @override
   String get refreshing => '刷新中';
 
   @override

@@ -192,7 +192,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get feedBalance => '余额';
 
   @override
-  String get campusCardBalance => '校园卡余额';
+  String get campusCardBalance => '学生証残高';
 
   @override
   String get dormitoryElectricity => '宿舍电费';
@@ -1454,6 +1454,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get currentRechargeRoom => 'チャージ対象の部屋';
+
+  @override
+  String get currentRechargeCard => 'チャージ対象のカード';
 
   @override
   String get refreshing => '更新中';

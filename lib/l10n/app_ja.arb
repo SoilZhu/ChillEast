@@ -404,6 +404,8 @@
   "electricityRechargeFailed": "電気代チャージに失敗しました",
   "electricityRechargeTitle": "電気代チャージ",
   "currentRechargeRoom": "チャージ対象の部屋",
+  "currentRechargeCard": "チャージ対象のカード",
+  "campusCardBalance": "学生証残高",
   "refreshing": "更新中",
   "noRoomSelectedYet": "部屋が未選択です",
   "electricityBalance": "電気代残高",

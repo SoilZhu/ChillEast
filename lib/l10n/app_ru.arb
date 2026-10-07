@@ -404,6 +404,8 @@
   "electricityRechargeFailed": "Не удалось оплатить электроэнергию",
   "electricityRechargeTitle": "Оплата электроэнергии",
   "currentRechargeRoom": "Выбранная комната",
+  "currentRechargeCard": "Выбранная карта",
+  "campusCardBalance": "Баланс карты",
   "refreshing": "Обновление...",
   "noRoomSelectedYet": "Комната еще не выбрана",
   "electricityBalance": "Баланс электроэнергии",

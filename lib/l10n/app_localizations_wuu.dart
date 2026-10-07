@@ -192,7 +192,7 @@ class AppLocalizationsWuu extends AppLocalizations {
   String get feedBalance => '余额';
 
   @override
-  String get campusCardBalance => '校园卡余额';
+  String get campusCardBalance => '校园卡还剩几许';
 
   @override
   String get dormitoryElectricity => '宿舍电费';
@@ -1444,6 +1444,9 @@ class AppLocalizationsWuu extends AppLocalizations {
 
   @override
   String get currentRechargeRoom => '现勒充铜钿个房间';
+
+  @override
+  String get currentRechargeCard => '现勒充铜钿个卡片';
 
   @override
   String get refreshing => '勒重新望';

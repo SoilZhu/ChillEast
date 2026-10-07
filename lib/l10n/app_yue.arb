@@ -812,6 +812,8 @@
   "electricityRechargeFailed": "电费增值失败",
   "electricityRechargeTitle": "电费增值",
   "currentRechargeRoom": "目前增值房间",
+  "currentRechargeCard": "目前增值卡片",
+  "campusCardBalance": "校园卡余额",
   "refreshing": "重新整理紧",
   "noRoomSelectedYet": "仲未选择房间",
   "electricityBalance": "电费余额",

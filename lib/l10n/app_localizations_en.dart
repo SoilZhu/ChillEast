@@ -1477,6 +1477,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currentRechargeRoom => 'Current Room';
 
   @override
+  String get currentRechargeCard => 'Current Card';
+
+  @override
   String get refreshing => 'Refreshing';
 
   @override

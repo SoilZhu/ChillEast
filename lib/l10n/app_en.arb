@@ -452,6 +452,7 @@
   "electricityRechargeFailed": "Electricity recharge failed",
   "electricityRechargeTitle": "Electricity Recharge",
   "currentRechargeRoom": "Current Room",
+  "currentRechargeCard": "Current Card",
   "refreshing": "Refreshing",
   "noRoomSelectedYet": "No room selected yet",
   "electricityBalance": "Electricity Balance",

@@ -194,7 +194,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get feedBalance => '余额';
 
   @override
-  String get campusCardBalance => '校园卡余额';
+  String get campusCardBalance => 'Saldo de tarjeta';
 
   @override
   String get dormitoryElectricity => '宿舍电费';
@@ -1495,6 +1495,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get currentRechargeRoom => 'Habitación a recargar';
+
+  @override
+  String get currentRechargeCard => 'Tarjeta a recargar';
 
   @override
   String get refreshing => 'Actualizando...';

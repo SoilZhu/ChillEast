@@ -404,6 +404,8 @@
   "electricityRechargeFailed": "Échec de la recharge d'électricité",
   "electricityRechargeTitle": "Recharge d'électricité",
   "currentRechargeRoom": "Pièce concernée",
+  "currentRechargeCard": "Carte concernée",
+  "campusCardBalance": "Solde de la carte",
   "refreshing": "Actualisation...",
   "noRoomSelectedYet": "Aucune pièce sélectionnée",
   "electricityBalance": "Solde d'électricité",

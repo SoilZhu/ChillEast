@@ -1445,6 +1445,9 @@ class AppLocalizationsHsn extends AppLocalizations {
   String get currentRechargeRoom => '现咯充值的房间';
 
   @override
+  String get currentRechargeCard => '现咯充值的卡片';
+
+  @override
   String get refreshing => '更新中';
 
   @override

@@ -404,6 +404,8 @@
   "electricityRechargeFailed": "Falha na recarga de energia",
   "electricityRechargeTitle": "Recarga de Energia",
   "currentRechargeRoom": "Quarto Atual",
+  "currentRechargeCard": "Cartão Atual",
+  "campusCardBalance": "Saldo do Cartão",
   "refreshing": "Atualizando",
   "noRoomSelectedYet": "Nenhum quarto selecionado ainda",
   "electricityBalance": "Saldo de Energia",

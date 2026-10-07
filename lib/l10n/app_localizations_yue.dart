@@ -1446,6 +1446,9 @@ class AppLocalizationsYue extends AppLocalizations {
   String get currentRechargeRoom => '目前增值房间';
 
   @override
+  String get currentRechargeCard => '目前增值卡片';
+
+  @override
   String get refreshing => '重新整理紧';
 
   @override

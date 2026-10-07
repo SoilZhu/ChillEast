@@ -405,6 +405,8 @@
   "electricityRechargeFailed": "電費充值失敗",
   "electricityRechargeTitle": "電費充值",
   "currentRechargeRoom": "當前充值房間",
+  "currentRechargeCard": "當前充值卡片",
+  "campusCardBalance": "校園卡餘額",
   "refreshing": "重新整理中",
   "noRoomSelectedYet": "尚未選擇房間",
   "electricityBalance": "電費餘額",
