@@ -1847,6 +1847,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           room.roomName.isNotEmpty ? room.roomName : room.roomId;
       final eleTitle =
           room.areaName.isNotEmpty ? room.areaName : context.l10n.dormitoryElectricity;
+      final String eleSubtitle;
+      if (room.buildingName.isNotEmpty) {
+        eleSubtitle = room.buildingName.endsWith(roomDisplayName)
+            ? room.buildingName
+            : '${room.buildingName} $roomDisplayName';
+      } else {
+        eleSubtitle = roomDisplayName;
+      }
+
       final balanceInfo = eleState.balanceInfo;
       final balanceText = balanceInfo != null
           ? '¥${balanceInfo.balance}'
@@ -1857,7 +1866,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           icon: Icons.bolt_outlined,
           iconColor: const Color(0xFFFF9800),
           title: eleTitle,
-          subtitle: roomDisplayName,
+          subtitle: eleSubtitle,
           balanceText: balanceText,
           balanceColor: isDark ? Colors.white : const Color(0xFFFF9800),
           onTap: () => _openElectricity(context),
