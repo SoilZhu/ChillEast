@@ -254,7 +254,9 @@ class ElectricityService {
         } else {
           throw Exception('Unexpected response format for getBalance: $data');
         }
-        return ElectricityBalanceInfo.fromJson(result);
+        final balanceInfo = ElectricityBalanceInfo.fromJson(result);
+        saveSavedBalance(balanceInfo);
+        return balanceInfo;
       }
       throw Exception('无法获取余额数据');
     } catch (e) {
@@ -392,9 +394,52 @@ class ElectricityService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_savedRoomKey);
-      _logger.d('🧹 Cleared saved electricity room');
+      await prefs.remove(_savedBalanceKey);
+      _logger.d('🧹 Cleared saved electricity room and balance');
     } catch (e) {
       _logger.w('Failed to clear saved electricity room: $e');
+    }
+  }
+
+  static const String _savedBalanceKey = 'saved_electricity_balance_info';
+
+  /// 获取上次保存的宿舍电费余额信息
+  Future<ElectricityBalanceInfo?> getSavedBalance() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_savedBalanceKey);
+      if (raw != null && raw.isNotEmpty) {
+        final data = jsonDecode(raw);
+        if (data is Map<String, dynamic>) {
+          return ElectricityBalanceInfo.fromJson(data);
+        } else if (data is Map) {
+          return ElectricityBalanceInfo.fromJson(Map<String, dynamic>.from(data));
+        }
+      }
+    } catch (e) {
+      _logger.w('Failed to get saved electricity balance: $e');
+    }
+    return null;
+  }
+
+  /// 保存当前宿舍的电费余额信息
+  Future<void> saveSavedBalance(ElectricityBalanceInfo info) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_savedBalanceKey, jsonEncode(info.toJson()));
+      _logger.d('💾 Saved electricity balance: ${info.balance}');
+    } catch (e) {
+      _logger.w('Failed to save electricity balance: $e');
+    }
+  }
+
+  /// 清除保存的宿舍电费余额
+  Future<void> clearSavedBalance() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_savedBalanceKey);
+    } catch (e) {
+      _logger.w('Failed to clear saved electricity balance: $e');
     }
   }
 }

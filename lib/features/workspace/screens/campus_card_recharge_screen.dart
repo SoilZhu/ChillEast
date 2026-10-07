@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../services/campus_card_service.dart';
+import '../providers/campus_card_cache_provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/l10n_extension.dart';
@@ -32,7 +33,13 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _loadInfo();
+    final cached = ref.read(campusCardCacheProvider).value ??
+        ref.read(campusCardServiceProvider).cachedInfo;
+    if (cached != null) {
+      _info = cached;
+      _isLoading = false;
+    }
+    _loadInfo(isSilent: cached != null);
   }
 
   @override
@@ -73,6 +80,7 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
           _error = null;
         });
       }
+      ref.read(campusCardCacheProvider.notifier).update(info);
     } catch (e) {
       _logger.e('Failed to load recharge info: $e');
       if (mounted) {

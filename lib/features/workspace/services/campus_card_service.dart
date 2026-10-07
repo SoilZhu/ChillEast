@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/cookie_manager.dart';
 import '../../../../core/utils/app_logger.dart';
@@ -27,6 +28,20 @@ class CampusCardInfo {
     required this.balance,
     this.openid,
   });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'idserial': idserial,
+        'balance': balance,
+        'openid': openid,
+      };
+
+  factory CampusCardInfo.fromJson(Map<String, dynamic> json) => CampusCardInfo(
+        name: (json['name'] ?? '').toString(),
+        idserial: (json['idserial'] ?? '').toString(),
+        balance: (json['balance'] ?? '0.00').toString(),
+        openid: json['openid']?.toString(),
+      );
 
   @override
   String toString() => 'CampusCardInfo(name: $name, idserial: $idserial, balance: $balance)';
@@ -74,6 +89,39 @@ class CampusCardService {
   
   CampusCardInfo? _cachedInfo;
   CampusCardInfo? get cachedInfo => _cachedInfo;
+
+  static const String _cardInfoStorageKey = 'cached_campus_card_info';
+
+  Future<void> _persistCardInfo(CampusCardInfo info) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_cardInfoStorageKey, jsonEncode(info.toJson()));
+    } catch (e) {
+      _logger.w('Failed to persist campus card info: $e');
+    }
+  }
+
+  Future<CampusCardInfo?> getStoredCardInfo() async {
+    if (_cachedInfo != null) return _cachedInfo;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final str = prefs.getString(_cardInfoStorageKey);
+      if (str != null && str.isNotEmpty) {
+        final data = jsonDecode(str);
+        if (data is Map<String, dynamic>) {
+          _cachedInfo = CampusCardInfo.fromJson(data);
+          return _cachedInfo;
+        } else if (data is Map) {
+          _cachedInfo =
+              CampusCardInfo.fromJson(Map<String, dynamic>.from(data));
+          return _cachedInfo;
+        }
+      }
+    } catch (e) {
+      _logger.w('Failed to load stored campus card info: $e');
+    }
+    return null;
+  }
 
   // 付款码缓存：服务端 60s 刷新一次，这里 55s TTL，命中则秒开，
   // 后台再静默刷新（stale-while-revalidate）。
@@ -354,6 +402,7 @@ class CampusCardService {
           balance: match.group(3)!.trim(),
           openid: _openid,
         );
+        _persistCardInfo(_cachedInfo!);
         _logger.i('✅ Parsed Card Info: $_cachedInfo');
       } else {
         _logger.w('⚠️ Regex did not match info text: $infoText');
@@ -491,6 +540,7 @@ class CampusCardService {
           balance: balance,
           openid: _openid,
         );
+        _persistCardInfo(_cachedInfo!);
         _logger.i('✅ Deep scan success: $_cachedInfo');
       }
     } catch (e) {

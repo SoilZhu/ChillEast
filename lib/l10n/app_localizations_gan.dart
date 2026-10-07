@@ -189,6 +189,18 @@ class AppLocalizationsGan extends AppLocalizations {
   String get repairWorkOrders => '报修工单';
 
   @override
+  String get campusCardBalance => '校园卡余额';
+
+  @override
+  String get dormitoryElectricity => '宿舍电费';
+
+  @override
+  String get noSavedDormitory => '暂未保存宿舍房间';
+
+  @override
+  String get clickToSelectDormitory => '点击前往选择房间或充值';
+
+  @override
   String get quickActions => '快捷功能';
 
   @override

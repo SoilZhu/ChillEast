@@ -42,6 +42,8 @@ import '../../../core/utils/l10n_extension.dart';
 import '../../../core/services/home_widget_service.dart';
 import '../../workspace/screens/campus_card_recharge_screen.dart';
 import '../../workspace/screens/electricity_recharge_screen.dart';
+import '../../workspace/providers/campus_card_cache_provider.dart';
+import '../../workspace/providers/electricity_cache_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../workspace/services/campus_card_service.dart';
 import '../../workspace/screens/vpn_converter_screen.dart';
@@ -226,6 +228,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         _buildPendingQuestionnaires(context),
                       'feed_leave' => _buildOngoingLeaves(context),
                       'feed_repair' => _buildOngoingRepairs(context),
+                      'feed_campus_card' => _buildCampusCardSection(context),
+                      'feed_electricity' => _buildElectricitySection(context),
                       _ => const SizedBox.shrink(),
                     },
                   const SizedBox(height: 24),
@@ -1716,6 +1720,179 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
     if (context.mounted) {
       ref.read(repairCacheProvider.notifier).refresh();
+    }
+  }
+
+  Widget _buildValueSectionRow({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required Widget trailing,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Icon(icon, size: 22, color: iconColor),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF222222),
+                ),
+              ),
+              if (subtitle.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.white60 : Colors.black54,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        trailing,
+      ],
+    );
+  }
+
+  Widget _buildCampusCardSection(BuildContext context) {
+    final cachedAsync = ref.watch(campusCardCacheProvider);
+    final cardInfo = cachedAsync.value;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final String title;
+    final String subtitle;
+    final String balanceText;
+
+    if (cardInfo != null) {
+      title = cardInfo.name.isNotEmpty
+          ? cardInfo.name
+          : context.l10n.campusCardBalance;
+      subtitle = cardInfo.idserial.isNotEmpty
+          ? context.l10n.cardNumberPrefix(cardInfo.idserial)
+          : context.l10n.funcCampusCard;
+      balanceText = '¥${cardInfo.balance}';
+    } else {
+      title = context.l10n.campusCardBalance;
+      subtitle = context.l10n.campusCardRecharge;
+      balanceText = cachedAsync.isLoading ? '...' : '¥--';
+    }
+
+    return _buildMergedSection(
+      title: context.l10n.campusCardBalance,
+      onMore: () => _openCampusCard(context),
+      items: [
+        _buildSectionItem(
+          onTap: () => _openCampusCard(context),
+          child: _buildValueSectionRow(
+            icon: Icons.credit_card_outlined,
+            iconColor: const Color(0xFF1677FF),
+            title: title,
+            subtitle: subtitle,
+            trailing: Text(
+              balanceText,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : const Color(0xFF1677FF),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openCampusCard(BuildContext context) async {
+    await Navigator.push(
+      context,
+      createSlideUpRoute(const CampusCardRechargeScreen()),
+    );
+    if (context.mounted) {
+      ref.read(campusCardCacheProvider.notifier).refresh();
+    }
+  }
+
+  Widget _buildElectricitySection(BuildContext context) {
+    final eleState = ref.watch(electricityCacheProvider);
+    final room = eleState.room;
+    final balanceInfo = eleState.balanceInfo;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final String title;
+    final String subtitle;
+    final Widget trailing;
+
+    if (room != null) {
+      final roomDisplayName =
+          room.roomName.isNotEmpty ? room.roomName : room.roomId;
+      title = room.buildingName.isNotEmpty
+          ? '${room.buildingName} $roomDisplayName'
+          : roomDisplayName;
+      subtitle = room.areaName;
+      final balanceText = balanceInfo != null
+          ? context.l10n.amountYuan(balanceInfo.balance)
+          : (eleState.isLoading ? '...' : '--');
+      trailing = Text(
+        balanceText,
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: isDark ? Colors.white : const Color(0xFFFF9800),
+        ),
+      );
+    } else {
+      title = context.l10n.noSavedDormitory;
+      subtitle = context.l10n.clickToSelectDormitory;
+      trailing = Icon(
+        Icons.chevron_right_rounded,
+        size: 20,
+        color: isDark ? Colors.white38 : Colors.black38,
+      );
+    }
+
+    return _buildMergedSection(
+      title: context.l10n.dormitoryElectricity,
+      onMore: () => _openElectricity(context),
+      items: [
+        _buildSectionItem(
+          onTap: () => _openElectricity(context),
+          child: _buildValueSectionRow(
+            icon: Icons.bolt_outlined,
+            iconColor: const Color(0xFFFF9800),
+            title: title,
+            subtitle: subtitle,
+            trailing: trailing,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openElectricity(BuildContext context) async {
+    await Navigator.push(
+      context,
+      createSlideUpRoute(const ElectricityRechargeScreen()),
+    );
+    if (context.mounted) {
+      ref.read(electricityCacheProvider.notifier).refresh();
     }
   }
 

@@ -102,6 +102,8 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     const FunctionItem(id: 'feed_quick', label: '快捷功能', icon: Icons.apps_rounded, color: Color(0xFF09C489)),
     const FunctionItem(id: 'feed_library', label: '图书馆预约', icon: Icons.local_library_outlined, color: Color(0xFF795548)),
     const FunctionItem(id: 'feed_agenda', label: '今日日程', icon: Icons.calendar_today_outlined, color: Color(0xFF09C489)),
+    const FunctionItem(id: 'feed_campus_card', label: '校园卡余额', icon: Icons.credit_card_outlined, color: Color(0xFF1677FF)),
+    const FunctionItem(id: 'feed_electricity', label: '宿舍电费', icon: Icons.bolt_outlined, color: Color(0xFFFF9800)),
     const FunctionItem(id: 'feed_questionnaire', label: '待完成的问卷', icon: Icons.assignment_outlined, color: Color(0xFF2E7D32)),
     const FunctionItem(id: 'feed_leave', label: '请假申请', icon: Icons.event_note_outlined, color: Color(0xFF009688)),
     const FunctionItem(id: 'feed_repair', label: '报修工单', icon: Icons.handyman_outlined, color: Colors.blueGrey),

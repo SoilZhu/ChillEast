@@ -190,6 +190,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get repairWorkOrders => 'Repair work orders';
 
   @override
+  String get campusCardBalance => 'Campus Card Balance';
+
+  @override
+  String get dormitoryElectricity => 'Dormitory Electricity';
+
+  @override
+  String get noSavedDormitory => 'No saved dormitory room';
+
+  @override
+  String get clickToSelectDormitory => 'Tap to select room or recharge';
+
+  @override
   String get quickActions => 'Quick actions';
 
   @override

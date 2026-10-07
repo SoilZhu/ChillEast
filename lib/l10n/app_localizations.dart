@@ -479,6 +479,30 @@ abstract class AppLocalizations {
   /// **'报修工单'**
   String get repairWorkOrders;
 
+  /// No description provided for @campusCardBalance.
+  ///
+  /// In zh, this message translates to:
+  /// **'校园卡余额'**
+  String get campusCardBalance;
+
+  /// No description provided for @dormitoryElectricity.
+  ///
+  /// In zh, this message translates to:
+  /// **'宿舍电费'**
+  String get dormitoryElectricity;
+
+  /// No description provided for @noSavedDormitory.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂未保存宿舍房间'**
+  String get noSavedDormitory;
+
+  /// No description provided for @clickToSelectDormitory.
+  ///
+  /// In zh, this message translates to:
+  /// **'点击前往选择房间或充值'**
+  String get clickToSelectDormitory;
+
   /// No description provided for @quickActions.
   ///
   /// In zh, this message translates to:

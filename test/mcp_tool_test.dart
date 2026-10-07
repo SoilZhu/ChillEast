@@ -152,6 +152,7 @@ class FakeCampusCardService extends CampusCardService {
 
 class FakeElectricityService implements ElectricityService {
   SavedElectricityRoom? _savedRoom;
+  ElectricityBalanceInfo? _savedBalance;
 
   @override
   Future<SavedElectricityRoom?> getSavedRoom() async => _savedRoom;
@@ -164,6 +165,20 @@ class FakeElectricityService implements ElectricityService {
   @override
   Future<void> clearSavedRoom() async {
     _savedRoom = null;
+    _savedBalance = null;
+  }
+
+  @override
+  Future<ElectricityBalanceInfo?> getSavedBalance() async => _savedBalance;
+
+  @override
+  Future<void> saveSavedBalance(ElectricityBalanceInfo info) async {
+    _savedBalance = info;
+  }
+
+  @override
+  Future<void> clearSavedBalance() async {
+    _savedBalance = null;
   }
 
   @override

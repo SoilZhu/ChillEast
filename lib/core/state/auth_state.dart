@@ -18,6 +18,8 @@ import '../../features/notice/providers/notice_provider.dart';
 import '../../features/timetable/services/timetable_storage.dart';
 import '../../features/timetable/services/timetable_service.dart';
 import '../../features/workspace/services/campus_card_service.dart';
+import '../../features/workspace/providers/campus_card_cache_provider.dart';
+import '../../features/workspace/providers/electricity_cache_provider.dart';
 import '../../features/library/providers/library_provider.dart';
 import '../../features/questionnaire/providers/questionnaire_cache_provider.dart';
 import '../../features/leave/providers/leave_cache_provider.dart';
@@ -328,6 +330,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     // 退出登录时清空请假和报修缓存
     await _ref.read(leaveCacheProvider.notifier).clear();
     await _ref.read(repairCacheProvider.notifier).clear();
+
+    // 退出登录时清空校园卡与宿舍电费缓存
+    _ref.read(campusCardCacheProvider.notifier).clear();
+    _ref.read(electricityCacheProvider.notifier).clear();
 
     // 退出登录时清空图书馆预约、电费房间等剩余本地数据
     await LibraryStorage.clearReserves();
