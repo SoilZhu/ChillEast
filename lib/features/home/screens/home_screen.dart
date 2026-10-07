@@ -1593,15 +1593,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final end = _parseLeaveDate(record.endTime);
     if (start == null) return false;
     final now = DateTime.now();
-    final sevenDaysAgo = now.subtract(const Duration(days: 7));
+
+    // 如果当前时间已经过了请假的目标时间（结束时间），则不显示
+    if (end != null && !end.isAfter(now)) {
+      return false;
+    }
+    if (end == null && !start.isAfter(now)) {
+      return false;
+    }
+
     final sevenDaysLater = now.add(const Duration(days: 7));
-    if (start.isAfter(sevenDaysAgo) && start.isBefore(sevenDaysLater)) {
-      return true;
-    }
-    if (end != null && start.isBefore(now) && end.isAfter(now)) {
-      return true;
-    }
-    return false;
+    // 7天内即将开始或正在进行中
+    return start.isBefore(sevenDaysLater);
   }
 
   bool _shouldDisplayLeave(LeaveRecord record) {
