@@ -262,6 +262,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
                   showAppBar: false,
                   showWebBack: false,
                   appBarColor: Colors.white,
+                  allowExternalLinks: true,
                 ),
               )
             : _showLoginDialog();

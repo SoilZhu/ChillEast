@@ -24,6 +24,7 @@ class WebViewDetailScreen extends StatefulWidget {
   final String? targetUrl;
   final String? autoClickText;
   final Color? appBarColor;
+  final bool allowExternalLinks;
 
   const WebViewDetailScreen({
     super.key,
@@ -36,6 +37,7 @@ class WebViewDetailScreen extends StatefulWidget {
     this.targetUrl,
     this.autoClickText,
     this.appBarColor,
+    this.allowExternalLinks = false,
   });
 
   /// 判断目标 URL 是否属于信息门户首页 (https://portal.hunau.edu.cn/ydd/microService2/toApps2)
@@ -101,10 +103,28 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
     if (widget.url.contains('microService2/toApps2') ||
         widget.url.contains('portal.hunau.edu.cn/ydd') ||
         widget.title == '更多小程序' ||
+        widget.title == 'More Mini Programs' ||
+        widget.title == '更多小程式' ||
         widget.title == '信息门户') {
       return AppConstants.infoPortalUrl;
     }
     return null;
+  }
+
+  bool get _isInfoPortal {
+    if (widget.allowExternalLinks) return true;
+    final home = _effectiveHomeUrl;
+    if (home != null &&
+        (home.contains('microService2/toApps2') ||
+            home.contains('portal.hunau.edu.cn'))) {
+      return true;
+    }
+    return widget.url.contains('microService2/toApps2') ||
+        widget.url.contains('portal.hunau.edu.cn/ydd') ||
+        widget.title == '更多小程序' ||
+        widget.title == 'More Mini Programs' ||
+        widget.title == '更多小程式' ||
+        widget.title == '信息门户';
   }
 
   bool get _shouldShowHomeCapsule {
@@ -776,6 +796,11 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
 
 
                       // 3. 域名白名单控制 (仅限 HTTP/HTTPS)
+                      // 更多小程序 / 信息门户场景下放开对外链的管制，允许跳转第三方服务
+                      if (widget.allowExternalLinks || _isInfoPortal) {
+                        return NavigationActionPolicy.ALLOW;
+                      }
+
                       final whiteList = [
                         'hunau.edu.cn',
                         'chaoxing.com',
@@ -784,6 +809,7 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                         '17wanxiao.com',   // 完美校园，用于校内充值/校园卡等业务
                         'alipay.com',      // 支付宝支付
                         'tenpay.com',      // 微信支付相关
+                        '07315555.com',    // 校园便民/缴费等第三方平台
                         'authorize',       // OAuth 授权路径片段
                         'login'            // 登录路径片段
                       ];

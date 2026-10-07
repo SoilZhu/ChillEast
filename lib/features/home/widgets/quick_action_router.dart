@@ -133,6 +133,7 @@ Future<void> openFunctionById(
                 showAppBar: false,
                 showWebBack: false,
                 appBarColor: Colors.white,
+                allowExternalLinks: true,
               )))
           : _showLoginDialog(context, ref);
       break;

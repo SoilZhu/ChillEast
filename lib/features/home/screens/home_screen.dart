@@ -508,6 +508,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   showAppBar: false,
                   showWebBack: false,
                   appBarColor: Colors.white,
+                  allowExternalLinks: true,
                 )))
             : _showLoginDialog(context);
         break;
