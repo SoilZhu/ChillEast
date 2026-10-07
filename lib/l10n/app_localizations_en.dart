@@ -2791,4 +2791,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ehallOpenNativeLeave => 'Open in Native Leave App';
+
+  @override
+  String get examSchedule => 'Exam Schedule';
+
+  @override
+  String get examTimePrefix => 'Exam Time';
 }

@@ -23,6 +23,8 @@ import '../../timetable/utils/date_calculator.dart';
 import '../../timetable/utils/week_parser.dart';
 import '../../homework/providers/homework_provider.dart';
 import '../../homework/models/homework_model.dart';
+import '../../exam/providers/exam_provider.dart';
+import '../../exam/models/exam_schedule_model.dart';
 import '../../../core/utils/location_helper.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_constants.dart';
@@ -1054,6 +1056,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
+    // 当天考试日程（只显示本学期的考试）
+    final examAsync = ref.watch(examProvider);
+    final dayExams = examAsync.maybeWhen(
+      data: (list) {
+        final items = list
+            .where((e) =>
+                e.isCurrentSemester() &&
+                e.time.year == _previewDate.year &&
+                e.time.month == _previewDate.month &&
+                e.time.day == _previewDate.day)
+            .toList();
+        items.sort((a, b) => a.time.compareTo(b.time));
+        return items;
+      },
+      orElse: () => <ExamScheduleModel>[],
+    );
+
     // 当天待办作业（截止时间为预览日期），排在课程前面，日程页同款
     final homeworkAsync = ref.watch(homeworkProvider);
     final dayHomework = homeworkAsync.maybeWhen(
@@ -1111,7 +1130,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: CircularProgressIndicator(),
             ),
           )
-        else if (_todayCourses.isEmpty && dayHomework.isEmpty)
+        else if (_todayCourses.isEmpty && dayHomework.isEmpty && dayExams.isEmpty)
           Container(
             padding: const EdgeInsets.all(16),
             width: double.infinity,
@@ -1137,17 +1156,120 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              for (int i = 0; i < dayHomework.length; i++) ...[
+              for (int i = 0; i < dayExams.length; i++) ...[
                 if (i > 0) const SizedBox(height: 12),
+                _buildExamTask(dayExams[i]),
+              ],
+              for (int i = 0; i < dayHomework.length; i++) ...[
+                if (i > 0 || dayExams.isNotEmpty) const SizedBox(height: 12),
                 _buildHomeworkTask(dayHomework[i]),
               ],
               for (int i = 0; i < _todayCourses.length; i++) ...[
-                if (i > 0 || dayHomework.isNotEmpty) const SizedBox(height: 12),
+                if (i > 0 || dayHomework.isNotEmpty || dayExams.isNotEmpty)
+                  const SizedBox(height: 12),
                 _buildCourseItem(_todayCourses[i]),
               ],
             ],
           ),
       ],
+    );
+  }
+
+  /// 考试卡片（红色底 + 考试时间，严格显示第一个出现的时间）
+  Widget _buildExamTask(ExamScheduleModel item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final timeStr = DateFormat('HH:mm').format(item.time);
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        if (item.detailUrl.isNotEmpty) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WebViewDetailScreen(
+                url: item.detailUrl,
+                title: item.title,
+              ),
+            ),
+          );
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF382326) : const Color(0xFFFFEBEE),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: const Color(0xFFE53935).withOpacity(isDark ? 0.3 : 0.2),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.quiz_outlined,
+              size: 22,
+              color: Color(0xFFE53935),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            height: 1.2,
+                            color: isDark ? Colors.white : const Color(0xFF2D3436),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (item.status.isNotEmpty) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE53935).withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            item.status,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFE53935),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${context.l10n.examTimePrefix} $timeStr',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? Colors.white70
+                          : const Color(0xFF7F8C8D),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

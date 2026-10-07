@@ -842,5 +842,7 @@
   "ehallServiceUnavailable": "Service Hall is temporarily unavailable, please try again later",
   "ehallSessionExpired": "Service Hall session expired, please log in again",
   "ehallExternalJumpPrompt": "Opening external service",
-  "ehallOpenNativeLeave": "Open in Native Leave App"
+  "ehallOpenNativeLeave": "Open in Native Leave App",
+  "examSchedule": "Exam Schedule",
+  "examTimePrefix": "Exam Time"
 }

@@ -2708,6 +2708,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ehallOpenNativeLeave => '在请假小程序中办理';
+
+  @override
+  String get examSchedule => '考试日程';
+
+  @override
+  String get examTimePrefix => '考试时间';
 }
 
 /// The translations for Chinese, as used in Hong Kong (`zh_HK`).

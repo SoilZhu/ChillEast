@@ -5186,6 +5186,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'在请假小程序中办理'**
   String get ehallOpenNativeLeave;
+
+  /// No description provided for @examSchedule.
+  ///
+  /// In zh, this message translates to:
+  /// **'考试日程'**
+  String get examSchedule;
+
+  /// No description provided for @examTimePrefix.
+  ///
+  /// In zh, this message translates to:
+  /// **'考试时间'**
+  String get examTimePrefix;
 }
 
 class _AppLocalizationsDelegate

@@ -1527,5 +1527,7 @@
   "ehallServiceUnavailable": "办事大厅暂时不可用，请稍后重试",
   "ehallSessionExpired": "办事大厅登录态已过期，请重新登录",
   "ehallExternalJumpPrompt": "即将跳转至外部服务",
-  "ehallOpenNativeLeave": "在请假小程序中办理"
+  "ehallOpenNativeLeave": "在请假小程序中办理",
+  "examSchedule": "考试日程",
+  "examTimePrefix": "考试时间"
 }
