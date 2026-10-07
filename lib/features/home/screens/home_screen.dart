@@ -1799,8 +1799,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       title: context.l10n.campusCardBalance,
       onMore: () => _openCampusCard(context),
       items: [
-        _buildSectionItem(
-          onTap: () => _openCampusCard(context),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
           child: _buildValueSectionRow(
             icon: Icons.credit_card_outlined,
             iconColor: const Color(0xFF1677FF),
@@ -1833,53 +1833,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildElectricitySection(BuildContext context) {
     final eleState = ref.watch(electricityCacheProvider);
     final room = eleState.room;
+    if (room == null) return const SizedBox.shrink();
+
     final balanceInfo = eleState.balanceInfo;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final String title;
-    final String subtitle;
-    final Widget trailing;
-
-    if (room != null) {
-      final roomDisplayName =
-          room.roomName.isNotEmpty ? room.roomName : room.roomId;
-      title = room.buildingName.isNotEmpty
-          ? '${room.buildingName} $roomDisplayName'
-          : roomDisplayName;
-      subtitle = room.areaName;
-      final balanceText = balanceInfo != null
-          ? context.l10n.amountYuan(balanceInfo.balance)
-          : (eleState.isLoading ? '...' : '--');
-      trailing = Text(
-        balanceText,
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: isDark ? Colors.white : const Color(0xFFFF9800),
-        ),
-      );
-    } else {
-      title = context.l10n.noSavedDormitory;
-      subtitle = context.l10n.clickToSelectDormitory;
-      trailing = Icon(
-        Icons.chevron_right_rounded,
-        size: 20,
-        color: isDark ? Colors.white38 : Colors.black38,
-      );
-    }
+    final roomDisplayName =
+        room.roomName.isNotEmpty ? room.roomName : room.roomId;
+    final title = room.buildingName.isNotEmpty
+        ? '${room.buildingName} $roomDisplayName'
+        : roomDisplayName;
+    final subtitle = room.areaName;
+    final balanceText = balanceInfo != null
+        ? context.l10n.amountYuan(balanceInfo.balance)
+        : (eleState.isLoading ? '...' : '--');
 
     return _buildMergedSection(
       title: context.l10n.dormitoryElectricity,
       onMore: () => _openElectricity(context),
       items: [
-        _buildSectionItem(
-          onTap: () => _openElectricity(context),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
           child: _buildValueSectionRow(
             icon: Icons.bolt_outlined,
             iconColor: const Color(0xFFFF9800),
             title: title,
             subtitle: subtitle,
-            trailing: trailing,
+            trailing: Text(
+              balanceText,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : const Color(0xFFFF9800),
+              ),
+            ),
           ),
         ),
       ],
