@@ -1717,12 +1717,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required String subtitle,
     required String balanceText,
     required Color balanceColor,
-    required VoidCallback onArrowTap,
+    required VoidCallback onTap,
     required bool isDark,
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(6),
@@ -1733,64 +1732,62 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           width: 1,
         ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(icon, size: 22, color: iconColor),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(6),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF222222),
+                Icon(icon, size: 22, color: iconColor),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : const Color(0xFF222222),
+                        ),
+                      ),
+                      if (subtitle.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                if (subtitle.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark ? Colors.white60 : Colors.black54,
-                    ),
+                const SizedBox(width: 12),
+                Text(
+                  balanceText,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: balanceColor,
                   ),
-                ],
+                ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
-          Text(
-            balanceText,
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-              color: balanceColor,
-            ),
-          ),
-          const SizedBox(width: 4),
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: onArrowTap,
-            child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: Icon(
-                Icons.chevron_right_rounded,
-                size: 20,
-                color: isDark ? Colors.white54 : Colors.grey,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -1838,7 +1835,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           subtitle: cardSubtitle,
           balanceText: balanceText,
           balanceColor: isDark ? Colors.white : const Color(0xFF1677FF),
-          onArrowTap: () => _openCampusCard(context),
+          onTap: () => _openCampusCard(context),
           isDark: isDark,
         ),
       );
@@ -1848,23 +1845,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (room != null) {
       final roomDisplayName =
           room.roomName.isNotEmpty ? room.roomName : room.roomId;
-      final eleSubtitle = room.buildingName.isNotEmpty
-          ? '${room.areaName} · ${room.buildingName} $roomDisplayName'
-          : '${room.areaName} · $roomDisplayName';
+      final eleTitle =
+          room.areaName.isNotEmpty ? room.areaName : context.l10n.dormitoryElectricity;
       final balanceInfo = eleState.balanceInfo;
       final balanceText = balanceInfo != null
-          ? context.l10n.amountYuan(balanceInfo.balance)
-          : (eleState.isLoading ? '...' : '--');
+          ? '¥${balanceInfo.balance}'
+          : (eleState.isLoading ? '...' : '¥--');
 
       cards.add(
         _buildBalanceCardItem(
           icon: Icons.bolt_outlined,
           iconColor: const Color(0xFFFF9800),
-          title: context.l10n.dormitoryElectricity,
-          subtitle: eleSubtitle,
+          title: eleTitle,
+          subtitle: roomDisplayName,
           balanceText: balanceText,
           balanceColor: isDark ? Colors.white : const Color(0xFFFF9800),
-          onArrowTap: () => _openElectricity(context),
+          onTap: () => _openElectricity(context),
           isDark: isDark,
         ),
       );
