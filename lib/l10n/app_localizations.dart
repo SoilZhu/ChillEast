@@ -479,6 +479,12 @@ abstract class AppLocalizations {
   /// **'报修工单'**
   String get repairWorkOrders;
 
+  /// No description provided for @feedBalance.
+  ///
+  /// In zh, this message translates to:
+  /// **'余额'**
+  String get feedBalance;
+
   /// No description provided for @campusCardBalance.
   ///
   /// In zh, this message translates to:

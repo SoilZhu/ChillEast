@@ -228,8 +228,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         _buildPendingQuestionnaires(context),
                       'feed_leave' => _buildOngoingLeaves(context),
                       'feed_repair' => _buildOngoingRepairs(context),
-                      'feed_campus_card' => _buildCampusCardSection(context),
-                      'feed_electricity' => _buildElectricitySection(context),
+                      'feed_balance' => _buildBalanceSection(context),
                       _ => const SizedBox.shrink(),
                     },
                   const SizedBox(height: 24),
@@ -1711,99 +1710,184 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  Widget _buildValueSectionRow({
+  Widget _buildBalanceCardItem({
     required IconData icon,
     required Color iconColor,
     required String title,
     required String subtitle,
-    required Widget trailing,
+    required String balanceText,
+    required Color balanceColor,
+    required VoidCallback onArrowTap,
+    required bool isDark,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Icon(icon, size: 22, color: iconColor),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : const Color(0xFF222222),
-                ),
-              ),
-              if (subtitle.isNotEmpty) ...[
-                const SizedBox(height: 6),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : const Color(0xFFE0E0E0),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, size: 22, color: iconColor),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Text(
-                  subtitle,
+                  title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? Colors.white60 : Colors.black54,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF222222),
                   ),
                 ),
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? Colors.white60 : Colors.black54,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        trailing,
-      ],
-    );
-  }
-
-  Widget _buildCampusCardSection(BuildContext context) {
-    final cachedAsync = ref.watch(campusCardCacheProvider);
-    final cardInfo = cachedAsync.value;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final String title;
-    final String subtitle;
-    final String balanceText;
-
-    if (cardInfo != null) {
-      title = cardInfo.name.isNotEmpty
-          ? cardInfo.name
-          : context.l10n.campusCardBalance;
-      subtitle = cardInfo.idserial.isNotEmpty
-          ? context.l10n.cardNumberPrefix(cardInfo.idserial)
-          : context.l10n.funcCampusCard;
-      balanceText = '¥${cardInfo.balance}';
-    } else {
-      title = context.l10n.campusCardBalance;
-      subtitle = context.l10n.campusCardRecharge;
-      balanceText = cachedAsync.isLoading ? '...' : '¥--';
-    }
-
-    return _buildMergedSection(
-      title: context.l10n.campusCardBalance,
-      onMore: () => _openCampusCard(context),
-      items: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: _buildValueSectionRow(
-            icon: Icons.credit_card_outlined,
-            iconColor: const Color(0xFF1677FF),
-            title: title,
-            subtitle: subtitle,
-            trailing: Text(
-              balanceText,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF1677FF),
+          const SizedBox(width: 12),
+          Text(
+            balanceText,
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: balanceColor,
+            ),
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onArrowTap,
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: isDark ? Colors.white54 : Colors.grey,
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBalanceSection(BuildContext context) {
+    final cachedCardAsync = ref.watch(campusCardCacheProvider);
+    final cardInfo = cachedCardAsync.value;
+
+    final eleState = ref.watch(electricityCacheProvider);
+    final room = eleState.room;
+
+    final authState = ref.watch(authStateProvider);
+    final isAuthenticated = authState.status == AuthStatus.authenticated;
+
+    if (cardInfo == null && room == null && !isAuthenticated) {
+      return const SizedBox.shrink();
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final List<Widget> cards = [];
+
+    // 1. 校园卡卡片
+    if (cardInfo != null || isAuthenticated) {
+      final String cardSubtitle;
+      final String balanceText;
+      if (cardInfo != null) {
+        if (cardInfo.name.isNotEmpty && cardInfo.idserial.isNotEmpty) {
+          cardSubtitle = '${cardInfo.name} · ${cardInfo.idserial}';
+        } else if (cardInfo.idserial.isNotEmpty) {
+          cardSubtitle = cardInfo.idserial;
+        } else {
+          cardSubtitle = context.l10n.funcCampusCard;
+        }
+        balanceText = '¥${cardInfo.balance}';
+      } else {
+        cardSubtitle = context.l10n.campusCardRecharge;
+        balanceText = cachedCardAsync.isLoading ? '...' : '¥--';
+      }
+
+      cards.add(
+        _buildBalanceCardItem(
+          icon: Icons.credit_card_outlined,
+          iconColor: const Color(0xFF1677FF),
+          title: context.l10n.funcCampusCard,
+          subtitle: cardSubtitle,
+          balanceText: balanceText,
+          balanceColor: isDark ? Colors.white : const Color(0xFF1677FF),
+          onArrowTap: () => _openCampusCard(context),
+          isDark: isDark,
         ),
+      );
+    }
+
+    // 2. 宿舍电费卡片（若无保存的房间则不显示）
+    if (room != null) {
+      final roomDisplayName =
+          room.roomName.isNotEmpty ? room.roomName : room.roomId;
+      final eleSubtitle = room.buildingName.isNotEmpty
+          ? '${room.areaName} · ${room.buildingName} $roomDisplayName'
+          : '${room.areaName} · $roomDisplayName';
+      final balanceInfo = eleState.balanceInfo;
+      final balanceText = balanceInfo != null
+          ? context.l10n.amountYuan(balanceInfo.balance)
+          : (eleState.isLoading ? '...' : '--');
+
+      cards.add(
+        _buildBalanceCardItem(
+          icon: Icons.bolt_outlined,
+          iconColor: const Color(0xFFFF9800),
+          title: context.l10n.dormitoryElectricity,
+          subtitle: eleSubtitle,
+          balanceText: balanceText,
+          balanceColor: isDark ? Colors.white : const Color(0xFFFF9800),
+          onArrowTap: () => _openElectricity(context),
+          isDark: isDark,
+        ),
+      );
+    }
+
+    if (cards.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text(
+          context.l10n.feedBalance,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        for (int i = 0; i < cards.length; i++) ...[
+          if (i > 0) const SizedBox(height: 12),
+          cards[i],
+        ],
       ],
     );
   }
@@ -1816,49 +1900,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (context.mounted) {
       ref.read(campusCardCacheProvider.notifier).refresh();
     }
-  }
-
-  Widget _buildElectricitySection(BuildContext context) {
-    final eleState = ref.watch(electricityCacheProvider);
-    final room = eleState.room;
-    if (room == null) return const SizedBox.shrink();
-
-    final balanceInfo = eleState.balanceInfo;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final roomDisplayName =
-        room.roomName.isNotEmpty ? room.roomName : room.roomId;
-    final title = room.buildingName.isNotEmpty
-        ? '${room.buildingName} $roomDisplayName'
-        : roomDisplayName;
-    final subtitle = room.areaName;
-    final balanceText = balanceInfo != null
-        ? context.l10n.amountYuan(balanceInfo.balance)
-        : (eleState.isLoading ? '...' : '--');
-
-    return _buildMergedSection(
-      title: context.l10n.dormitoryElectricity,
-      onMore: () => _openElectricity(context),
-      items: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: _buildValueSectionRow(
-            icon: Icons.bolt_outlined,
-            iconColor: const Color(0xFFFF9800),
-            title: title,
-            subtitle: subtitle,
-            trailing: Text(
-              balanceText,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFFFF9800),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
   }
 
   Future<void> _openElectricity(BuildContext context) async {

@@ -185,6 +185,8 @@ extension FunctionItemLocalization on FunctionItem {
         return l10n.funcLeave;
       case 'feed_repair':
         return l10n.repairWorkOrders;
+      case 'feed_balance':
+        return l10n.feedBalance;
       case 'feed_campus_card':
         return l10n.campusCardBalance;
       case 'feed_electricity':

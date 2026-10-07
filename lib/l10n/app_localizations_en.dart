@@ -190,6 +190,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get repairWorkOrders => 'Repair work orders';
 
   @override
+  String get feedBalance => 'Balance';
+
+  @override
   String get campusCardBalance => 'Campus Card Balance';
 
   @override

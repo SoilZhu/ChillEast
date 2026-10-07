@@ -60,6 +60,7 @@
   "funcXgxt": "Student Affairs",
   "funcRepairs": "Campus Repairs",
   "repairWorkOrders": "Repair work orders",
+  "feedBalance": "Balance",
   "campusCardBalance": "Campus Card Balance",
   "dormitoryElectricity": "Dormitory Electricity",
   "noSavedDormitory": "No saved dormitory room",

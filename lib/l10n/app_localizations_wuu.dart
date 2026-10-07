@@ -189,6 +189,9 @@ class AppLocalizationsWuu extends AppLocalizations {
   String get repairWorkOrders => '报修个工单';
 
   @override
+  String get feedBalance => '余额';
+
+  @override
   String get campusCardBalance => '校园卡余额';
 
   @override
