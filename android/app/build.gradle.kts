@@ -48,6 +48,9 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+        }
         release {
             // 使用上面定义的 release 签名配置
             signingConfig = signingConfigs.getByName("release")
