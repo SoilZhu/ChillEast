@@ -4920,7 +4920,7 @@ abstract class AppLocalizations {
   /// 数据同步设置入口
   ///
   /// In zh, this message translates to:
-  /// **'数据同步'**
+  /// **'数据'**
   String get dataSyncSettings;
 
   /// 数据导出设置项
@@ -5334,7 +5334,7 @@ abstract class AppLocalizations {
   /// No description provided for @clearWebViewCache.
   ///
   /// In zh, this message translates to:
-  /// **'清理网页缓存'**
+  /// **'清理缓存'**
   String get clearWebViewCache;
 
   /// No description provided for @clearWebViewCacheSubtitle.
@@ -5346,13 +5346,13 @@ abstract class AppLocalizations {
   /// No description provided for @clearWebViewCacheSuccess.
   ///
   /// In zh, this message translates to:
-  /// **'已清理网页缓存及离线临时数据'**
+  /// **'已清理缓存'**
   String get clearWebViewCacheSuccess;
 
   /// No description provided for @clearWebViewCacheConfirmTitle.
   ///
   /// In zh, this message translates to:
-  /// **'确认清理网页缓存？'**
+  /// **'确认清理缓存？'**
   String get clearWebViewCacheConfirmTitle;
 
   /// No description provided for @clearWebViewCacheConfirmMessage.

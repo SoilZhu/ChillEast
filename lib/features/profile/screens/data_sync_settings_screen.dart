@@ -335,7 +335,6 @@ class _DataSyncSettingsScreenState
             context,
             icon: Icons.cleaning_services_outlined,
             title: l10n.clearWebViewCache,
-            subtitle: l10n.clearWebViewCacheSubtitle,
             trailing: _clearingCache
                 ? const SizedBox(
                     width: 20,

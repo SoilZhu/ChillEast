@@ -1520,7 +1520,7 @@
   "repairsDeleteConfirm": "确认删除此图片？",
   "repairsSubmitTicket": "填写报修单",
   "repairsSelectCategory": "选择报修类型",
-  "dataSyncSettings": "数据同步",
+  "dataSyncSettings": "数据",
   "@dataSyncSettings": {
     "description": "数据同步设置入口"
   },
@@ -1660,9 +1660,9 @@
   "ehallOpenNativeLeave": "在请假小程序中办理",
   "examSchedule": "考试日程",
   "examTimePrefix": "考试时间",
-  "clearWebViewCache": "清理网页缓存",
+  "clearWebViewCache": "清理缓存",
   "clearWebViewCacheSubtitle": "清理 InAppWebView 磁盘缓存与网页离线数据",
-  "clearWebViewCacheSuccess": "已清理网页缓存及离线临时数据",
-  "clearWebViewCacheConfirmTitle": "确认清理网页缓存？",
+  "clearWebViewCacheSuccess": "已清理缓存",
+  "clearWebViewCacheConfirmTitle": "确认清理缓存？",
   "clearWebViewCacheConfirmMessage": "将清除应用内网页的本地离线缓存与临时数据，不会影响您的登录状态。"
 }

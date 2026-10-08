@@ -805,7 +805,7 @@
   "repairsDeleteConfirm": "Delete this photo?",
   "repairsSubmitTicket": "Submit Repair Ticket",
   "repairsSelectCategory": "Select Repair Category",
-  "dataSyncSettings": "Data sync",
+  "dataSyncSettings": "Data",
   "dataBackup": "Export data",
   "backupSecurityTip": "Backup excludes login credentials, but includes your custom AI key. Keep it safe.",
   "backupShareText": "My ChillEast data backup",
@@ -873,9 +873,9 @@
   "ehallOpenNativeLeave": "Open in Native Leave App",
   "examSchedule": "Exam Schedule",
   "examTimePrefix": "Exam Time",
-  "clearWebViewCache": "Clear Web Cache",
+  "clearWebViewCache": "Clear Cache",
   "clearWebViewCacheSubtitle": "Clear InAppWebView disk cache and web data",
-  "clearWebViewCacheSuccess": "Web cache and temporary data cleared",
-  "clearWebViewCacheConfirmTitle": "Clear Web Cache?",
+  "clearWebViewCacheSuccess": "Cache cleared",
+  "clearWebViewCacheConfirmTitle": "Clear Cache?",
   "clearWebViewCacheConfirmMessage": "This will clear local offline cache and temporary data for in-app web pages. Your login session will not be affected."
 }

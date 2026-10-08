@@ -2648,7 +2648,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get repairsSelectCategory => 'Select Repair Category';
 
   @override
-  String get dataSyncSettings => 'Data sync';
+  String get dataSyncSettings => 'Data';
 
   @override
   String get dataBackup => 'Export data';
@@ -2869,17 +2869,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get examTimePrefix => 'Exam Time';
 
   @override
-  String get clearWebViewCache => 'Clear Web Cache';
+  String get clearWebViewCache => 'Clear Cache';
 
   @override
   String get clearWebViewCacheSubtitle =>
       'Clear InAppWebView disk cache and web data';
 
   @override
-  String get clearWebViewCacheSuccess => 'Web cache and temporary data cleared';
+  String get clearWebViewCacheSuccess => 'Cache cleared';
 
   @override
-  String get clearWebViewCacheConfirmTitle => 'Clear Web Cache?';
+  String get clearWebViewCacheConfirmTitle => 'Clear Cache?';
 
   @override
   String get clearWebViewCacheConfirmMessage =>

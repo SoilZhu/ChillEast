@@ -2572,7 +2572,7 @@ class AppLocalizationsWuu extends AppLocalizations {
   String get repairsSelectCategory => '选择报修类型';
 
   @override
-  String get dataSyncSettings => '数据同步';
+  String get dataSyncSettings => '数据';
 
   @override
   String get dataBackup => '数据导出';
@@ -2785,16 +2785,16 @@ class AppLocalizationsWuu extends AppLocalizations {
   String get examTimePrefix => '考试时间';
 
   @override
-  String get clearWebViewCache => '清理网页缓存';
+  String get clearWebViewCache => '清理缓存';
 
   @override
   String get clearWebViewCacheSubtitle => '清理 InAppWebView 磁盘缓存与网页离线数据';
 
   @override
-  String get clearWebViewCacheSuccess => '已清理网页缓存及离线临时数据';
+  String get clearWebViewCacheSuccess => '已清理缓存';
 
   @override
-  String get clearWebViewCacheConfirmTitle => '确认清理网页缓存？';
+  String get clearWebViewCacheConfirmTitle => '确认清理缓存？';
 
   @override
   String get clearWebViewCacheConfirmMessage =>
