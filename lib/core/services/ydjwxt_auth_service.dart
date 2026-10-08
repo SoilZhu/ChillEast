@@ -104,6 +104,9 @@ class YdjwxtAuthService {
           domStorageEnabled: true,
           userAgent: AppConstants.ydjwxtUA,
           useShouldInterceptRequest: true,
+          cacheEnabled: false,
+          cacheMode: CacheMode.LOAD_NO_CACHE,
+          clearSessionCache: true,
         ),
         onLoadStop: (controller, url) async {
           final token = await controller.evaluateJavascript(source: '''

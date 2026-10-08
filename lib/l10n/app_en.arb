@@ -753,7 +753,13 @@
   "repairsUnnamedOrder": "Unnamed work order",
   "repairsEnterValue": "Enter or paste the platform value",
   "repairsRequiredField": "Please fill in {field}",
-  "@repairsRequiredField": {"placeholders": {"field": {"type": "String"}}},
+  "@repairsRequiredField": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
   "repairsSubmitSuccess": "Submitted",
   "repairsSubmitSuccessMessage": "Your work order was submitted. Track it under My work orders.",
   "repairsFormHint": "Fields marked * are required. Photo attachments can be captured or picked from gallery.",
@@ -866,5 +872,10 @@
   "ehallExternalJumpPrompt": "Opening external service",
   "ehallOpenNativeLeave": "Open in Native Leave App",
   "examSchedule": "Exam Schedule",
-  "examTimePrefix": "Exam Time"
+  "examTimePrefix": "Exam Time",
+  "clearWebViewCache": "Clear Web Cache",
+  "clearWebViewCacheSubtitle": "Clear InAppWebView disk cache and web data",
+  "clearWebViewCacheSuccess": "Web cache and temporary data cleared",
+  "clearWebViewCacheConfirmTitle": "Clear Web Cache?",
+  "clearWebViewCacheConfirmMessage": "This will clear local offline cache and temporary data for in-app web pages. Your login session will not be affected."
 }

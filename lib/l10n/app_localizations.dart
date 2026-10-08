@@ -5330,6 +5330,36 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'考试时间'**
   String get examTimePrefix;
+
+  /// No description provided for @clearWebViewCache.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理网页缓存'**
+  String get clearWebViewCache;
+
+  /// No description provided for @clearWebViewCacheSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理 InAppWebView 磁盘缓存与网页离线数据'**
+  String get clearWebViewCacheSubtitle;
+
+  /// No description provided for @clearWebViewCacheSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'已清理网页缓存及离线临时数据'**
+  String get clearWebViewCacheSuccess;
+
+  /// No description provided for @clearWebViewCacheConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认清理网页缓存？'**
+  String get clearWebViewCacheConfirmTitle;
+
+  /// No description provided for @clearWebViewCacheConfirmMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'将清除应用内网页的本地离线缓存与临时数据，不会影响您的登录状态。'**
+  String get clearWebViewCacheConfirmMessage;
 }
 
 class _AppLocalizationsDelegate

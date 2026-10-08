@@ -13,6 +13,7 @@ import '../../features/library/services/library_storage.dart';
 import '../../features/workspace/services/electricity_service.dart';
 import '../utils/secure_storage_helper.dart';
 import '../network/cookie_manager.dart';
+import '../services/webview_cache_service.dart';
 import '../../features/homework/providers/homework_provider.dart';
 import '../../features/notice/providers/notice_provider.dart';
 import '../../features/timetable/services/timetable_storage.dart';
@@ -349,6 +350,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await _ref.read(settingsProvider.notifier).reload();
     } catch (e) {
       _logger.w('⚠️ Reload settings after logout failed: $e');
+    }
+
+    // 退出登录时深度清理 WebView 缓存与 WebStorage 数据
+    try {
+      await WebViewCacheService.clearCache(includeDiskFiles: true, clearStorage: true);
+    } catch (e) {
+      _logger.w('⚠️ Clear WebView cache on logout failed: $e');
     }
 
     // 退出登录时删除本地头像文件

@@ -443,6 +443,8 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
                     displayZoomControls: false,
                     userAgent: _effectiveUserAgent,
                     allowsInlineMediaPlayback: true,
+                    cacheEnabled: true,
+                    cacheMode: CacheMode.LOAD_DEFAULT,
                     loadWithOverviewMode: true,
                     allowFileAccessFromFileURLs: true,
                     allowUniversalAccessFromFileURLs: true,
@@ -1023,6 +1025,7 @@ class _WebViewDetailScreenState extends State<WebViewDetailScreen> {
   @override
   void dispose() {
     _cancelLoadTimeout();
+    InAppWebViewController.clearAllCache(includeDiskFiles: false);
     super.dispose();
   }
 }

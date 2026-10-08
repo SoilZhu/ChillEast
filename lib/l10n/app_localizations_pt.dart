@@ -2873,4 +2873,20 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get examTimePrefix => '考试时间';
+
+  @override
+  String get clearWebViewCache => '清理网页缓存';
+
+  @override
+  String get clearWebViewCacheSubtitle => '清理 InAppWebView 磁盘缓存与网页离线数据';
+
+  @override
+  String get clearWebViewCacheSuccess => '已清理网页缓存及离线临时数据';
+
+  @override
+  String get clearWebViewCacheConfirmTitle => '确认清理网页缓存？';
+
+  @override
+  String get clearWebViewCacheConfirmMessage =>
+      '将清除应用内网页的本地离线缓存与临时数据，不会影响您的登录状态。';
 }

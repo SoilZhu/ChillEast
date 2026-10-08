@@ -529,6 +529,9 @@ window.onload = function() {
                     javaScriptEnabled: true,
                     userAgent: AppConstants.campusCardUA,
                     useShouldOverrideUrlLoading: true,
+                    cacheEnabled: false,
+                    cacheMode: CacheMode.LOAD_NO_CACHE,
+                    clearCache: true,
                   ),
                   onLoadStart: (controller, url) async {
                     final path = url?.path ?? '';

@@ -2867,4 +2867,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get examTimePrefix => 'Exam Time';
+
+  @override
+  String get clearWebViewCache => 'Clear Web Cache';
+
+  @override
+  String get clearWebViewCacheSubtitle =>
+      'Clear InAppWebView disk cache and web data';
+
+  @override
+  String get clearWebViewCacheSuccess => 'Web cache and temporary data cleared';
+
+  @override
+  String get clearWebViewCacheConfirmTitle => 'Clear Web Cache?';
+
+  @override
+  String get clearWebViewCacheConfirmMessage =>
+      'This will clear local offline cache and temporary data for in-app web pages. Your login session will not be affected.';
 }
