@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/state/auth_state.dart';
 import '../providers/auth_provider.dart';
@@ -147,8 +148,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Form(
-            key: _formKey,
+          child: AutofillGroup(
+            child: Form(
+              key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -180,6 +182,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 controller: _usernameController,
                 decoration: md2InputDecoration(context.l10n.studentId, Icons.person_outline),
                 keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.next,
+                autofillHints: const [AutofillHints.username],
                 validator: (value) {
                   if (value == null || value.isEmpty) return context.l10n.studentIdHint;
                   return null;
@@ -192,6 +196,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               TextFormField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
+                textInputAction: TextInputAction.done,
+                autofillHints: const [AutofillHints.password],
+                onFieldSubmitted: (_) {
+                  if (authState.status != AuthStatus.authenticating) {
+                    _handleLogin();
+                  }
+                },
                 decoration: md2InputDecoration(context.l10n.password, Icons.lock_outline).copyWith(
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -260,6 +271,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
       ),
+      ),
     ),
   );
 }
@@ -273,6 +285,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await ref.read(authStateProvider.notifier).login(username, password);
       
+      // 登录成功后告知系统密码管理器保存/更新凭据
+      TextInput.finishAutofillContext();
+
       // 登录成功后，如果是推入式路由则关闭当前页
       if (mounted && Navigator.canPop(context)) {
         Navigator.pop(context);
