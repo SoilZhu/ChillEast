@@ -765,6 +765,9 @@ class CampusCardService {
           headers: {
             'Referer': 'https://fin-serv.hunau.edu.cn/',
             'User-Agent': AppConstants.campusCardUA,
+            'Accept':
+                'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
           },
           responseType: ResponseType.plain,
         ),
@@ -774,10 +777,16 @@ class CampusCardService {
         // 匹配 weixin://wap/pay?...
         final match = RegExp(r'''(weixin://wap/pay\?[^"'\s<>\)]+)''').firstMatch(html);
         if (match != null) {
-          final deepLink = match.group(1);
+          var deepLink = match.group(1)!;
+          deepLink = deepLink.replaceAll('&amp;', '&');
           _logger.i('✅ Extracted WeChat DeepLink: $deepLink');
           return deepLink;
+        } else {
+          _logger.w(
+              '⚠️ DeepLink regex not matched in wx.tenpay response: ${html.substring(0, html.length > 300 ? 300 : html.length)}');
         }
+      } else {
+        _logger.w('⚠️ wx.tenpay returned status: ${response.statusCode}');
       }
     } catch (e) {
       _logger.w('⚠️ getWeChatDeepLink error: $e');

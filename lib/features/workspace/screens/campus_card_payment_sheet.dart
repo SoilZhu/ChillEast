@@ -110,12 +110,15 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
         final deepLink = await service.getWeChatDeepLink(order.mwebUrl);
         bool launched = false;
         if (deepLink != null) {
-          final uri = Uri.parse(deepLink);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-            launched = true;
+          try {
+            final uri = Uri.parse(deepLink);
+            _logger.i('🚀 Launching WeChat directly via deepLink: $deepLink');
+            launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+          } catch (e) {
+            _logger.w('⚠️ Direct launch WeChat deepLink failed: $e');
           }
         }
+        // 若直接唤起未成功，启用内置 WebView 自动通过 window.location.replace 携带合法 Referer 唤起
         _needsWeChatWebViewFallback = !launched;
 
         // 启动后台定时轮询（每 3 秒一次，最多轮询 25 次即 75 秒）
@@ -285,6 +288,24 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
         });
       }
     }
+  }
+
+  String _buildWeChatFallbackHtml(String mwebUrl) {
+    return '''
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+window.onload = function() {
+  window.location.replace("$mwebUrl");
+};
+</script>
+</head>
+<body>
+</body>
+</html>
+''';
   }
 
   @override
@@ -497,20 +518,13 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
               child: Opacity(
                 opacity: 0.01,
                 child: InAppWebView(
-                  initialData: _htmlForm != null
-                      ? InAppWebViewInitialData(
-                          data: _htmlForm!,
-                          baseUrl: WebUri('https://fin-serv.hunau.edu.cn/'),
-                        )
-                      : null,
-                  initialUrlRequest: (_htmlForm == null &&
-                          _needsWeChatWebViewFallback &&
-                          _weChatOrder != null)
-                      ? URLRequest(
-                          url: WebUri(_weChatOrder!.mwebUrl),
-                          headers: {'Referer': 'https://fin-serv.hunau.edu.cn/'},
-                        )
-                      : null,
+                  initialData: InAppWebViewInitialData(
+                    data: _htmlForm ??
+                        (_weChatOrder != null
+                            ? _buildWeChatFallbackHtml(_weChatOrder!.mwebUrl)
+                            : ''),
+                    baseUrl: WebUri('https://fin-serv.hunau.edu.cn/'),
+                  ),
                   initialSettings: InAppWebViewSettings(
                     javaScriptEnabled: true,
                     userAgent: AppConstants.campusCardUA,
@@ -546,9 +560,10 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
                           scheme != 'javascript') {
                         _logger.i('🚀 Intercepted custom scheme in PaymentSheet: $url');
                         try {
-                          if (await canLaunchUrl(uri)) {
-                            await launchUrl(uri, mode: LaunchMode.externalApplication);
-                          } else if (url.startsWith('intent://')) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } catch (e) {
+                          _logger.w('⚠️ Failed to launch custom scheme: $url: $e');
+                          if (url.startsWith('intent://')) {
                             final schemeMatch =
                                 RegExp(r'scheme=([a-zA-Z0-9_-]+);').firstMatch(url);
                             if (schemeMatch != null) {
@@ -557,14 +572,14 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
                                   .replaceFirst('intent://', '$extractedScheme://')
                                   .split('#Intent;')[0];
                               final fallbackUri = Uri.tryParse(fallbackUrl);
-                              if (fallbackUri != null && await canLaunchUrl(fallbackUri)) {
-                                await launchUrl(fallbackUri,
-                                    mode: LaunchMode.externalApplication);
+                              if (fallbackUri != null) {
+                                try {
+                                  await launchUrl(fallbackUri,
+                                      mode: LaunchMode.externalApplication);
+                                } catch (_) {}
                               }
                             }
                           }
-                        } catch (e) {
-                          _logger.w('⚠️ Failed to launch custom scheme: $url: $e');
                         }
                         return NavigationActionPolicy.CANCEL;
                       }
