@@ -339,7 +339,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
         );
 
     double offset = 0;
-    for (int i = 0; i < _todayIndex; i++) {
+    for (int i = 0; i < _todayIndex && i < _agendaTimeline.length; i++) {
       // 月份标题高度 (40px)
       if (i == 0 ||
           _agendaTimeline[i].key.month != _agendaTimeline[i - 1].key.month) {
@@ -363,20 +363,28 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
               h.endTime?.day == date.day)
           .length;
 
-      final cardCount = courseCount + examCount + homeworkCount;
-      // 计算高度：单张卡片 60px + 4px margin = 64px, 区域底部间距 24px
-      double sectionHeight = cardCount * 64.0 + 24.0;
-      if (sectionHeight < 84) sectionHeight = 84;
+      // 精确卡片高度：课程卡片 64px (60+4), 考试卡片 65px (61+4), 作业卡片 61px (57+4)
+      final rightContentHeight =
+          courseCount * 64.0 + examCount * 65.0 + homeworkCount * 61.0;
+      // 左侧日期栏固定高度 56px (Text 16px + SizedBox 4px + Circle 36px)
+      final rowHeight = rightContentHeight > 56.0 ? rightContentHeight : 56.0;
+      // 区域底部外边距 24px
+      final sectionHeight = rowHeight + 24.0;
       offset += sectionHeight;
     }
+
+    final maxExtent = _agendaScrollController.position.maxScrollExtent;
+    final minExtent = _agendaScrollController.position.minScrollExtent;
+    final targetOffset = offset.clamp(minExtent, maxExtent);
+
     if (animate) {
       _agendaScrollController.animateTo(
-        offset,
+        targetOffset,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOutCubic,
       );
     } else {
-      _agendaScrollController.jumpTo(offset);
+      _agendaScrollController.jumpTo(targetOffset);
     }
   }
 
