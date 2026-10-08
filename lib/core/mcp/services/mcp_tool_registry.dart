@@ -98,6 +98,10 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
   // 11. 图书馆座位预约（支持默认上次座位与强制确认）
   registry.register(LibraryReserveTool.create(service: libraryService));
 
+  // 11.0 图书馆快速预约 (智能匹配空闲座位，同时注册 quick_reserve 别名)
+  registry.register(LibraryQuickReserveTool.create(service: libraryService));
+  registry.register(LibraryQuickReserveTool.create(service: libraryService, toolName: 'quick_reserve'));
+
   // 11.1 图书馆图书检索 (同时注册 search_library_books 与 query_books 别名)
   registry.register(LibraryBookSearchTool.create(service: libraryBookService));
   registry.register(LibraryBookSearchTool.create(service: libraryBookService, toolName: 'query_books'));

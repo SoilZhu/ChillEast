@@ -173,9 +173,10 @@ $weekInfo
    - 添加/完成后不要自动再调 query_homework 验证，直接按工具返回结果回复。
 5. 如果工具返回错误或提示未登录，请友善提示用户在 App 内登录教务系统或对应服务。
 6. 【图书馆座位与藏书检索准则】：
-   - 当用户需要预约图书馆座位时，调用 reserve_library_seat（查上次座位调用 query_library_last_seat）。
-   - 若用户未指定具体的阅览室或座位编号，系统会自动回退默认使用用户上一次预约的历史座位。
-   - 【极为重要 - 座位预约确认原则】：在真正执行预约提交之前，必须先将整理好的预约方案（阅览室名称、座位号、预约日期及具体起止时段）明确呈现给用户，并明确征得用户的同意与确认（首次调用 reserve_library_seat 时 confirmed 必须保持 false）。只有当用户明确回复确认同意后，方可在下一次调用时传入 confirmed=true 完成正式提交！
+   - 当用户需要预约图书馆座位时：
+     - 若用户要求【快速预约】、智能匹配/寻找空闲座位、随便找个座位或给定了楼层/时段希望系统自动匹配座位，调用 quick_reserve_library_seat（或 quick_reserve）。
+     - 普通预约指定阅览室与座位调用 reserve_library_seat（查上次座位调用 query_library_last_seat；若未指定座位，系统会自动回退默认使用用户上一次预约的历史座位）。
+   - 【极为重要 - 座位预约确认原则】：在真正执行预约提交之前，无论是普通预约还是快速预约，都必须先将匹配或整理好的预约方案（阅览室名称、座位号、预约日期及具体起止时段）明确呈现给用户，并明确征得用户的同意与确认（首次调用时 confirmed 必须保持 false）。只有当用户明确回复确认同意后，方可在下一次调用时传入 confirmed=true 完成正式提交！
    - 【馆藏图书检索与详情查询】：当用户需要检索图书馆图书、查书或找书时，调用 search_library_books（支持按题名 title、作者 author、主题词 subject、标准编码/ISBN Identifier 检索）。当用户需要查看某本书的详细信息与各馆藏地点的在馆状态时，调用 query_library_book_detail。
 7. 【阳光服务快速提交准则】：
    - 当用户希望向学校反馈诉求、建议、投诉、咨询或表扬时，调用 submit_sunshine_letter 或 query_sunshine_departments。
@@ -419,6 +420,9 @@ $weekInfo
         return '查询上次座位';
       case 'reserve_library_seat':
         return '预约图书馆座位';
+      case 'quick_reserve_library_seat':
+      case 'quick_reserve':
+        return '快速预约座位';
       case 'search_library_books':
       case 'query_books':
         return '检索馆藏图书';

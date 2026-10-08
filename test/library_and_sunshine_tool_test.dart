@@ -61,11 +61,58 @@ class FakeLibraryBookService extends LibraryBookService {
 class FakeLibraryService extends LibraryService {
   final LibraryIndexData indexData;
   bool submitCalled = false;
+  bool matchSeatCalled = false;
+  bool quickSubmitCalled = false;
 
   FakeLibraryService({required this.indexData});
 
   @override
   Future<LibraryIndexData> fetchIndexData() async => indexData;
+
+  @override
+  Future<LibraryMatchedSeatModel> matchSeat({
+    required String startTime,
+    required String endTime,
+    String firstLevelName = '',
+    String secondLevelName = '',
+    String thirdLevelName = '',
+  }) async {
+    matchSeatCalled = true;
+    return LibraryMatchedSeatModel(
+      roomId: 14100,
+      seatNum: '042',
+      startTime: DateTime.now(),
+      endTime: DateTime.now().add(const Duration(hours: 2)),
+      duration: '2.0',
+      firstLevelName: '图书馆',
+      secondLevelName: secondLevelName.isNotEmpty ? secondLevelName : '3楼',
+      thirdLevelName: thirdLevelName.isNotEmpty ? thirdLevelName : '自然科学图书阅览一区413',
+    );
+  }
+
+  @override
+  Future<LibraryReserveModel> submitQuickReservation({
+    required int roomId,
+    required String seatNum,
+    required String day,
+    required String startTime,
+    required String endTime,
+  }) async {
+    quickSubmitCalled = true;
+    return LibraryReserveModel(
+      id: 8889,
+      roomId: roomId,
+      deptId: 33430,
+      seatNum: seatNum,
+      startTime: DateTime.now(),
+      endTime: DateTime.now().add(const Duration(hours: 2)),
+      status: 0,
+      firstLevelName: '图书馆',
+      secondLevelName: '3楼',
+      thirdLevelName: '自然科学图书阅览一区413',
+      today: day,
+    );
+  }
 
   @override
   Future<LibraryReserveModel> submitReservation({
@@ -196,6 +243,50 @@ void main() {
       expect(json['status'], equals('success'));
       expect(json['reservation']['seatNum'], equals('042'));
       expect(fakeService.submitCalled, isTrue); // 真正调用了提交
+    });
+
+    test('quick_reserve_library_seat matches seat and requires confirmation when confirmed=false', () async {
+      final fakeService = FakeLibraryService(indexData: mockIndexData);
+      final tool = LibraryQuickReserveTool.create(service: fakeService);
+
+      final result = await tool.execute({
+        'floor': '三楼',
+        'startTime': '14:00',
+        'endTime': '16:00',
+        'confirmed': false,
+      });
+
+      expect(result.isError, isFalse);
+      final json = jsonDecode(result.content.first.text!);
+      expect(json['status'], equals('requires_confirmation'));
+      expect(json['needsUserConsent'], isTrue);
+      expect(json['matchedSeat']['seatNum'], equals('042'));
+      expect(json['matchedSeat']['roomId'], equals(14100));
+      expect(json['matchedSeat']['roomName'], contains('3楼'));
+      expect(fakeService.matchSeatCalled, isTrue); // 匹配座位被调用
+      expect(fakeService.quickSubmitCalled, isFalse); // 未确认时不得提交
+    });
+
+    test('quick_reserve_library_seat successfully submits when confirmed=true', () async {
+      final fakeService = FakeLibraryService(indexData: mockIndexData);
+      final tool = LibraryQuickReserveTool.create(service: fakeService);
+
+      final reserveDay = LibraryTimeUtils.availableReserveDays().last;
+      final result = await tool.execute({
+        'roomId': 14100,
+        'seatNum': '042',
+        'day': reserveDay,
+        'startTime': '14:00',
+        'endTime': '16:00',
+        'confirmed': true,
+      });
+
+      expect(result.isError, isFalse);
+      final json = jsonDecode(result.content.first.text!);
+      expect(json['status'], equals('success'));
+      expect(json['reservation']['seatNum'], equals('042'));
+      expect(json['reservation']['roomId'], equals(14100));
+      expect(fakeService.quickSubmitCalled, isTrue); // 真正提交了快速预约
     });
 
     test('search_library_books searches catalog and returns books', () async {
