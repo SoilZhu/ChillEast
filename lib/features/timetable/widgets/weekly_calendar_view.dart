@@ -550,38 +550,10 @@ class _ConflictingCoursesDialogState extends State<_ConflictingCoursesDialog> {
     final current = widget.courses[_selectedIndex];
 
     return AlertDialog(
-      title: Row(
-        children: [
-          Expanded(
-            child: Text(
-              current.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.layers_rounded, size: 12, color: Colors.orange),
-                const SizedBox(width: 3),
-                Text(
-                  '${_selectedIndex + 1}/${widget.courses.length}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+      title: Text(
+        current.name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -612,7 +584,7 @@ class _ConflictingCoursesDialogState extends State<_ConflictingCoursesDialog> {
                 }),
               ),
             ),
-            const Divider(height: 16),
+            const SizedBox(height: 8),
           ],
           _buildRow(context.l10n.teacher, current.teacher),
           _buildRow(context.l10n.classroom, current.classroom),
