@@ -1209,6 +1209,26 @@
   "loadingSeatMap": "正在加载座位分布图...",
   "reserveNow": "立即预约",
   "quickReserve": "快速预约",
+  "quickReserveTip": "系统将根据您设置的时间与位置偏好自动匹配空闲座位，助您快速锁定。",
+  "startMatchingSeats": "开始匹配座位",
+  "matchingSeats": "正在匹配座位...",
+  "matchedSeatSuccess": "已为您分配推荐座位",
+  "changeAnotherSeat": "换一个",
+  "changeAnotherSeatWithCooldown": "换一个 ({seconds}s)",
+  "@changeAnotherSeatWithCooldown": {
+    "placeholders": {
+      "seconds": { "type": "int" }
+    }
+  },
+  "confirmQuickReserve": "确认",
+  "allFloors": "全部楼层",
+  "allRooms": "全部阅览室",
+  "locationPreference": "位置偏好",
+  "optionalLabel": "可选",
+  "floorLabel": "楼层",
+  "roomLabel": "阅览室",
+  "noMatchedSeatFound": "暂无符合条件的空闲座位，请调整时段或位置后重试",
+  "adjustFilters": "修改筛选条件",
   "selectDate": "选择日期",
   "noAvailableSlotsForDate": "该日期已无可用预约时段，请选择其他日期。",
   "confirmReservationPeriod": "确认预约 ({day} {start} - {end})",

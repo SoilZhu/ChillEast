@@ -3,7 +3,6 @@ import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:html/parser.dart' as html_parser;
 import '../../../core/network/dio_client.dart';
-import '../../../core/network/cookie_manager.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../core/exceptions/app_exceptions.dart';
 import '../models/library_models.dart';
@@ -15,26 +14,40 @@ class LibraryService {
 
   Dio get _dio => DioClient().dio;
   bool _hasInitializedSession = false;
+  Future<void>? _initSessionFuture;
 
-  /// 确保 Cookie 已经同步/回流，并访问第三方入口完成凭证置换
+  /// 确保访问第三方入口完成座位系统凭证置换（全生命周期按需初始化一次）
   Future<void> _ensureCookies({bool forceInit = false}) async {
-    await AppCookieManager().injectAllChaoxingCookies();
-    if (!_hasInitializedSession || forceInit) {
-      try {
-        _logger.i('🔑 Initializing seat session via third entrance...');
-        await _dio.get(
-          '$officeBase/front/third/apps/seat/index?fidEnc=$deptIdEnc',
-          options: Options(
-            headers: {
-              'User-Agent':
-                  'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36',
-            },
-          ),
-        );
-        _hasInitializedSession = true;
-      } catch (e) {
-        _logger.w('⚠️ Third entrance init warning: $e');
-      }
+    if (_hasInitializedSession && !forceInit) {
+      return;
+    }
+    if (_initSessionFuture != null && !forceInit) {
+      return _initSessionFuture;
+    }
+
+    _initSessionFuture = _performEnsureCookies();
+    try {
+      await _initSessionFuture;
+    } finally {
+      _initSessionFuture = null;
+    }
+  }
+
+  Future<void> _performEnsureCookies() async {
+    try {
+      _logger.i('🔑 Initializing seat session via third entrance...');
+      await _dio.get(
+        '$officeBase/front/third/apps/seat/index?fidEnc=$deptIdEnc',
+        options: Options(
+          headers: {
+            'User-Agent':
+                'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36',
+          },
+        ),
+      );
+      _hasInitializedSession = true;
+    } catch (e) {
+      _logger.w('⚠️ Third entrance init warning: $e');
     }
   }
 
@@ -441,6 +454,288 @@ class LibraryService {
       return reserve;
     } catch (e) {
       _logger.e('❌ submitReservation error: $e');
+      rethrow;
+    }
+  }
+
+  /// 获取分类层级列表（type 0: 一级, type 1: 二级楼层, type 2: 三级阅览室）
+  Future<List<String>> fetchLevels({
+    required int type,
+    String? firstLevelName,
+    String? secondLevelName,
+  }) async {
+    await _ensureCookies();
+    const url = '$officeBase/data/apps/seat/levels';
+
+    final data = <String, dynamic>{
+      'deptIdEnc': deptIdEnc,
+      'type': type,
+    };
+    if (firstLevelName != null && firstLevelName.isNotEmpty) {
+      data['firstLevelName'] = firstLevelName;
+    }
+    if (secondLevelName != null && secondLevelName.isNotEmpty) {
+      data['secondLevelName'] = secondLevelName;
+    }
+
+    try {
+      final response = await _dio.post(
+        url,
+        data: data,
+        options: Options(
+          contentType: Headers.formUrlEncodedContentType,
+          headers: {
+            'Origin': officeBase,
+            'Referer':
+                '$officeBase/front/third/apps/seat/live/select?deptIdEnc=$deptIdEnc',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        ),
+      );
+
+      if (response.statusCode != 200) {
+        throw NetworkException('获取分类信息失败: HTTP ${response.statusCode}');
+      }
+
+      final jsonMap = _parseResponseMap(response.data, '获取分类信息失败');
+      final resData = jsonMap['data'] is Map
+          ? (jsonMap['data'] as Map).cast<String, dynamic>()
+          : <String, dynamic>{};
+      final levelsRaw = resData['levels'] as List<dynamic>? ?? [];
+
+      final key = type == 0
+          ? 'firstLevelName'
+          : (type == 1 ? 'secondLevelName' : 'thirdLevelName');
+
+      final result = <String>[];
+      for (final item in levelsRaw) {
+        if (item is Map && item[key] != null) {
+          final val = item[key].toString().trim();
+          if (val.isNotEmpty && !result.contains(val)) {
+            result.add(val);
+          }
+        }
+      }
+      return result;
+    } catch (e) {
+      _logger.e('❌ fetchLevels error: $e');
+      rethrow;
+    }
+  }
+
+  /// 获取快速预约开放时间与当前日期
+  Future<Map<String, dynamic>> fetchLiveStartEndTime() async {
+    await _ensureCookies();
+    const url = '$officeBase/data/apps/seat/getstartendtime';
+
+    try {
+      final response = await _dio.post(
+        url,
+        data: {'deptIdEnc': deptIdEnc},
+        options: Options(
+          contentType: Headers.formUrlEncodedContentType,
+          headers: {
+            'Origin': officeBase,
+            'Referer':
+                '$officeBase/front/third/apps/seat/live/select?deptIdEnc=$deptIdEnc',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final jsonMap = _parseResponseMap(response.data, '获取营业时间失败');
+        return jsonMap['data'] is Map
+            ? (jsonMap['data'] as Map).cast<String, dynamic>()
+            : <String, dynamic>{};
+      }
+      return {};
+    } catch (e) {
+      _logger.w('⚠️ fetchLiveStartEndTime error: $e');
+      return {};
+    }
+  }
+
+  /// 快速预约：智能匹配座位
+  Future<LibraryMatchedSeatModel> matchSeat({
+    required String startTime,
+    required String endTime,
+    String firstLevelName = '',
+    String secondLevelName = '',
+    String thirdLevelName = '',
+  }) async {
+    await _ensureCookies();
+    const url = '$officeBase/data/apps/seat/getseatinfo';
+    _logger.i(
+        '🎯 Matching seat: $startTime-$endTime, first=$firstLevelName, second=$secondLevelName, third=$thirdLevelName');
+
+    try {
+      final response = await _dio.post(
+        url,
+        data: {
+          'deptIdEnc': deptIdEnc,
+          'startTime': startTime,
+          'endTime': endTime,
+          'firstLevelName': firstLevelName,
+          'secondLevelName': secondLevelName,
+          'thirdLevelName': thirdLevelName,
+        },
+        options: Options(
+          contentType: Headers.formUrlEncodedContentType,
+          headers: {
+            'Origin': officeBase,
+            'Referer':
+                '$officeBase/front/third/apps/seat/live/select?deptIdEnc=$deptIdEnc',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        ),
+      );
+
+      if (response.statusCode != 200) {
+        throw NetworkException('匹配座位失败: HTTP ${response.statusCode}');
+      }
+
+      final jsonMap = _parseResponseMap(response.data, '暂无符合条件的空闲座位');
+      final resData = jsonMap['data'] is Map
+          ? (jsonMap['data'] as Map).cast<String, dynamic>()
+          : <String, dynamic>{};
+      final matchReserveRaw = resData['matchReserve'] is Map
+          ? (resData['matchReserve'] as Map).cast<String, dynamic>()
+          : null;
+
+      if (matchReserveRaw == null) {
+        throw const AppException('暂无符合条件的空闲座位，请调整筛选条件后重试');
+      }
+
+      return LibraryMatchedSeatModel.fromJson(matchReserveRaw);
+    } catch (e) {
+      _logger.e('❌ matchSeat error: $e');
+      rethrow;
+    }
+  }
+
+  /// 提取快速预约页面的 submit_enc 签名密钥
+  Future<String> _fetchLiveSubmitEnc() async {
+    const pageUrl =
+        '$officeBase/front/third/apps/seat/live/select?deptIdEnc=$deptIdEnc';
+    _logger.d('🔍 Extracting live submit_enc from $pageUrl...');
+
+    try {
+      final response = await _dio.get(
+        pageUrl,
+        options: Options(
+          headers: {
+            'User-Agent':
+                'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36',
+          },
+        ),
+      );
+
+      final html = response.data.toString();
+      final doc = html_parser.parse(html);
+      final input = doc.querySelector('input#submit_enc');
+      final value = input?.attributes['value'];
+
+      if (value != null && value.isNotEmpty) {
+        _logger.d('✅ Extracted live submit_enc: $value');
+        return value;
+      }
+
+      final reg = RegExp(r'id="submit_enc"\s+value="(.*?)"');
+      final match = reg.firstMatch(html);
+      if (match != null) {
+        final encVal = match.group(1)!;
+        _logger.d('✅ Extracted live submit_enc via regex: $encVal');
+        return encVal;
+      }
+
+      throw const AppException('无法从快速预约页面提取签名凭证');
+    } catch (e) {
+      _logger.e('❌ _fetchLiveSubmitEnc error: $e');
+      rethrow;
+    }
+  }
+
+  /// 提交快速预约
+  Future<LibraryReserveModel> submitQuickReservation({
+    required int roomId,
+    required String seatNum,
+    required String day,
+    required String startTime,
+    required String endTime,
+  }) async {
+    await _ensureCookies();
+    _logger.i(
+        '🚀 Submitting quick reservation: roomId=$roomId, seatNum=$seatNum, day=$day, time=$startTime-$endTime...');
+
+    try {
+      // 1. 获取快速预约页面独有的 submit_enc
+      final submitEnc = await _fetchLiveSubmitEnc();
+
+      // 2. 组装参数并计算签名 (根据 HAR 与 seat_live_third.js，快速预约不携带 deptIdEnc)
+      final paramObj = <String, dynamic>{
+        'roomId': roomId,
+        'startTime': startTime,
+        'endTime': endTime,
+        'day': day,
+        'captcha': '',
+        'seatNum': seatNum,
+        'wyToken': '',
+      };
+
+      final enc = _generateEnc(paramObj, submitEnc);
+
+      // 3. 发送预约请求
+      const submitUrl = '$officeBase/data/apps/seat/submit';
+      final response = await _dio.post(
+        submitUrl,
+        data: {
+          'roomId': roomId,
+          'startTime': startTime,
+          'endTime': endTime,
+          'day': day,
+          'captcha': '',
+          'seatNum': seatNum,
+          'wyToken': '',
+          'enc': enc,
+        },
+        options: Options(
+          contentType: Headers.formUrlEncodedContentType,
+          headers: {
+            'Origin': officeBase,
+            'Referer':
+                '$officeBase/front/third/apps/seat/live/select?deptIdEnc=$deptIdEnc',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        ),
+      );
+
+      if (response.statusCode != 200) {
+        throw NetworkException('快速预约请求失败: HTTP ${response.statusCode}');
+      }
+
+      final jsonMap = _parseResponseMap(response.data, '快速预约失败，请稍后重试');
+      final resData = jsonMap['data'] is Map
+          ? (jsonMap['data'] as Map).cast<String, dynamic>()
+          : <String, dynamic>{};
+      final reserveData = resData['seatReserve'] is Map
+          ? (resData['seatReserve'] as Map).cast<String, dynamic>()
+          : null;
+
+      if (reserveData == null || reserveData.isEmpty) {
+        final message = jsonMap['msg']?.toString() ??
+            jsonMap['message']?.toString() ??
+            '快速预约失败，服务器未返回有效预约结果';
+        throw AppException(message);
+      }
+
+      final reserve = LibraryReserveModel.fromJson(reserveData);
+      if (reserve.id <= 0 && reserve.seatNum.isEmpty) {
+        throw const AppException('快速预约失败，服务器未返回有效预约结果');
+      }
+      return reserve;
+    } catch (e) {
+      _logger.e('❌ submitQuickReservation error: $e');
       rethrow;
     }
   }

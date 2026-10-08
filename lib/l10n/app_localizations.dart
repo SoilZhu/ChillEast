@@ -4239,6 +4239,96 @@ abstract class AppLocalizations {
   /// **'快速预约'**
   String get quickReserve;
 
+  /// No description provided for @quickReserveTip.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统将根据您设置的时间与位置偏好自动匹配空闲座位，助您快速锁定。'**
+  String get quickReserveTip;
+
+  /// No description provided for @startMatchingSeats.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始匹配座位'**
+  String get startMatchingSeats;
+
+  /// No description provided for @matchingSeats.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在匹配座位...'**
+  String get matchingSeats;
+
+  /// No description provided for @matchedSeatSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'已为您分配推荐座位'**
+  String get matchedSeatSuccess;
+
+  /// No description provided for @changeAnotherSeat.
+  ///
+  /// In zh, this message translates to:
+  /// **'换一个'**
+  String get changeAnotherSeat;
+
+  /// No description provided for @changeAnotherSeatWithCooldown.
+  ///
+  /// In zh, this message translates to:
+  /// **'换一个 ({seconds}s)'**
+  String changeAnotherSeatWithCooldown(int seconds);
+
+  /// No description provided for @confirmQuickReserve.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认'**
+  String get confirmQuickReserve;
+
+  /// No description provided for @allFloors.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部楼层'**
+  String get allFloors;
+
+  /// No description provided for @allRooms.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部阅览室'**
+  String get allRooms;
+
+  /// No description provided for @locationPreference.
+  ///
+  /// In zh, this message translates to:
+  /// **'位置偏好'**
+  String get locationPreference;
+
+  /// No description provided for @optionalLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'可选'**
+  String get optionalLabel;
+
+  /// No description provided for @floorLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'楼层'**
+  String get floorLabel;
+
+  /// No description provided for @roomLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'阅览室'**
+  String get roomLabel;
+
+  /// No description provided for @noMatchedSeatFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无符合条件的空闲座位，请调整时段或位置后重试'**
+  String get noMatchedSeatFound;
+
+  /// No description provided for @adjustFilters.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改筛选条件'**
+  String get adjustFilters;
+
   /// No description provided for @selectDate.
   ///
   /// In zh, this message translates to:

@@ -2192,6 +2192,53 @@ class AppLocalizationsGan extends AppLocalizations {
   String get quickReserve => '快速预约';
 
   @override
+  String get quickReserveTip => '系统将根据您设置的时间与位置偏好自动匹配空闲座位，助您快速锁定。';
+
+  @override
+  String get startMatchingSeats => '开始匹配座位';
+
+  @override
+  String get matchingSeats => '正在匹配座位...';
+
+  @override
+  String get matchedSeatSuccess => '已为您分配推荐座位';
+
+  @override
+  String get changeAnotherSeat => '换一个';
+
+  @override
+  String changeAnotherSeatWithCooldown(int seconds) {
+    return '换一个 (${seconds}s)';
+  }
+
+  @override
+  String get confirmQuickReserve => '确认';
+
+  @override
+  String get allFloors => '全部楼层';
+
+  @override
+  String get allRooms => '全部阅览室';
+
+  @override
+  String get locationPreference => '位置偏好';
+
+  @override
+  String get optionalLabel => '可选';
+
+  @override
+  String get floorLabel => '楼层';
+
+  @override
+  String get roomLabel => '阅览室';
+
+  @override
+  String get noMatchedSeatFound => '暂无符合条件的空闲座位，请调整时段或位置后重试';
+
+  @override
+  String get adjustFilters => '修改筛选条件';
+
+  @override
   String get selectDate => '拣日子';
 
   @override

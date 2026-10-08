@@ -2256,6 +2256,55 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickReserve => 'Quick Reserve';
 
   @override
+  String get quickReserveTip =>
+      'The system automatically matches available seats based on your time and location preferences.';
+
+  @override
+  String get startMatchingSeats => 'Find Available Seat';
+
+  @override
+  String get matchingSeats => 'Matching seat...';
+
+  @override
+  String get matchedSeatSuccess => 'Seat matched successfully';
+
+  @override
+  String get changeAnotherSeat => 'Change Seat';
+
+  @override
+  String changeAnotherSeatWithCooldown(int seconds) {
+    return 'Change (${seconds}s)';
+  }
+
+  @override
+  String get confirmQuickReserve => 'Confirm';
+
+  @override
+  String get allFloors => 'All Floors';
+
+  @override
+  String get allRooms => 'All Rooms';
+
+  @override
+  String get locationPreference => 'Location Preference';
+
+  @override
+  String get optionalLabel => 'Optional';
+
+  @override
+  String get floorLabel => 'Floor';
+
+  @override
+  String get roomLabel => 'Room';
+
+  @override
+  String get noMatchedSeatFound =>
+      'No available seats found. Please adjust time or location criteria.';
+
+  @override
+  String get adjustFilters => 'Adjust Filters';
+
+  @override
   String get selectDate => 'Select Date';
 
   @override
