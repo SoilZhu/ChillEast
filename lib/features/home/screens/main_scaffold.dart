@@ -192,9 +192,6 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
       _isAiMode = true;
     });
     _aiAnimController.forward();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _aiInputFocusNode.requestFocus();
-    });
   }
 
   void _exitAiMode() {
@@ -392,6 +389,10 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final hasTimetable = ref.watch(timetableStatusProvider);
+    final aiState = ref.watch(aiAssistantProvider);
+    final hasChat = aiState.displayMessages.isNotEmpty ||
+        aiState.isLoading ||
+        aiState.errorMessage != null;
     
     // 监听强制触发器，当课表导入完成时，重置状态并展示提醒
     ref.listen(classReminderTriggerProvider, (previous, next) {
@@ -620,23 +621,59 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                     mainAxisAlignment: MainAxisAlignment.end,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 卡片在底栏上方
+                      // 点击之后先不展示卡片，而是直接暴露原本的快捷提问按钮（一行一个）；
+                      // 出现对话或正在加载时才展示卡片
                       Flexible(
-                        child: AiResponseCard(
-                          onClose: _exitAiMode,
-                          onQuickQuerySelected: (query) {
-                            _aiInputController.clear();
-                            setState(() {
-                              _selectedImagePath = null;
-                            });
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 220),
+                          switchInCurve: Curves.easeOutCubic,
+                          switchOutCurve: Curves.easeOutCubic,
+                          layoutBuilder: (currentChild, previousChildren) {
+                            return Stack(
+                              alignment: Alignment.bottomLeft,
+                              children: [
+                                ...previousChildren,
+                                if (currentChild != null) currentChild,
+                              ],
+                            );
                           },
+                          child: hasChat
+                              ? KeyedSubtree(
+                                  key: const ValueKey('ai_response_card'),
+                                  child: AiResponseCard(
+                                    onClose: _exitAiMode,
+                                    onQuickQuerySelected: (query) {
+                                      _aiInputController.clear();
+                                      setState(() {
+                                        _selectedImagePath = null;
+                                      });
+                                    },
+                                  ),
+                                )
+                              : KeyedSubtree(
+                                  key: const ValueKey('ai_exposed_quick_prompts'),
+                                  child: AiQuickPromptsList(
+                                    onDismiss: _exitAiMode,
+                                    onPromptSelected: (prompt) {
+                                      _aiInputController.clear();
+                                      _aiInputFocusNode.unfocus();
+                                      setState(() {
+                                        _selectedImagePath = null;
+                                      });
+                                    },
+                                  ),
+                                ),
                         ),
                       ),
                       const SizedBox(height: 8),
-                      // 原顶栏现成为底栏
+                      // 原顶栏现成为底栏（拦截内部点击，避免误触退出）
                       Material(
                         type: MaterialType.transparency,
-                        child: _buildAiBottomBar(context),
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {},
+                          child: _buildAiBottomBar(context),
+                        ),
                       ),
                     ],
                   ),
@@ -802,28 +839,11 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 输入行：返回按钮 + 输入框
+          // 输入行：输入框
           SizedBox(
             height: 44,
             child: Row(
               children: [
-                SizedBox(
-                  width: 32,
-                  height: 32,
-                  child: GestureDetector(
-                    key: const ValueKey('ai_back_button'),
-                    onTap: _exitAiMode,
-                    behavior: HitTestBehavior.opaque,
-                    child: const Center(
-                      child: Icon(
-                        Icons.arrow_back_rounded,
-                        color: Color(0xFF09C489),
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
                 Expanded(
                   child: TextField(
                     key: const ValueKey('ai_text_field'),
