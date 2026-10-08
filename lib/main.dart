@@ -12,6 +12,7 @@ import 'core/state/auth_state.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/background_worker.dart';
 import 'core/services/live_scheduler.dart';
+import 'core/services/update_service.dart';
 import 'core/state/locale_provider.dart';
 import 'core/utils/l10n_extension.dart';
 import 'core/utils/fallback_localizations_delegate.dart';
@@ -58,6 +59,8 @@ Future<void> _initializeAfterFirstFrame() async {
     _initializeBackgroundWorker(),
     _initializeNotifications(),
   ]);
+  // 自动清理历史 APK 安装包，释放存储空间
+  unawaited(UpdateService.cleanHistoricalApks());
   // 实时卡：前台 tick + 原生闹钟编排（内部自带 try/catch，不阻塞启动）
   try {
     LiveScheduler().start();

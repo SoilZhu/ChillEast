@@ -21,6 +21,41 @@ class UpdateService {
   static const String _apiUrl = 'https://api.github.com/repos/$_githubRepo/releases/latest';
   static const String _downloadUrl = 'https://eastchill-apk.soilzhu.su/latest/app-release.apk';
 
+  /// 自动扫描并清理历史下载的 APK 安装包以释放手机存储空间
+  static Future<void> cleanHistoricalApks({String? excludePath}) async {
+    try {
+      final dirs = <Directory>[];
+
+      // 1. 外部存储私有文件目录（旧版本 APK 累积的主目录）
+      final extDir = await getExternalStorageDirectory();
+      if (extDir != null && extDir.existsSync()) {
+        dirs.add(extDir);
+      }
+
+      // 2. 临时缓存目录
+      final tempDir = await getTemporaryDirectory();
+      if (tempDir.existsSync()) {
+        dirs.add(tempDir);
+      }
+
+      for (final dir in dirs) {
+        try {
+          final entities = dir.listSync();
+          for (final entity in entities) {
+            if (entity is File && entity.path.toLowerCase().endsWith('.apk')) {
+              if (excludePath != null && entity.path == excludePath) {
+                continue;
+              }
+              try {
+                entity.deleteSync();
+              } catch (_) {}
+            }
+          }
+        } catch (_) {}
+      }
+    } catch (_) {}
+  }
+
   /// 检查更新
   Future<void> checkUpdate(BuildContext context, {bool showNoUpdate = false}) async {
     try {
@@ -96,6 +131,11 @@ class UpdateService {
   }
 
   Future<void> startDownload(BuildContext context, String url, String version) async {
+    // 下载前先清理历史旧安装包
+    await cleanHistoricalApks();
+
+    if (!context.mounted) return;
+
     // 在底部显示“正在下载”提醒
     final snackBar = ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -171,6 +211,7 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
   double _progress = 0;
   final Dio _dio = Dio();
   CancelToken? _cancelToken;
+  String? _savePath;
 
   @override
   void initState() {
@@ -184,6 +225,7 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
       if (dir == null) throw Exception('External storage unavailable');
       
       final savePath = '${dir.path}/${widget.fileName}';
+      _savePath = savePath;
       _cancelToken = CancelToken();
 
       await _dio.download(
@@ -203,6 +245,14 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
       
       widget.onCompleted(savePath);
     } catch (e) {
+      if (_savePath != null) {
+        try {
+          final file = File(_savePath!);
+          if (file.existsSync()) {
+            file.deleteSync();
+          }
+        } catch (_) {}
+      }
       if (!CancelToken.isCancel(e as DioException)) {
         widget.onError(e.toString());
       }
