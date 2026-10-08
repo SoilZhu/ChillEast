@@ -300,7 +300,7 @@ void main() {
     });
 
     test('Rules output can be directly serialized to ICS and parsed back without data loss', () {
-      final customCourse = const CourseModel(
+      const customCourse = CourseModel(
         id: 'custom_2',
         name: '物理实验',
         teacher: '钱老师',
@@ -337,6 +337,115 @@ void main() {
       expect(parsedCourses.isNotEmpty, isTrue);
       expect(parsedCourses.any((c) => c.name == '物理实验'), isTrue);
       expect(parsedCourses.any((c) => c.name == '高等数学'), isTrue);
+    });
+
+    test('Enforces reschedule before suspension even when suspension rule is listed first', () {
+      // 模拟常见场景：用户先添加了第5周周一停课，后添加了将第5周周一的课调至周六
+      final suspensionRule = TimetableRule.createSuspension(
+        startWeek: 5,
+        endWeek: 5,
+        dayOfWeek: 1,
+        courseName: '高等数学',
+      );
+      final rescheduleRule = TimetableRule.createReschedule(
+        sourceWeek: 5,
+        sourceDayOfWeek: 1,
+        targetWeek: 5,
+        targetDayOfWeek: 6,
+        courseName: '高等数学',
+        sourceStartPeriod: 1,
+        sourceEndPeriod: 2,
+      );
+
+      // 规则列表中停课排在调课前面
+      final rules = [suspensionRule, rescheduleRule];
+
+      final result = service.applyRules(testCourses, rules);
+
+      // 周一原时段：第5周的高数已被停课/移走
+      final mondayMath = result.firstWhere(
+        (c) => c.name == '高等数学' && c.dayOfWeek == 1,
+      );
+      expect(WeekParser.parseWeeks(mondayMath.weeks).contains(5), isFalse);
+
+      // 周六目标时段：第5周的高数成功被调入（证明调课先于停课生效，成功抓取到源时段课程）
+      final saturdayMath = result.where(
+        (c) => c.name == '高等数学' && c.dayOfWeek == 6,
+      );
+      expect(saturdayMath.isNotEmpty, isTrue);
+      expect(WeekParser.parseWeeks(saturdayMath.first.weeks).contains(5), isTrue);
+    });
+
+    test('Enforces whole-day holiday rescheduling before whole-day suspension', () {
+      // 节假日调休：第5周周五放假全天停课，周五课程调到第5周周日补课
+      final suspensionRule = TimetableRule.createSuspension(
+        startWeek: 5,
+        endWeek: 5,
+        dayOfWeek: 5,
+      );
+      final rescheduleRule = TimetableRule.createReschedule(
+        sourceWeek: 5,
+        sourceDayOfWeek: 5,
+        targetWeek: 5,
+        targetDayOfWeek: 7,
+      );
+
+      // 即使停课规则在前
+      final rules = [suspensionRule, rescheduleRule];
+      final result = service.applyRules(testCourses, rules);
+
+      // 周五课程（英语、物理）第5周均已不在周五
+      final fridayCourses = result.where((c) => c.dayOfWeek == 5);
+      for (final c in fridayCourses) {
+        expect(WeekParser.parseWeeks(c.weeks).contains(5), isFalse);
+      }
+
+      // 周日成功补课：第5周周日应有从周五调过去的课程（英语、物理）
+      final sundayCourses = result.where(
+        (c) => c.dayOfWeek == 7 && WeekParser.parseWeeks(c.weeks).contains(5),
+      );
+      expect(sundayCourses.length, equals(2));
+      expect(sundayCourses.any((c) => c.name == '大学英语'), isTrue);
+      expect(sundayCourses.any((c) => c.name == '大学物理'), isTrue);
+    });
+
+    test('sortRules strictly orders customCourse -> reschedule -> suspension while maintaining stability', () {
+      final s1 = TimetableRule.createSuspension(startWeek: 1, endWeek: 2);
+      final r1 = TimetableRule.createReschedule(
+        sourceWeek: 1,
+        sourceDayOfWeek: 1,
+        targetWeek: 1,
+        targetDayOfWeek: 2,
+      );
+      final c1 = TimetableRule.createCustomCourse(
+        course: const CourseModel(
+          id: 'cust_1',
+          name: '加课1',
+          teacher: 'T',
+          classroom: 'C',
+          weeks: '1(周)',
+          periods: '01-02',
+          dayOfWeek: 1,
+          startPeriod: 1,
+          endPeriod: 2,
+        ),
+      );
+      final r2 = TimetableRule.createReschedule(
+        sourceWeek: 2,
+        sourceDayOfWeek: 2,
+        targetWeek: 2,
+        targetDayOfWeek: 3,
+      );
+      final s2 = TimetableRule.createSuspension(startWeek: 3, endWeek: 4);
+
+      final sorted = TimetableRuleService.sortRules([s1, r1, c1, r2, s2]);
+
+      expect(sorted.length, equals(5));
+      expect(sorted[0], equals(c1));
+      expect(sorted[1], equals(r1));
+      expect(sorted[2], equals(r2));
+      expect(sorted[3], equals(s1));
+      expect(sorted[4], equals(s2));
     });
   });
 }
