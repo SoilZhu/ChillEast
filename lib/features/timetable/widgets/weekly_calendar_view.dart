@@ -208,13 +208,48 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
     );
   }
 
+  /// 冲突层级排序规则：
+  /// 1. 有教室的比没教室的层级更高（后绘制，置于上层）
+  /// 2. 时长更短的比时长更长的层级更高（后绘制，置于上层）
+  /// 3. 兜底按 startPeriod 和 id 稳定排序
+  static int compareCourseLayers(CourseModel a, CourseModel b) {
+    // 1. 教室优先：有教室的比没教室的层级更高（排在后面，后绘制在顶层）
+    final aHasRoom = a.classroom.trim().isNotEmpty;
+    final bHasRoom = b.classroom.trim().isNotEmpty;
+    if (aHasRoom != bHasRoom) {
+      return aHasRoom ? 1 : -1;
+    }
+
+    // 2. 时长优先：时长更短的比时长更长的层级更高（排在后面，后绘制在顶层）
+    final aDuration = a.endPeriod - a.startPeriod + 1;
+    final bDuration = b.endPeriod - b.startPeriod + 1;
+    if (aDuration != bDuration) {
+      return bDuration.compareTo(aDuration); // 时长更长(值更大)在底层，时长更短在上层
+    }
+
+    // 3. 兜底稳定排序
+    final startCompare = a.startPeriod.compareTo(b.startPeriod);
+    if (startCompare != 0) return startCompare;
+    return a.id.compareTo(b.id);
+  }
+
+  /// 判定两门课程是否存在时间重叠冲突（同一天且节次区间重叠）
+  static bool areCoursesOverlapping(CourseModel a, CourseModel b) {
+    if (a.dayOfWeek != b.dayOfWeek) return false;
+    return a.startPeriod <= b.endPeriod && b.startPeriod <= a.endPeriod;
+  }
+
   /// 构建固定的课程块
   List<Widget> _buildFixedCourseBlocks(List<CourseModel> courses, double screenWidth, double blockHeight, double gap) {
     final blocks = <Widget>[];
     const timeColumnWidth = 55.0;
     final columnWidth = (screenWidth - timeColumnWidth) / 7.0;
 
-    for (final course in courses) {
+    // 冲突课程都显示：按层级升序排序（底层先绘制，顶层后绘制置于上层）
+    final sortedCourses = List<CourseModel>.from(courses)
+      ..sort(compareCourseLayers);
+
+    for (final course in sortedCourses) {
       final int bigSectionIndex = (course.startPeriod - 1) ~/ 2;
       final int periodDuration = (course.endPeriod - course.startPeriod + 1);
       final int bigSectionSpan = (periodDuration / 2).ceil();
@@ -226,13 +261,23 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
       final left = timeColumnWidth + dayOffset + (gap / 2);
       final width = columnWidth - gap;
 
+      // 获取同时间段所有冲突课程
+      final conflicts = sortedCourses
+          .where((other) => areCoursesOverlapping(course, other))
+          .toList();
+      final hasConflict = conflicts.length > 1;
+
       blocks.add(
         Positioned(
           top: top,
           left: left,
           width: width,
           height: height,
-          child: _buildCourseBlock(course),
+          child: _buildCourseBlock(
+            course,
+            hasConflict: hasConflict,
+            conflictingCourses: conflicts,
+          ),
         ),
       );
     }
@@ -240,41 +285,77 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
   }
   
   /// 构建单个课程块
-  Widget _buildCourseBlock(CourseModel course) {
+  Widget _buildCourseBlock(
+    CourseModel course, {
+    bool hasConflict = false,
+    List<CourseModel>? conflictingCourses,
+  }) {
     final color = _getCourseColor(course.name);
     return GestureDetector(
-      onTap: () => _showCourseDetail(course),
+      onTap: () => _showCourseDetail(
+        course,
+        conflictingCourses: conflictingCourses,
+      ),
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(6), // 圆角 6px
+          border: hasConflict
+              ? Border.all(
+                  color: Colors.white.withValues(alpha: 0.4),
+                  width: 1.0,
+                )
+              : null,
+          boxShadow: hasConflict
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : null,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            Text(
-              course.name,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                height: 1.1,
-              ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            if (course.classroom.isNotEmpty)
-              Text(
-                course.classroom,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 9,
-                  height: 1.1,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  course.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    height: 1.1,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 3, // 支持 3 行显示
-                overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 2),
+                if (course.classroom.isNotEmpty)
+                  Text(
+                    course.classroom,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      height: 1.1,
+                    ),
+                    maxLines: 3, // 支持 3 行显示
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+            if (hasConflict)
+              const Positioned(
+                top: 0,
+                right: 0,
+                child: Icon(
+                  Icons.layers_rounded,
+                  size: 10,
+                  color: Colors.white70,
+                ),
               ),
           ],
         ),
@@ -283,39 +364,53 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
   }
   
   /// 显示课程详情
-  void _showCourseDetail(CourseModel course) {
+  void _showCourseDetail(
+    CourseModel course, {
+    List<CourseModel>? conflictingCourses,
+  }) {
+    final hasMultiple = conflictingCourses != null && conflictingCourses.length > 1;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(course.name),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDetailRow(context.l10n.teacher, course.teacher),
-            _buildDetailRow(context.l10n.classroom, course.classroom),
-            _buildDetailRow(context.l10n.weeksLabel, WeekParser.formatWeeksLocalized(
-              context,
-              WeekParser.parseWeeks(course.weeks),
-            )),
-            _buildDetailRow(
-              context.l10n.periodsLabel,
-              context.l10n.periodsRange(course.startPeriod, course.endPeriod),
+      builder: (context) {
+        if (!hasMultiple) {
+          return AlertDialog(
+            title: Text(course.name),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDetailRow(context.l10n.teacher, course.teacher),
+                _buildDetailRow(context.l10n.classroom, course.classroom),
+                _buildDetailRow(context.l10n.weeksLabel, WeekParser.formatWeeksLocalized(
+                  context,
+                  WeekParser.parseWeeks(course.weeks),
+                )),
+                _buildDetailRow(
+                  context.l10n.periodsLabel,
+                  context.l10n.periodsRange(course.startPeriod, course.endPeriod),
+                ),
+                _buildDetailRow(
+                  context.l10n.timeLabel,
+                  '${DateCalculator.getSectionTime(course.startPeriod)['start']!.format(context)}-'
+                  '${DateCalculator.getSectionTime(course.endPeriod)['end']!.format(context)}',
+                ),
+              ],
             ),
-            _buildDetailRow(
-              context.l10n.timeLabel,
-              '${DateCalculator.getSectionTime(course.startPeriod)['start']!.format(context)}-'
-              '${DateCalculator.getSectionTime(course.endPeriod)['end']!.format(context)}',
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.l10n.close),
-          ),
-        ],
-      ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(context.l10n.close),
+              ),
+            ],
+          );
+        }
+
+        return _ConflictingCoursesDialog(
+          initialCourse: course,
+          courses: conflictingCourses,
+        );
+      },
     );
   }
   
@@ -418,6 +513,152 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
               ),
             );
           }),
+        ],
+      ),
+    );
+  }
+}
+
+
+/// 冲突课程浏览弹窗：支持在同时间段多门重叠课程之间切换查看详情
+class _ConflictingCoursesDialog extends StatefulWidget {
+  final CourseModel initialCourse;
+  final List<CourseModel> courses;
+
+  const _ConflictingCoursesDialog({
+    required this.initialCourse,
+    required this.courses,
+  });
+
+  @override
+  State<_ConflictingCoursesDialog> createState() =>
+      _ConflictingCoursesDialogState();
+}
+
+class _ConflictingCoursesDialogState extends State<_ConflictingCoursesDialog> {
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    final idx = widget.courses.indexOf(widget.initialCourse);
+    _selectedIndex = idx >= 0 ? idx : 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final current = widget.courses[_selectedIndex];
+
+    return AlertDialog(
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              current.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.layers_rounded, size: 12, color: Colors.orange),
+                const SizedBox(width: 3),
+                Text(
+                  '${_selectedIndex + 1}/${widget.courses.length}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (widget.courses.length > 1) ...[
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: List.generate(widget.courses.length, (i) {
+                  final c = widget.courses[i];
+                  final isSel = i == _selectedIndex;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6, bottom: 8),
+                    child: ChoiceChip(
+                      label: Text(
+                        c.name,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isSel ? Colors.white : null,
+                        ),
+                      ),
+                      selected: isSel,
+                      selectedColor: Theme.of(context).primaryColor,
+                      onSelected: (_) => setState(() => _selectedIndex = i),
+                    ),
+                  );
+                }),
+              ),
+            ),
+            const Divider(height: 16),
+          ],
+          _buildRow(context.l10n.teacher, current.teacher),
+          _buildRow(context.l10n.classroom, current.classroom),
+          _buildRow(
+            context.l10n.weeksLabel,
+            WeekParser.formatWeeksLocalized(
+              context,
+              WeekParser.parseWeeks(current.weeks),
+            ),
+          ),
+          _buildRow(
+            context.l10n.periodsLabel,
+            context.l10n.periodsRange(current.startPeriod, current.endPeriod),
+          ),
+          _buildRow(
+            context.l10n.timeLabel,
+            '${DateCalculator.getSectionTime(current.startPeriod)['start']!.format(context)}-'
+            '${DateCalculator.getSectionTime(current.endPeriod)['end']!.format(context)}',
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(context.l10n.close),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 60,
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          Expanded(
+            child: Text(value.isEmpty ? context.l10n.unknown : value),
+          ),
         ],
       ),
     );
