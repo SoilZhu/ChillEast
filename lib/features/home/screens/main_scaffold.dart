@@ -192,6 +192,12 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
       _isAiMode = true;
     });
     _aiAnimController.forward();
+    // 进入 AI 模式后自动聚焦输入框并调起键盘
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _aiInputFocusNode.requestFocus();
+      }
+    });
   }
 
   void _exitAiMode() {
@@ -849,6 +855,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                     key: const ValueKey('ai_text_field'),
                     controller: _aiInputController,
                     focusNode: _aiInputFocusNode,
+                    autofocus: true,
                     textInputAction: TextInputAction.send,
                     onSubmitted: _submitAiQuery,
                     cursorColor: const Color(0xFF09C489),
