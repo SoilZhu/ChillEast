@@ -30,6 +30,8 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     const FunctionItem(id: 'recharge', label: '校园卡充值', icon: Icons.account_balance_wallet_outlined, color: Colors.orange),
     const FunctionItem(id: 'library', label: '图书馆', icon: Icons.library_books_outlined, color: Color(0xFF795548)),
     const FunctionItem(id: 'empty_classroom', label: '空教室', icon: Icons.meeting_room_outlined, color: Color(0xFF9C27B0)),
+    const FunctionItem(id: 'ehall', label: '办事大厅', icon: Icons.account_balance_outlined, color: Color(0xFF1E88E5)),
+    const FunctionItem(id: 'info_portal', label: '更多小程序', icon: Icons.public_outlined, color: Color(0xFF1976D2)),
     const FunctionItem(id: 'xgxt', label: '学工系统', icon: Icons.connect_without_contact_outlined, color: Color(0xFF3476E6)),
     const FunctionItem(id: 'repairs', label: '报修平台', icon: Icons.handyman_outlined, color: Colors.blueGrey),
     const FunctionItem(id: 'gym', label: '场馆预约', icon: Icons.sports_basketball_outlined, color: Colors.pink),
@@ -41,6 +43,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     const FunctionItem(id: 'bus', label: '实时校车', icon: Icons.airport_shuttle_outlined, color: Color(0xFF34E676)),
     const FunctionItem(id: 'cs_bus', label: '长沙实时公交', icon: Icons.directions_bus_outlined, color: Color(0xFF2196F3)),
     const FunctionItem(id: 'campus_bus_route', label: '校内公交线路', icon: Icons.alt_route_rounded, color: Color(0xFF00A86B)),
+    const FunctionItem(id: 'dormitory', label: '我的宿舍', icon: Icons.hotel_outlined, color: Color(0xFF5C6BC0)),
   ];
 
   AppearanceNotifier() : super(AppearanceState(
@@ -58,7 +61,16 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     return functionGroups.map((g) => g.titleKey).toList();
   }
 
-  static const List<String> _defaultVisibleHomeIds = ['payment_code', 'library', 'empty_classroom', 'xgxt', 'repairs', 'bus', 'score'];
+  static const List<String> defaultVisibleHomeIds = [
+    'payment_code',
+    'library',
+    'empty_classroom',
+    'xgxt',
+    'repairs',
+    'bus',
+    'score',
+  ];
+  static const List<String> _defaultVisibleHomeIds = defaultVisibleHomeIds;
 
   static List<FunctionItem> _getDefaultWidgetItems([List<String>? visibleIds]) {
     final activeIds = visibleIds ?? HomeWidgetService.defaultQuickIds;
@@ -90,10 +102,14 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     const FunctionItem(id: 'feed_quick', label: '快捷功能', icon: Icons.apps_rounded, color: Color(0xFF09C489)),
     const FunctionItem(id: 'feed_library', label: '图书馆预约', icon: Icons.local_library_outlined, color: Color(0xFF795548)),
     const FunctionItem(id: 'feed_agenda', label: '今日日程', icon: Icons.calendar_today_outlined, color: Color(0xFF09C489)),
+    const FunctionItem(id: 'feed_balance', label: '余额', icon: Icons.account_balance_wallet_outlined, color: Color(0xFF1677FF)),
     const FunctionItem(id: 'feed_questionnaire', label: '待完成的问卷', icon: Icons.assignment_outlined, color: Color(0xFF2E7D32)),
     const FunctionItem(id: 'feed_leave', label: '请假申请', icon: Icons.event_note_outlined, color: Color(0xFF009688)),
     const FunctionItem(id: 'feed_repair', label: '报修工单', icon: Icons.handyman_outlined, color: Colors.blueGrey),
   ];
+
+  static List<FunctionItem> get feedPool =>
+      List<FunctionItem>.unmodifiable(_feedPool);
 
   static List<FunctionItem> _getDefaultFeedItems() {
     return List<FunctionItem>.from(_feedPool);
@@ -110,7 +126,7 @@ class AppearanceNotifier extends StateNotifier<AppearanceState> {
     // 默认全选，按照指定顺序
     final functionIds = [
       'payment_code', 'recharge', 'ele_recharge', 'library', 'empty_classroom', 'repairs', 
-      'sunshine', 'questionnaire', 'leave', 'gym', 'xgxt', 'teaching_eval', 'score', 'vpn', 'campus_card', 'bus', 'cs_bus', 'campus_bus_route'
+      'sunshine', 'questionnaire', 'leave', 'dormitory', 'gym', 'info_portal', 'ehall', 'xgxt', 'teaching_eval', 'score', 'vpn', 'campus_card', 'bus', 'cs_bus', 'campus_bus_route'
     ];
     final items = functionIds.map((id) => _masterPool.firstWhere((item) => item.id == id)).toList();
     // 兜底：只加了 _masterPool 忘记加 functionIds 的新功能，自动追加为可见，避免新装用户丢失

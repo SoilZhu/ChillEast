@@ -359,6 +359,12 @@ abstract class AppLocalizations {
   /// **'开源声明'**
   String get openSourceLicenses;
 
+  /// No description provided for @visitWebsite.
+  ///
+  /// In zh, this message translates to:
+  /// **'访问官网'**
+  String get visitWebsite;
+
   /// No description provided for @sendEmail.
   ///
   /// In zh, this message translates to:
@@ -455,6 +461,12 @@ abstract class AppLocalizations {
   /// **'空教室'**
   String get funcEmptyClassroom;
 
+  /// No description provided for @funcInfoPortal.
+  ///
+  /// In zh, this message translates to:
+  /// **'更多小程序'**
+  String get funcInfoPortal;
+
   /// No description provided for @funcXgxt.
   ///
   /// In zh, this message translates to:
@@ -472,6 +484,36 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'报修工单'**
   String get repairWorkOrders;
+
+  /// No description provided for @feedBalance.
+  ///
+  /// In zh, this message translates to:
+  /// **'余额'**
+  String get feedBalance;
+
+  /// No description provided for @campusCardBalance.
+  ///
+  /// In zh, this message translates to:
+  /// **'校园卡余额'**
+  String get campusCardBalance;
+
+  /// No description provided for @dormitoryElectricity.
+  ///
+  /// In zh, this message translates to:
+  /// **'宿舍电费'**
+  String get dormitoryElectricity;
+
+  /// No description provided for @noSavedDormitory.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂未保存宿舍房间'**
+  String get noSavedDormitory;
+
+  /// No description provided for @clickToSelectDormitory.
+  ///
+  /// In zh, this message translates to:
+  /// **'点击前往选择房间或充值'**
+  String get clickToSelectDormitory;
 
   /// No description provided for @quickActions.
   ///
@@ -532,6 +574,84 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'校内公交线路'**
   String get funcCampusBusRoute;
+
+  /// No description provided for @funcDormitory.
+  ///
+  /// In zh, this message translates to:
+  /// **'我的宿舍'**
+  String get funcDormitory;
+
+  /// No description provided for @dormitoryBuilding.
+  ///
+  /// In zh, this message translates to:
+  /// **'宿舍楼'**
+  String get dormitoryBuilding;
+
+  /// No description provided for @dormitoryUnit.
+  ///
+  /// In zh, this message translates to:
+  /// **'单元'**
+  String get dormitoryUnit;
+
+  /// No description provided for @dormitoryFloor.
+  ///
+  /// In zh, this message translates to:
+  /// **'楼层'**
+  String get dormitoryFloor;
+
+  /// No description provided for @dormitoryRoom.
+  ///
+  /// In zh, this message translates to:
+  /// **'宿舍'**
+  String get dormitoryRoom;
+
+  /// No description provided for @dormitoryBed.
+  ///
+  /// In zh, this message translates to:
+  /// **'床号'**
+  String get dormitoryBed;
+
+  /// No description provided for @dormitoryAcademicYear.
+  ///
+  /// In zh, this message translates to:
+  /// **'学年'**
+  String get dormitoryAcademicYear;
+
+  /// No description provided for @dormitoryTerm.
+  ///
+  /// In zh, this message translates to:
+  /// **'学期'**
+  String get dormitoryTerm;
+
+  /// No description provided for @dormitoryNotAssigned.
+  ///
+  /// In zh, this message translates to:
+  /// **'未安排床位'**
+  String get dormitoryNotAssigned;
+
+  /// No description provided for @dormitoryAssigned.
+  ///
+  /// In zh, this message translates to:
+  /// **'已分配床位'**
+  String get dormitoryAssigned;
+
+  /// No description provided for @dormitoryOpenWeb.
+  ///
+  /// In zh, this message translates to:
+  /// **'学生公寓平台'**
+  String get dormitoryOpenWeb;
+
+  /// No description provided for @dormitoryDetail.
+  ///
+  /// In zh, this message translates to:
+  /// **'宿舍详情'**
+  String get dormitoryDetail;
+
+  /// No description provided for @dormitoryBedPrompt.
+  ///
+  /// In zh, this message translates to:
+  /// **'可前往学生公寓服务平台办理查寝签到或床位业务'**
+  String get dormitoryBedPrompt;
 
   /// No description provided for @more.
   ///
@@ -2726,6 +2846,12 @@ abstract class AppLocalizations {
   /// **'当前充值房间'**
   String get currentRechargeRoom;
 
+  /// No description provided for @currentRechargeCard.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前充值卡片'**
+  String get currentRechargeCard;
+
   /// No description provided for @refreshing.
   ///
   /// In zh, this message translates to:
@@ -4113,6 +4239,96 @@ abstract class AppLocalizations {
   /// **'快速预约'**
   String get quickReserve;
 
+  /// No description provided for @quickReserveTip.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统将根据您设置的时间与位置偏好自动匹配空闲座位，助您快速锁定。'**
+  String get quickReserveTip;
+
+  /// No description provided for @startMatchingSeats.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始匹配座位'**
+  String get startMatchingSeats;
+
+  /// No description provided for @matchingSeats.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在匹配座位...'**
+  String get matchingSeats;
+
+  /// No description provided for @matchedSeatSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'已为您分配推荐座位'**
+  String get matchedSeatSuccess;
+
+  /// No description provided for @changeAnotherSeat.
+  ///
+  /// In zh, this message translates to:
+  /// **'换一个'**
+  String get changeAnotherSeat;
+
+  /// No description provided for @changeAnotherSeatWithCooldown.
+  ///
+  /// In zh, this message translates to:
+  /// **'换一个 ({seconds}s)'**
+  String changeAnotherSeatWithCooldown(int seconds);
+
+  /// No description provided for @confirmQuickReserve.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认'**
+  String get confirmQuickReserve;
+
+  /// No description provided for @allFloors.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部楼层'**
+  String get allFloors;
+
+  /// No description provided for @allRooms.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部阅览室'**
+  String get allRooms;
+
+  /// No description provided for @locationPreference.
+  ///
+  /// In zh, this message translates to:
+  /// **'位置偏好'**
+  String get locationPreference;
+
+  /// No description provided for @optionalLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'可选'**
+  String get optionalLabel;
+
+  /// No description provided for @floorLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'楼层'**
+  String get floorLabel;
+
+  /// No description provided for @roomLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'阅览室'**
+  String get roomLabel;
+
+  /// No description provided for @noMatchedSeatFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无符合条件的空闲座位，请调整时段或位置后重试'**
+  String get noMatchedSeatFound;
+
+  /// No description provided for @adjustFilters.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改筛选条件'**
+  String get adjustFilters;
+
   /// No description provided for @selectDate.
   ///
   /// In zh, this message translates to:
@@ -4808,6 +5024,312 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'立即开启'**
   String get cloudSyncPromptEnable;
+
+  /// No description provided for @bookSearch.
+  ///
+  /// In zh, this message translates to:
+  /// **'图书查询'**
+  String get bookSearch;
+
+  /// No description provided for @bookSearchSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'检索馆藏图书与借阅状态'**
+  String get bookSearchSubtitle;
+
+  /// No description provided for @bookSearchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索书名、作者、主题或标准编码...'**
+  String get bookSearchHint;
+
+  /// No description provided for @bookSearchTotalCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'共找到 {count} 本图书'**
+  String bookSearchTotalCount(int count);
+
+  /// No description provided for @bookSearchLoading.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在加载...'**
+  String get bookSearchLoading;
+
+  /// No description provided for @bookSearchEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'未检索到相关图书'**
+  String get bookSearchEmpty;
+
+  /// No description provided for @bookDetailTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'图书详情'**
+  String get bookDetailTitle;
+
+  /// No description provided for @holdingsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'馆藏信息'**
+  String get holdingsTitle;
+
+  /// No description provided for @barcode.
+  ///
+  /// In zh, this message translates to:
+  /// **'条码号'**
+  String get barcode;
+
+  /// No description provided for @callNumber.
+  ///
+  /// In zh, this message translates to:
+  /// **'索书号'**
+  String get callNumber;
+
+  /// No description provided for @holdingLocation.
+  ///
+  /// In zh, this message translates to:
+  /// **'典藏地'**
+  String get holdingLocation;
+
+  /// No description provided for @holdingStatus.
+  ///
+  /// In zh, this message translates to:
+  /// **'状态'**
+  String get holdingStatus;
+
+  /// No description provided for @holdingUnit.
+  ///
+  /// In zh, this message translates to:
+  /// **'馆藏单位'**
+  String get holdingUnit;
+
+  /// No description provided for @copyType.
+  ///
+  /// In zh, this message translates to:
+  /// **'单册类型'**
+  String get copyType;
+
+  /// No description provided for @accessionNo.
+  ///
+  /// In zh, this message translates to:
+  /// **'登录号'**
+  String get accessionNo;
+
+  /// No description provided for @searchTypeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'书名'**
+  String get searchTypeTitle;
+
+  /// No description provided for @searchTypeAuthor.
+  ///
+  /// In zh, this message translates to:
+  /// **'作者'**
+  String get searchTypeAuthor;
+
+  /// No description provided for @searchTypeSubject.
+  ///
+  /// In zh, this message translates to:
+  /// **'主题'**
+  String get searchTypeSubject;
+
+  /// No description provided for @searchTypeIdentifier.
+  ///
+  /// In zh, this message translates to:
+  /// **'标准编码'**
+  String get searchTypeIdentifier;
+
+  /// No description provided for @statusInLibrary.
+  ///
+  /// In zh, this message translates to:
+  /// **'在库'**
+  String get statusInLibrary;
+
+  /// No description provided for @statusBorrowed.
+  ///
+  /// In zh, this message translates to:
+  /// **'借出'**
+  String get statusBorrowed;
+
+  /// No description provided for @search.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索'**
+  String get search;
+
+  /// No description provided for @funcEhall.
+  ///
+  /// In zh, this message translates to:
+  /// **'办事大厅'**
+  String get funcEhall;
+
+  /// No description provided for @ehallSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'线上办事、流程审批与综合服务'**
+  String get ehallSubtitle;
+
+  /// No description provided for @ehallHotServices.
+  ///
+  /// In zh, this message translates to:
+  /// **'热门服务'**
+  String get ehallHotServices;
+
+  /// No description provided for @ehallAllServices.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部服务'**
+  String get ehallAllServices;
+
+  /// No description provided for @ehallCategories.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务分类'**
+  String get ehallCategories;
+
+  /// No description provided for @ehallDepartments.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务部门'**
+  String get ehallDepartments;
+
+  /// No description provided for @ehallMyOrders.
+  ///
+  /// In zh, this message translates to:
+  /// **'我的办件'**
+  String get ehallMyOrders;
+
+  /// No description provided for @ehallSearchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索服务名称、部门或描述...'**
+  String get ehallSearchHint;
+
+  /// No description provided for @ehallNoServicesFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'未找到匹配的服务'**
+  String get ehallNoServicesFound;
+
+  /// No description provided for @ehallApplyNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'我要办理'**
+  String get ehallApplyNow;
+
+  /// No description provided for @ehallViewDetail.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看详情'**
+  String get ehallViewDetail;
+
+  /// No description provided for @ehallServiceType.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务类型'**
+  String get ehallServiceType;
+
+  /// No description provided for @ehallDepartment.
+  ///
+  /// In zh, this message translates to:
+  /// **'主办部门'**
+  String get ehallDepartment;
+
+  /// No description provided for @ehallVisits.
+  ///
+  /// In zh, this message translates to:
+  /// **'访问量'**
+  String get ehallVisits;
+
+  /// No description provided for @ehallExternalLink.
+  ///
+  /// In zh, this message translates to:
+  /// **'外部系统跳转'**
+  String get ehallExternalLink;
+
+  /// No description provided for @ehallProcessWorkflow.
+  ///
+  /// In zh, this message translates to:
+  /// **'线上审批流程'**
+  String get ehallProcessWorkflow;
+
+  /// No description provided for @ehallOpenInWeb.
+  ///
+  /// In zh, this message translates to:
+  /// **'网页版大厅'**
+  String get ehallOpenInWeb;
+
+  /// No description provided for @ehallOngoing.
+  ///
+  /// In zh, this message translates to:
+  /// **'进行中'**
+  String get ehallOngoing;
+
+  /// No description provided for @ehallCompleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'已办结'**
+  String get ehallCompleted;
+
+  /// No description provided for @ehallNoOrders.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无办件记录'**
+  String get ehallNoOrders;
+
+  /// No description provided for @ehallFavorites.
+  ///
+  /// In zh, this message translates to:
+  /// **'我的收藏'**
+  String get ehallFavorites;
+
+  /// No description provided for @ehallAddToFavorites.
+  ///
+  /// In zh, this message translates to:
+  /// **'收藏服务'**
+  String get ehallAddToFavorites;
+
+  /// No description provided for @ehallRemoveFromFavorites.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消收藏'**
+  String get ehallRemoveFromFavorites;
+
+  /// No description provided for @ehallServiceUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'办事大厅暂时不可用，请稍后重试'**
+  String get ehallServiceUnavailable;
+
+  /// No description provided for @ehallSessionExpired.
+  ///
+  /// In zh, this message translates to:
+  /// **'办事大厅登录态已过期，请重新登录'**
+  String get ehallSessionExpired;
+
+  /// No description provided for @ehallExternalJumpPrompt.
+  ///
+  /// In zh, this message translates to:
+  /// **'即将跳转至外部服务'**
+  String get ehallExternalJumpPrompt;
+
+  /// No description provided for @ehallOpenNativeLeave.
+  ///
+  /// In zh, this message translates to:
+  /// **'在请假小程序中办理'**
+  String get ehallOpenNativeLeave;
+
+  /// No description provided for @examSchedule.
+  ///
+  /// In zh, this message translates to:
+  /// **'考试日程'**
+  String get examSchedule;
+
+  /// No description provided for @examTimePrefix.
+  ///
+  /// In zh, this message translates to:
+  /// **'考试时间'**
+  String get examTimePrefix;
 }
 
 class _AppLocalizationsDelegate

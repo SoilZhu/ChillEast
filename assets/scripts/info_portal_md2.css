@@ -1,0 +1,352 @@
+/* ==========================================================================
+   Material Design 2 (MD2) Theme for HUNAU Info Portal (toApps2)
+   Matching ChillEast Native Functions Screen UI (2-column Horizontal Cards)
+   ========================================================================== */
+
+:root {
+  --portal-bg: #FFFFFF;
+  --portal-card-bg: #FFFFFF;
+  --portal-card-border: #E0E0E0;
+  --portal-card-active: #F5F5F5;
+  --portal-title-color: #616161;
+  --portal-text-color: rgba(0, 0, 0, 0.87);
+  --portal-primary: #09C489;
+  --md-primary: #09C489;
+  --portal-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --portal-bg: #121212;
+    --portal-card-bg: #1E1E1E;
+    --portal-card-border: rgba(255, 255, 255, 0.12);
+    --portal-card-active: #2A2A2A;
+    --portal-title-color: rgba(255, 255, 255, 0.7);
+    --portal-text-color: #FFFFFF;
+  }
+}
+
+/* Base resets & layout */
+html, body {
+  background-color: var(--portal-bg) !important;
+  color: var(--portal-text-color) !important;
+  font-family: var(--portal-font-family) !important;
+  -webkit-font-smoothing: antialiased !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 100vh !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+body {
+  padding-bottom: 32px !important;
+}
+
+.wrapMax {
+  max-width: 680px !important;
+  margin: 0 auto !important;
+  padding: 16px 16px 24px 16px !important;
+  box-sizing: border-box !important;
+}
+
+/* ==========================================================================
+   Search Bar (Automatically Hidden for Pure Native Category View)
+   ========================================================================== */
+.centerSearchBox,
+div[class*="SearchBox"],
+div[class*="searchBox"],
+#searchBox {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* ==========================================================================
+   Hidden Duplicate Apps (Native ChillEast features already exist)
+   ========================================================================== */
+.item[valid="6336614"], .item[valId="6336614"],      /* 学工系统 */
+.item[valid="7710759"], .item[valId="7710759"],      /* 本科生公寓 */
+.item[valid="8056745"], .item[valId="8056745"],      /* 教学评价平台 */
+.item[valid="4311705"], .item[valId="4311705"],      /* 办事大厅 */
+.item[valid="15336377"], .item[valId="15336377"],    /* 综合报修平台 */
+.item[valid="4311769"], .item[valId="4311769"],      /* 成绩查询 */
+.item[valid="4311750"], .item[valId="4311750"],      /* 课表查询 */
+.item[valid="18418170"], .item[valId="18418170"],    /* 体育馆预约 */
+.item[valid="6243391"], .item[valId="6243391"],      /* 馆藏查询 */
+.item[valid="4610339"], .item[valId="4610339"] {     /* 借阅记录 */
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  pointer-events: none !important;
+}
+
+/* ==========================================================================
+   Category Containers (.applicationBox)
+   ========================================================================== */
+.applicationBox,
+div[class*="applicationBox"],
+div[class*="appBox"],
+div[class*="ServiceBox"],
+div[class*="serviceBox"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 0 20px 0 !important;
+  overflow: visible !important;
+}
+
+.applicationBox.borderBtm {
+  border-bottom: none !important;
+}
+
+/* Category Title (.title) */
+.applicationBox .title,
+div[class*="applicationBox"] .title,
+div[class*="appBox"] .title,
+div[class*="ServiceBox"] .title {
+  display: block !important;
+  height: auto !important;
+  line-height: normal !important;
+  padding: 0 0 10px 0 !important;
+  margin: 0 !important;
+  color: var(--portal-title-color) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  letter-spacing: normal !important;
+  background: transparent !important;
+  border: none !important;
+  position: static !important;
+}
+
+/* Hide any decorative pseudo-elements before title */
+.applicationBox .title::before,
+div[class*="applicationBox"] .title::before,
+div[class*="appBox"] .title::before,
+div[class*="ServiceBox"] .title::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* ==========================================================================
+   Apps 2-Column Grid Layout (.list)
+   ========================================================================== */
+.applicationBox .list,
+div[class*="applicationBox"] .list,
+div[class*="appBox"] .list,
+div[class*="ServiceBox"] .list {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 10px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+
+@media (min-width: 600px) {
+  .applicationBox .list,
+  div[class*="applicationBox"] .list {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (min-width: 900px) {
+  .applicationBox .list,
+  div[class*="applicationBox"] .list {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+/* ==========================================================================
+   Horizontal App Card (.item)
+   Matching ChillEast Native _buildFunctionGridCard
+   ========================================================================== */
+.applicationBox .list .item,
+div[class*="applicationBox"] .list .item,
+div[class*="appBox"] .list .item,
+div[class*="ServiceBox"] .list .item {
+  float: none !important;
+  width: 100% !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  padding: 0 14px !important;
+  border-radius: 8px !important;
+  background-color: var(--portal-card-bg) !important;
+  border: 1px solid var(--portal-card-border) !important;
+  box-shadow: none !important;
+  position: relative !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
+}
+
+.applicationBox .list .item:active,
+.applicationBox .list .item:hover,
+div[class*="applicationBox"] .list .item:active,
+div[class*="applicationBox"] .list .item:hover {
+  background-color: var(--portal-card-active) !important;
+}
+
+/* ==========================================================================
+   App Icon (Left Aligned, 20px)
+   ========================================================================== */
+.applicationBox .list .item img,
+div[class*="applicationBox"] .list .item img,
+.applicationBox .list .item .icon,
+div[class*="applicationBox"] .list .item .icon,
+.applicationBox .list .item svg,
+div[class*="applicationBox"] .list .item svg {
+  display: block !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  margin: 0 10px 0 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 2px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  object-fit: contain !important;
+  flex-shrink: 0 !important;
+}
+
+/* Fallback generated avatar (for broken or missing images) */
+.md2-fallback-icon {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  margin: 0 10px 0 0 !important;
+  border-radius: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #FFFFFF !important;
+  box-shadow: none !important;
+  user-select: none !important;
+  flex-shrink: 0 !important;
+}
+
+/* ==========================================================================
+   App Label (Right Aligned, 14px Regular, Single Line)
+   ========================================================================== */
+.applicationBox .list .item p,
+div[class*="applicationBox"] .list .item p,
+.applicationBox .list .item .search,
+div[class*="applicationBox"] .list .item .search,
+.applicationBox .list .item .searchText,
+div[class*="applicationBox"] .list .item .searchText,
+.applicationBox .list .item span,
+div[class*="applicationBox"] .list .item span {
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  color: var(--portal-text-color) !important;
+  text-align: left !important;
+  line-height: normal !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: auto !important;
+  display: block !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  word-break: normal !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+/* ==========================================================================
+   Hidden Navigation Sibling Elements
+   ========================================================================== */
+.applicationBox .list > div[style*="display:none"],
+.applicationBox .list > div[style*="display: none"],
+div[class*="applicationBox"] .list > div[style*="display:none"],
+div[class*="applicationBox"] .list > div[style*="display: none"] {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ==========================================================================
+   Gentle Ripple Effect
+   ========================================================================== */
+.md2-ripple {
+  position: absolute !important;
+  border-radius: 50% !important;
+  background: rgba(0, 0, 0, 0.06) !important;
+  transform: scale(0) !important;
+  animation: md2RippleAnimation 0.4s ease-out forwards !important;
+  pointer-events: none !important;
+}
+
+@keyframes md2RippleAnimation {
+  to {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+/* ==========================================================================
+   Empty Search State
+   ========================================================================== */
+.md2-empty-state {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  text-align: center;
+}
+
+.md2-empty-state.visible {
+  display: flex !important;
+}
+
+.md2-empty-state-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  opacity: 0.35;
+  color: var(--portal-title-color);
+}
+
+.md2-empty-state-text {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--portal-title-color);
+  margin-bottom: 14px;
+}
+
+.md2-empty-state-btn {
+  padding: 6px 16px;
+  border-radius: 8px;
+  background: var(--portal-primary);
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+}

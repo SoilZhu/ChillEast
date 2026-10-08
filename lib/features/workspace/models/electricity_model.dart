@@ -63,6 +63,13 @@ class ElectricityBalanceInfo {
     this.elestatus,
   });
 
+  Map<String, dynamic> toJson() => {
+    'balance': balance,
+    'detail': detail,
+    'accname': accname,
+    'elestatus': elestatus,
+  };
+
   factory ElectricityBalanceInfo.fromJson(Map<String, dynamic> json) {
     final balanceVal = json['eledetail'] ??
         json['balance'] ??

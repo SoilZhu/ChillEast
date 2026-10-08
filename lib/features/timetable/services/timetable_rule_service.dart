@@ -22,16 +22,28 @@ class TimetableRuleService {
   final Logger _logger = Logger();
   final TimetableStorage _storage;
 
-  /// 获取所有已配置的规则
+  /// 排序规则列表：强制自定义加课 -> 调课 -> 停课 的执行顺序，同类型保持原有相对顺序
+  static List<TimetableRule> sortRules(List<TimetableRule> rules) {
+    if (rules.isEmpty) return [];
+    return [
+      ...rules.where((r) => r.type == TimetableRuleType.customCourse),
+      ...rules.where((r) => r.type == TimetableRuleType.reschedule),
+      ...rules.where((r) => r.type == TimetableRuleType.suspension),
+    ];
+  }
+
+  /// 获取所有已配置的规则（按强制执行顺序排序）
   Future<List<TimetableRule>> getRules() async {
-    return _storage.readRules();
+    final rules = await _storage.readRules();
+    return sortRules(rules);
   }
 
   /// 添加一条新规则并重新应用生成 ICS 与课表
   Future<void> addRule(TimetableRule rule) async {
     final rules = await _storage.readRules();
     rules.add(rule);
-    await _storage.saveRules(rules);
+    final sortedRules = sortRules(rules);
+    await _storage.saveRules(sortedRules);
     await applyRulesAndRegenerate();
   }
 
@@ -49,7 +61,9 @@ class TimetableRuleService {
     await applyRulesAndRegenerate();
   }
 
-  /// 纯函数：将规则列表应用到原始课程列表中，返回修改后的课程列表
+  /// 纯函数：将规则列表应用到原始课程列表中，返回修改后的课程列表。
+  /// 强制规则执行顺序：自定义加课 -> 调课 (reschedule) -> 停课 (suspension)。
+  /// 即使用户先添加停课再添加调课，也强制先执行调课以确保被调课程能被正确定位与转移，再执行停课。
   List<CourseModel> applyRules(
       List<CourseModel> rawCourses, List<TimetableRule> rules) {
     if (rules.isEmpty) {
@@ -59,16 +73,19 @@ class TimetableRuleService {
     // 工作课程列表
     List<CourseModel> workingCourses = List<CourseModel>.from(rawCourses);
 
-    for (final rule in rules) {
+    // 强制先调课再停课（自定义加课 -> 调课 -> 停课）
+    final sortedRules = sortRules(rules);
+
+    for (final rule in sortedRules) {
       switch (rule.type) {
-        case TimetableRuleType.suspension:
-          workingCourses = _applySuspension(workingCourses, rule);
+        case TimetableRuleType.customCourse:
+          workingCourses = _applyCustomCourse(workingCourses, rule);
           break;
         case TimetableRuleType.reschedule:
           workingCourses = _applyReschedule(workingCourses, rule);
           break;
-        case TimetableRuleType.customCourse:
-          workingCourses = _applyCustomCourse(workingCourses, rule);
+        case TimetableRuleType.suspension:
+          workingCourses = _applySuspension(workingCourses, rule);
           break;
       }
     }
@@ -173,12 +190,15 @@ class TimetableRuleService {
       if (c.dayOfWeek != sourceDayOfWeek) return false;
       if (!WeekParser.parseWeeks(c.weeks).contains(sourceWeek)) return false;
       if (courseName != null && courseName.isNotEmpty) {
-        if (!c.name.toLowerCase().contains(courseName.toLowerCase()))
+        if (!c.name.toLowerCase().contains(courseName.toLowerCase())) {
           return false;
+        }
       }
       if (sourceStartPeriod != null && sourceEndPeriod != null) {
         if (c.startPeriod != sourceStartPeriod ||
-            c.endPeriod != sourceEndPeriod) return false;
+            c.endPeriod != sourceEndPeriod) {
+          return false;
+        }
       }
       return true;
     }
@@ -204,8 +224,9 @@ class TimetableRuleService {
         if (c.dayOfWeek != targetDayOfWeek) continue;
         if (!WeekParser.parseWeeks(c.weeks).contains(targetWeek)) continue;
         if (courseName != null && courseName.isNotEmpty) {
-          if (!c.name.toLowerCase().contains(courseName.toLowerCase()))
+          if (!c.name.toLowerCase().contains(courseName.toLowerCase())) {
             continue;
+          }
         }
         targetMatchedIdx.add(i);
       }

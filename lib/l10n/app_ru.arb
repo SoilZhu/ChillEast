@@ -40,6 +40,7 @@
   "logoutConfirmContent": "При выходе из учетной записи локальные данные авторизации будут удалены, а синхронизация остановлена.",
   "checkUpdate": "Проверить обновления",
   "openSourceLicenses": "Лицензии открытого ПО",
+  "visitWebsite": "Посетить официальный сайт",
   "sendEmail": "Написать на почту",
   "developer": "Разработчик",
   "loginTitle": "Вход",
@@ -404,6 +405,8 @@
   "electricityRechargeFailed": "Не удалось оплатить электроэнергию",
   "electricityRechargeTitle": "Оплата электроэнергии",
   "currentRechargeRoom": "Выбранная комната",
+  "currentRechargeCard": "Выбранная карта",
+  "campusCardBalance": "Баланс карты",
   "refreshing": "Обновление...",
   "noRoomSelectedYet": "Комната еще не выбрана",
   "electricityBalance": "Баланс электроэнергии",
@@ -684,7 +687,13 @@
   "repairsUnnamedOrder": "未命名工单",
   "repairsEnterValue": "请输入或粘贴平台选项值",
   "repairsRequiredField": "请填写{field}",
-  "@repairsRequiredField": {"placeholders": {"field": {"type": "String"}}},
+  "@repairsRequiredField": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
   "repairsSubmitSuccess": "提交成功",
   "repairsSubmitSuccessMessage": "工单已提交，处理进度可在“我的工单”中查看。",
   "repairsFormHint": "带 * 的字段为必填项。图片附件功能将随平台接口适配逐步开放。",
@@ -698,5 +707,18 @@
   "repairsDepartment": "处理部门",
   "repairsCreatedAt": "创建时间",
   "repairsDescription": "问题描述",
-  "repairsNoDescription": "暂无描述"
+  "repairsNoDescription": "暂无描述",
+  "funcDormitory": "Моё общежитие",
+  "dormitoryBuilding": "Корпус",
+  "dormitoryUnit": "Секция",
+  "dormitoryFloor": "Этаж",
+  "dormitoryRoom": "Комната",
+  "dormitoryBed": "Место",
+  "dormitoryAcademicYear": "Учебный год",
+  "dormitoryTerm": "Семестр",
+  "dormitoryNotAssigned": "Место не назначено",
+  "dormitoryAssigned": "Место назначено",
+  "dormitoryOpenWeb": "Портал общежития",
+  "dormitoryDetail": "Информация об общежитии",
+  "dormitoryBedPrompt": "Перейдите на портал для отметки и услуг"
 }

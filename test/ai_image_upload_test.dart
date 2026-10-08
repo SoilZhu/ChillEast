@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ChillEast/core/ai/ai_provider.dart';
 import 'package:ChillEast/core/state/locale_provider.dart';
 import 'package:ChillEast/features/home/screens/main_scaffold.dart';
+import 'package:ChillEast/features/home/widgets/ai_response_card.dart';
 import 'package:ChillEast/l10n/app_localizations.dart';
 
 void main() {
@@ -122,6 +123,7 @@ void main() {
             localeProvider.overrideWith((ref) => LocaleNotifier()..state = const Locale('zh')),
           ],
           child: const MaterialApp(
+            locale: Locale('zh'),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: MainScaffold(),
@@ -131,10 +133,10 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // 点击一言区域进入 AI 交互模式
-      final hitokotoFinder = find.byKey(const ValueKey('hitokoto_text'));
-      expect(hitokotoFinder, findsOneWidget);
-      await tester.tap(hitokotoFinder);
+      // 点击 AI 按键进入 AI 交互模式
+      final aiBtnFinder = find.byKey(const ValueKey('ai_entry_button'));
+      expect(aiBtnFinder, findsOneWidget);
+      await tester.tap(aiBtnFinder);
       await tester.pump(const Duration(milliseconds: 300));
 
       // 验证图片按钮与发送按钮均已渲染
@@ -149,6 +151,52 @@ void main() {
       final sendPos = tester.getCenter(sendBtnFinder);
       expect(imagePos.dx, lessThan(sendPos.dx));
       expect((imagePos.dy - sendPos.dy).abs(), lessThan(5.0));
+
+      // 验证点击之后先不展示卡片，而是直接暴露快捷提问按钮
+      expect(find.byType(AiResponseCard), findsNothing);
+      expect(find.byType(AiQuickPromptsList), findsOneWidget);
+      expect(find.text('今天有什么课？'), findsOneWidget);
+      // 验证快捷提问按钮左对齐（margin 16）且垂直间距为 2px（原 6px 的 1/3）
+      final chip0 = tester.getRect(find.byType(ActionChip).at(0));
+      final chip1 = tester.getRect(find.byType(ActionChip).at(1));
+      expect(chip0.left, closeTo(16.0, 0.1));
+      expect(chip1.left, closeTo(16.0, 0.1));
+      expect(chip1.top - chip0.bottom, closeTo(2.0, 0.1));
+
+      // 验证点击快捷提问右侧空白区域退出 AI 模式
+      await tester.tapAt(const Offset(500, 130));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(AiQuickPromptsList), findsNothing);
+
+      // 重新点击 AI 按键进入 AI 交互模式
+      await tester.tap(aiBtnFinder);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(AiQuickPromptsList), findsOneWidget);
+
+      // 点击快捷提问按钮后展示卡片
+      await tester.tap(find.text('今天有什么课？'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(AiResponseCard), findsOneWidget);
+      expect(find.byType(AiQuickPromptsList), findsNothing);
+
+      // 点击卡片内部，卡片依然保留（不误触退出）
+      final cardCenter = tester.getCenter(find.byType(AiResponseCard));
+      await tester.tapAt(cardCenter);
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(AiResponseCard), findsOneWidget);
+
+      // 验证底栏返回按钮已被移除
+      expect(find.byKey(const ValueKey('ai_back_button')), findsNothing);
+
+      // 点击非快捷指令/底栏/卡片的外部区域退出 AI 模式
+      await tester.tapAt(const Offset(400, 50));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(AiResponseCard), findsNothing);
 
       // 确保组件内的延迟定时器跑完
       await tester.pump(const Duration(seconds: 4));

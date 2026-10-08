@@ -131,6 +131,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get openSourceLicenses => 'Licences open source';
 
   @override
+  String get visitWebsite => 'Visiter le site officiel';
+
+  @override
   String get sendEmail => 'Envoyer un e-mail';
 
   @override
@@ -179,6 +182,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get funcEmptyClassroom => 'Salles disponibles';
 
   @override
+  String get funcInfoPortal => '更多小程序';
+
+  @override
   String get funcXgxt => 'Affaires étudiantes';
 
   @override
@@ -186,6 +192,21 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get repairWorkOrders => '报修工单';
+
+  @override
+  String get feedBalance => '余额';
+
+  @override
+  String get campusCardBalance => 'Solde de la carte';
+
+  @override
+  String get dormitoryElectricity => '宿舍电费';
+
+  @override
+  String get noSavedDormitory => '暂未保存宿舍房间';
+
+  @override
+  String get clickToSelectDormitory => '点击前往选择房间或充值';
 
   @override
   String get quickActions => '快捷功能';
@@ -216,6 +237,46 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get funcCampusBusRoute => '校内公交线路';
+
+  @override
+  String get funcDormitory => 'Mon dortoir';
+
+  @override
+  String get dormitoryBuilding => 'Bâtiment';
+
+  @override
+  String get dormitoryUnit => 'Unité';
+
+  @override
+  String get dormitoryFloor => 'Étage';
+
+  @override
+  String get dormitoryRoom => 'Chambre';
+
+  @override
+  String get dormitoryBed => 'Lit';
+
+  @override
+  String get dormitoryAcademicYear => 'Année universitaire';
+
+  @override
+  String get dormitoryTerm => 'Semestre';
+
+  @override
+  String get dormitoryNotAssigned => 'Aucun lit attribué';
+
+  @override
+  String get dormitoryAssigned => 'Lit attribué';
+
+  @override
+  String get dormitoryOpenWeb => 'Portail de résidence';
+
+  @override
+  String get dormitoryDetail => 'Détails du dortoir';
+
+  @override
+  String get dormitoryBedPrompt =>
+      'Accédez au portail pour la présence et la chambre';
 
   @override
   String get more => 'Plus';
@@ -1443,6 +1504,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get currentRechargeRoom => 'Pièce concernée';
 
   @override
+  String get currentRechargeCard => 'Carte concernée';
+
+  @override
   String get refreshing => 'Actualisation...';
 
   @override
@@ -2233,6 +2297,53 @@ class AppLocalizationsFr extends AppLocalizations {
   String get quickReserve => 'Réservation rapide';
 
   @override
+  String get quickReserveTip => '系统将根据您设置的时间与位置偏好自动匹配空闲座位，助您快速锁定。';
+
+  @override
+  String get startMatchingSeats => '开始匹配座位';
+
+  @override
+  String get matchingSeats => '正在匹配座位...';
+
+  @override
+  String get matchedSeatSuccess => '已为您分配推荐座位';
+
+  @override
+  String get changeAnotherSeat => '换一个';
+
+  @override
+  String changeAnotherSeatWithCooldown(int seconds) {
+    return '换一个 (${seconds}s)';
+  }
+
+  @override
+  String get confirmQuickReserve => '确认';
+
+  @override
+  String get allFloors => '全部楼层';
+
+  @override
+  String get allRooms => '全部阅览室';
+
+  @override
+  String get locationPreference => '位置偏好';
+
+  @override
+  String get optionalLabel => '可选';
+
+  @override
+  String get floorLabel => '楼层';
+
+  @override
+  String get roomLabel => '阅览室';
+
+  @override
+  String get noMatchedSeatFound => '暂无符合条件的空闲座位，请调整时段或位置后重试';
+
+  @override
+  String get adjustFilters => '修改筛选条件';
+
+  @override
   String get selectDate => 'Sélectionner la date';
 
   @override
@@ -2628,4 +2739,159 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get cloudSyncPromptEnable => '立即开启';
+
+  @override
+  String get bookSearch => '图书查询';
+
+  @override
+  String get bookSearchSubtitle => '检索馆藏图书与借阅状态';
+
+  @override
+  String get bookSearchHint => '搜索书名、作者、主题或标准编码...';
+
+  @override
+  String bookSearchTotalCount(int count) {
+    return '共找到 $count 本图书';
+  }
+
+  @override
+  String get bookSearchLoading => '正在加载...';
+
+  @override
+  String get bookSearchEmpty => '未检索到相关图书';
+
+  @override
+  String get bookDetailTitle => '图书详情';
+
+  @override
+  String get holdingsTitle => '馆藏信息';
+
+  @override
+  String get barcode => '条码号';
+
+  @override
+  String get callNumber => '索书号';
+
+  @override
+  String get holdingLocation => '典藏地';
+
+  @override
+  String get holdingStatus => '状态';
+
+  @override
+  String get holdingUnit => '馆藏单位';
+
+  @override
+  String get copyType => '单册类型';
+
+  @override
+  String get accessionNo => '登录号';
+
+  @override
+  String get searchTypeTitle => '书名';
+
+  @override
+  String get searchTypeAuthor => '作者';
+
+  @override
+  String get searchTypeSubject => '主题';
+
+  @override
+  String get searchTypeIdentifier => '标准编码';
+
+  @override
+  String get statusInLibrary => '在库';
+
+  @override
+  String get statusBorrowed => '借出';
+
+  @override
+  String get search => '搜索';
+
+  @override
+  String get funcEhall => '办事大厅';
+
+  @override
+  String get ehallSubtitle => '线上办事、流程审批与综合服务';
+
+  @override
+  String get ehallHotServices => '热门服务';
+
+  @override
+  String get ehallAllServices => '全部服务';
+
+  @override
+  String get ehallCategories => '服务分类';
+
+  @override
+  String get ehallDepartments => '服务部门';
+
+  @override
+  String get ehallMyOrders => '我的办件';
+
+  @override
+  String get ehallSearchHint => '搜索服务名称、部门或描述...';
+
+  @override
+  String get ehallNoServicesFound => '未找到匹配的服务';
+
+  @override
+  String get ehallApplyNow => '我要办理';
+
+  @override
+  String get ehallViewDetail => '查看详情';
+
+  @override
+  String get ehallServiceType => '服务类型';
+
+  @override
+  String get ehallDepartment => '主办部门';
+
+  @override
+  String get ehallVisits => '访问量';
+
+  @override
+  String get ehallExternalLink => '外部系统跳转';
+
+  @override
+  String get ehallProcessWorkflow => '线上审批流程';
+
+  @override
+  String get ehallOpenInWeb => '网页版大厅';
+
+  @override
+  String get ehallOngoing => '进行中';
+
+  @override
+  String get ehallCompleted => '已办结';
+
+  @override
+  String get ehallNoOrders => '暂无办件记录';
+
+  @override
+  String get ehallFavorites => '我的收藏';
+
+  @override
+  String get ehallAddToFavorites => '收藏服务';
+
+  @override
+  String get ehallRemoveFromFavorites => '取消收藏';
+
+  @override
+  String get ehallServiceUnavailable => '办事大厅暂时不可用，请稍后重试';
+
+  @override
+  String get ehallSessionExpired => '办事大厅登录态已过期，请重新登录';
+
+  @override
+  String get ehallExternalJumpPrompt => '即将跳转至外部服务';
+
+  @override
+  String get ehallOpenNativeLeave => '在请假小程序中办理';
+
+  @override
+  String get examSchedule => '考试日程';
+
+  @override
+  String get examTimePrefix => '考试时间';
 }

@@ -40,6 +40,7 @@
   "logoutConfirmContent": "Al cerrar sesión se borrarán tus credenciales locales y se detendrá la sincronización de datos.",
   "checkUpdate": "Buscar actualizaciones",
   "openSourceLicenses": "Licencias de código abierto",
+  "visitWebsite": "Visitar sitio oficial",
   "sendEmail": "Enviar correo",
   "developer": "Desarrollador",
   "loginTitle": "Iniciar sesión",
@@ -404,6 +405,8 @@
   "electricityRechargeFailed": "Error en la recarga de electricidad",
   "electricityRechargeTitle": "Recarga de electricidad",
   "currentRechargeRoom": "Habitación a recargar",
+  "currentRechargeCard": "Tarjeta a recargar",
+  "campusCardBalance": "Saldo de tarjeta",
   "refreshing": "Actualizando...",
   "noRoomSelectedYet": "Aún no has seleccionado ninguna habitación",
   "electricityBalance": "Saldo de electricidad",
@@ -684,7 +687,13 @@
   "repairsUnnamedOrder": "未命名工单",
   "repairsEnterValue": "请输入或粘贴平台选项值",
   "repairsRequiredField": "请填写{field}",
-  "@repairsRequiredField": {"placeholders": {"field": {"type": "String"}}},
+  "@repairsRequiredField": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
   "repairsSubmitSuccess": "提交成功",
   "repairsSubmitSuccessMessage": "工单已提交，处理进度可在“我的工单”中查看。",
   "repairsFormHint": "带 * 的字段为必填项。图片附件功能将随平台接口适配逐步开放。",
@@ -698,5 +707,18 @@
   "repairsDepartment": "处理部门",
   "repairsCreatedAt": "创建时间",
   "repairsDescription": "问题描述",
-  "repairsNoDescription": "暂无描述"
+  "repairsNoDescription": "暂无描述",
+  "funcDormitory": "Mi dormitorio",
+  "dormitoryBuilding": "Edificio",
+  "dormitoryUnit": "Unidad",
+  "dormitoryFloor": "Planta",
+  "dormitoryRoom": "Habitación",
+  "dormitoryBed": "Cama",
+  "dormitoryAcademicYear": "Año académico",
+  "dormitoryTerm": "Semestre",
+  "dormitoryNotAssigned": "Sin cama asignada",
+  "dormitoryAssigned": "Cama asignada",
+  "dormitoryOpenWeb": "Portal de residencia",
+  "dormitoryDetail": "Detalles del dormitorio",
+  "dormitoryBedPrompt": "Visite el portal para pase de lista y trámites"
 }

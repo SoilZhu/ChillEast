@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../services/electricity_service.dart';
 import '../services/campus_card_service.dart';
 import '../models/electricity_model.dart';
+import '../providers/electricity_cache_provider.dart';
 import 'payment_result_screen.dart';
 import 'campus_card_payment_sheet.dart';
 import '../../../core/constants/app_constants.dart';
@@ -91,6 +92,13 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
           _selectedRoom = targetRoom ?? (_rooms.isNotEmpty ? _rooms.first : null);
         }
 
+        if (_selectedRoom != null) {
+          final savedBalance = await service.getSavedBalance();
+          if (savedBalance != null && mounted) {
+            _balanceInfo = savedBalance;
+          }
+        }
+
         _saveCurrentSelection();
       }
 
@@ -153,6 +161,7 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
           _isLoadingBalance = false;
         });
       }
+      ref.read(electricityCacheProvider.notifier).updateBalance(info);
     } catch (e) {
       _logger.w('Failed to load electricity balance: $e');
       if (mounted) {
@@ -166,15 +175,17 @@ class _ElectricityRechargeScreenState extends ConsumerState<ElectricityRechargeS
 
   void _saveCurrentSelection() {
     if (_selectedArea != null && _selectedBuilding != null && _selectedRoom != null) {
-      ref.read(electricityServiceProvider).saveSavedRoom(
-        SavedElectricityRoom(
-          areaName: _selectedArea!.name,
-          buildingName: _selectedBuilding!.name,
-          roomId: _selectedRoom!.id,
-          roomName: _selectedRoom!.name,
-          mertype: _selectedRoom!.mertype,
-        ),
+      final room = SavedElectricityRoom(
+        areaName: _selectedArea!.name,
+        buildingName: _selectedBuilding!.name,
+        roomId: _selectedRoom!.id,
+        roomName: _selectedRoom!.name,
+        mertype: _selectedRoom!.mertype,
       );
+      ref.read(electricityServiceProvider).saveSavedRoom(room);
+      ref
+          .read(electricityCacheProvider.notifier)
+          .updateRoomAndBalance(room, _balanceInfo);
     }
   }
 

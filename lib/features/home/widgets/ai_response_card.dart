@@ -62,12 +62,16 @@ class _AiResponseCardState extends ConsumerState<AiResponseCard> {
 
     return Material(
       type: MaterialType.transparency,
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: cardMaxHeight,
-          minHeight: 100,
-        ),
-        margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {},
+        child: Container(
+          width: double.infinity,
+          constraints: BoxConstraints(
+            maxHeight: cardMaxHeight,
+            minHeight: 100,
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.circular(8), // 大卡片 8px 圆角
@@ -107,8 +111,9 @@ class _AiResponseCardState extends ConsumerState<AiResponseCard> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   /// 卡片头部（纯净无多余文字与分割线）
   Widget _buildCardHeader(
@@ -369,7 +374,7 @@ class _AiResponseCardState extends ConsumerState<AiResponseCard> {
                 ),
                 backgroundColor: isDark ? const Color(0xFF282828) : Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4), // 按钮 4px 圆角
+                  borderRadius: BorderRadius.circular(6), // 按钮 6px 圆角
                   side: BorderSide(
                     color: isDark ? Colors.white24 : const Color(0xFFE0E0E0), // 灰边框
                     width: 1.0,
@@ -637,4 +642,90 @@ class _AiResponseCardState extends ConsumerState<AiResponseCard> {
       ),
     );
   }
+}
+
+/// 暴露在底栏上方的快捷提问按钮列表（无卡片包裹，一行一个）
+class AiQuickPromptsList extends ConsumerWidget {
+  final ValueChanged<String>? onPromptSelected;
+  final VoidCallback? onDismiss;
+
+  const AiQuickPromptsList({
+    super.key,
+    this.onPromptSelected,
+    this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final quickPrompts = [
+      {'icon': Icons.calendar_today_outlined, 'text': context.l10n.promptTodayCourses},
+      {'icon': Icons.assignment_outlined, 'text': context.l10n.promptPendingHomework},
+      {'icon': Icons.local_library_outlined, 'text': context.l10n.promptReserveLibrary},
+      {'icon': Icons.wb_sunny_outlined, 'text': context.l10n.promptSubmitSunshine},
+      {'icon': Icons.credit_card_outlined, 'text': context.l10n.promptCampusCardBalance},
+      {'icon': Icons.flash_on_outlined, 'text': context.l10n.promptDormElectricity},
+      {'icon': Icons.meeting_room_outlined, 'text': context.l10n.promptEmptyClassrooms},
+      {'icon': Icons.campaign_outlined, 'text': context.l10n.promptImportantNotices},
+    ];
+
+    return Material(
+      type: MaterialType.transparency,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onDismiss,
+        child: Container(
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: quickPrompts.map((item) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: ActionChip(
+                    elevation: 2,
+                    pressElevation: 4,
+                    shadowColor: Colors.black26,
+                    avatar: Icon(
+                      item['icon'] as IconData,
+                      size: 15,
+                      color: const Color(0xFF09C489),
+                    ),
+                    label: Text(
+                      item['text'] as String,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: isDark ? Colors.white : const Color(0xFF202124),
+                      ),
+                    ),
+                    backgroundColor: isDark ? const Color(0xFF282828) : Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6), // 按钮 6px 圆角
+                      side: BorderSide(
+                        color: isDark ? Colors.white24 : const Color(0xFFE0E0E0), // 灰边框
+                        width: 1.0,
+                      ),
+                    ),
+                    onPressed: () {
+                      final text = item['text'] as String;
+                      if (onPromptSelected != null) {
+                        onPromptSelected!(text);
+                      }
+                      ref.read(aiAssistantProvider.notifier).sendMessage(text);
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
 }

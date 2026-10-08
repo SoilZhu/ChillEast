@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ChillEast/features/cloudisk/services/cloud_backup_manager.dart';
 import 'package:ChillEast/features/cloudisk/services/cloudisk_service.dart';
 
@@ -172,6 +173,26 @@ void main() {
       final s = CloudiskService.parseSession(trapped);
       expect(s.token, '930e5385a80fe00fcedd018b0502c004');
       expect(s.puid, '342380530');
+    });
+  });
+
+  group('CloudBackupManager.pullLatestOnStartup', () {
+    TestWidgetsFlutterBinding.ensureInitialized();
+
+    test('returns null when cloud backup toggle is disabled', () async {
+      SharedPreferences.setMockInitialValues({
+        CloudBackupManager.toggleKey: false,
+      });
+      final result =
+          await CloudBackupManager.instance.pullLatestOnStartup();
+      expect(result, isNull);
+    });
+
+    test('returns null when toggle is not set', () async {
+      SharedPreferences.setMockInitialValues({});
+      final result =
+          await CloudBackupManager.instance.pullLatestOnStartup();
+      expect(result, isNull);
     });
   });
 }

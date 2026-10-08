@@ -23,6 +23,8 @@ import '../../timetable/utils/date_calculator.dart';
 import '../../timetable/utils/week_parser.dart';
 import '../../homework/providers/homework_provider.dart';
 import '../../homework/models/homework_model.dart';
+import '../../exam/providers/exam_provider.dart';
+import '../../exam/models/exam_schedule_model.dart';
 import '../../../core/utils/location_helper.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_constants.dart';
@@ -40,9 +42,12 @@ import '../../../core/utils/l10n_extension.dart';
 import '../../../core/services/home_widget_service.dart';
 import '../../workspace/screens/campus_card_recharge_screen.dart';
 import '../../workspace/screens/electricity_recharge_screen.dart';
+import '../../workspace/providers/campus_card_cache_provider.dart';
+import '../../workspace/providers/electricity_cache_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../workspace/services/campus_card_service.dart';
 import '../../workspace/screens/vpn_converter_screen.dart';
+import '../../dormitory/screens/dormitory_screen.dart';
 import '../../library/models/library_models.dart';
 import '../../library/providers/library_provider.dart';
 import '../../library/screens/library_home_screen.dart';
@@ -223,6 +228,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         _buildPendingQuestionnaires(context),
                       'feed_leave' => _buildOngoingLeaves(context),
                       'feed_repair' => _buildOngoingRepairs(context),
+                      'feed_balance' => _buildBalanceSection(context),
                       _ => const SizedBox.shrink(),
                     },
                   const SizedBox(height: 24),
@@ -470,6 +476,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ? Navigator.push(context, createSlideUpRoute(const RepairScreen()))
             : _showLoginDialog(context);
         break;
+      case 'dormitory':
+        isLoggedIn
+            ? Navigator.push(
+                context, createSlideUpRoute(const DormitoryScreen()))
+            : _showLoginDialog(context);
+        break;
+      case 'ehall':
+        isLoggedIn
+            ? Navigator.push(
+                context,
+                createSlideUpRoute(WebViewDetailScreen(
+                  title: context.l10n.funcEhall,
+                  url: AppConstants.ehallUrl,
+                  userAgent: AppConstants.ehallUA,
+                  showAppBar: false,
+                  showWebBack: false,
+                  appBarColor: const Color(0xFF1E88E5),
+                )))
+            : _showLoginDialog(context);
+        break;
+      case 'info_portal':
+        isLoggedIn
+            ? Navigator.push(
+                context,
+                createSlideUpRoute(WebViewDetailScreen(
+                  title: context.l10n.funcInfoPortal,
+                  url: AppConstants.infoPortalUrl,
+                  homeUrl: AppConstants.infoPortalUrl,
+                  userAgent: AppConstants.infoPortalUA,
+                  showAppBar: false,
+                  showWebBack: false,
+                  appBarColor: Colors.white,
+                  allowExternalLinks: true,
+                )))
+            : _showLoginDialog(context);
+        break;
       case 'gym':
         isLoggedIn
             ? Navigator.push(
@@ -500,7 +542,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             : _showLoginDialog(context);
         break;
       case 'vpn':
-        Navigator.push(context, createSlideUpRoute(VpnConverterScreen()));
+        Navigator.push(context, createSlideUpRoute(const VpnConverterScreen()));
         break;
       case 'campus_card':
         if (isLoggedIn) {
@@ -572,7 +614,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.12)
@@ -583,7 +625,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(8),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -1018,6 +1060,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
+    // 当天考试日程（只显示本学期的考试）
+    final examAsync = ref.watch(examProvider);
+    final dayExams = examAsync.maybeWhen(
+      data: (list) {
+        final items = list
+            .where((e) =>
+                e.isCurrentSemester() &&
+                e.time.year == _previewDate.year &&
+                e.time.month == _previewDate.month &&
+                e.time.day == _previewDate.day)
+            .toList();
+        items.sort((a, b) => a.time.compareTo(b.time));
+        return items;
+      },
+      orElse: () => <ExamScheduleModel>[],
+    );
+
     // 当天待办作业（截止时间为预览日期），排在课程前面，日程页同款
     final homeworkAsync = ref.watch(homeworkProvider);
     final dayHomework = homeworkAsync.maybeWhen(
@@ -1075,7 +1134,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: CircularProgressIndicator(),
             ),
           )
-        else if (_todayCourses.isEmpty && dayHomework.isEmpty)
+        else if (_todayCourses.isEmpty && dayHomework.isEmpty && dayExams.isEmpty)
           Container(
             padding: const EdgeInsets.all(16),
             width: double.infinity,
@@ -1101,17 +1160,120 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              for (int i = 0; i < dayHomework.length; i++) ...[
+              for (int i = 0; i < dayExams.length; i++) ...[
                 if (i > 0) const SizedBox(height: 12),
+                _buildExamTask(dayExams[i]),
+              ],
+              for (int i = 0; i < dayHomework.length; i++) ...[
+                if (i > 0 || dayExams.isNotEmpty) const SizedBox(height: 12),
                 _buildHomeworkTask(dayHomework[i]),
               ],
               for (int i = 0; i < _todayCourses.length; i++) ...[
-                if (i > 0 || dayHomework.isNotEmpty) const SizedBox(height: 12),
+                if (i > 0 || dayHomework.isNotEmpty || dayExams.isNotEmpty)
+                  const SizedBox(height: 12),
                 _buildCourseItem(_todayCourses[i]),
               ],
             ],
           ),
       ],
+    );
+  }
+
+  /// 考试卡片（红色底 + 考试时间，严格显示第一个出现的时间）
+  Widget _buildExamTask(ExamScheduleModel item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final timeStr = DateFormat('HH:mm').format(item.time);
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        if (item.detailUrl.isNotEmpty) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WebViewDetailScreen(
+                url: item.detailUrl,
+                title: item.title,
+              ),
+            ),
+          );
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF382326) : const Color(0xFFFFEBEE),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: const Color(0xFFE53935).withOpacity(isDark ? 0.3 : 0.2),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.quiz_outlined,
+              size: 22,
+              color: Color(0xFFE53935),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            height: 1.2,
+                            color: isDark ? Colors.white : const Color(0xFF2D3436),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (item.status.isNotEmpty) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE53935).withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            item.status,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFE53935),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${context.l10n.examTimePrefix} $timeStr',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? Colors.white70
+                          : const Color(0xFF7F8C8D),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1182,46 +1344,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         color: baseColor,
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.history_edu,
-            color: Colors.white,
-            size: 22,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  course.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    height: 1.2,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  [
-                    timeRange,
-                    course.classroom.trim(),
-                  ].where((s) => s.isNotEmpty).join(' @ '),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    height: 1.2,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+          Text(
+            course.name,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              height: 1.2,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            [
+              timeRange,
+              course.classroom.trim(),
+            ].where((s) => s.isNotEmpty).join(' @ '),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              height: 1.2,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -1416,21 +1566,64 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
+  DateTime? _parseLeaveDate(String str) {
+    if (str.isEmpty) return null;
+    return DateTime.tryParse(str) ??
+        DateTime.tryParse(str.replaceFirst(' ', 'T'));
+  }
+
   bool _isOngoingLeave(LeaveRecord record) {
-    final start = DateTime.tryParse(record.startTime);
-    final end = DateTime.tryParse(record.endTime);
+    final start = _parseLeaveDate(record.startTime);
+    final end = _parseLeaveDate(record.endTime);
     if (start == null || end == null) return false;
     final now = DateTime.now();
     return start.isBefore(now) && end.isAfter(now);
   }
 
+  bool _isLeaveWithin7Days(LeaveRecord record) {
+    final start = _parseLeaveDate(record.startTime);
+    final end = _parseLeaveDate(record.endTime);
+    if (start == null) return false;
+    final now = DateTime.now();
+
+    // 如果当前时间已经过了请假的目标时间（结束时间），则不显示
+    if (end != null && !end.isAfter(now)) {
+      return false;
+    }
+    if (end == null && !start.isAfter(now)) {
+      return false;
+    }
+
+    final sevenDaysLater = now.add(const Duration(days: 7));
+    // 7天内即将开始或正在进行中
+    return start.isBefore(sevenDaysLater);
+  }
+
+  bool _shouldDisplayLeave(LeaveRecord record) {
+    // 待审核 (0) 和 审核中 (8)：展示 7 天内的
+    if (record.auditStatus == '0' ||
+        record.auditStatus == '8' ||
+        record.auditStatusName == '待审核' ||
+        record.auditStatusName == '审核中') {
+      return _isLeaveWithin7Days(record);
+    }
+    // 驳回 / 不通过的不在首页展示
+    if (record.auditResultName.contains('不通过') ||
+        record.auditResultName.contains('驳回') ||
+        record.auditResultName.contains('拒绝')) {
+      return false;
+    }
+    // 已通过：保持现在的已通过展示（即进行中的请假）
+    return _isOngoingLeave(record);
+  }
+
   Widget _buildOngoingLeaves(BuildContext context) {
     final cachedAsync = ref.watch(leaveCacheProvider);
-    final ongoing = (cachedAsync.value ?? []).where(_isOngoingLeave).toList()
+    final leaves = (cachedAsync.value ?? []).where(_shouldDisplayLeave).toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
-    if (ongoing.isEmpty) return const SizedBox.shrink();
+    if (leaves.isEmpty) return const SizedBox.shrink();
 
-    final display = ongoing.take(3).toList();
+    final display = leaves.take(3).toList();
 
     return _buildMergedSection(
       title: context.l10n.funcLeave,
@@ -1452,6 +1645,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             iconColor: const Color(0xFF009688),
             title: title,
             time: record.timeRange,
+            status: record.getLocalizedStatus(context),
           ),
         );
       }).toList(),
@@ -1514,6 +1708,213 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
     if (context.mounted) {
       ref.read(repairCacheProvider.notifier).refresh();
+    }
+  }
+
+  Widget _buildBalanceCardItem({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required String balanceText,
+    required Color balanceColor,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : const Color(0xFFE0E0E0),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(6),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(icon, size: 22, color: iconColor),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : const Color(0xFF222222),
+                        ),
+                      ),
+                      if (subtitle.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  balanceText,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: balanceColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBalanceSection(BuildContext context) {
+    final cachedCardAsync = ref.watch(campusCardCacheProvider);
+    final cardInfo = cachedCardAsync.value;
+
+    final eleState = ref.watch(electricityCacheProvider);
+    final room = eleState.room;
+
+    final authState = ref.watch(authStateProvider);
+    final isAuthenticated = authState.status == AuthStatus.authenticated;
+
+    if (cardInfo == null && room == null && !isAuthenticated) {
+      return const SizedBox.shrink();
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final List<Widget> cards = [];
+
+    // 1. 校园卡卡片
+    if (cardInfo != null || isAuthenticated) {
+      final String cardSubtitle;
+      final String balanceText;
+      if (cardInfo != null) {
+        if (cardInfo.name.isNotEmpty && cardInfo.idserial.isNotEmpty) {
+          cardSubtitle = '${cardInfo.name} · ${cardInfo.idserial}';
+        } else if (cardInfo.idserial.isNotEmpty) {
+          cardSubtitle = cardInfo.idserial;
+        } else {
+          cardSubtitle = context.l10n.funcCampusCard;
+        }
+        balanceText = '¥${cardInfo.balance}';
+      } else {
+        cardSubtitle = context.l10n.campusCardRecharge;
+        balanceText = cachedCardAsync.isLoading ? '...' : '¥--';
+      }
+
+      cards.add(
+        _buildBalanceCardItem(
+          icon: Icons.credit_card_outlined,
+          iconColor: const Color(0xFF1677FF),
+          title: context.l10n.funcCampusCard,
+          subtitle: cardSubtitle,
+          balanceText: balanceText,
+          balanceColor: isDark ? Colors.white : const Color(0xFF1677FF),
+          onTap: () => _openCampusCard(context),
+          isDark: isDark,
+        ),
+      );
+    }
+
+    // 2. 宿舍电费卡片（若无保存的房间则不显示）
+    if (room != null) {
+      final roomDisplayName =
+          room.roomName.isNotEmpty ? room.roomName : room.roomId;
+      final eleTitle =
+          room.areaName.isNotEmpty ? room.areaName : context.l10n.dormitoryElectricity;
+      final String eleSubtitle;
+      if (room.buildingName.isNotEmpty) {
+        eleSubtitle = room.buildingName.endsWith(roomDisplayName)
+            ? room.buildingName
+            : '${room.buildingName} $roomDisplayName';
+      } else {
+        eleSubtitle = roomDisplayName;
+      }
+
+      final balanceInfo = eleState.balanceInfo;
+      final balanceText = balanceInfo != null
+          ? '¥${balanceInfo.balance}'
+          : (eleState.isLoading ? '...' : '¥--');
+
+      cards.add(
+        _buildBalanceCardItem(
+          icon: Icons.bolt_outlined,
+          iconColor: const Color(0xFFFF9800),
+          title: eleTitle,
+          subtitle: eleSubtitle,
+          balanceText: balanceText,
+          balanceColor: isDark ? Colors.white : const Color(0xFFFF9800),
+          onTap: () => _openElectricity(context),
+          isDark: isDark,
+        ),
+      );
+    }
+
+    if (cards.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text(
+          context.l10n.feedBalance,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        for (int i = 0; i < cards.length; i++) ...[
+          if (i > 0) const SizedBox(height: 12),
+          cards[i],
+        ],
+      ],
+    );
+  }
+
+  Future<void> _openCampusCard(BuildContext context) async {
+    await Navigator.push(
+      context,
+      createSlideUpRoute(const CampusCardRechargeScreen()),
+    );
+    if (context.mounted) {
+      ref.read(campusCardCacheProvider.notifier).refresh();
+    }
+  }
+
+  Future<void> _openElectricity(BuildContext context) async {
+    await Navigator.push(
+      context,
+      createSlideUpRoute(const ElectricityRechargeScreen()),
+    );
+    if (context.mounted) {
+      ref.read(electricityCacheProvider.notifier).refresh();
     }
   }
 

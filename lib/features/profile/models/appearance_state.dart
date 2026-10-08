@@ -97,14 +97,14 @@ const List<FunctionGroup> functionGroups = [
       ids: ['library', 'empty_classroom', 'score']),
   FunctionGroup(
       titleKey: 'groupLife',
-      ids: ['repairs', 'leave', 'questionnaire', 'sunshine']),
+      ids: ['repairs', 'leave', 'questionnaire', 'sunshine', 'dormitory']),
   FunctionGroup(
       titleKey: 'groupTravel',
       ids: ['bus', 'cs_bus', 'campus_bus_route']),
   FunctionGroup(titleKey: 'groupTools', ids: ['vpn']),
   FunctionGroup(
       titleKey: 'groupMiniApps',
-      ids: ['xgxt', 'teaching_eval', 'gym', 'campus_card']),
+      ids: ['info_portal', 'ehall', 'xgxt', 'teaching_eval', 'gym', 'campus_card']),
 ];
 
 String functionGroupTitle(BuildContext context, String titleKey) {
@@ -131,6 +131,10 @@ extension FunctionItemLocalization on FunctionItem {
   String getLocalizedTitle(BuildContext context) {
     final l10n = context.l10n;
     switch (id) {
+      case 'info_portal':
+        return l10n.funcInfoPortal;
+      case 'ehall':
+        return l10n.funcEhall;
       case 'sunshine':
         return l10n.funcSunshine;
       case 'questionnaire':
@@ -167,6 +171,8 @@ extension FunctionItemLocalization on FunctionItem {
         return l10n.funcCsBus;
       case 'campus_bus_route':
         return l10n.funcCampusBusRoute;
+      case 'dormitory':
+        return l10n.funcDormitory;
       case 'feed_quick':
         return l10n.quickActions;
       case 'feed_library':
@@ -179,6 +185,12 @@ extension FunctionItemLocalization on FunctionItem {
         return l10n.funcLeave;
       case 'feed_repair':
         return l10n.repairWorkOrders;
+      case 'feed_balance':
+        return l10n.feedBalance;
+      case 'feed_campus_card':
+        return l10n.campusCardBalance;
+      case 'feed_electricity':
+        return l10n.dormitoryElectricity;
       default:
         return label;
     }

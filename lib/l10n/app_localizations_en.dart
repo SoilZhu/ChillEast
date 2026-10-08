@@ -130,6 +130,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openSourceLicenses => 'Open Source Licenses';
 
   @override
+  String get visitWebsite => 'Visit Official Website';
+
+  @override
   String get sendEmail => 'Send Email';
 
   @override
@@ -178,6 +181,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get funcEmptyClassroom => 'Available Classrooms';
 
   @override
+  String get funcInfoPortal => 'More Mini Programs';
+
+  @override
   String get funcXgxt => 'Student Affairs';
 
   @override
@@ -185,6 +191,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get repairWorkOrders => 'Repair work orders';
+
+  @override
+  String get feedBalance => 'Balance';
+
+  @override
+  String get campusCardBalance => 'Campus Card Balance';
+
+  @override
+  String get dormitoryElectricity => 'Dormitory Electricity';
+
+  @override
+  String get noSavedDormitory => 'No saved dormitory room';
+
+  @override
+  String get clickToSelectDormitory => 'Tap to select room or recharge';
 
   @override
   String get quickActions => 'Quick actions';
@@ -215,6 +236,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get funcCampusBusRoute => 'Campus Bus Routes';
+
+  @override
+  String get funcDormitory => 'My Dormitory';
+
+  @override
+  String get dormitoryBuilding => 'Building';
+
+  @override
+  String get dormitoryUnit => 'Unit';
+
+  @override
+  String get dormitoryFloor => 'Floor';
+
+  @override
+  String get dormitoryRoom => 'Room';
+
+  @override
+  String get dormitoryBed => 'Bed';
+
+  @override
+  String get dormitoryAcademicYear => 'Academic Year';
+
+  @override
+  String get dormitoryTerm => 'Semester';
+
+  @override
+  String get dormitoryNotAssigned => 'No bed assigned';
+
+  @override
+  String get dormitoryAssigned => 'Bed Assigned';
+
+  @override
+  String get dormitoryOpenWeb => 'Apartment Platform';
+
+  @override
+  String get dormitoryDetail => 'Dormitory Details';
+
+  @override
+  String get dormitoryBedPrompt =>
+      'Visit Student Apartment Platform for dorm check-in and bed operations';
 
   @override
   String get more => 'More';
@@ -1419,6 +1480,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currentRechargeRoom => 'Current Room';
 
   @override
+  String get currentRechargeCard => 'Current Card';
+
+  @override
   String get refreshing => 'Refreshing';
 
   @override
@@ -2192,6 +2256,55 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickReserve => 'Quick Reserve';
 
   @override
+  String get quickReserveTip =>
+      'The system automatically matches available seats based on your time and location preferences.';
+
+  @override
+  String get startMatchingSeats => 'Find Available Seat';
+
+  @override
+  String get matchingSeats => 'Matching seat...';
+
+  @override
+  String get matchedSeatSuccess => 'Seat matched successfully';
+
+  @override
+  String get changeAnotherSeat => 'Change Seat';
+
+  @override
+  String changeAnotherSeatWithCooldown(int seconds) {
+    return 'Change (${seconds}s)';
+  }
+
+  @override
+  String get confirmQuickReserve => 'Confirm';
+
+  @override
+  String get allFloors => 'All Floors';
+
+  @override
+  String get allRooms => 'All Rooms';
+
+  @override
+  String get locationPreference => 'Location Preference';
+
+  @override
+  String get optionalLabel => 'Optional';
+
+  @override
+  String get floorLabel => 'Floor';
+
+  @override
+  String get roomLabel => 'Room';
+
+  @override
+  String get noMatchedSeatFound =>
+      'No available seats found. Please adjust time or location criteria.';
+
+  @override
+  String get adjustFilters => 'Adjust Filters';
+
+  @override
   String get selectDate => 'Select Date';
 
   @override
@@ -2596,4 +2709,162 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cloudSyncPromptEnable => 'Enable now';
+
+  @override
+  String get bookSearch => 'Book Search';
+
+  @override
+  String get bookSearchSubtitle => 'Search library catalog & holdings';
+
+  @override
+  String get bookSearchHint =>
+      'Search by title, author, subject, or standard code...';
+
+  @override
+  String bookSearchTotalCount(int count) {
+    return 'Found $count books';
+  }
+
+  @override
+  String get bookSearchLoading => 'Loading...';
+
+  @override
+  String get bookSearchEmpty => 'No books found';
+
+  @override
+  String get bookDetailTitle => 'Book Details';
+
+  @override
+  String get holdingsTitle => 'Holdings';
+
+  @override
+  String get barcode => 'Barcode';
+
+  @override
+  String get callNumber => 'Call Number';
+
+  @override
+  String get holdingLocation => 'Location';
+
+  @override
+  String get holdingStatus => 'Status';
+
+  @override
+  String get holdingUnit => 'Library';
+
+  @override
+  String get copyType => 'Item Type';
+
+  @override
+  String get accessionNo => 'Accession No.';
+
+  @override
+  String get searchTypeTitle => 'Title';
+
+  @override
+  String get searchTypeAuthor => 'Author';
+
+  @override
+  String get searchTypeSubject => 'Subject';
+
+  @override
+  String get searchTypeIdentifier => 'Standard Code';
+
+  @override
+  String get statusInLibrary => 'Available';
+
+  @override
+  String get statusBorrowed => '借出';
+
+  @override
+  String get search => 'Search';
+
+  @override
+  String get funcEhall => 'Service Hall';
+
+  @override
+  String get ehallSubtitle => 'Online affairs, approvals & campus services';
+
+  @override
+  String get ehallHotServices => 'Popular Services';
+
+  @override
+  String get ehallAllServices => 'All Services';
+
+  @override
+  String get ehallCategories => 'Categories';
+
+  @override
+  String get ehallDepartments => 'Departments';
+
+  @override
+  String get ehallMyOrders => 'My Applications';
+
+  @override
+  String get ehallSearchHint => 'Search service name, department...';
+
+  @override
+  String get ehallNoServicesFound => 'No matching services found';
+
+  @override
+  String get ehallApplyNow => 'Apply Now';
+
+  @override
+  String get ehallViewDetail => 'View Details';
+
+  @override
+  String get ehallServiceType => 'Service Type';
+
+  @override
+  String get ehallDepartment => 'Department';
+
+  @override
+  String get ehallVisits => 'Visits';
+
+  @override
+  String get ehallExternalLink => 'External Link';
+
+  @override
+  String get ehallProcessWorkflow => 'Online Workflow';
+
+  @override
+  String get ehallOpenInWeb => 'Open Web Portal';
+
+  @override
+  String get ehallOngoing => 'In Progress';
+
+  @override
+  String get ehallCompleted => 'Completed';
+
+  @override
+  String get ehallNoOrders => 'No application records yet';
+
+  @override
+  String get ehallFavorites => 'Favorites';
+
+  @override
+  String get ehallAddToFavorites => 'Favorite';
+
+  @override
+  String get ehallRemoveFromFavorites => 'Unfavorite';
+
+  @override
+  String get ehallServiceUnavailable =>
+      'Service Hall is temporarily unavailable, please try again later';
+
+  @override
+  String get ehallSessionExpired =>
+      'Service Hall session expired, please log in again';
+
+  @override
+  String get ehallExternalJumpPrompt => 'Opening external service';
+
+  @override
+  String get ehallOpenNativeLeave => 'Open in Native Leave App';
+
+  @override
+  String get examSchedule => 'Exam Schedule';
+
+  @override
+  String get examTimePrefix => 'Exam Time';
 }

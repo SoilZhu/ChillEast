@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 import '../../../core/utils/l10n_extension.dart';
 
 /// 图书馆预约记录状态
@@ -422,3 +423,80 @@ class LibraryIndexData {
     return curReserves.first;
   }
 }
+
+/// 快速预约（智能匹配）座位结果模型
+class LibraryMatchedSeatModel {
+  final int roomId;
+  final String seatNum;
+  final String firstLevelName;
+  final String secondLevelName;
+  final String thirdLevelName;
+  final DateTime startTime;
+  final DateTime endTime;
+  final String duration;
+
+  LibraryMatchedSeatModel({
+    required this.roomId,
+    required this.seatNum,
+    required this.firstLevelName,
+    required this.secondLevelName,
+    required this.thirdLevelName,
+    required this.startTime,
+    required this.endTime,
+    required this.duration,
+  });
+
+  String get fullRoomName {
+    final parts = [firstLevelName, secondLevelName, thirdLevelName]
+        .where((s) => s.isNotEmpty)
+        .toList();
+    return parts.join(' · ');
+  }
+
+  String get formattedTimeRange {
+    final startFmt = DateFormat('HH:mm').format(startTime);
+    final endFmt = DateFormat('HH:mm').format(endTime);
+    return '$startFmt ~ $endFmt';
+  }
+
+  String get formattedDate {
+    return DateFormat('yyyy-MM-dd').format(startTime);
+  }
+
+  factory LibraryMatchedSeatModel.fromJson(Map<String, dynamic> json) {
+    return LibraryMatchedSeatModel(
+      roomId: json['roomId'] is int
+          ? json['roomId']
+          : int.tryParse(json['roomId']?.toString() ?? '0') ?? 0,
+      seatNum: json['seatNum']?.toString() ?? '',
+      firstLevelName: json['firstLevelName']?.toString() ?? '',
+      secondLevelName: json['secondLevelName']?.toString() ?? '',
+      thirdLevelName: json['thirdLevelName']?.toString() ?? '',
+      startTime: json['startTime'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(json['startTime'] is int
+              ? json['startTime']
+              : int.tryParse(json['startTime'].toString()) ?? 0)
+          : DateTime.now(),
+      endTime: json['endTime'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(json['endTime'] is int
+              ? json['endTime']
+              : int.tryParse(json['endTime'].toString()) ?? 0)
+          : DateTime.now(),
+      duration: json['duration']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'roomId': roomId,
+      'seatNum': seatNum,
+      'firstLevelName': firstLevelName,
+      'secondLevelName': secondLevelName,
+      'thirdLevelName': thirdLevelName,
+      'startTime': startTime.millisecondsSinceEpoch,
+      'endTime': endTime.millisecondsSinceEpoch,
+      'duration': duration,
+    };
+  }
+}
+

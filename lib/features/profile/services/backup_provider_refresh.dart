@@ -5,11 +5,13 @@ import '../../../core/state/locale_provider.dart';
 import '../../homework/providers/homework_provider.dart';
 import '../providers/appearance_provider.dart';
 import '../providers/settings_provider.dart';
+import '../../workspace/providers/campus_card_cache_provider.dart';
+import '../../workspace/providers/electricity_cache_provider.dart';
 
 /// 备份写回后的 Provider 刷新（导入 / 云端下拉共用），界面立即生效。
 class BackupProviderRefresh {
   static Future<void> refreshAfterRestore(
-    WidgetRef ref,
+    dynamic ref,
     Map<String, dynamic> backup,
   ) async {
     final settings = backup['settings'] is Map
@@ -35,6 +37,12 @@ class BackupProviderRefresh {
     } catch (_) {}
     try {
       await HomeWidgetService().syncWidgets();
+    } catch (_) {}
+    try {
+      await ref.read(electricityCacheProvider.notifier).refresh();
+    } catch (_) {}
+    try {
+      await ref.read(campusCardCacheProvider.notifier).refresh();
     } catch (_) {}
   }
 }

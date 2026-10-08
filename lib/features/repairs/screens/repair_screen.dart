@@ -58,7 +58,6 @@ class _RepairScreenState extends ConsumerState<RepairScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bgColor = isDark ? theme.scaffoldBackgroundColor : Colors.white;
 
     final currentOrders = _selectedTab == 0
         ? _ongoing
@@ -67,11 +66,11 @@ class _RepairScreenState extends ConsumerState<RepairScreen> {
     final isDraftTab = _selectedTab == 2;
 
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(context.l10n.repairsTitle),
-        backgroundColor: bgColor,
-        surfaceTintColor: bgColor,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        surfaceTintColor: theme.scaffoldBackgroundColor,
         foregroundColor: isDark ? Colors.white : Colors.black87,
         elevation: 0,
         actions: [
@@ -269,13 +268,36 @@ class _RepairScreenState extends ConsumerState<RepairScreen> {
       final y = order.createdAt!.year;
       final m = order.createdAt!.month.toString().padLeft(2, '0');
       final d = order.createdAt!.day.toString().padLeft(2, '0');
-      dateStr = '$y/$m/$d';
+      dateStr = '$y-$m-$d';
     }
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+    final department = order.department.isNotEmpty
+        ? order.department
+        : catalog.department;
+    final type = order.catalog.isNotEmpty ? order.catalog : catalog.title;
+    final statusText =
+        isDraftTab && (order.status.isEmpty || order.status == 'NEW')
+            ? '草稿'
+            : order.status;
+    final isDone = order.isDone;
+    final isDraft = order.isDraft || isDraftTab;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : const Color(0xFFE0E0E0),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6),
           onTap: () {
             if (isDraftTab) {
               Navigator.push(
@@ -291,50 +313,85 @@ class _RepairScreenState extends ConsumerState<RepairScreen> {
             }
           },
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 2),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: catalog.color.withValues(alpha: .12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(catalog.icon, color: catalog.color, size: 20),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
                         order.title.isEmpty
                             ? context.l10n.repairsUnnamedOrder
                             : order.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? Colors.white : Colors.black87,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              isDark ? Colors.white : const Color(0xFF222222),
                         ),
                       ),
-                      if (dateStr.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          dateStr,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark ? Colors.white54 : Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ],
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 13,
+                      color: isDark ? Colors.white24 : Colors.grey[400],
+                    ),
+                  ],
+                ),
+                if (department.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    department,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? Colors.white60 : Colors.black54,
+                    ),
                   ),
+                ],
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 4,
+                  children: [
+                    if (type.isNotEmpty)
+                      Text(
+                        type,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.white38 : Colors.grey[600],
+                        ),
+                      ),
+                    if (dateStr.isNotEmpty)
+                      Text(
+                        dateStr,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.white38 : Colors.grey[600],
+                        ),
+                      ),
+                    if (statusText.isNotEmpty)
+                      Text(
+                        statusText,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDone
+                              ? const Color(0xFF09C489)
+                              : (isDraft
+                                  ? Colors.orange
+                                  : (isDark
+                                      ? Colors.white38
+                                      : Colors.grey[600])),
+                          fontWeight:
+                              isDone ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                  ],
                 ),
               ],
+            ),
           ),
         ),
       ),

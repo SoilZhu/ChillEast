@@ -12,7 +12,6 @@ import '../../score/screens/score_screen.dart';
 import '../../home/screens/bus_tracking_screen.dart';
 import 'webview_detail_screen.dart';
 import 'vpn_converter_screen.dart';
-import 'workspace_screen.dart';
 import 'classroom_inquiry_screen.dart';
 import 'payment_code_screen.dart';
 import 'campus_card_recharge_screen.dart';
@@ -25,6 +24,7 @@ import '../../../core/utils/location_helper.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../library/screens/library_home_screen.dart';
 import '../../campus_bus/screens/campus_bus_map_screen.dart';
+import '../../dormitory/screens/dormitory_screen.dart';
 
 /// 功能页 - 展示各种功能入口
 class FunctionsScreen extends ConsumerStatefulWidget {
@@ -221,6 +221,11 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
               )
             : _showLoginDialog();
         break;
+      case 'dormitory':
+        isLoggedIn
+            ? _safeNavigate(const DormitoryScreen())
+            : _showLoginDialog();
+        break;
       case 'gym':
         isLoggedIn 
             ? _safeNavigate(
@@ -228,6 +233,36 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
                   title: context.l10n.funcGym,
                   url: AppConstants.gymReservationUrl,
                   showWebBack: true,
+                ),
+              )
+            : _showLoginDialog();
+        break;
+      case 'ehall':
+        isLoggedIn 
+            ? _safeNavigate(
+                WebViewDetailScreen(
+                  title: context.l10n.funcEhall,
+                  url: AppConstants.ehallUrl,
+                  userAgent: AppConstants.ehallUA,
+                  showAppBar: false,
+                  showWebBack: false,
+                  appBarColor: const Color(0xFF1E88E5),
+                ),
+              )
+            : _showLoginDialog();
+        break;
+      case 'info_portal':
+        isLoggedIn 
+            ? _safeNavigate(
+                WebViewDetailScreen(
+                  title: context.l10n.funcInfoPortal,
+                  url: AppConstants.infoPortalUrl,
+                  homeUrl: AppConstants.infoPortalUrl,
+                  userAgent: AppConstants.infoPortalUA,
+                  showAppBar: false,
+                  showWebBack: false,
+                  appBarColor: Colors.white,
+                  allowExternalLinks: true,
                 ),
               )
             : _showLoginDialog();
@@ -268,6 +303,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
         break;
       case 'campus_card':
         if (isLoggedIn) {
+          final campusCardTitle = context.l10n.funcCampusCard;
           await [Permission.camera, Permission.photos, Permission.storage].request();
           final service = ref.read(campusCardServiceProvider);
           final url = service.getCampusCardHomeUrl();
@@ -275,7 +311,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
           if (!mounted) return;
           _safeNavigate(
             WebViewDetailScreen(
-              title: context.l10n.funcCampusCard,
+              title: campusCardTitle,
               url: url,
               userAgent: AppConstants.campusCardUA,
               showWebBack: false,
@@ -294,12 +330,14 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
         _safeNavigate(const CampusBusMapScreen());
         break;
       case 'cs_bus':
+        final csBusTitle = context.l10n.funcCsBus;
+        final needLocationMsg = context.l10n.needLocationForBus;
         final hasPermission = await LocationHelper.requestPermission();
         if (!mounted) return;
         if (hasPermission) {
           _safeNavigate(
             WebViewDetailScreen(
-              title: context.l10n.funcCsBus,
+              title: csBusTitle,
               url: AppConstants.changshaBusUrl,
               showWebBack: true,
               showAppBar: true,
@@ -310,7 +348,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(context.l10n.needLocationForBus),
+                content: Text(needLocationMsg),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -332,7 +370,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.12)
@@ -343,7 +381,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(8),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

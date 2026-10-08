@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/utils/app_logger.dart';
-import '../../cloudisk/services/cloud_backup_manager.dart';
 import '../models/library_models.dart';
 
 class LibraryStorage {
@@ -42,7 +41,6 @@ class LibraryStorage {
       final jsonList = reserves.map((e) => e.toJson()).toList();
       final jsonStr = jsonEncode(jsonList);
       await prefs.setString(_cachedReservesKey, jsonStr);
-      CloudBackupManager.instance.markDirty();
       _logger.d('💾 Saved ${reserves.length} library reserves to local cache');
     } catch (e) {
       _logger.e('❌ Failed to save library reserves to cache: $e');

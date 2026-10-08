@@ -248,7 +248,6 @@ class _DataSyncSettingsScreenState
               }
             },
           ),
-          const Divider(height: 1, indent: 16, endIndent: 16),
           _buildSettingItem(
             context,
             icon: Icons.upload_outlined,

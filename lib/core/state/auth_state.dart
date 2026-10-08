@@ -8,6 +8,7 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/profile/providers/settings_provider.dart';
 import '../../features/cloudisk/screens/cloud_sync_prompt_screen.dart';
 import '../../features/cloudisk/services/cloud_backup_manager.dart';
+import '../../features/profile/services/backup_provider_refresh.dart';
 import '../../features/library/services/library_storage.dart';
 import '../../features/workspace/services/electricity_service.dart';
 import '../utils/secure_storage_helper.dart';
@@ -17,6 +18,8 @@ import '../../features/notice/providers/notice_provider.dart';
 import '../../features/timetable/services/timetable_storage.dart';
 import '../../features/timetable/services/timetable_service.dart';
 import '../../features/workspace/services/campus_card_service.dart';
+import '../../features/workspace/providers/campus_card_cache_provider.dart';
+import '../../features/workspace/providers/electricity_cache_provider.dart';
 import '../../features/library/providers/library_provider.dart';
 import '../../features/questionnaire/providers/questionnaire_cache_provider.dart';
 import '../../features/leave/providers/leave_cache_provider.dart';
@@ -237,17 +240,40 @@ class AuthNotifier extends StateNotifier<AuthState> {
       {required bool includeLibrary}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || state.status != AuthStatus.authenticated) return;
-      if (username != null) {
-        unawaited(_ref.read(homeworkProvider.notifier).refresh(username));
-        unawaited(_ref.read(noticeProvider.notifier).refresh());
-      }
-      if (includeLibrary) {
-        unawaited(_ref.read(cachedLibraryReserveProvider.notifier).refresh());
-      }
-      unawaited(_refreshUserInfo());
-      unawaited(_ref.read(campusCardServiceProvider).authenticate());
-      unawaited(_syncTimetableSilently());
+      unawaited(_runPostLoginWork(username, includeLibrary: includeLibrary));
     });
+  }
+
+  Future<void> _runPostLoginWork(String? username,
+      {required bool includeLibrary}) async {
+    // 1. 启动并在自动静默登录后，优先尝试拉取云端最新备份并覆盖应用到本地
+    await _pullCloudBackupSilently();
+
+    if (!mounted || state.status != AuthStatus.authenticated) return;
+    if (username != null) {
+      unawaited(_ref.read(homeworkProvider.notifier).refresh(username));
+      unawaited(_ref.read(noticeProvider.notifier).refresh());
+    }
+    if (includeLibrary) {
+      unawaited(_ref.read(cachedLibraryReserveProvider.notifier).refresh());
+    }
+    unawaited(_refreshUserInfo());
+    unawaited(_ref.read(campusCardServiceProvider).authenticate());
+    unawaited(_syncTimetableSilently());
+  }
+
+  /// 静默拉取云端最新备份并应用到本地
+  Future<void> _pullCloudBackupSilently() async {
+    try {
+      final backup =
+          await CloudBackupManager.instance.pullLatestOnStartup();
+      if (backup != null && mounted) {
+        await BackupProviderRefresh.refreshAfterRestore(_ref, backup);
+        _logger.i('☁️ Startup cloud backup pull completed and applied');
+      }
+    } catch (e) {
+      _logger.w('⚠️ Silent cloud backup pull failed: $e');
+    }
   }
 
   /// 刷新用户资料
@@ -304,6 +330,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     // 退出登录时清空请假和报修缓存
     await _ref.read(leaveCacheProvider.notifier).clear();
     await _ref.read(repairCacheProvider.notifier).clear();
+
+    // 退出登录时清空校园卡与宿舍电费缓存
+    _ref.read(campusCardCacheProvider.notifier).clear();
+    _ref.read(electricityCacheProvider.notifier).clear();
 
     // 退出登录时清空图书馆预约、电费房间等剩余本地数据
     await LibraryStorage.clearReserves();

@@ -7,6 +7,7 @@ import '../providers/library_provider.dart';
 import '../utils/library_time_utils.dart';
 import '../widgets/library_time_range_picker.dart';
 import 'library_seat_screen.dart';
+import 'library_quick_reserve_screen.dart';
 
 class LibraryRoomScreen extends ConsumerStatefulWidget {
   const LibraryRoomScreen({super.key});
@@ -51,6 +52,16 @@ class _LibraryRoomScreenState extends ConsumerState<LibraryRoomScreen> {
         foregroundColor: isDark ? Colors.white : Colors.black87,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bolt_rounded),
+            tooltip: context.l10n.quickReserve,
+            onPressed: () {
+              Navigator.push(
+                context,
+                createSlideUpRoute(const LibraryQuickReserveScreen()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: context.l10n.refresh,

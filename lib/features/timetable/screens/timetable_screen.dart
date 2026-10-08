@@ -20,6 +20,9 @@ import '../widgets/empty_timetable_state.dart';
 import '../widgets/timetable_rule_dialogs.dart';
 import '../../homework/providers/homework_provider.dart';
 import '../../homework/models/homework_model.dart';
+import '../../exam/providers/exam_provider.dart';
+import '../../exam/models/exam_schedule_model.dart';
+import '../../workspace/screens/webview_detail_screen.dart';
 import '../../../core/state/auth_state.dart';
 import '../../profile/providers/settings_provider.dart';
 import '../../../core/widgets/login_required_placeholder.dart';
@@ -249,10 +252,34 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
           orElse: () => false,
         );
 
-        if (dayCourses.isNotEmpty || hasHomework) {
+        // 查找属于这天的考试（只取本学期的考试）
+        final examState = ref.read(examProvider);
+        final hasExam = examState.maybeWhen(
+          data: (list) => list.any((e) =>
+              e.isCurrentSemester(firstWeekMonday: _firstWeekMonday) &&
+              e.time.year == dayKey.year &&
+              e.time.month == dayKey.month &&
+              e.time.day == dayKey.day),
+          orElse: () => false,
+        );
+
+        if (dayCourses.isNotEmpty || hasHomework || hasExam) {
           dayCourses.sort((a, b) => a.startPeriod.compareTo(b.startPeriod));
           grouped[dayKey] = dayCourses;
         }
+      }
+    }
+
+    // 补充可能处于开学前夕（如开学补考）的本学期考试日期
+    final examList = ref.read(examProvider).maybeWhen(
+          data: (list) => list,
+          orElse: () => <ExamScheduleModel>[],
+        );
+    for (final e in examList) {
+      if (!e.isCurrentSemester(firstWeekMonday: _firstWeekMonday)) continue;
+      final dayKey = DateTime(e.time.year, e.time.month, e.time.day);
+      if (!grouped.containsKey(dayKey)) {
+        grouped[dayKey] = [];
       }
     }
 
@@ -343,6 +370,9 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
       // 重新加载本地数据
       await _loadLocalTimetable();
 
+      // 刷新考试日程
+      ref.read(examProvider.notifier).refresh();
+
       // 刷新全局状态
       ref.read(timetableStatusProvider.notifier).refresh();
       ref
@@ -425,6 +455,13 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
     // 监听作业变化，同步刷新日程轴
     ref.listen(homeworkProvider, (_, __) {
       if (_courses.isNotEmpty && _firstWeekMonday != null) {
+        _generateAgendaTimeline();
+      }
+    });
+
+    // 监听考试变化，同步刷新日程轴
+    ref.listen(examProvider, (_, __) {
+      if (_firstWeekMonday != null) {
         _generateAgendaTimeline();
       }
     });
@@ -716,6 +753,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
           Expanded(
             child: Column(
               children: [
+                ..._buildDayExamItems(date),
                 ..._buildDayHomeworkItems(date),
                 ...courses
                     .map((course) => _buildCourseAgendaCard(course))
@@ -796,6 +834,126 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
       const SizedBox(height: 24),
       ElevatedButton(onPressed: _loadLocalTimetable, child: Text(context.l10n.retry)),
     ]));
+  }
+
+  List<Widget> _buildDayExamItems(DateTime date) {
+    final examState = ref.watch(examProvider);
+    return examState.maybeWhen(
+      data: (list) {
+        final dayExams = list
+            .where((e) =>
+                e.isCurrentSemester(firstWeekMonday: _firstWeekMonday) &&
+                e.time.year == date.year &&
+                e.time.month == date.month &&
+                e.time.day == date.day)
+            .toList();
+
+        // 按第一个出现的时间升序排列
+        dayExams.sort((a, b) => a.time.compareTo(b.time));
+
+        return dayExams.map((e) => _buildExamAgendaTask(e)).toList();
+      },
+      orElse: () => [],
+    );
+  }
+
+  Widget _buildExamAgendaTask(ExamScheduleModel item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final timeStr = DateFormat('HH:mm').format(item.time);
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        if (item.detailUrl.isNotEmpty) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WebViewDetailScreen(
+                url: item.detailUrl,
+                title: item.title,
+              ),
+            ),
+          );
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF382326) : const Color(0xFFFFEBEE),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: const Color(0xFFE53935).withOpacity(isDark ? 0.3 : 0.2),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.quiz_outlined,
+              size: 18,
+              color: Color(0xFFE53935),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF2D3436),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (item.status.isNotEmpty) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE53935).withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            item.status,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFE53935),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${context.l10n.examTimePrefix} $timeStr',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? Colors.white70
+                          : const Color(0xFF7F8C8D),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   List<Widget> _buildDayHomeworkItems(DateTime date) {

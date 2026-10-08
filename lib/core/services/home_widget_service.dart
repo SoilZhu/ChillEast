@@ -48,6 +48,8 @@ class HomeWidgetService {
     'empty_classroom',
     'repairs',
     'sunshine',
+    'ehall',
+    'info_portal',
     'questionnaire',
     'leave',
     'gym',
@@ -59,6 +61,7 @@ class HomeWidgetService {
     'bus',
     'cs_bus',
     'campus_bus_route',
+    'dormitory',
   ];
 
   /// 按钮 emoji（保留给「日程 + 快捷」长条组件使用；2x2 快捷组件已改用与 App 一致的矢量图标）。
@@ -68,6 +71,8 @@ class HomeWidgetService {
     'ele_recharge': '⚡',
     'library': '📚',
     'empty_classroom': '🚪',
+    'ehall': '🏛️',
+    'info_portal': '🌐',
     'repairs': '🛠️',
     'sunshine': '☀️',
     'questionnaire': '📋',
@@ -81,11 +86,14 @@ class HomeWidgetService {
     'cs_bus': '🚏',
     'campus_bus_route': '🗺️',
     'xgxt': '🏫',
+    'dormitory': '🛏️',
   };
 
   /// 功能配色（与外观设置 _masterPool 一致，原生侧为矢量图标着色）。
   static const Map<String, int> functionColors = {
     'sunshine': 0xFF09C489,
+    'ehall': 0xFF1E88E5,
+    'info_portal': 0xFF1976D2,
     'questionnaire': 0xFF3476E6,
     'leave': 0xFF009688,
     'payment_code': 0xFF00C853,
@@ -103,6 +111,7 @@ class HomeWidgetService {
     'bus': 0xFF34E676,
     'cs_bus': 0xFF2196F3,
     'campus_bus_route': 0xFF00A86B,
+    'dormitory': 0xFF5C6BC0,
   };
 
   /// 课程配色（与应用内 [CourseColorUtils] 同一色板，保证小组件与课表日程页同色）。
@@ -386,6 +395,10 @@ class HomeWidgetService {
         return l10n.funcLibrary;
       case 'empty_classroom':
         return l10n.funcEmptyClassroom;
+      case 'ehall':
+        return l10n.funcEhall;
+      case 'info_portal':
+        return l10n.funcInfoPortal;
       case 'xgxt':
         return l10n.funcXgxt;
       case 'repairs':
@@ -408,6 +421,8 @@ class HomeWidgetService {
         return l10n.funcCsBus;
       case 'campus_bus_route':
         return l10n.funcCampusBusRoute;
+      case 'dormitory':
+        return l10n.funcDormitory;
       default:
         return id;
     }

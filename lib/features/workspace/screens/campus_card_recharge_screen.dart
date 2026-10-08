@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../services/campus_card_service.dart';
+import '../providers/campus_card_cache_provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/l10n_extension.dart';
@@ -32,7 +33,13 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _loadInfo();
+    final cached = ref.read(campusCardCacheProvider).value ??
+        ref.read(campusCardServiceProvider).cachedInfo;
+    if (cached != null) {
+      _info = cached;
+      _isLoading = false;
+    }
+    _loadInfo(isSilent: cached != null);
   }
 
   @override
@@ -73,6 +80,7 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
           _error = null;
         });
       }
+      ref.read(campusCardCacheProvider.notifier).update(info);
     } catch (e) {
       _logger.e('Failed to load recharge info: $e');
       if (mounted) {
@@ -126,8 +134,8 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final themeColor = const Color(0xFF1677FF); // Alipay Blue for consistency
-    final primaryColor = const Color(AppConstants.primaryColorValue);
+    const themeColor = Color(0xFF1677FF); // Alipay Blue for consistency
+    const primaryColor = Color(AppConstants.primaryColorValue);
     
     return Scaffold(
       appBar: AppBar(
@@ -136,22 +144,9 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: _isRefreshing
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.refresh),
-            tooltip: context.l10n.refreshBalance,
-            onPressed: _isRefreshing ? null : () => _loadInfo(isSilent: true),
-          ),
-        ],
       ),
       body: _isLoading 
-        ? Center(child: CircularProgressIndicator(color: primaryColor))
+        ? const Center(child: CircularProgressIndicator(color: primaryColor))
         : _error != null
           ? Center(
               child: Column(
@@ -172,72 +167,97 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // MD2 Style Info Card (Flat)
-                  InkWell(
-                    onTap: _isRefreshing ? null : () => _loadInfo(isSilent: true),
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withOpacity(0.05) : primaryColor.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : primaryColor.withOpacity(0.2)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _info?.name ?? '---',
-                                    style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 20, fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    context.l10n.cardNumberPrefix(_info?.idserial ?? '---'),
-                                    style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 13),
-                                  ),
-                                 ],
-                               ),
-                               Icon(Icons.account_balance_wallet_outlined, color: primaryColor, size: 32),
-                             ],
-                           ),
-                           const SizedBox(height: 24),
-                           Row(
-                             children: [
-                               Text(
-                                 context.l10n.currentBalanceYuan,
-                                 style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 12, fontWeight: FontWeight.bold),
-                               ),
-                               const SizedBox(width: 6),
-                               if (_isRefreshing)
-                                 const SizedBox(
-                                   width: 12,
-                                   height: 12,
-                                   child: CircularProgressIndicator(strokeWidth: 1.5),
-                                 )
-                               else
-                                 Icon(
-                                   Icons.refresh,
-                                   size: 13,
-                                   color: isDark ? Colors.white38 : Colors.black38,
-                                 ),
-                             ],
-                           ),
-                           const SizedBox(height: 4),
-                           Text(
-                             '¥${_info?.balance ?? '0.00'}',
-                             style: TextStyle(color: primaryColor, fontSize: 32, fontWeight: FontWeight.bold),
-                           ),
-                         ],
-                       ),
-                     ),
-                   ),
+                  // Flat Header
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? primaryColor.withValues(alpha: 0.1) : primaryColor.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: isDark ? primaryColor.withValues(alpha: 0.2) : primaryColor.withValues(alpha: 0.2)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              context.l10n.currentRechargeCard,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? Colors.white54 : Colors.black54,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            InkWell(
+                              onTap: _isRefreshing ? null : () => _loadInfo(isSilent: true),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (_isRefreshing)
+                                      SizedBox(
+                                        width: 11,
+                                        height: 11,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 1.5,
+                                          color: isDark ? Colors.white70 : Colors.black54,
+                                        ),
+                                      )
+                                    else
+                                      Icon(
+                                        Icons.refresh,
+                                        size: 13,
+                                        color: isDark ? Colors.white54 : Colors.black54,
+                                      ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      _isRefreshing ? context.l10n.refreshing : context.l10n.refreshBalance,
+                                      style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : Colors.black54),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          _info != null
+                              ? '${_info!.name} (${_info!.idserial})'
+                              : '---',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: isDark ? Colors.white : Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          context.l10n.campusCardBalance,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? Colors.white54 : Colors.black54,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _info != null
+                              ? context.l10n.amountYuan(_info!.balance)
+                              : (_isRefreshing ? context.l10n.checkingPaymentStatus : context.l10n.amountYuan('0.00')),
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: isDark ? Colors.white : Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                    
                    const SizedBox(height: 32),
                    
@@ -266,10 +286,10 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
                          borderRadius: BorderRadius.circular(6),
                          child: Container(
                            decoration: BoxDecoration(
-                             color: isSelected ? themeColor : (isDark ? Colors.white.withOpacity(0.05) : Colors.white),
+                             color: isSelected ? themeColor : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white),
                              borderRadius: BorderRadius.circular(6),
                              border: Border.all(
-                               color: isSelected ? themeColor : (isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.3)),
+                               color: isSelected ? themeColor : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.3)),
                              ),
                            ),
                            alignment: Alignment.center,
@@ -295,22 +315,22 @@ class _CampusCardRechargeScreenState extends ConsumerState<CampusCardRechargeScr
                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                      decoration: InputDecoration(
                        labelText: context.l10n.customAmount,
-                       labelStyle: TextStyle(color: isDark ? themeColor.withOpacity(0.8) : themeColor),
+                       labelStyle: TextStyle(color: isDark ? themeColor.withValues(alpha: 0.8) : themeColor),
                        prefixText: '¥ ',
                        filled: isDark,
-                       fillColor: isDark ? Colors.white.withOpacity(0.05) : null,
+                       fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : null,
                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                        border: OutlineInputBorder(
                          borderRadius: BorderRadius.circular(6),
-                         borderSide: BorderSide(color: themeColor.withOpacity(0.3)),
+                         borderSide: BorderSide(color: themeColor.withValues(alpha: 0.3)),
                        ),
                        enabledBorder: OutlineInputBorder(
                          borderRadius: BorderRadius.circular(6),
-                         borderSide: BorderSide(color: themeColor.withOpacity(0.3)),
+                         borderSide: BorderSide(color: themeColor.withValues(alpha: 0.3)),
                        ),
                        focusedBorder: OutlineInputBorder(
                          borderRadius: BorderRadius.circular(6),
-                         borderSide: BorderSide(color: themeColor, width: 1.5),
+                         borderSide: const BorderSide(color: themeColor, width: 1.5),
                        ),
                      ),
                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

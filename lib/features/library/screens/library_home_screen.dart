@@ -8,6 +8,8 @@ import '../models/library_models.dart';
 import '../providers/library_provider.dart';
 import '../widgets/library_quick_reserve_sheet.dart';
 import 'library_room_screen.dart';
+import 'library_book_search_screen.dart';
+import 'library_quick_reserve_screen.dart';
 
 class LibraryHomeScreen extends ConsumerStatefulWidget {
   const LibraryHomeScreen({super.key});
@@ -429,8 +431,16 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
             ],
           ],
 
-          // 2. 预约选座入口 (单个卡片)
+          // 2. 快速预约入口 (单个卡片)
+          _buildQuickReserveCard(),
+          const SizedBox(height: 12),
+
+          // 3. 预约选座入口 (单个卡片)
           _buildQuickActionCard(),
+          const SizedBox(height: 12),
+
+          // 4. 图书馆图书查询入口 (单个卡片)
+          _buildBookSearchCard(),
 
           const SizedBox(height: 24),
 
@@ -579,6 +589,114 @@ class _LibraryHomeScreenState extends ConsumerState<LibraryHomeScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBookSearchCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : const Color(0xFFE0E0E0),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: () {
+            Navigator.push(
+                context, createSlideUpRoute(const LibraryBookSearchScreen()));
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.menu_book_rounded,
+                  color: Color(0xFF09C489),
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  context.l10n.bookSearch,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: isDark ? Colors.white38 : Colors.grey,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickReserveCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : const Color(0xFFE0E0E0),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: () {
+            Navigator.push(
+                context, createSlideUpRoute(const LibraryQuickReserveScreen()));
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.bolt_rounded,
+                  color: Color(0xFF09C489),
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  context.l10n.quickReserve,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: isDark ? Colors.white38 : Colors.grey,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
