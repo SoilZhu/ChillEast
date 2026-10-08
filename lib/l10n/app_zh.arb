@@ -939,10 +939,18 @@
   "confirmSubmitAppealMessage": "将以 {identity} 的身份向“{department}”提交{type}：\n\n{title}\n\n请确认内容真实准确，相同内容请勿重复提交。",
   "@confirmSubmitAppealMessage": {
     "placeholders": {
-      "identity": { "type": "String" },
-      "department": { "type": "String" },
-      "type": { "type": "String" },
-      "title": { "type": "String" }
+      "identity": {
+        "type": "String"
+      },
+      "department": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      }
     }
   },
   "continueEditing": "继续编辑",
@@ -998,7 +1006,9 @@
   "pleaseFillQuestion": "请填写: {title}",
   "@pleaseFillQuestion": {
     "placeholders": {
-      "title": { "type": "String" }
+      "title": {
+        "type": "String"
+      }
     }
   },
   "questionnaireCannotBeSubmitted": "该问卷当前不可提交",
@@ -1032,13 +1042,11 @@
   "districtCounty": "区/县",
   "detailedAddress": "详细地址",
   "returnToDormitory": "回宿舍",
-  "remark": "备注",
   "leaveCity": "出市",
   "leaveProvince": "出省",
   "leaveMaterials": "请假材料",
   "leaveMaterialsHint": "选填，点击从相册选择",
   "removeAttachment": "移除附件",
-  "pleaseSelect": "请选择",
   "selectTimeAutoCalculateDuration": "请选择起止时间自动计算",
   "pleaseSelectLeaveType": "请选择请假类别",
   "pleaseSelectStartTime": "请选择开始时间",
@@ -1064,13 +1072,17 @@
   "durationDays": "{days}天",
   "@durationDays": {
     "placeholders": {
-      "days": { "type": "String" }
+      "days": {
+        "type": "String"
+      }
     }
   },
   "durationHours": "{hours}小时",
   "@durationHours": {
     "placeholders": {
-      "hours": { "type": "String" }
+      "hours": {
+        "type": "String"
+      }
     }
   },
   "contactPhone": "联系人电话",
@@ -1082,7 +1094,9 @@
   "leaveTypeDetails": "{type}详情",
   "@leaveTypeDetails": {
     "placeholders": {
-      "type": { "type": "String" }
+      "type": {
+        "type": "String"
+      }
     }
   },
   "revokeApplication": "撤销申请",
@@ -1093,8 +1107,12 @@
   "confirmRevokeLeaveItem": "确定撤销《{type}》({timeRange})吗？",
   "@confirmRevokeLeaveItem": {
     "placeholders": {
-      "type": { "type": "String" },
-      "timeRange": { "type": "String" }
+      "type": {
+        "type": "String"
+      },
+      "timeRange": {
+        "type": "String"
+      }
     }
   },
   "library": "图书馆",
@@ -1108,40 +1126,52 @@
   "checkInFailedWithReason": "签到失败: {reason}",
   "@checkInFailedWithReason": {
     "placeholders": {
-      "reason": { "type": "String" }
+      "reason": {
+        "type": "String"
+      }
     }
   },
   "confirmCheckOutTitle": "确认退座？",
   "confirmCheckOutMessage": "确定结束在【{room}】的 {seat} 号座位使用吗？",
   "@confirmCheckOutMessage": {
     "placeholders": {
-      "room": { "type": "String" },
-      "seat": { "type": "String" }
+      "room": {
+        "type": "String"
+      },
+      "seat": {
+        "type": "String"
+      }
     }
   },
-  "thinkAgain": "我再想想",
   "confirmCheckOut": "确认退座",
   "checkOutSuccess": "退座成功",
   "checkOutFailedWithReason": "退座失败: {reason}",
   "@checkOutFailedWithReason": {
     "placeholders": {
-      "reason": { "type": "String" }
+      "reason": {
+        "type": "String"
+      }
     }
   },
   "confirmCancelReservationTitle": "确认取消预约？",
   "confirmCancelReservationMessage": "确定取消在【{room}】的 {seat} 号座位预约吗？",
   "@confirmCancelReservationMessage": {
     "placeholders": {
-      "room": { "type": "String" },
-      "seat": { "type": "String" }
+      "room": {
+        "type": "String"
+      },
+      "seat": {
+        "type": "String"
+      }
     }
   },
-  "confirmCancel": "确认取消",
   "reservationCancelledSuccess": "已成功取消该预约",
   "cancelReservationFailedWithReason": "取消失败: {reason}",
   "@cancelReservationFailedWithReason": {
     "placeholders": {
-      "reason": { "type": "String" }
+      "reason": {
+        "type": "String"
+      }
     }
   },
   "submittingReservation": "正在提交预约...",
@@ -1149,25 +1179,33 @@
   "readingRoomLabel": "阅览室：{room}",
   "@readingRoomLabel": {
     "placeholders": {
-      "room": { "type": "String" }
+      "room": {
+        "type": "String"
+      }
     }
   },
   "seatNumberLabel": "座位号：{seat} 号",
   "@seatNumberLabel": {
     "placeholders": {
-      "seat": { "type": "String" }
+      "seat": {
+        "type": "String"
+      }
     }
   },
   "dateLabel": "日期：{date}",
   "@dateLabel": {
     "placeholders": {
-      "date": { "type": "String" }
+      "date": {
+        "type": "String"
+      }
     }
   },
   "timeValueLabel": "时间：{time}",
   "@timeValueLabel": {
     "placeholders": {
-      "time": { "type": "String" }
+      "time": {
+        "type": "String"
+      }
     }
   },
   "reservationNotice": "请在规定时间内完成签到，超时未签到将视为违规。",
@@ -1176,7 +1214,9 @@
   "seatWithNumber": "{seat} 号座位",
   "@seatWithNumber": {
     "placeholders": {
-      "seat": { "type": "String" }
+      "seat": {
+        "type": "String"
+      }
     }
   },
   "cancelReservation": "取消预约",
@@ -1191,7 +1231,9 @@
   "totalSeats": "总座位数：{capacity}",
   "@totalSeats": {
     "placeholders": {
-      "capacity": { "type": "String" }
+      "capacity": {
+        "type": "String"
+      }
     }
   },
   "pleaseSelectSeatFirst": "请先在地图中选择一个座位",
@@ -1199,8 +1241,12 @@
   "dateAndPeriod": "日期：{day}  |  时段：{time}",
   "@dateAndPeriod": {
     "placeholders": {
-      "day": { "type": "String" },
-      "time": { "type": "String" }
+      "day": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
     }
   },
   "seatAvailable": "可选",
@@ -1217,7 +1263,9 @@
   "changeAnotherSeatWithCooldown": "换一个 ({seconds}s)",
   "@changeAnotherSeatWithCooldown": {
     "placeholders": {
-      "seconds": { "type": "int" }
+      "seconds": {
+        "type": "int"
+      }
     }
   },
   "confirmQuickReserve": "确认",
@@ -1234,9 +1282,15 @@
   "confirmReservationPeriod": "确认预约 ({day} {start} - {end})",
   "@confirmReservationPeriod": {
     "placeholders": {
-      "day": { "type": "String" },
-      "start": { "type": "String" },
-      "end": { "type": "String" }
+      "day": {
+        "type": "String"
+      },
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
     }
   },
   "pleaseSelectValidPeriod": "请选择有效时段",
@@ -1245,26 +1299,36 @@
   "todayWithDate": "今天 ({date})",
   "@todayWithDate": {
     "placeholders": {
-      "date": { "type": "String" }
+      "date": {
+        "type": "String"
+      }
     }
   },
   "tomorrowWithDate": "明天 ({date})",
   "@tomorrowWithDate": {
     "placeholders": {
-      "date": { "type": "String" }
+      "date": {
+        "type": "String"
+      }
     }
   },
   "monthDayFormat": "{month}月{day}日",
   "@monthDayFormat": {
     "placeholders": {
-      "month": { "type": "int" },
-      "day": { "type": "int" }
+      "month": {
+        "type": "int"
+      },
+      "day": {
+        "type": "int"
+      }
     }
   },
   "newVersionFoundSnackBar": "🚀 发现新版本 v{version}，点击查看详情",
   "@newVersionFoundSnackBar": {
     "placeholders": {
-      "version": { "type": "String" }
+      "version": {
+        "type": "String"
+      }
     }
   },
   "viewAction": "查看",
@@ -1272,20 +1336,26 @@
   "checkUpdateFailed": "检查更新失败: {error}",
   "@checkUpdateFailed": {
     "placeholders": {
-      "error": { "type": "String" }
+      "error": {
+        "type": "String"
+      }
     }
   },
   "downloadingUpdate": "正在下载更新 v{version}...",
   "@downloadingUpdate": {
     "placeholders": {
-      "version": { "type": "String" }
+      "version": {
+        "type": "String"
+      }
     }
   },
   "downloadingUpdateTitle": "正在下载更新",
   "downloadFailedWithReason": "下载失败: {error}",
   "@downloadFailedWithReason": {
     "placeholders": {
-      "error": { "type": "String" }
+      "error": {
+        "type": "String"
+      }
     }
   },
   "classReminderChannelName": "上课提醒",
@@ -1297,64 +1367,85 @@
   "homeworkDueInLessThan": "作业将在不到{time}后截止",
   "@homeworkDueInLessThan": {
     "placeholders": {
-      "time": { "type": "String" }
+      "time": {
+        "type": "String"
+      }
     }
   },
   "homeworkDueIn": "作业将在{time}后截止",
   "@homeworkDueIn": {
     "placeholders": {
-      "time": { "type": "String" }
+      "time": {
+        "type": "String"
+      }
     }
   },
   "minutesCount": "{count}分钟",
   "@minutesCount": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "hoursCount": "{count}小时",
   "@hoursCount": {
     "placeholders": {
-      "count": { "type": "String" }
+      "count": {
+        "type": "String"
+      }
     }
   },
   "seatNumberNotificationTitle": "{time} {seat}号座位",
   "@seatNumberNotificationTitle": {
     "placeholders": {
-      "time": { "type": "String" },
-      "seat": { "type": "String" }
+      "time": {
+        "type": "String"
+      },
+      "seat": {
+        "type": "String"
+      }
     }
   },
   "liveMinutesRemainingClass": "还有 {minutes} 分钟上课",
   "@liveMinutesRemainingClass": {
     "placeholders": {
-      "minutes": { "type": "int" }
+      "minutes": {
+        "type": "int"
+      }
     }
   },
   "liveClassStartingTime": "{time}开课",
   "@liveClassStartingTime": {
     "placeholders": {
-      "time": { "type": "String" }
+      "time": {
+        "type": "String"
+      }
     }
   },
   "liveMinutesRemainingSeat": "还有 {minutes} 分钟开始 · 请按时签到",
   "@liveMinutesRemainingSeat": {
     "placeholders": {
-      "minutes": { "type": "int" }
+      "minutes": {
+        "type": "int"
+      }
     }
   },
   "liveSeatStartingTime": "{time}开始",
   "@liveSeatStartingTime": {
     "placeholders": {
-      "time": { "type": "String" }
+      "time": {
+        "type": "String"
+      }
     }
   },
   "aiApiKeyNotConfigured": "未配置 API Key，请先在「AI 助理设置」中填入 API Key",
-  "aiThinking": "正在思考中...",
   "weeksRange": "第{weeks}周",
   "@weeksRange": {
     "placeholders": {
-      "weeks": { "type": "String" }
+      "weeks": {
+        "type": "String"
+      }
     }
   },
   "ruleModeCopy": "复制",
@@ -1377,7 +1468,13 @@
   "repairsUnnamedOrder": "未命名工单",
   "repairsEnterValue": "请输入或粘贴平台选项值",
   "repairsRequiredField": "请填写{field}",
-  "@repairsRequiredField": {"placeholders": {"field": {"type": "String"}}},
+  "@repairsRequiredField": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
   "repairsSubmitSuccess": "提交成功",
   "repairsSubmitSuccessMessage": "工单已提交，处理进度可在“我的工单”中查看。",
   "repairsFormHint": "带 * 的字段为必填项。图片附件支持拍照或从相册上传。",
@@ -1423,7 +1520,7 @@
   "repairsDeleteConfirm": "确认删除此图片？",
   "repairsSubmitTicket": "填写报修单",
   "repairsSelectCategory": "选择报修类型",
-  "dataSyncSettings": "数据同步",
+  "dataSyncSettings": "数据",
   "@dataSyncSettings": {
     "description": "数据同步设置入口"
   },
@@ -1447,7 +1544,9 @@
   "@backupExportFailed": {
     "description": "备份导出失败提示",
     "placeholders": {
-      "error": { "type": "String" }
+      "error": {
+        "type": "String"
+      }
     }
   },
   "dataImport": "数据导入",
@@ -1470,7 +1569,9 @@
   "@dataImportFailed": {
     "description": "备份导入失败提示",
     "placeholders": {
-      "error": { "type": "String" }
+      "error": {
+        "type": "String"
+      }
     }
   },
   "dataImportInvalidFile": "不是有效的备份文件",
@@ -1507,7 +1608,9 @@
   "bookSearchTotalCount": "共找到 {count} 本图书",
   "@bookSearchTotalCount": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "bookSearchLoading": "正在加载...",
@@ -1556,5 +1659,10 @@
   "ehallExternalJumpPrompt": "即将跳转至外部服务",
   "ehallOpenNativeLeave": "在请假小程序中办理",
   "examSchedule": "考试日程",
-  "examTimePrefix": "考试时间"
+  "examTimePrefix": "考试时间",
+  "clearWebViewCache": "清理缓存",
+  "clearWebViewCacheSubtitle": "清理 InAppWebView 磁盘缓存与网页离线数据",
+  "clearWebViewCacheSuccess": "已清理缓存",
+  "clearWebViewCacheConfirmTitle": "确认清理缓存？",
+  "clearWebViewCacheConfirmMessage": "将清除应用内网页的本地离线缓存与临时数据，不会影响您的登录状态。"
 }

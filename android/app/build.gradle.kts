@@ -48,10 +48,17 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+        }
         release {
             // 使用上面定义的 release 签名配置
             signingConfig = signingConfigs.getByName("release")
             
+            // 启用代码压缩与资源缩减
+            isMinifyEnabled = true
+            isShrinkResources = true
+
             // 启用自定义混淆规则
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }

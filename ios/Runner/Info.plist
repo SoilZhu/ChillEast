@@ -76,5 +76,13 @@
 		<string>需要获取您的位置信息以提供校园周边服务</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>weixin</string>
+			<string>weixinULAPI</string>
+			<string>alipay</string>
+			<string>alipays</string>
+			<string>alipayqr</string>
+		</array>
 	</dict>
 </plist>

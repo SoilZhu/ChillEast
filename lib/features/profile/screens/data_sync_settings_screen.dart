@@ -7,6 +7,7 @@ import '../../cloudisk/services/cloud_backup_manager.dart';
 import '../providers/settings_provider.dart';
 import '../services/backup_export_service.dart';
 import '../services/backup_provider_refresh.dart';
+import '../../../core/services/webview_cache_service.dart';
 
 /// 数据同步页：云备份自动同步开关 + 手动备份导出 + 备份导入。
 class DataSyncSettingsScreen extends ConsumerStatefulWidget {
@@ -21,6 +22,60 @@ class _DataSyncSettingsScreenState
     extends ConsumerState<DataSyncSettingsScreen> {
   bool _exporting = false;
   bool _importing = false;
+  bool _clearingCache = false;
+
+  Future<void> _handleClearWebViewCache() async {
+    if (_clearingCache) return;
+    final l10n = context.l10n;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.clearWebViewCacheConfirmTitle),
+        content: Text(l10n.clearWebViewCacheConfirmMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.confirm),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _clearingCache = true);
+    try {
+      await WebViewCacheService.clearCache(
+        includeDiskFiles: true,
+        clearStorage: true,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.clearWebViewCacheSuccess),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _clearingCache = false);
+    }
+  }
 
   Future<void> _handleExportBackup() async {
     if (_exporting || _importing) return;
@@ -275,6 +330,20 @@ class _DataSyncSettingsScreenState
                 : null,
             showChevron: !_importing,
             onTap: _handleImportBackup,
+          ),
+          _buildSettingItem(
+            context,
+            icon: Icons.cleaning_services_outlined,
+            title: l10n.clearWebViewCache,
+            trailing: _clearingCache
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : null,
+            showChevron: !_clearingCache,
+            onTap: _handleClearWebViewCache,
           ),
         ],
       ),

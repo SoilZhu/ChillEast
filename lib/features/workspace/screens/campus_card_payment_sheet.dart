@@ -87,7 +87,10 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
     if (widget.paymentMethod == PaymentMethod.alipay) {
       try {
         _htmlForm = await service.getAlipayForm(double.parse(widget.amount));
-        if (mounted) setState(() {});
+        if (mounted) {
+          setState(() {});
+          _startPollingAlipayStatus();
+        }
       } catch (e) {
         _logger.e('Failed to get alipay form: $e');
         if (mounted) {
@@ -107,12 +110,15 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
         final deepLink = await service.getWeChatDeepLink(order.mwebUrl);
         bool launched = false;
         if (deepLink != null) {
-          final uri = Uri.parse(deepLink);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-            launched = true;
+          try {
+            final uri = Uri.parse(deepLink);
+            _logger.i('🚀 Launching WeChat directly via deepLink: $deepLink');
+            launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+          } catch (e) {
+            _logger.w('⚠️ Direct launch WeChat deepLink failed: $e');
           }
         }
+        // 若直接唤起未成功，启用内置 WebView 自动通过 window.location.replace 携带合法 Referer 唤起
         _needsWeChatWebViewFallback = !launched;
 
         // 启动后台定时轮询（每 3 秒一次，最多轮询 25 次即 75 秒）
@@ -131,6 +137,19 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
         }
       }
     }
+  }
+
+  void _startPollingAlipayStatus() {
+    _pollingTimer?.cancel();
+    int pollCount = 0;
+    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
+      pollCount++;
+      if (pollCount > 25 || _isSuccess || !mounted) {
+        timer.cancel();
+        return;
+      }
+      await _checkAlipayStatus(isManual: false);
+    });
   }
 
   void _startPollingWeChatStatus() {
@@ -162,24 +181,22 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
         _pollingTimer?.cancel();
         await _handleSuccess();
       } else if (result.isPending) {
-        if (isManual) {
-          // 手动查询时，双重核验实际卡余额是否已经到账增加
-          final oldBal = double.tryParse(widget.info.balance);
-          if (oldBal != null) {
-            final newInfo = await service.fetchRechargeInfo();
-            final newBal = double.tryParse(newInfo.balance);
-            if (newBal != null && newBal > oldBal) {
-              _logger.i('🎉 Card balance increased from $oldBal to $newBal');
-              _pollingTimer?.cancel();
-              await _handleSuccess();
-              return;
-            }
+        // 双重核验实际卡余额是否已经到账增加 (无论自动轮询或手动查询)
+        final oldBal = double.tryParse(widget.info.balance);
+        if (oldBal != null) {
+          final newInfo = await service.fetchRechargeInfo(isRetry: true);
+          final newBal = double.tryParse(newInfo.balance);
+          if (newBal != null && newBal > oldBal) {
+            _logger.i('🎉 WeChat: Card balance increased from $oldBal to $newBal');
+            _pollingTimer?.cancel();
+            await _handleSuccess();
+            return;
           }
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(context.l10n.paymentProcessingWechatHint)),
-            );
-          }
+        }
+        if (isManual && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.l10n.paymentProcessingWechatHint)),
+          );
         }
       } else if (!result.isPending && result.message != null && isManual) {
         if (mounted) {
@@ -209,6 +226,7 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
       final newBal = double.tryParse(newInfo.balance);
       if (oldBal != null && newBal != null && newBal > oldBal) {
         _logger.i('🎉 Alipay: Card balance increased from $oldBal to $newBal');
+        _pollingTimer?.cancel();
         await _handleSuccess();
         return;
       }
@@ -272,10 +290,28 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
     }
   }
 
+  String _buildWeChatFallbackHtml(String mwebUrl) {
+    return '''
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+window.onload = function() {
+  window.location.replace("$mwebUrl");
+};
+</script>
+</head>
+<body>
+</body>
+</html>
+''';
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = const Color(AppConstants.primaryColorValue);
+    const primaryColor = Color(AppConstants.primaryColorValue);
 
     return Container(
       width: double.infinity,
@@ -383,7 +419,7 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
             Center(
               child: Column(
                 children: [
-                  CircularProgressIndicator(color: primaryColor),
+                  const CircularProgressIndicator(color: primaryColor),
                   const SizedBox(height: 16),
                   Text(
                     context.l10n.recharging,
@@ -431,7 +467,7 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
                             : _checkAlipayStatus(isManual: true),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _themeColor,
-                      side: BorderSide(color: _themeColor.withOpacity(0.5)),
+                      side: BorderSide(color: _themeColor.withValues(alpha: 0.5)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                     ),
                     icon: _isCheckingResult
@@ -482,16 +518,20 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
               child: Opacity(
                 opacity: 0.01,
                 child: InAppWebView(
-                  initialData: _htmlForm != null ? InAppWebViewInitialData(data: _htmlForm!) : null,
-                  initialUrlRequest: (_htmlForm == null && _needsWeChatWebViewFallback && _weChatOrder != null)
-                      ? URLRequest(
-                          url: WebUri(_weChatOrder!.mwebUrl),
-                          headers: {'Referer': 'https://fin-serv.hunau.edu.cn/'},
-                        )
-                      : null,
+                  initialData: InAppWebViewInitialData(
+                    data: _htmlForm ??
+                        (_weChatOrder != null
+                            ? _buildWeChatFallbackHtml(_weChatOrder!.mwebUrl)
+                            : ''),
+                    baseUrl: WebUri('https://fin-serv.hunau.edu.cn/'),
+                  ),
                   initialSettings: InAppWebViewSettings(
                     javaScriptEnabled: true,
                     userAgent: AppConstants.campusCardUA,
+                    useShouldOverrideUrlLoading: true,
+                    cacheEnabled: false,
+                    cacheMode: CacheMode.LOAD_NO_CACHE,
+                    clearCache: true,
                   ),
                   onLoadStart: (controller, url) async {
                     final path = url?.path ?? '';
@@ -499,16 +539,53 @@ class _CampusCardPaymentSheetState extends ConsumerState<CampusCardPaymentSheet>
                       await _handleSuccess();
                     }
                   },
+                  onLoadStop: (controller, url) async {
+                    final path = url?.path ?? '';
+                    if (path.contains('paySuccess')) {
+                      await _handleSuccess();
+                      return;
+                    }
+                    if (_htmlForm != null) {
+                      await controller.evaluateJavascript(
+                        source:
+                            "if (document.forms && document.forms.length > 0 && !window.__formSubmitted) { window.__formSubmitted = true; document.forms[0].submit(); }",
+                      );
+                    }
+                  },
                   shouldOverrideUrlLoading: (controller, navigationAction) async {
                     final url = navigationAction.request.url?.toString() ?? '';
-                    if (url.startsWith('alipays://') ||
-                        url.startsWith('alipay://') ||
-                        url.startsWith('weixin://')) {
-                      final uri = Uri.parse(url);
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    final uri = navigationAction.request.url?.uriValue ?? Uri.tryParse(url);
+                    if (uri != null) {
+                      final scheme = uri.scheme.toLowerCase();
+                      if (scheme != 'http' &&
+                          scheme != 'https' &&
+                          scheme != 'about' &&
+                          scheme != 'javascript') {
+                        _logger.i('🚀 Intercepted custom scheme in PaymentSheet: $url');
+                        try {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } catch (e) {
+                          _logger.w('⚠️ Failed to launch custom scheme: $url: $e');
+                          if (url.startsWith('intent://')) {
+                            final schemeMatch =
+                                RegExp(r'scheme=([a-zA-Z0-9_-]+);').firstMatch(url);
+                            if (schemeMatch != null) {
+                              final extractedScheme = schemeMatch.group(1);
+                              final fallbackUrl = url
+                                  .replaceFirst('intent://', '$extractedScheme://')
+                                  .split('#Intent;')[0];
+                              final fallbackUri = Uri.tryParse(fallbackUrl);
+                              if (fallbackUri != null) {
+                                try {
+                                  await launchUrl(fallbackUri,
+                                      mode: LaunchMode.externalApplication);
+                                } catch (_) {}
+                              }
+                            }
+                          }
+                        }
+                        return NavigationActionPolicy.CANCEL;
                       }
-                      return NavigationActionPolicy.CANCEL;
                     }
                     return NavigationActionPolicy.ALLOW;
                   },

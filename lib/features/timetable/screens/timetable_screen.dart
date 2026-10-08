@@ -313,7 +313,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
   }
 
   void _scrollToToday({bool animate = false}) {
-    if (_todayIndex <= 0 || !mounted) return;
+    if (_todayIndex < 0 || !mounted) return;
 
     // 立即尝试跳转（如果已经有 clients）
     if (_agendaScrollController.hasClients) {
@@ -329,27 +329,62 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
   }
 
   void _performScroll({bool animate = false}) {
+    final examList = ref.read(examProvider).maybeWhen(
+          data: (list) => list,
+          orElse: () => <ExamScheduleModel>[],
+        );
+    final homeworkList = ref.read(homeworkProvider).maybeWhen(
+          data: (list) => list,
+          orElse: () => <HomeworkModel>[],
+        );
+
     double offset = 0;
-    for (int i = 0; i < _todayIndex; i++) {
+    for (int i = 0; i < _todayIndex && i < _agendaTimeline.length; i++) {
       // 月份标题高度 (40px)
       if (i == 0 ||
           _agendaTimeline[i].key.month != _agendaTimeline[i - 1].key.month) {
         offset += 40.0;
       }
-      final cardCount = _agendaTimeline[i].value.length;
-      // 计算高度：单张卡片 60px + 4px margin = 64px, 区域底部间距 24px
-      double sectionHeight = cardCount * 64.0 + 24.0;
-      if (sectionHeight < 84) sectionHeight = 84;
+      final date = _agendaTimeline[i].key;
+      final courseCount = _agendaTimeline[i].value.length;
+      final examCount = examList
+          .where((e) =>
+              e.isCurrentSemester(firstWeekMonday: _firstWeekMonday) &&
+              e.time.year == date.year &&
+              e.time.month == date.month &&
+              e.time.day == date.day)
+          .length;
+      final homeworkCount = homeworkList
+          .where((h) =>
+              h.status == HomeworkStatus.pending &&
+              h.endTime != null &&
+              h.endTime?.year == date.year &&
+              h.endTime?.month == date.month &&
+              h.endTime?.day == date.day)
+          .length;
+
+      // 精确卡片高度：课程卡片 64px (60+4), 考试卡片 65px (61+4), 作业卡片 61px (57+4)
+      final rightContentHeight =
+          courseCount * 64.0 + examCount * 65.0 + homeworkCount * 61.0;
+      // 左侧日期栏固定高度 56px (Text 16px + SizedBox 4px + Circle 36px)
+      final rowHeight = rightContentHeight > 56.0 ? rightContentHeight : 56.0;
+      // 区域底部外边距 24px
+      final sectionHeight = rowHeight + 24.0;
       offset += sectionHeight;
     }
+
+    final maxExtent = _agendaScrollController.position.maxScrollExtent;
+    final minExtent = _agendaScrollController.position.minScrollExtent;
+    final targetOffset = offset.clamp(minExtent, maxExtent);
+
     if (animate) {
       _agendaScrollController.animateTo(
-        offset,
+        targetOffset,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOutCubic,
       );
     } else {
-      _agendaScrollController.jumpTo(offset);
+      _agendaScrollController.jumpTo(targetOffset);
     }
   }
 

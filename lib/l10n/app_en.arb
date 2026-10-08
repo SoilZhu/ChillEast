@@ -753,7 +753,13 @@
   "repairsUnnamedOrder": "Unnamed work order",
   "repairsEnterValue": "Enter or paste the platform value",
   "repairsRequiredField": "Please fill in {field}",
-  "@repairsRequiredField": {"placeholders": {"field": {"type": "String"}}},
+  "@repairsRequiredField": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
   "repairsSubmitSuccess": "Submitted",
   "repairsSubmitSuccessMessage": "Your work order was submitted. Track it under My work orders.",
   "repairsFormHint": "Fields marked * are required. Photo attachments can be captured or picked from gallery.",
@@ -799,7 +805,7 @@
   "repairsDeleteConfirm": "Delete this photo?",
   "repairsSubmitTicket": "Submit Repair Ticket",
   "repairsSelectCategory": "Select Repair Category",
-  "dataSyncSettings": "Data sync",
+  "dataSyncSettings": "Data",
   "dataBackup": "Export data",
   "backupSecurityTip": "Backup excludes login credentials, but includes your custom AI key. Keep it safe.",
   "backupShareText": "My ChillEast data backup",
@@ -866,5 +872,10 @@
   "ehallExternalJumpPrompt": "Opening external service",
   "ehallOpenNativeLeave": "Open in Native Leave App",
   "examSchedule": "Exam Schedule",
-  "examTimePrefix": "Exam Time"
+  "examTimePrefix": "Exam Time",
+  "clearWebViewCache": "Clear Cache",
+  "clearWebViewCacheSubtitle": "Clear InAppWebView disk cache and web data",
+  "clearWebViewCacheSuccess": "Cache cleared",
+  "clearWebViewCacheConfirmTitle": "Clear Cache?",
+  "clearWebViewCacheConfirmMessage": "This will clear local offline cache and temporary data for in-app web pages. Your login session will not be affected."
 }

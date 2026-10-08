@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ChillEast/features/campus_bus/models/campus_bus_data.dart';
 import 'package:ChillEast/features/campus_bus/screens/campus_bus_map_screen.dart';
@@ -58,7 +57,7 @@ void main() {
       expect(find.byType(InteractiveViewer), findsOneWidget);
 
       // Verify SvgPicture exists
-      expect(find.byType(SvgPicture), findsOneWidget);
+      expect(find.byType(Image), findsOneWidget);
     });
   });
 }
