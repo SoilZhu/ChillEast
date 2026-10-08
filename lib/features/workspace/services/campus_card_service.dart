@@ -548,128 +548,211 @@ class CampusCardService {
     }
   }
 
-  /// 提交充值请求，获取支付宝跳转表单
-  Future<String> getAlipayForm(double amount) async {
-    if (_openid == null || _cachedInfo == null) {
-      await fetchRechargeInfo();
+  /// 初始化校园卡充值环境 (确保 OpenID、Cookie 和 openCardPay 会话，对齐电费充值做法)
+  Future<String?> ensureCardPayAuthenticated({bool force = false}) async {
+    if (force || _openid == null || _cachedInfo == null) {
+      await fetchRechargeInfo(isRetry: force);
     }
 
-    final dio = DioClient().dio;
-    const url = 'https://fin-serv.hunau.edu.cn/alipay/transferFromAlipay2Card';
+    final openid = _openid;
+    if (openid == null) return null;
 
+    final dio = DioClient().dio;
     try {
-      final response = await dio.post(
-        url,
-        data: {
-          'txamt': amount.toStringAsFixed(0), // 可能是整数？HAR 中 txamt=1
-          'payWay': '4',
-          'openid': _openid,
-          'idserial': _cachedInfo!.idserial,
-          'username': _cachedInfo!.name,
-          'disableidserialstart': '88,89',
+      final response = await dio.get(
+        'https://fin-serv.hunau.edu.cn/cardpay/openCardPay',
+        queryParameters: {
+          'openid': openid,
+          'displayflag': '1',
+          'id': '28',
         },
         options: Options(
-          contentType: Headers.formUrlEncodedContentType,
           headers: {
             'User-Agent': AppConstants.campusCardUA,
-            'Referer': 'https://fin-serv.hunau.edu.cn/cardpay/openCardPay?openid=$_openid&displayflag=1&id=28',
+            'Referer':
+                'https://fin-serv.hunau.edu.cn/homeCX/openHomePage?openid=$openid&usertype=2',
           },
+          responseType: ResponseType.plain,
+          validateStatus: (status) => status != null && status < 500,
         ),
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        return response.data.toString();
+        final html = response.data.toString();
+        if (_cachedInfo == null ||
+            _cachedInfo!.balance.isEmpty ||
+            _cachedInfo!.balance == '0.00') {
+          _deepScanInfo(html);
+        }
       }
-      throw Exception('充值请求失败: ${response.statusCode}');
     } catch (e) {
-      _logger.e('❌ getAlipayForm error: $e');
-      rethrow;
+      _logger.w('⚠️ openCardPay initial call failed: $e');
     }
+
+    return openid;
   }
 
-  /// 提交微信充值请求，获取微信充值订单信息 (含 mweb_url 等)
-  Future<WeChatRechargeOrder> createWeChatOrder(double amount) async {
+  /// 发送带 DKYW 动态 AES 加解密的充值 POST 请求 (对齐电费充值与 HAR)
+  Future<dynamic> _postCardPay(String url, Map<String, dynamic> payload,
+      {bool isRetry = false}) async {
     if (_openid == null || _cachedInfo == null) {
-      await fetchRechargeInfo();
+      await ensureCardPayAuthenticated(force: isRetry);
     }
+    final openid = _openid;
+    if (openid == null) throw Exception('未授权 (OpenID 为空)');
 
     final dio = DioClient().dio;
+    final encryptedDatajson = DkywCrypto.encryptPayload(payload);
 
-    // 1. 尝试记录用户最后一次选择的支付方式 (HAR 中 Entry 0/32)
+    final response = await dio.post(
+      url,
+      queryParameters: {
+        'openid': openid,
+        'connect_redirect': '1',
+      },
+      data: {'datajson': encryptedDatajson},
+      options: Options(
+        headers: {
+          'User-Agent': AppConstants.campusCardUA,
+          'Referer':
+              'https://fin-serv.hunau.edu.cn/cardpay/openCardPay?openid=$openid&displayflag=1&id=28',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json, text/javascript, */*; q=0.01',
+        },
+      ),
+    );
+
+    final resData = DkywCrypto.decryptServerResponse(response.data);
+    _logger.d('📥 _postCardPay ($url) decrypted: $resData');
+
+    // 检查是否 session 过期或 openid 无效 (同电费充值)
+    if (resData is Map) {
+      final msg = (resData['message'] ?? resData['msg'] ?? '').toString();
+      if (!isRetry &&
+          (msg.contains('openid无效') ||
+              msg.contains('页面丢失') ||
+              msg.contains('未登录') ||
+              msg.contains('会话过期') ||
+              msg.contains('资源受限'))) {
+        _logger.w('⚠️ Token/OpenID expired in _postCardPay, re-authenticating...');
+        _openid = null;
+        await _clearDomainCookies();
+        await ensureCardPayAuthenticated(force: true);
+        return _postCardPay(url, payload, isRetry: true);
+      }
+    }
+
+    return resData;
+  }
+
+  /// 提交充值请求，获取支付宝跳转表单 (对齐 HAR 中 userlastbind + transferFromAlipay2Card)
+  Future<String> getAlipayForm(double amount) async {
+    await ensureCardPayAuthenticated();
+    if (_cachedInfo == null) throw Exception('未获取到校园卡信息');
+
+    final amountStr = amount == amount.roundToDouble()
+        ? amount.toInt().toString()
+        : amount.toStringAsFixed(2);
+
+    // 1. 尝试记录用户最后一次选择的支付方式 (HAR 中 Entry 0: cardpayWay=4)
     try {
-      await dio.post(
-        'https://fin-serv.hunau.edu.cn/myaccount/userlastbind?openid=$_openid&connect_redirect=1',
-        data: {
-          'payinfo': {'cardpayWay': '1'},
+      await _postCardPay(
+        'https://fin-serv.hunau.edu.cn/myaccount/userlastbind',
+        {
+          'payinfo': {'cardpayWay': '4'},
           'idserial': _cachedInfo!.idserial,
         },
-        options: Options(
-          contentType: Headers.jsonContentType,
-          headers: {
-            'User-Agent': AppConstants.campusCardUA,
-            'Referer': 'https://fin-serv.hunau.edu.cn/cardpay/openCardPay?openid=$_openid',
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-        ),
       );
     } catch (e) {
       _logger.w('⚠️ userlastbind failed (non-fatal): $e');
     }
 
-    // 2. 发起微信充值统一下单 (HAR 中 Entry 1/31)
-    final url = 'https://fin-serv.hunau.edu.cn/wxpay/transferFromWx2Card?openid=$_openid&connect_redirect=1';
-    try {
-      final response = await dio.post(
-        url,
-        data: {
-          'txamt': amount.toStringAsFixed(0),
-          'payWay': '1',
-          'openid': _openid,
-          'idserial': _cachedInfo!.idserial,
-          'tradetype': 'WAP',
-        },
-        options: Options(
-          contentType: Headers.jsonContentType,
-          headers: {
-            'User-Agent': AppConstants.campusCardUA,
-            'Referer': 'https://fin-serv.hunau.edu.cn/cardpay/openCardPay?openid=$_openid&displayflag=1&id=28',
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-        ),
-      );
+    // 2. 发起支付宝充值 (HAR 中 Entry 1)
+    final data = await _postCardPay(
+      'https://fin-serv.hunau.edu.cn/alipay/transferFromAlipay2Card',
+      {
+        'txamt': amountStr,
+        'payWay': '4',
+        'openid': _openid,
+        'idserial': _cachedInfo!.idserial,
+      },
+    );
 
-      if (response.statusCode == 200 && response.data != null) {
-        final dynamic respData = response.data is String ? jsonDecode(response.data as String) : response.data;
-        if (respData is Map<String, dynamic>) {
-          if (respData['success'] == true) {
-            final resultData = respData['resultData'] as Map<String, dynamic>?;
-            if (resultData != null && resultData['mweb_url'] != null) {
-              var returnurl = resultData['returnurl']?.toString() ?? '';
-              if (returnurl.contains('%')) {
-                try {
-                  returnurl = Uri.decodeComponent(returnurl);
-                } catch (_) {}
-              }
-              if (returnurl.startsWith('http://')) {
-                returnurl = returnurl.replaceFirst('http://', 'https://');
-              }
-              return WeChatRechargeOrder(
-                partnerjourno: resultData['partnerjourno']?.toString() ?? '',
-                mwebUrl: resultData['mweb_url'].toString(),
-                returnurl: returnurl,
-                redirectUrl: resultData['redirect_url']?.toString(),
-                prepayId: resultData['prepay_id']?.toString(),
-              );
-            }
-          }
-          throw Exception(respData['message'] ?? '创建微信充值订单失败');
+    if (data is Map) {
+      if (data['success'] == true || data['success'] == 'true') {
+        final resultData = data['resultData'];
+        if (resultData is Map && resultData['htmlpost'] != null) {
+          final htmlpost = resultData['htmlpost'].toString();
+          return htmlpost;
         }
       }
-      throw Exception('微信充值请求失败: ${response.statusCode}');
-    } catch (e) {
-      _logger.e('❌ createWeChatOrder error: $e');
-      rethrow;
+      final msg = data['message'] ?? data['msg'] ?? '获取支付宝支付表单失败';
+      throw Exception(msg.toString());
     }
+    throw Exception('获取支付宝支付表单失败：响应格式异常');
+  }
+
+  /// 提交微信充值请求，获取微信充值订单信息 (含 mweb_url 等) (对齐 HAR 中 userlastbind + transferFromWx2Card)
+  Future<WeChatRechargeOrder> createWeChatOrder(double amount) async {
+    await ensureCardPayAuthenticated();
+    if (_cachedInfo == null) throw Exception('未获取到校园卡信息');
+
+    final amountStr = amount == amount.roundToDouble()
+        ? amount.toInt().toString()
+        : amount.toStringAsFixed(2);
+
+    // 1. 尝试记录用户最后一次选择的支付方式 (HAR 中 Entry 0: cardpayWay=1)
+    try {
+      await _postCardPay(
+        'https://fin-serv.hunau.edu.cn/myaccount/userlastbind',
+        {
+          'payinfo': {'cardpayWay': '1'},
+          'idserial': _cachedInfo!.idserial,
+        },
+      );
+    } catch (e) {
+      _logger.w('⚠️ userlastbind failed (non-fatal): $e');
+    }
+
+    // 2. 发起微信充值统一下单 (HAR 中 Entry 1)
+    final data = await _postCardPay(
+      'https://fin-serv.hunau.edu.cn/wxpay/transferFromWx2Card',
+      {
+        'txamt': amountStr,
+        'payWay': '1',
+        'openid': _openid,
+        'idserial': _cachedInfo!.idserial,
+        'tradetype': 'WAP',
+      },
+    );
+
+    if (data is Map) {
+      if (data['success'] == true || data['success'] == 'true') {
+        final resultData = data['resultData'];
+        if (resultData is Map && resultData['mweb_url'] != null) {
+          var returnurl = resultData['returnurl']?.toString() ?? '';
+          if (returnurl.contains('%')) {
+            try {
+              returnurl = Uri.decodeComponent(returnurl);
+            } catch (_) {}
+          }
+          if (returnurl.startsWith('http://')) {
+            returnurl = returnurl.replaceFirst('http://', 'https://');
+          }
+          return WeChatRechargeOrder(
+            partnerjourno: resultData['partnerjourno']?.toString() ?? '',
+            mwebUrl: resultData['mweb_url'].toString(),
+            returnurl: returnurl,
+            redirectUrl: resultData['redirect_url']?.toString(),
+            prepayId: resultData['prepay_id']?.toString(),
+          );
+        }
+      }
+      final msg = data['message'] ?? data['msg'] ?? '创建微信充值订单失败';
+      throw Exception(msg.toString());
+    }
+    throw Exception('创建微信充值订单失败：响应格式异常');
   }
 
   /// 从微信 H5 支付页 (mweb_url) 中提取 weixin://wap/pay?... 唤醒链接
