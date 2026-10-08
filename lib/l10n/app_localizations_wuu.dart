@@ -129,6 +129,9 @@ class AppLocalizationsWuu extends AppLocalizations {
   String get openSourceLicenses => '开源说明';
 
   @override
+  String get visitWebsite => '访问官网';
+
+  @override
   String get sendEmail => '发电邮';
 
   @override

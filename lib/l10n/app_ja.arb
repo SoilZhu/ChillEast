@@ -40,6 +40,7 @@
   "logoutConfirmContent": "ログアウトすると、端末内の認証情報が消去され、データ同期が切断されます。",
   "checkUpdate": "アップデートを確認",
   "openSourceLicenses": "オープンソースライセンス",
+  "visitWebsite": "公式サイトを見る",
   "sendEmail": "メールを送信",
   "developer": "開発者",
   "loginTitle": "ログイン",

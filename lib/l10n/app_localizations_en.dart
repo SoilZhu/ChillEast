@@ -130,6 +130,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openSourceLicenses => 'Open Source Licenses';
 
   @override
+  String get visitWebsite => 'Visit Official Website';
+
+  @override
   String get sendEmail => 'Send Email';
 
   @override

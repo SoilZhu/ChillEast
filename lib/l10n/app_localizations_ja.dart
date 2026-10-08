@@ -129,6 +129,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get openSourceLicenses => 'オープンソースライセンス';
 
   @override
+  String get visitWebsite => '公式サイトを見る';
+
+  @override
   String get sendEmail => 'メールを送信';
 
   @override

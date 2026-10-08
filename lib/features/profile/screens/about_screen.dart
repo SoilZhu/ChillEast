@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/utils/route_utils.dart';
 import '../../../core/services/update_service.dart';
 import '../../../core/utils/l10n_extension.dart';
@@ -72,7 +73,7 @@ class AboutScreen extends StatelessWidget {
               child: FutureBuilder<PackageInfo>(
                 future: PackageInfo.fromPlatform(),
                 builder: (context, snapshot) {
-                  final versionStr = snapshot.hasData ? snapshot.data!.version : '1.0.9';
+                  final versionStr = snapshot.hasData ? snapshot.data!.version : '1.0.10';
                   return Text(
                     'Version $versionStr',
                     style: TextStyle(
@@ -88,6 +89,20 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 48),
             
             // 列表项 - 无分割线，涟漪延伸到两侧
+            _buildAboutItem(
+              context,
+              title: context.l10n.visitWebsite,
+              onTap: () async {
+                final Uri url = Uri.parse('https://chilleast.soilzhu.su');
+                if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('无法打开 $url')),
+                    );
+                  }
+                }
+              },
+            ),
             _buildAboutItem(
               context,
               title: context.l10n.checkUpdate,

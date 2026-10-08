@@ -127,6 +127,7 @@
   "logoutConfirmContent": "登出后会清除本地登入凭证，并中断资料连接。",
   "checkUpdate": "睇下有冇更新",
   "openSourceLicenses": "开源许可",
+  "visitWebsite": "前往官網",
   "sendEmail": "寄电邮",
   "developer": "开发者",
   "loginTitle": "登入",

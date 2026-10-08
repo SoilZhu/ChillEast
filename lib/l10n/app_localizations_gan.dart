@@ -129,6 +129,9 @@ class AppLocalizationsGan extends AppLocalizations {
   String get openSourceLicenses => '开源声明';
 
   @override
+  String get visitWebsite => '访问官网';
+
+  @override
   String get sendEmail => '发出邮件';
 
   @override

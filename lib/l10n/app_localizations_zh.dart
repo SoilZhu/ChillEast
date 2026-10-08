@@ -129,6 +129,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get openSourceLicenses => '开源声明';
 
   @override
+  String get visitWebsite => '访问官网';
+
+  @override
   String get sendEmail => '发送邮件';
 
   @override
@@ -2859,6 +2862,9 @@ class AppLocalizationsZhHk extends AppLocalizationsZh {
   String get openSourceLicenses => '開源聲明';
 
   @override
+  String get visitWebsite => '訪問官網';
+
+  @override
   String get sendEmail => '發送郵件';
 
   @override
@@ -5171,6 +5177,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get openSourceLicenses => '開源宣告';
 
   @override
+  String get visitWebsite => '造訪官網';
+
+  @override
   String get sendEmail => '傳送郵件';
 
   @override
@@ -7481,6 +7490,9 @@ class AppLocalizationsZhHefei extends AppLocalizationsZh {
 
   @override
   String get openSourceLicenses => '开源声明';
+
+  @override
+  String get visitWebsite => '去瞅瞅官网';
 
   @override
   String get sendEmail => '发邮件';

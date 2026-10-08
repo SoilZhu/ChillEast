@@ -131,6 +131,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get openSourceLicenses => 'Лицензии открытого ПО';
 
   @override
+  String get visitWebsite => 'Посетить официальный сайт';
+
+  @override
   String get sendEmail => 'Написать на почту';
 
   @override

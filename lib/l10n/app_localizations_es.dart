@@ -131,6 +131,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get openSourceLicenses => 'Licencias de código abierto';
 
   @override
+  String get visitWebsite => 'Visitar sitio oficial';
+
+  @override
   String get sendEmail => 'Enviar correo';
 
   @override

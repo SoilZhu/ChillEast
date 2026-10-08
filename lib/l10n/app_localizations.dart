@@ -359,6 +359,12 @@ abstract class AppLocalizations {
   /// **'开源声明'**
   String get openSourceLicenses;
 
+  /// No description provided for @visitWebsite.
+  ///
+  /// In zh, this message translates to:
+  /// **'访问官网'**
+  String get visitWebsite;
+
   /// No description provided for @sendEmail.
   ///
   /// In zh, this message translates to:

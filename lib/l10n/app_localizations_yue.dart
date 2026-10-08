@@ -129,6 +129,9 @@ class AppLocalizationsYue extends AppLocalizations {
   String get openSourceLicenses => '开源许可';
 
   @override
+  String get visitWebsite => '前往官網';
+
+  @override
   String get sendEmail => '寄电邮';
 
   @override

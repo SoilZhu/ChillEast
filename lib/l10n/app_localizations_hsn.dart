@@ -129,6 +129,9 @@ class AppLocalizationsHsn extends AppLocalizations {
   String get openSourceLicenses => '开源讲究';
 
   @override
+  String get visitWebsite => '去望哈官网';
+
+  @override
   String get sendEmail => '发封邮件';
 
   @override

@@ -130,6 +130,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get openSourceLicenses => 'Licenças de Código Aberto';
 
   @override
+  String get visitWebsite => 'Visitar o site oficial';
+
+  @override
   String get sendEmail => 'Enviar E-mail';
 
   @override
