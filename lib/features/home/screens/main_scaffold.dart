@@ -579,7 +579,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
             ),
           ),
 
-          // AI 模式下：全屏统一暗色背景遮罩（覆盖底栏与顶栏四周）+ 唯一点亮的漂浮顶栏与下方卡片
+          // AI 模式下：全屏统一暗色背景遮罩 + 底部悬浮卡片与输入底栏
           if (_isAiMode) ...[
             Positioned.fill(
               child: FadeTransition(
@@ -597,19 +597,12 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
               ),
             ),
             Positioned(
-              top: 0,
               left: 0,
               right: 0,
-              child: Material(
-                type: MaterialType.transparency,
-                child: _buildExpandedTopBar(context, authState, hasTimetable),
-              ),
-            ),
-            Positioned(
-              // 顶栏白条已展开到 120（2 倍），总高 134，卡片紧跟其下保持 2px 间隙
-              top: MediaQuery.of(context).padding.top + 136,
-              left: 0,
-              right: 0,
+              top: MediaQuery.of(context).padding.top + 8,
+              bottom: (MediaQuery.of(context).viewInsets.bottom > 0
+                  ? MediaQuery.of(context).viewInsets.bottom + 8
+                  : MediaQuery.of(context).padding.bottom + 8),
               child: FadeTransition(
                 opacity: CurvedAnimation(
                   parent: _aiAnimController,
@@ -617,23 +610,35 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                 ),
                 child: SlideTransition(
                   position: Tween<Offset>(
-                    begin: const Offset(0.0, -0.05), // 自顶栏平滑下移淡入
+                    begin: const Offset(0.0, 0.05), // 自底栏平滑上移淡入
                     end: Offset.zero,
                   ).animate(CurvedAnimation(
                     parent: _aiAnimController,
                     curve: Curves.easeOutCubic,
                   )),
-                  child: Material(
-                    type: MaterialType.transparency,
-                    child: AiResponseCard(
-                      onClose: _exitAiMode,
-                      onQuickQuerySelected: (query) {
-                        _aiInputController.clear();
-                        setState(() {
-                          _selectedImagePath = null;
-                        });
-                      },
-                    ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // 卡片在底栏上方
+                      Flexible(
+                        child: AiResponseCard(
+                          onClose: _exitAiMode,
+                          onQuickQuerySelected: (query) {
+                            _aiInputController.clear();
+                            setState(() {
+                              _selectedImagePath = null;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // 原顶栏现成为底栏
+                      Material(
+                        type: MaterialType.transparency,
+                        child: _buildAiBottomBar(context),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -644,424 +649,322 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
     );
   }
 
-  PreferredSizeWidget _buildGlobalTopBar(BuildContext context, AuthState authState, bool hasTimetable, [double? overrideBarHeight]) {
+  PreferredSizeWidget _buildGlobalTopBar(
+      BuildContext context, AuthState authState, bool hasTimetable) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // 非 AI 模式：去掉白色卡片顶栏，一言左对齐（无左侧 icon），头像右对齐
-    // 注：正常顶栏不区分 AI 模式，永远 plain；AI 浮层输入条走下面的卡片分支
-    if (overrideBarHeight == null) {
-      // 一言只在主页 tab 显示。controller 在点击帧就同步翻 index，
-      // listener 无条件重绘，所以这里与页面翻页是同一帧，并行动画。
-      final isHomeTab = _tabController.index == 0;
-      return PreferredSize(
-        preferredSize: const Size.fromHeight(56),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    // 注意：不要在这里设 switchIn/OutCurve，出场动画 t 是从 1→0，
-                    // 套 easeOut 会让前半段几乎不动（t=0.9 时 opacity 还有 0.999），
-                    // 看起来就像“过一小会才动”。方向曲线在下面按进/出分别指定。
-                    // 左对齐堆叠（默认 layoutBuilder 是居中的，会把一言挤到中间）
-                    layoutBuilder: (currentChild, previousChildren) {
-                      return Stack(
-                        alignment: Alignment.centerLeft,
-                        clipBehavior: Clip.none,
-                        children: [
-                          ...previousChildren,
-                          if (currentChild != null) currentChild,
-                        ],
-                      );
-                    },
-                    // 进场从下方滑入，出场向上滑出（各走各的方向，非反播）。
-                    // 方向按目标 tab + 子项 key 判定：只有一言文本可见，
-                    // 回主页=文本进场，离主页=文本出场。
-                    transitionBuilder: (child, animation) {
-                      final isText =
-                          child.key == const ValueKey('hitokoto_text');
-                      if (!isText) {
-                        // 空占位不可见，线性淡入淡出即可
-                        return FadeTransition(
-                          opacity: animation,
-                          child: child,
-                        );
-                      }
-                      // 进场用 easeOut、出场用 easeIn，保证两边都是“快起”：
-                      // 出场 t 从 1→0，若用 easeOut 则前半段几乎不动。
-                      final curve =
-                          isHomeTab ? Curves.easeOutCubic : Curves.easeInCubic;
-                      final curved = CurvedAnimation(
-                        parent: animation,
-                        curve: curve,
-                      );
-                      final slide = isHomeTab
-                          // 回主页：从下方滑入
-                          ? Tween<Offset>(
-                              begin: const Offset(0, 0.5), end: Offset.zero)
-                              .animate(curved)
-                          // 离主页：向上滑出
-                          : Tween<Offset>(
-                              begin: const Offset(0, -0.5),
-                              end: Offset.zero)
-                              .animate(curved);
+    // 一言只在主页 tab 显示。controller 在点击帧就同步翻 index，
+    // listener 无条件重绘，所以这里与页面翻页是同一帧，并行动画。
+    final isHomeTab = _tabController.index == 0;
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(56),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  // 注意：不要在这里设 switchIn/OutCurve，出场动画 t 是从 1→0，
+                  // 套 easeOut 会让前半段几乎不动（t=0.9 时 opacity 还有 0.999），
+                  // 看起来就像“过一小会才动”。方向曲线在下面按进/出分别指定。
+                  // 左对齐堆叠（默认 layoutBuilder 是居中的，会把一言挤到中间）
+                  layoutBuilder: (currentChild, previousChildren) {
+                    return Stack(
+                      alignment: Alignment.centerLeft,
+                      clipBehavior: Clip.none,
+                      children: [
+                        ...previousChildren,
+                        if (currentChild != null) currentChild,
+                      ],
+                    );
+                  },
+                  // 进场从下方滑入，出场向上滑出（各走各的方向，非反播）。
+                  // 方向按目标 tab + 子项 key 判定：只有一言文本可见，
+                  // 回主页=文本进场，离主页=文本出场。
+                  transitionBuilder: (child, animation) {
+                    final isText =
+                        child.key == const ValueKey('hitokoto_text');
+                    if (!isText) {
+                      // 空占位不可见，线性淡入淡出即可
                       return FadeTransition(
-                        opacity: curved,
-                        child: SlideTransition(
-                          position: slide,
-                          child: child,
-                        ),
+                        opacity: animation,
+                        child: child,
                       );
-                    },
-                    child: isHomeTab
-                        ? Text(
-                            _hitokoto ?? context.l10n.defaultHitokoto,
-                            key: const ValueKey('hitokoto_text'),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.left,
-                            style: TextStyle(
-                              fontSize: 16,
-                              height: 1.2,
-                              color:
-                                  isDark ? Colors.white54 : Colors.grey[800],
-                            ),
-                          )
-                        : const SizedBox.shrink(
-                            key: ValueKey('hitokoto_empty')),
+                    }
+                    // 进场用 easeOut、出场用 easeIn，保证两边都是“快起”：
+                    // 出场 t 从 1→0，若用 easeOut 则前半段几乎不动。
+                    final curve =
+                        isHomeTab ? Curves.easeOutCubic : Curves.easeInCubic;
+                    final curved = CurvedAnimation(
+                      parent: animation,
+                      curve: curve,
+                    );
+                    final slide = isHomeTab
+                        // 回主页：从下方滑入
+                        ? Tween<Offset>(
+                            begin: const Offset(0, 0.5), end: Offset.zero)
+                            .animate(curved)
+                        // 离主页：向上滑出
+                        : Tween<Offset>(
+                            begin: const Offset(0, -0.5),
+                            end: Offset.zero)
+                            .animate(curved);
+                    return FadeTransition(
+                      opacity: curved,
+                      child: SlideTransition(
+                        position: slide,
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: isHomeTab
+                      ? Text(
+                          _hitokoto ?? context.l10n.defaultHitokoto,
+                          key: const ValueKey('hitokoto_text'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.left,
+                          style: TextStyle(
+                            fontSize: 16,
+                            height: 1.2,
+                            color:
+                                isDark ? Colors.white54 : Colors.grey[800],
+                          ),
+                        )
+                      : const SizedBox.shrink(
+                          key: ValueKey('hitokoto_empty')),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                key: const ValueKey('ai_entry_button'),
+                onTap: _enterAiMode,
+                behavior: HitTestBehavior.opaque,
+                child: SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Center(
+                    child: SvgPicture.asset(
+                      'assets/images/ai_button.svg',
+                      width: 24,
+                      height: 24,
+                      colorFilter: ColorFilter.mode(
+                        isDark ? Colors.white54 : Colors.grey,
+                        BlendMode.srcIn,
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 8),
+              ),
+              const SizedBox(width: 4),
+              SizedBox(
+                width: 40,
+                height: 40,
+                child:
+                    _buildAvatar(context, authState, hasTimetable, isDark),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// AI 模式悬浮底栏（原顶栏）
+  Widget _buildAiBottomBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final canSend = _aiInputController.text.trim().isNotEmpty || _selectedImagePath != null;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(8), // MD2 圆角 8
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.5)
+                : Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.12)
+              : Colors.grey.withOpacity(0.1),
+          width: 1.0,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 输入行：返回按钮 + 输入框
+          SizedBox(
+            height: 44,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: GestureDetector(
+                    key: const ValueKey('ai_back_button'),
+                    onTap: _exitAiMode,
+                    behavior: HitTestBehavior.opaque,
+                    child: const Center(
+                      child: Icon(
+                        Icons.arrow_back_rounded,
+                        color: Color(0xFF09C489),
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    key: const ValueKey('ai_text_field'),
+                    controller: _aiInputController,
+                    focusNode: _aiInputFocusNode,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: _submitAiQuery,
+                    cursorColor: const Color(0xFF09C489),
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.2,
+                      color: isDark ? Colors.white : const Color(0xFF202124),
+                    ),
+                    decoration: InputDecoration(
+                      hintText: context.l10n.whatsNewHint,
+                      hintStyle: TextStyle(
+                        fontSize: 16,
+                        height: 1.2,
+                        color: isDark ? Colors.white38 : Colors.grey[400],
+                      ),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      focusedErrorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      filled: false,
+                      fillColor: Colors.transparent,
+                      hoverColor: Colors.transparent,
+                      focusColor: Colors.transparent,
+                      isDense: true,
+                      isCollapsed: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          // 操作行：图片预览（若有）+ 图片选择 + 发送按钮
+          SizedBox(
+            height: 40,
+            child: Row(
+              children: [
+                if (_selectedImagePath != null)
+                  Container(
+                    height: 36,
+                    padding: const EdgeInsets.only(left: 3, right: 8),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.black.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: const Color(0xFF09C489).withOpacity(0.4),
+                        width: 1.0,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: Image.file(
+                            File(_selectedImagePath!),
+                            width: 30,
+                            height: 30,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedImagePath = null;
+                            });
+                          },
+                          behavior: HitTestBehavior.opaque,
+                          child: Icon(
+                            Icons.close_rounded,
+                            size: 16,
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const Spacer(),
                 GestureDetector(
-                  onTap: _enterAiMode,
+                  onTap: _pickImage,
                   behavior: HitTestBehavior.opaque,
                   child: SizedBox(
                     width: 40,
                     height: 40,
                     child: Center(
-                      child: SvgPicture.asset(
-                        'assets/images/ai_button.svg',
-                        width: 24,
-                        height: 24,
-                        colorFilter: ColorFilter.mode(
-                          isDark ? Colors.white54 : Colors.grey,
-                          BlendMode.srcIn,
-                        ),
+                      child: Icon(
+                        _selectedImagePath != null
+                            ? Icons.image_rounded
+                            : Icons.image_outlined,
+                        color: _selectedImagePath != null
+                            ? const Color(0xFF09C489)
+                            : (isDark ? Colors.white70 : Colors.grey[600]),
+                        size: 22,
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 4),
-                SizedBox(
-                  width: 40,
-                  height: 40,
-                  child:
-                      _buildAvatar(context, authState, hasTimetable, isDark),
+                GestureDetector(
+                  onTap: canSend ? () => _submitAiQuery(_aiInputController.text) : null,
+                  behavior: HitTestBehavior.opaque,
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: canSend
+                              ? const Color(0xFF09C489)
+                              : (isDark
+                                  ? Colors.white.withOpacity(0.1)
+                                  : Colors.grey[300]),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.arrow_upward_rounded,
+                          color: canSend
+                              ? Colors.white
+                              : (isDark ? Colors.white38 : Colors.grey[500]),
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-        ),
-      );
-    }
-    // 白条高度：默认 60，点击后展开到 120（2 倍）；整体高度联动 +60，保持边距不变
-    // 能走到这里 overrideBarHeight 必非空（空已在 plain 分支返回）
-    final double barHeight = overrideBarHeight;
-    final prefHeight = 88.0 + (barHeight - 60.0);
-
-    return PreferredSize(
-      preferredSize: Size.fromHeight(prefHeight),
-      child: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
-          child: GestureDetector(
-            onTap: _isAiMode ? null : _enterAiMode,
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              height: barHeight,
-              alignment: Alignment.topCenter,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                borderRadius: BorderRadius.circular(8), // MD2 圆角 8
-                boxShadow: [
-                  BoxShadow(
-                    color: isDark 
-                        ? Colors.black.withOpacity(0.5) 
-                        : Colors.black.withOpacity(0.2),
-                    blurRadius: 3,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.12)
-                      : Colors.grey.withOpacity(0.1),
-                  width: 1.0,
-                ),
-              ),
-              // 首行固定 60px 置顶：展开时返回按钮/输入框保持原位，发送按钮下移到底部
-              child: SizedBox(
-                height: barHeight,
-                child: Stack(
-                  children: [
-                    SizedBox(
-                      height: 60,
-                      child: Row(
-                      children: [
-                  // 左侧图标：位置绝对固定，原地纯渐变切换（返回按钮 <-> 自然图标）
-                  SizedBox(
-                    width: 32,
-                    height: 32,
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeOutCubic,
-                      transitionBuilder: (child, animation) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: child,
-                        );
-                      },
-                      child: _isAiMode
-                          ? GestureDetector(
-                              key: const ValueKey('ai_back_button'),
-                              onTap: _exitAiMode,
-                              behavior: HitTestBehavior.opaque,
-                              child: const Center(
-                                child: Icon(
-                                  Icons.arrow_back_rounded,
-                                  color: Color(0xFF09C489),
-                                  size: 24,
-                                ),
-                              ),
-                            )
-                          : Center(
-                              key: const ValueKey('nature_icon'),
-                              child: Icon(
-                                Icons.nature_outlined, 
-                                color: isDark ? Colors.white60 : Colors.grey, 
-                                size: 24,
-                              ),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-
-                  // 中间区域：位置基准线完全一致，原地平滑交叉淡化（输入框 <-> 一言文本）
-                  Expanded(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeOutCubic,
-                      transitionBuilder: (child, animation) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: child,
-                        );
-                      },
-                      child: _isAiMode
-                          ? Align(
-                              key: const ValueKey('ai_text_field'),
-                              alignment: Alignment.centerLeft,
-                              child: TextField(
-                                controller: _aiInputController,
-                                focusNode: _aiInputFocusNode,
-                                textInputAction: TextInputAction.send,
-                                onSubmitted: _submitAiQuery,
-                                cursorColor: const Color(0xFF09C489),
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  height: 1.2,
-                                  color: isDark ? Colors.white : const Color(0xFF202124),
-                                ),
-                                decoration: InputDecoration(
-                                  hintText: context.l10n.whatsNewHint,
-                                  hintStyle: TextStyle(
-                                    fontSize: 16,
-                                    height: 1.2,
-                                    color: isDark ? Colors.white38 : Colors.grey[400],
-                                  ),
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  errorBorder: InputBorder.none,
-                                  focusedErrorBorder: InputBorder.none,
-                                  disabledBorder: InputBorder.none,
-                                  filled: false,
-                                  fillColor: Colors.transparent,
-                                  hoverColor: Colors.transparent,
-                                  focusColor: Colors.transparent,
-                                  isDense: true,
-                                  isCollapsed: true,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                              ),
-                            )
-                          : Align(
-                              key: const ValueKey('hitokoto_text'),
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                _hitokoto ?? context.l10n.defaultHitokoto,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  height: 1.2,
-                                  color: isDark ? Colors.white54 : Colors.grey[500],
-                                ),
-                              ),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // 右侧区域：AI 模式下占位（发送按钮已下移到底部），非 AI 模式显示头像
-                  SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeOutCubic,
-                      transitionBuilder: (child, animation) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: child,
-                        );
-                      },
-                      child: _isAiMode
-                          ? const SizedBox(
-                              key: ValueKey('ai_empty_space'),
-                              width: 40,
-                              height: 40,
-                            )
-                          : _buildAvatar(context, authState, hasTimetable, isDark,
-                              key: const ValueKey('profile_avatar')),
-                    ),
-                  ),
-                ],
-                      ), // Row
-                    ), // 顶部 60px 行：返回按钮 + 输入框保持原位
-                    // 已选图片预览缩略图
-                    if (_isAiMode && _selectedImagePath != null)
-                      Positioned(
-                        top: 10 + (barHeight - 60),
-                        left: 42,
-                        child: Container(
-                          height: 40,
-                          padding: const EdgeInsets.only(left: 3, right: 8),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.white.withOpacity(0.08)
-                                : Colors.black.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: const Color(0xFF09C489).withOpacity(0.4),
-                              width: 1.0,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: Image.file(
-                                  File(_selectedImagePath!),
-                                  width: 34,
-                                  height: 34,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedImagePath = null;
-                                  });
-                                },
-                                behavior: HitTestBehavior.opaque,
-                                child: Icon(
-                                  Icons.close_rounded,
-                                  size: 16,
-                                  color: isDark ? Colors.white70 : Colors.black54,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    // 图片按钮与发送按钮：随展开从顶部下移到底部右下角
-                    if (_isAiMode)
-                      Positioned(
-                        top: 10 + (barHeight - 60),
-                        right: 0,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // 发送键左侧的图片上传按钮（直接展示图标，不包在圆内）
-                            GestureDetector(
-                              onTap: _pickImage,
-                              behavior: HitTestBehavior.opaque,
-                              child: SizedBox(
-                                width: 40,
-                                height: 40,
-                                child: Center(
-                                  child: Icon(
-                                    _selectedImagePath != null
-                                        ? Icons.image_rounded
-                                        : Icons.image_outlined,
-                                    color: _selectedImagePath != null
-                                        ? const Color(0xFF09C489)
-                                        : (isDark ? Colors.white70 : Colors.grey[600]),
-                                    size: 22,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            // 发送按钮
-                            GestureDetector(
-                              onTap: (_aiInputController.text.trim().isNotEmpty || _selectedImagePath != null)
-                                  ? () => _submitAiQuery(_aiInputController.text)
-                                  : null,
-                              behavior: HitTestBehavior.opaque,
-                              child: SizedBox(
-                                width: 40,
-                                height: 40,
-                                child: Center(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(7),
-                                    decoration: BoxDecoration(
-                                      color: (_aiInputController.text.trim().isNotEmpty || _selectedImagePath != null)
-                                          ? const Color(0xFF09C489)
-                                          : (isDark
-                                              ? Colors.white.withOpacity(0.1)
-                                              : Colors.grey[300]),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      Icons.arrow_upward_rounded,
-                                      color: (_aiInputController.text.trim().isNotEmpty || _selectedImagePath != null)
-                                          ? Colors.white
-                                          : (isDark ? Colors.white38 : Colors.grey[500]),
-                                      size: 16,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -1180,22 +1083,6 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
             ),
           ),
       ],
-    );
-  }
-
-  /// AI 模式漂浮顶栏：高度随 _aiAnimController 从 60 展开到 120（2 倍）
-  Widget _buildExpandedTopBar(
-      BuildContext context, AuthState authState, bool hasTimetable) {
-    return AnimatedBuilder(
-      animation: _aiAnimController,
-      builder: (context, _) {
-        final t = CurvedAnimation(
-          parent: _aiAnimController,
-          curve: Curves.easeOutCubic,
-        ).value;
-        final barHeight = 60.0 + 60.0 * t; // 60 -> 120
-        return _buildGlobalTopBar(context, authState, hasTimetable, barHeight);
-      },
     );
   }
 

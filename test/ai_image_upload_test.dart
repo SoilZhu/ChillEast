@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ChillEast/core/ai/ai_provider.dart';
 import 'package:ChillEast/core/state/locale_provider.dart';
 import 'package:ChillEast/features/home/screens/main_scaffold.dart';
+import 'package:ChillEast/features/home/widgets/ai_response_card.dart';
 import 'package:ChillEast/l10n/app_localizations.dart';
 
 void main() {
@@ -131,10 +132,10 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // 点击一言区域进入 AI 交互模式
-      final hitokotoFinder = find.byKey(const ValueKey('hitokoto_text'));
-      expect(hitokotoFinder, findsOneWidget);
-      await tester.tap(hitokotoFinder);
+      // 点击 AI 按键进入 AI 交互模式
+      final aiBtnFinder = find.byKey(const ValueKey('ai_entry_button'));
+      expect(aiBtnFinder, findsOneWidget);
+      await tester.tap(aiBtnFinder);
       await tester.pump(const Duration(milliseconds: 300));
 
       // 验证图片按钮与发送按钮均已渲染
@@ -149,6 +150,20 @@ void main() {
       final sendPos = tester.getCenter(sendBtnFinder);
       expect(imagePos.dx, lessThan(sendPos.dx));
       expect((imagePos.dy - sendPos.dy).abs(), lessThan(5.0));
+
+      // 验证卡片在底栏上方
+      final cardFinder = find.byType(AiResponseCard);
+      expect(cardFinder, findsOneWidget);
+      final cardBottom = tester.getBottomLeft(cardFinder).dy;
+      final inputTop = tester.getTopLeft(find.byKey(const ValueKey('ai_text_field'))).dy;
+      expect(cardBottom, lessThanOrEqualTo(inputTop));
+
+      // 点击返回按钮退出 AI 交互模式
+      final backBtnFinder = find.byKey(const ValueKey('ai_back_button'));
+      expect(backBtnFinder, findsOneWidget);
+      await tester.tap(backBtnFinder);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(AiResponseCard), findsNothing);
 
       // 确保组件内的延迟定时器跑完
       await tester.pump(const Duration(seconds: 4));
