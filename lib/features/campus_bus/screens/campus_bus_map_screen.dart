@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/utils/l10n_extension.dart';
 
 class CampusBusMapScreen extends StatelessWidget {
@@ -31,8 +30,8 @@ class CampusBusMapScreen extends StatelessWidget {
               vertical: 32,
             ),
             child: Center(
-              child: SvgPicture.asset(
-                'assets/images/campus_bus_map.svg',
+              child: Image.asset(
+                'assets/images/campus_bus_map.webp',
                 width: constraints.maxWidth,
                 fit: BoxFit.contain,
               ),
