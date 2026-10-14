@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/network/cookie_manager.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/state/auth_state.dart';
 import '../models/repair_models.dart';
@@ -17,7 +19,19 @@ final repairServiceProvider = Provider<RepairService>((ref) => RepairService(
 
 class RepairException implements Exception {
   final String message;
-  const RepairException(this.message);
+  final int? code;
+  const RepairException(this.message, {this.code});
+
+  bool get isUnauthorized =>
+      code == 401 ||
+      code == 403 ||
+      message.contains('未登录') ||
+      message.contains('not login') ||
+      message.contains('未授权') ||
+      message.contains('凭证交换失败') ||
+      message.contains('会话已过期') ||
+      message.contains('会话已失效');
+
   @override
   String toString() => message;
 }
@@ -82,16 +96,22 @@ class RepairService {
   String get _uid => _bxptUserId ?? auth.uid ?? '';
   String? get bxptUserId => _bxptUserId;
 
+  void invalidateSession() {
+    _repairSessionReady = false;
+    _bxptUserId = null;
+    _repairSessionFuture = null;
+  }
+
   /// The campus repair platform has its own CAS service endpoint. The normal
   /// app login establishes the SSO ticket cookie, but the ticket must still be
   /// exchanged once with bxpt.hunau.edu.cn before its /relax/mobile RPC API
   /// accepts requests. This is the same redirect chain captured in
   /// debug/登录bxpt.hunau.edu.cn.har.
-  Future<void> _ensureRepairSession() async {
-    if (_repairSessionReady) return;
+  Future<void> _ensureRepairSession({bool force = false}) async {
+    if (!force && _repairSessionReady) return;
     final running = _repairSessionFuture;
     if (running != null) return running;
-    final future = _establishRepairSession();
+    final future = _establishRepairSession(skipReuse: force);
     _repairSessionFuture = future;
     try {
       await future;
@@ -100,21 +120,32 @@ class RepairService {
     }
   }
 
-  Future<void> _establishRepairSession() async {
-    // 1. 尝试复用现有会话
+  Future<void> _establishRepairSession({bool skipReuse = false}) async {
+    // 1. 尝试复用现有会话 (仅在非强制模式下)
+    if (!skipReuse) {
+      try {
+        final identity = await _rpcRaw('/v2/login/isAuthenticated', null);
+        if (identity is Map && identity['id'] != null) {
+          _bxptUserId = identity['id']?.toString();
+          _repairSessionReady = true;
+          return;
+        }
+      } catch (_) {}
+    }
+
+    // 2. 清理报修平台旧 Cookie，避免失效 Cookie 干扰 CAS 换票
     try {
-      final identity = await _rpcRaw('/v2/login/isAuthenticated', null);
-      if (identity is Map && identity['id'] != null) {
-        _bxptUserId = identity['id']?.toString();
-        _repairSessionReady = true;
-        return;
+      if (_client == null) {
+        await AppCookieManager()
+            .dioCookieJar
+            .delete(Uri.parse(RepairService.baseUrl), true);
       }
     } catch (_) {}
 
-    // 2. 进行 CAS 票据交换
+    // 3. 进行 CAS 票据交换
     await _exchangeCasTicket();
 
-    // 3. 校验并提取用户资料
+    // 4. 校验并提取用户资料
     try {
       final identity = await _rpcRaw('/v2/login/isAuthenticated', null);
       if (identity is Map && identity['id'] != null) {
@@ -124,11 +155,18 @@ class RepairService {
       }
     } catch (_) {}
 
-    // 4. 若换票未成功，可能是 SSO TGC 过期，尝试静默重新登录后再次换票
+    // 5. 若换票未成功，可能是 SSO TGC 过期，尝试静默重新登录后再次换票
     final reauthenticate = _reauthenticate;
     if (reauthenticate != null) {
       try {
         await reauthenticate();
+        try {
+          if (_client == null) {
+            await AppCookieManager()
+                .dioCookieJar
+                .delete(Uri.parse(RepairService.baseUrl), true);
+          }
+        } catch (_) {}
         await _exchangeCasTicket();
         final refreshedIdentity =
             await _rpcRaw('/v2/login/isAuthenticated', null);
@@ -140,7 +178,7 @@ class RepairService {
       } catch (_) {}
     }
 
-    throw const RepairException('报修平台登录凭证交换失败，请返回个人中心重新登录后重试');
+    throw const RepairException('报修平台登录凭证交换失败，请返回个人中心重新登录后重试', code: 401);
   }
 
   Future<void> _exchangeCasTicket() async {
@@ -173,27 +211,36 @@ class RepairService {
     }
   }
 
+  static String _computeStamp(dynamic payload, int timestamp) {
+    final rawStamp = 'jsonrpc: ${jsonEncode(payload)}';
+    final hash = md5.convert(utf8.encode(rawStamp)).toString();
+    return hash + timestamp.toRadixString(16);
+  }
+
   Future<dynamic> _rpcRaw(String path, dynamic params,
       {bool batch = false}) async {
     final payload = batch
         ? params
         : {'jsonrpc': '2.0', 'method': path, 'id': '1', 'params': params};
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final stamp = _computeStamp(payload, now);
     final response = await _dio.post(
       '$baseUrl/relax/mobile/rpc',
       queryParameters: {
         'p': path,
-        't': DateTime.now().millisecondsSinceEpoch,
+        't': now,
       },
       data: payload,
       options: Options(
         contentType: Headers.jsonContentType,
         responseType: ResponseType.plain,
         receiveTimeout: const Duration(seconds: 25),
-        headers: const {
+        headers: {
           'Origin': baseUrl,
           'Referer': '$baseUrl/relax/mobile/index.html',
           'X-Requested-With': 'XMLHttpRequest',
           'X-User-Lang': 'zh-CN',
+          'X-SR-A': stamp,
           'Accept': '*/*',
         },
       ),
@@ -212,22 +259,43 @@ class RepairService {
       return body.map((e) => e is Map ? e['result'] : e).toList();
     }
     if (body is! Map) {
+      if (response.statusCode == 401 ||
+          response.statusCode == 302 ||
+          (response.data is String &&
+              ((response.data as String).contains('cas/login') ||
+                  (response.data as String).contains('<html')))) {
+        throw const RepairException('报修会话已过期，请重新登录', code: 401);
+      }
       throw const RepairException('报修平台暂时不可用，请稍后重试');
     }
     if (body['error'] != null) {
       final err = body['error'];
+      final errCode =
+          err is Map && err['code'] is int ? err['code'] as int : null;
       final msg = err is Map
           ? (err['message'] ?? err['data'] ?? '')
           : err.toString();
+      final code = errCode ?? (response.statusCode == 401 ? 401 : null);
       throw RepairException(
-          msg.isNotEmpty ? '报修服务异常: $msg' : '报修平台暂时不可用，请稍后重试');
+          msg.isNotEmpty ? '报修服务异常: $msg' : '报修平台暂时不可用，请稍后重试',
+          code: code);
     }
     return body['result'];
   }
 
   Future<dynamic> _rpc(String path, dynamic params) async {
     await _ensureRepairSession();
-    return _rpcRaw(path, params);
+    try {
+      return await _rpcRaw(path, params);
+    } on RepairException catch (e) {
+      if (e.isUnauthorized) {
+        _repairSessionReady = false;
+        _bxptUserId = null;
+        await _ensureRepairSession(force: true);
+        return await _rpcRaw(path, params);
+      }
+      rethrow;
+    }
   }
 
   Future<List<RepairOrder>> fetchOrders({
@@ -794,7 +862,24 @@ class RepairService {
     File file,
   ) async {
     await _ensureRepairSession();
+    try {
+      return await _uploadAttachmentRaw(session, field, file);
+    } on RepairException catch (e) {
+      if (e.isUnauthorized) {
+        _repairSessionReady = false;
+        _bxptUserId = null;
+        await _ensureRepairSession(force: true);
+        return await _uploadAttachmentRaw(session, field, file);
+      }
+      rethrow;
+    }
+  }
 
+  Future<RepairAttachment> _uploadAttachmentRaw(
+    RepairFormSession session,
+    RepairField field,
+    File file,
+  ) async {
     final fileName = file.path.split(Platform.pathSeparator).last;
     final instance = '${session.instanceId}-${field.name}';
     final formData = FormData.fromMap({
@@ -830,7 +915,25 @@ class RepairService {
     }
 
     if (resData is! Map) {
+      if (response.statusCode == 401 ||
+          response.statusCode == 302 ||
+          (response.data is String &&
+              ((response.data as String).contains('cas/login') ||
+                  (response.data as String).contains('<html')))) {
+        throw const RepairException('报修会话已过期，请重新登录', code: 401);
+      }
       throw const RepairException('上传附件失败，服务器未返回有效数据');
+    }
+    if (resData['error'] != null) {
+      final err = resData['error'];
+      final errCode =
+          err is Map && err['code'] is int ? err['code'] as int : null;
+      final msg = err is Map
+          ? (err['message'] ?? err['data'] ?? '')
+          : err.toString();
+      throw RepairException(
+          msg.isNotEmpty ? '上传附件失败: $msg' : '上传附件失败，服务器未返回有效数据',
+          code: errCode ?? (response.statusCode == 401 ? 401 : null));
     }
 
     final attachment =

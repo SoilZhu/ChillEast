@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -69,6 +70,15 @@ class _AuthenticatedBxptImageState extends State<AuthenticatedBxptImage> {
       final data = res.data;
       if (!mounted || url != _loadedUrl) return;
       if (data == null || data.isEmpty) {
+        setState(() => _failed = true);
+        return;
+      }
+      final contentType =
+          res.headers.value(HttpHeaders.contentTypeHeader) ?? '';
+      if (res.statusCode != 200 ||
+          (!contentType.toLowerCase().startsWith('image/') &&
+              !contentType.toLowerCase().startsWith('application/octet-stream') &&
+              contentType.isNotEmpty)) {
         setState(() => _failed = true);
         return;
       }

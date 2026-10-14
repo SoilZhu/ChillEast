@@ -25,7 +25,11 @@ class RepairCacheNotifier
       if (previous?.status != AuthStatus.authenticated &&
           next.status == AuthStatus.authenticated) {
         _logger.i('🔐 Login success detected, auto-refreshing repairs...');
+        _ref.read(repairServiceProvider).invalidateSession();
         _silentRefresh();
+      } else if (next.status != AuthStatus.authenticated) {
+        _ref.read(repairServiceProvider).invalidateSession();
+        clear();
       }
     });
   }

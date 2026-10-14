@@ -1018,4 +1018,123 @@ void main() {
     await service.submit(session, {'scwttp': 2, 'wtmsh': '问题描述'});
     expect(submitCalled, isTrue);
   });
+
+  test('RPC request includes X-SR-A header matching md5(jsonrpc: payload) + hex(t)', () async {
+    final service = RepairService(auth, dio: dio);
+
+    respond = (options) {
+      if (options.uri.path == '/relax/mobile/rpc') {
+        final method = options.data is Map ? options.data['method'] : '';
+        if (method == '/v2/login/isAuthenticated') {
+          return {'id': 1, 'jsonrpc': '2.0', 'result': {'id': testBxptUuid}};
+        }
+        if (method == '/v2/service/portal/workorderData/ongoingPage') {
+          return {'id': 1, 'jsonrpc': '2.0', 'result': {'data': []}};
+        }
+      }
+      return Response(requestOptions: options, statusCode: 200);
+    };
+
+    await service.fetchOrders(ongoing: true);
+
+    final rpcReq = requests.firstWhere((r) =>
+        r.uri.path == '/relax/mobile/rpc' &&
+        r.data is Map &&
+        r.data['method'] == '/v2/service/portal/workorderData/ongoingPage');
+
+    final xsra = rpcReq.headers['X-SR-A'] as String?;
+    expect(xsra, isNotNull);
+    expect(xsra!.length, greaterThan(32));
+
+    final tQuery = rpcReq.uri.queryParameters['t'];
+    expect(tQuery, isNotNull);
+    final timestamp = int.parse(tQuery!);
+    final expectedHex = timestamp.toRadixString(16);
+    expect(xsra.endsWith(expectedHex), isTrue);
+  });
+
+  test('RPC call automatically recovers from 401 unauthenticated error by re-exchanging ticket', () async {
+    final service = RepairService(auth, dio: dio);
+    int ongoingCalls = 0;
+    int ticketExchanges = 0;
+
+    respond = (options) {
+      final url = options.uri.toString();
+      if (url == AppConstants.repairsSsoUrl) {
+        ticketExchanges++;
+        return Response(
+          requestOptions: options,
+          statusCode: 302,
+          headers: Headers.fromMap({
+            HttpHeaders.locationHeader: [
+              'http://bxpt.hunau.edu.cn/relax/sso/cas/login?ticket=ST-reauth-ticket'
+            ],
+          }),
+        );
+      }
+      if (url == 'https://bxpt.hunau.edu.cn/relax/sso/cas/login?ticket=ST-reauth-ticket') {
+        return Response(
+          requestOptions: options,
+          statusCode: 302,
+          headers: Headers.fromMap({
+            HttpHeaders.locationHeader: ['http://bxpt.hunau.edu.cn/relax/index.html'],
+          }),
+        );
+      }
+      if (url == 'https://bxpt.hunau.edu.cn/relax/index.html') {
+        return Response(requestOptions: options, statusCode: 200, data: 'OK');
+      }
+      if (options.uri.path == '/relax/mobile/rpc') {
+        final method = options.data is Map ? options.data['method'] : '';
+        if (method == '/v2/login/isAuthenticated') {
+          return {'id': 1, 'jsonrpc': '2.0', 'result': {'id': testBxptUuid}};
+        }
+        if (method == '/v2/service/portal/workorderData/ongoingPage') {
+          ongoingCalls++;
+          if (ongoingCalls == 1) {
+            // First time it returns 401 unauthenticated error
+            return {
+              'id': 1,
+              'jsonrpc': '2.0',
+              'error': {
+                'code': 401,
+                'message': '未登录，method: /v2/service/portal/workorderData/ongoingPage',
+              },
+            };
+          }
+          // After re-exchange, it succeeds
+          return {'id': 1, 'jsonrpc': '2.0', 'result': {'data': []}};
+        }
+      }
+      return Response(requestOptions: options, statusCode: 200);
+    };
+
+    final orders = await service.fetchOrders(ongoing: true);
+    expect(orders, isEmpty);
+    expect(ongoingCalls, 2);
+    expect(ticketExchanges, 1);
+  });
+
+  test('invalidateSession resets repair session readiness and userId', () async {
+    final service = RepairService(auth, dio: dio);
+
+    respond = (options) {
+      if (options.uri.path == '/relax/mobile/rpc') {
+        final method = options.data is Map ? options.data['method'] : '';
+        if (method == '/v2/login/isAuthenticated') {
+          return {'id': 1, 'jsonrpc': '2.0', 'result': {'id': testBxptUuid}};
+        }
+        if (method == '/v2/service/portal/workorderData/ongoingPage') {
+          return {'id': 1, 'jsonrpc': '2.0', 'result': {'data': []}};
+        }
+      }
+      return Response(requestOptions: options, statusCode: 200);
+    };
+
+    await service.fetchOrders(ongoing: true);
+    expect(service.bxptUserId, testBxptUuid);
+
+    service.invalidateSession();
+    expect(service.bxptUserId, isNull);
+  });
 }
