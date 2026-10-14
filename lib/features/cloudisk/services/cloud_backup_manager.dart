@@ -22,15 +22,16 @@ class InitialSyncResult {
 
 /// 本地备份 → 学习通云盘自动同步。
 ///
-/// 文件名：`chilleast-backup-{slot}-{stamp}.json`，
+/// 文件名：`chilleast-backup-b-{stamp}.json`（读取兼容历史 a/b 槽位），
 /// stamp 为 `yyyyMMdd-HHmmss`（字典序即时间序，删除失败也能肉眼定位最新）。
-/// A/B 轮换：每轮上传到对侧槽位，校验成功后删除**所有**其它同前缀旧文件
-///（即使某次删除失败，下次同步也会收敛清理）。
+/// 写入时固定为槽位 b（兼容老版本/MCP识别正则，且 'b' > 'a' 消除轮换字典序错位），
+/// 校验成功后删除**所有**其它同前缀旧文件（即使某次删除失败，下次同步也会收敛清理）。
 class CloudBackupManager {
   static final CloudBackupManager instance = CloudBackupManager._internal();
   CloudBackupManager._internal();
 
   static const String filePrefix = 'chilleast-backup-';
+  static const String fixedSlot = 'b';
   static const String toggleKey = 'cloud_backup_auto_sync';
   static const String promptDecidedKey = 'cloud_backup_prompt_decided';
   static const String _activeSlotKey = 'cloud_backup_active_slot';
@@ -46,11 +47,12 @@ class CloudBackupManager {
   bool _requeued = false;
   bool _refreshingAuth = false;
 
-  /// 文件名：slot 为 a/b。
-  static String buildFileName(String slot, DateTime time) {
+  /// 文件名：slot 为 a/b（新备份固定使用 'b'）。
+  static String buildFileName([String slot = fixedSlot, DateTime? time]) {
+    final t = time ?? DateTime.now();
     String two(int v) => v.toString().padLeft(2, '0');
-    final stamp = '${time.year}${two(time.month)}${two(time.day)}-'
-        '${two(time.hour)}${two(time.minute)}${two(time.second)}';
+    final stamp = '${t.year}${two(t.month)}${two(t.day)}-'
+        '${two(t.hour)}${two(t.minute)}${two(t.second)}';
     return '$filePrefix$slot-$stamp.json';
   }
 
@@ -63,11 +65,10 @@ class CloudBackupManager {
     return (slot: m.group(1)!, stamp: m.group(2)!);
   }
 
-  /// 轮换目标槽位（无记录时首轮用 a）。
-  static String pickTargetSlot(String? activeSlot) =>
-      activeSlot == 'a' ? 'b' : 'a';
+  /// 目标槽位：固定为 b，兼容历史调用。
+  static String pickTargetSlot([String? activeSlot]) => fixedSlot;
 
-  /// 从目录条目中挑出最新的备份文件（文件名 stamp 字典序即时间序）。
+  /// 从目录条目中挑出最新的备份文件（按 stamp 字典序即时间序）。
   /// 忽略非备份文件；无备份返回 null。
   static Map<String, String>? pickLatestBackupEntry(
     List<Map<String, dynamic>> entries,
@@ -80,13 +81,14 @@ class CloudBackupManager {
       final resid = e['id']?.toString() ?? '';
       final encryptedId = e['encryptedId']?.toString() ?? '';
       if (resid.isEmpty || encryptedId.isEmpty) continue;
-      if (best == null || name.compareTo(best['name']!) > 0) {
+      if (best == null || parsed.stamp.compareTo(best['stamp']!) > 0) {
         best = {
           'resid': resid,
           'encryptedId': encryptedId,
           'puid': e['puid']?.toString() ?? '',
           'name': name,
           'slot': parsed.slot,
+          'stamp': parsed.stamp,
         };
       }
     }
@@ -334,7 +336,7 @@ class CloudBackupManager {
       final candidate = pickLatestBackupEntry(result.entries);
       if (candidate != null &&
           (best == null ||
-              candidate['name']!.compareTo(best['name']!) > 0)) {
+              candidate['stamp']!.compareTo(best['stamp']!) > 0)) {
         best = candidate;
       }
       if (result.entries.length >= result.totalCount ||
@@ -351,9 +353,7 @@ class CloudBackupManager {
       final bytes = utf8.encode(const JsonEncoder().convert(data));
 
       final session = await _cloudisk.ensureSession();
-      final targetSlot =
-          pickTargetSlot(prefs.getString(_activeSlotKey));
-      final filename = buildFileName(targetSlot, DateTime.now());
+      final filename = buildFileName(fixedSlot, DateTime.now());
 
       final uploaded = await _cloudisk.uploadJson(
         folderId: session.rootDirId,
@@ -365,7 +365,7 @@ class CloudBackupManager {
       // 收敛清理：删掉所有其它同前缀旧文件
       await _pruneOthers(session, keepResid: resid);
 
-      await prefs.setString(_activeSlotKey, targetSlot);
+      await prefs.setString(_activeSlotKey, fixedSlot);
       await prefs.setString(_activeResidKey, resid);
       await prefs.setString(_activeEncryptedIdKey,
           uploaded['encryptedId']?.toString() ?? '');

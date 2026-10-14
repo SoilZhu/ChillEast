@@ -19,6 +19,13 @@ void main() {
           'a', DateTime(2026, 9, 26, 9, 31, 2));
       expect(earlier.compareTo(later) < 0, isTrue);
     });
+    test('defaults to slot b', () {
+      expect(
+        CloudBackupManager.buildFileName(
+            CloudBackupManager.fixedSlot, DateTime(2026, 9, 26, 9, 30, 15)),
+        'chilleast-backup-b-20260926-093015.json',
+      );
+    });
   });
 
   group('CloudBackupManager.parseFileName', () {
@@ -42,10 +49,10 @@ void main() {
   });
 
   group('CloudBackupManager.pickTargetSlot', () {
-    test('first round uses a, then alternates', () {
-      expect(CloudBackupManager.pickTargetSlot(null), 'a');
+    test('always returns b', () {
+      expect(CloudBackupManager.pickTargetSlot(null), 'b');
       expect(CloudBackupManager.pickTargetSlot('a'), 'b');
-      expect(CloudBackupManager.pickTargetSlot('b'), 'a');
+      expect(CloudBackupManager.pickTargetSlot('b'), 'b');
     });
   });
 
@@ -120,6 +127,27 @@ void main() {
       expect(latest, isNotNull);
       expect(latest!['resid'], 'new-resid');
       expect(latest['slot'], 'b');
+    });
+
+    test('picks newest by stamp even if newer is slot a and older is slot b', () {
+      final crossSlotEntries = [
+        {
+          'id': 'older-b',
+          'name': 'chilleast-backup-b-20260925-100000.json',
+          'encryptedId': 'enc-b',
+          'puid': '1',
+        },
+        {
+          'id': 'newer-a',
+          'name': 'chilleast-backup-a-20260926-100000.json',
+          'encryptedId': 'enc-a',
+          'puid': '1',
+        },
+      ];
+      final latest = CloudBackupManager.pickLatestBackupEntry(crossSlotEntries);
+      expect(latest, isNotNull);
+      expect(latest!['resid'], 'newer-a');
+      expect(latest['slot'], 'a');
     });
 
     test('returns null when no backup exists', () {
