@@ -391,6 +391,7 @@ class CloudBackupManager {
       await prefs.remove(_activeResidKey);
       await prefs.remove(_activeEncryptedIdKey);
       await prefs.remove(_dirtyStorageKey);
+      await BackupExportService.clearUnknownFields();
     } catch (e) {
       _logger.w('☁️ Cloud backup logout reset failed: $e');
     }

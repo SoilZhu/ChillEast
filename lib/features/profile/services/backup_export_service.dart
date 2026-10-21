@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/ai/ai_service.dart';
 import '../../../core/services/home_widget_service.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/atomic_storage_helper.dart';
 import '../../../core/utils/secure_storage_helper.dart';
 import '../models/appearance_state.dart';
@@ -30,9 +31,415 @@ class BackupExportService {
   static const String modernBackupFormat = 'chilleast-modern';
   static const String backupFormat = modernBackupFormat;
   static const int backupVersion = 1;
+  static const String unknownPassthroughFile = 'unknown_backup_passthrough.json';
+
+  /// 顶级已知字段
+  static const Set<String> _knownTopLevelKeys = {
+    'format',
+    'version',
+    'exportedAt',
+    'appVersion',
+    'settings',
+    'localData',
+  };
+
+  /// settings 下的已知一级字段
+  static const Set<String> _knownSettingsKeys = {
+    'languageCode',
+    'courseReminderMinutes',
+    'homeworkReminderHours',
+    'libraryReminderMinutes',
+    'courseLiveEnabled',
+    'flymeLiveEnabled',
+    'timetableAutoSyncEnabled',
+    'timetableShowEndTime',
+    'timetableSubscription',
+    'manualFirstWeekMonday',
+    'customCourseColors',
+    'appearance',
+    'electricityRoom',
+    'electricityRoom2',
+    'ai',
+  };
+
+  /// settings.appearance 下的已知二级字段
+  static const Set<String> _knownAppearanceKeys = {
+    'homeItems',
+    'functionItems',
+    'feedItems',
+    'widgetItems',
+    'functionGroupOrder',
+    'hiddenFunctionGroups',
+    'feedAutoSort',
+  };
+
+  /// settings.ai 下的已知二级字段
+  static const Set<String> _knownAiKeys = {
+    'apiUrl',
+    'model',
+    'apiKey',
+    'hasCustomApiKey',
+  };
+
+  /// settings.timetableSubscription 下的已知二级字段
+  static const Set<String> _knownSubscriptionKeys = {
+    'enabled',
+    'uuid',
+  };
+
+  /// localData 下的已知一级字段
+  static const Set<String> _knownLocalDataKeys = {
+    'timetableIcs',
+    'timetableMeta',
+    'courses',
+    'rawCourses',
+    'timetableRules',
+    'homeworkList',
+    'examList',
+    'manualExamList',
+    'aiMemories',
+  };
 
   static bool isSupportedFormat(String? format) =>
       format == modernBackupFormat || format == legacyBackupFormat;
+
+  /// 从给定的备份数据中提取本版本不认识的未知字段与配置项（暗盒）。
+  static Map<String, dynamic> extractUnknownFields(Map<String, dynamic> backup) {
+    final unknown = <String, dynamic>{};
+
+    // 1. 顶级未知键
+    for (final entry in backup.entries) {
+      if (!_knownTopLevelKeys.contains(entry.key)) {
+        unknown[entry.key] = entry.value;
+      }
+    }
+
+    // 2. settings 下的未知键与子结构
+    final rawSettings = backup['settings'];
+    if (rawSettings is Map) {
+      final unknownSettings = <String, dynamic>{};
+      for (final entry in rawSettings.entries) {
+        final key = entry.key.toString();
+        if (!_knownSettingsKeys.contains(key)) {
+          unknownSettings[key] = entry.value;
+        }
+      }
+
+      // 2a. appearance 内部未知键与未知项
+      final rawApp = rawSettings['appearance'];
+      if (rawApp is Map) {
+        final unknownApp = <String, dynamic>{};
+        for (final entry in rawApp.entries) {
+          final key = entry.key.toString();
+          if (!_knownAppearanceKeys.contains(key)) {
+            unknownApp[key] = entry.value;
+          }
+        }
+
+        final masterIds = AppearanceNotifier.masterPool.map((e) => e.id).toSet();
+        final feedIds = AppearanceNotifier.feedPool.map((e) => e.id).toSet();
+        final validGroupKeys = functionGroups.map((g) => g.titleKey).toSet();
+
+        final unknownListItems = <String, dynamic>{};
+
+        for (final listKey in ['homeItems', 'functionItems', 'widgetItems']) {
+          final list = rawApp[listKey];
+          if (list is List) {
+            final items = list.whereType<Map>().where((item) {
+              final id = item['id']?.toString();
+              return id != null && !masterIds.contains(id);
+            }).map((item) => Map<String, dynamic>.from(item)).toList();
+            if (items.isNotEmpty) {
+              unknownListItems[listKey] = items;
+            }
+          }
+        }
+
+        final feedList = rawApp['feedItems'];
+        if (feedList is List) {
+          final items = feedList.whereType<Map>().where((item) {
+            final id = item['id']?.toString();
+            return id != null && !feedIds.contains(id);
+          }).map((item) => Map<String, dynamic>.from(item)).toList();
+          if (items.isNotEmpty) {
+            unknownListItems['feedItems'] = items;
+          }
+        }
+
+        final groupOrder = rawApp['functionGroupOrder'];
+        if (groupOrder is List) {
+          final unknownGroups = groupOrder
+              .map((e) => e?.toString())
+              .where((k) => k != null && !validGroupKeys.contains(k))
+              .cast<String>()
+              .toList();
+          if (unknownGroups.isNotEmpty) {
+            unknownListItems['functionGroupOrder'] = unknownGroups;
+          }
+        }
+
+        final hiddenGroups = rawApp['hiddenFunctionGroups'];
+        if (hiddenGroups is List) {
+          final unknownHidden = hiddenGroups
+              .map((e) => e?.toString())
+              .where((k) => k != null && !validGroupKeys.contains(k))
+              .cast<String>()
+              .toList();
+          if (unknownHidden.isNotEmpty) {
+            unknownListItems['hiddenFunctionGroups'] = unknownHidden;
+          }
+        }
+
+        if (unknownListItems.isNotEmpty) {
+          unknownApp['_unknownListItems'] = unknownListItems;
+        }
+
+        if (unknownApp.isNotEmpty) {
+          unknownSettings['appearance'] = unknownApp;
+        }
+      }
+
+      // 2b. AI 内部未知键
+      final rawAi = rawSettings['ai'];
+      if (rawAi is Map) {
+        final unknownAi = <String, dynamic>{};
+        for (final entry in rawAi.entries) {
+          final key = entry.key.toString();
+          if (!_knownAiKeys.contains(key)) {
+            unknownAi[key] = entry.value;
+          }
+        }
+        if (unknownAi.isNotEmpty) {
+          unknownSettings['ai'] = unknownAi;
+        }
+      }
+
+      // 2c. Subscription 内部未知键
+      final rawSub = rawSettings['timetableSubscription'];
+      if (rawSub is Map) {
+        final unknownSub = <String, dynamic>{};
+        for (final entry in rawSub.entries) {
+          final key = entry.key.toString();
+          if (!_knownSubscriptionKeys.contains(key)) {
+            unknownSub[key] = entry.value;
+          }
+        }
+        if (unknownSub.isNotEmpty) {
+          unknownSettings['timetableSubscription'] = unknownSub;
+        }
+      }
+
+      if (unknownSettings.isNotEmpty) {
+        unknown['settings'] = unknownSettings;
+      }
+    }
+
+    // 3. localData 下的未知键
+    final rawLocal = backup['localData'];
+    if (rawLocal is Map) {
+      final unknownLocal = <String, dynamic>{};
+      for (final entry in rawLocal.entries) {
+        final key = entry.key.toString();
+        if (!_knownLocalDataKeys.contains(key)) {
+          unknownLocal[key] = entry.value;
+        }
+      }
+      if (unknownLocal.isNotEmpty) {
+        unknown['localData'] = unknownLocal;
+      }
+    }
+
+    return unknown;
+  }
+
+  /// 将未知字段暗盒合并回基础备份数据中（回填拼接）。
+  static Map<String, dynamic> mergeUnknownFields(
+    Map<String, dynamic> base,
+    Map<String, dynamic> unknown,
+  ) {
+    if (unknown.isEmpty) return base;
+
+    final result = Map<String, dynamic>.from(base);
+
+    // 1. 顶级未知键
+    for (final entry in unknown.entries) {
+      if (entry.key != 'settings' && entry.key != 'localData') {
+        result[entry.key] = entry.value;
+      }
+    }
+
+    // 2. settings 下的未知键
+    final unknownSettings = unknown['settings'];
+    if (unknownSettings is Map) {
+      final baseSettings = result['settings'] is Map
+          ? Map<String, dynamic>.from(result['settings'] as Map)
+          : <String, dynamic>{};
+
+      for (final entry in unknownSettings.entries) {
+        final key = entry.key.toString();
+        if (key != 'appearance' && key != 'ai' && key != 'timetableSubscription') {
+          baseSettings[key] = entry.value;
+        }
+      }
+
+      // 2a. appearance
+      final unknownApp = unknownSettings['appearance'];
+      if (unknownApp is Map) {
+        final baseApp = baseSettings['appearance'] is Map
+            ? Map<String, dynamic>.from(baseSettings['appearance'] as Map)
+            : <String, dynamic>{};
+
+        for (final entry in unknownApp.entries) {
+          final key = entry.key.toString();
+          if (key != '_unknownListItems') {
+            baseApp[key] = entry.value;
+          }
+        }
+
+        final unknownListItems = unknownApp['_unknownListItems'];
+        if (unknownListItems is Map) {
+          for (final listKey in ['homeItems', 'functionItems', 'widgetItems', 'feedItems']) {
+            final unknownItems = unknownListItems[listKey];
+            if (unknownItems is List && unknownItems.isNotEmpty) {
+              final baseList = baseApp[listKey] is List
+                  ? List<Map<String, dynamic>>.from(
+                      (baseApp[listKey] as List)
+                          .whereType<Map>()
+                          .map((e) => Map<String, dynamic>.from(e)))
+                  : <Map<String, dynamic>>[];
+              final existingIds = baseList.map((e) => e['id']?.toString()).toSet();
+              for (final item in unknownItems) {
+                if (item is Map) {
+                  final id = item['id']?.toString();
+                  if (id != null && !existingIds.contains(id)) {
+                    baseList.add(Map<String, dynamic>.from(item));
+                    existingIds.add(id);
+                  }
+                }
+              }
+              baseApp[listKey] = baseList;
+            }
+          }
+
+          for (final groupKey in ['functionGroupOrder', 'hiddenFunctionGroups']) {
+            final unknownGroups = unknownListItems[groupKey];
+            if (unknownGroups is List && unknownGroups.isNotEmpty) {
+              final baseList = baseApp[groupKey] is List
+                  ? List<String>.from((baseApp[groupKey] as List).map((e) => e.toString()))
+                  : <String>[];
+              final existingSet = baseList.toSet();
+              for (final g in unknownGroups) {
+                final str = g.toString();
+                if (!existingSet.contains(str)) {
+                  baseList.add(str);
+                  existingSet.add(str);
+                }
+              }
+              baseApp[groupKey] = baseList;
+            }
+          }
+        }
+
+        baseSettings['appearance'] = baseApp;
+      }
+
+      // 2b. AI
+      final unknownAi = unknownSettings['ai'];
+      if (unknownAi is Map) {
+        final baseAi = baseSettings['ai'] is Map
+            ? Map<String, dynamic>.from(baseSettings['ai'] as Map)
+            : <String, dynamic>{};
+        for (final entry in unknownAi.entries) {
+          baseAi[entry.key.toString()] = entry.value;
+        }
+        baseSettings['ai'] = baseAi;
+      }
+
+      // 2c. Subscription
+      final unknownSub = unknownSettings['timetableSubscription'];
+      if (unknownSub is Map) {
+        final baseSub = baseSettings['timetableSubscription'] is Map
+            ? Map<String, dynamic>.from(baseSettings['timetableSubscription'] as Map)
+            : <String, dynamic>{};
+        for (final entry in unknownSub.entries) {
+          baseSub[entry.key.toString()] = entry.value;
+        }
+        baseSettings['timetableSubscription'] = baseSub;
+      }
+
+      result['settings'] = baseSettings;
+    }
+
+    // 3. localData 下的未知键
+    final unknownLocal = unknown['localData'];
+    if (unknownLocal is Map) {
+      final baseLocal = result['localData'] is Map
+          ? Map<String, dynamic>.from(result['localData'] as Map)
+          : <String, dynamic>{};
+      for (final entry in unknownLocal.entries) {
+        baseLocal[entry.key.toString()] = entry.value;
+      }
+      result['localData'] = baseLocal;
+    }
+
+    return result;
+  }
+
+  /// 保存未知字段暗盒到本地存储（全量替换；为空时自动删除文件以防幽灵数据）。
+  static Future<void> saveUnknownFields(Map<String, dynamic> unknownFields) async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/$unknownPassthroughFile');
+      if (unknownFields.isEmpty) {
+        if (await file.exists()) {
+          await file.delete();
+        }
+        final bakFile = File('${file.path}.bak');
+        if (await bakFile.exists()) {
+          await bakFile.delete();
+        }
+        return;
+      }
+      final content = jsonEncode(unknownFields);
+      await AtomicStorageHelper.atomicWriteString(file, content);
+    } catch (e) {
+      AppLogger.instance.w('Failed to save unknown backup passthrough fields: $e');
+    }
+  }
+
+  /// 从本地存储加载未知字段暗盒。
+  static Future<Map<String, dynamic>?> loadUnknownFields() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/$unknownPassthroughFile');
+      final decoded = await AtomicStorageHelper.readJsonWithRecovery(file,
+          logTag: 'BackupExportService');
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
+      return null;
+    } catch (e) {
+      AppLogger.instance.w('Failed to load unknown backup passthrough fields: $e');
+      return null;
+    }
+  }
+
+  /// 清除未知字段暗盒（退出登录时隔离调用）。
+  static Future<void> clearUnknownFields() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/$unknownPassthroughFile');
+      if (await file.exists()) {
+        await file.delete();
+      }
+      final bakFile = File('${file.path}.bak');
+      if (await bakFile.exists()) {
+        await bakFile.delete();
+      }
+    } catch (e) {
+      AppLogger.instance.w('Failed to clear unknown backup passthrough fields: $e');
+    }
+  }
 
   /// 组装备份 JSON（纯 Map，可直接 jsonEncode）。
   /// [format] 默认走现代轨 'chilleast-modern'，导出文件走 'chilleast-backup'。
@@ -65,7 +472,7 @@ class BackupExportService {
       appVersion = '${info.version}+${info.buildNumber}';
     } catch (_) {}
 
-    return {
+    final baseData = {
       'format': format,
       'version': backupVersion,
       'exportedAt': DateTime.now().toIso8601String(),
@@ -125,6 +532,12 @@ class BackupExportService {
         'aiMemories': await _readDocFileJson('ai_memories.json'),
       },
     };
+
+    final unknown = await loadUnknownFields();
+    if (unknown != null && unknown.isNotEmpty) {
+      return mergeUnknownFields(baseData, unknown);
+    }
+    return baseData;
   }
 
   /// 组装备份 JSON 并写入临时文件，返回文件路径。
@@ -184,12 +597,17 @@ class BackupExportService {
   /// 语义为：
   /// - 云端有且本地有的项：使用云端数据覆盖本地并应用。
   /// - 云端没有本地有的项：继续使用本地的项目，不删除、不清空。
-  /// - 云端有本地没有的项：当它不存在（直接过滤丢弃）。
+  /// - 云端有本地没有的项：进入未知字段暗盒暂存，待后续上传/导出时保真回填，避免高版本功能数据被抹杀。
   static Future<void> applyBackupData(Map<String, dynamic> backup) async {
     // 先校验，避免写一半才发现版本不对
     if (!isSupportedFormat(backup['format']?.toString())) {
       throw const FormatException('不是自在东湖备份文件');
     }
+
+    // 提取并保存未知字段暗盒（全量替换，确保跨版本保真与防死灰复活）
+    final unknownFields = extractUnknownFields(backup);
+    await saveUnknownFields(unknownFields);
+
     final settings = backup['settings'] is Map
         ? Map<String, dynamic>.from(backup['settings'] as Map)
         : <String, dynamic>{};

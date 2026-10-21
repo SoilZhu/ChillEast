@@ -338,4 +338,230 @@ void main() {
       expect(updatedManual['title'], '云端覆盖手动考');
     });
   });
+
+  group('BackupExportService unknown fields preservation (Round-tripping)', () {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    late io.Directory tempDir;
+
+    setUpAll(() async {
+      tempDir = await io.Directory.systemTemp.createTemp('backup-unknown-test-');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+              const MethodChannel('plugins.flutter.io/path_provider'),
+              (call) async => tempDir.path);
+    });
+
+    tearDownAll(() async {
+      await tempDir.delete(recursive: true);
+    });
+
+    test('extractUnknownFields extracts unknown keys at all levels and ignores known keys', () {
+      final payload = {
+        'format': 'chilleast-modern',
+        'version': 1,
+        'exportedAt': '2026-10-21T00:00:00Z',
+        'appVersion': '1.0.0+1',
+        'futureTopKey': 'extra_top_level_value',
+        'settings': {
+          'languageCode': 'zh',
+          'courseReminderMinutes': 15,
+          'futureSettingA': 999,
+          'appearance': {
+            'homeItems': [
+              {'id': 'bus', 'isVisible': true},
+              {'id': 'future_tool_x', 'isVisible': true},
+            ],
+            'futureAppearanceColor': '#FFAABB',
+            'functionGroupOrder': ['groupStudy', 'future_group_z'],
+          },
+          'ai': {
+            'model': 'gpt-4o',
+            'futureAiParam': true,
+          },
+          'timetableSubscription': {
+            'enabled': true,
+            'futureSubField': 'custom_url',
+          },
+        },
+        'localData': {
+          'courses': [{'name': 'Math'}],
+          'futureModuleData': {'test': 123},
+        },
+      };
+
+      final unknown = BackupExportService.extractUnknownFields(payload);
+
+      expect(unknown['futureTopKey'], 'extra_top_level_value');
+      expect(unknown.containsKey('format'), isFalse);
+      expect(unknown.containsKey('version'), isFalse);
+
+      final settings = unknown['settings'] as Map<String, dynamic>;
+      expect(settings['futureSettingA'], 999);
+      expect(settings.containsKey('languageCode'), isFalse);
+      expect(settings.containsKey('courseReminderMinutes'), isFalse);
+
+      final app = settings['appearance'] as Map<String, dynamic>;
+      expect(app['futureAppearanceColor'], '#FFAABB');
+      final listItems = app['_unknownListItems'] as Map<String, dynamic>;
+      final homeItems = listItems['homeItems'] as List;
+      expect(homeItems.length, 1);
+      expect(homeItems.first['id'], 'future_tool_x');
+      final groupOrder = listItems['functionGroupOrder'] as List;
+      expect(groupOrder, ['future_group_z']);
+
+      final ai = settings['ai'] as Map<String, dynamic>;
+      expect(ai['futureAiParam'], true);
+      expect(ai.containsKey('model'), isFalse);
+
+      final sub = settings['timetableSubscription'] as Map<String, dynamic>;
+      expect(sub['futureSubField'], 'custom_url');
+      expect(sub.containsKey('enabled'), isFalse);
+
+      final localData = unknown['localData'] as Map<String, dynamic>;
+      expect(localData['futureModuleData'], {'test': 123});
+      expect(localData.containsKey('courses'), isFalse);
+    });
+
+    test('mergeUnknownFields merges unknown fields back into base backup', () {
+      final base = {
+        'format': 'chilleast-modern',
+        'version': 1,
+        'settings': {
+          'languageCode': 'en',
+          'appearance': {
+            'homeItems': [
+              {'id': 'courses', 'isVisible': false},
+            ],
+            'functionGroupOrder': ['daily'],
+          },
+          'ai': {'model': 'base_model'},
+          'timetableSubscription': {'enabled': false},
+        },
+        'localData': {
+          'courses': [],
+        },
+      };
+
+      final unknown = {
+        'futureTopKey': 'extra_val',
+        'settings': {
+          'futureSettingA': 123,
+          'appearance': {
+            'futureAppearanceColor': '#FFF',
+            '_unknownListItems': {
+              'homeItems': [
+                {'id': 'future_tool_x', 'isVisible': true},
+              ],
+              'functionGroupOrder': ['future_group_z'],
+            },
+          },
+          'ai': {'futureAiParam': 'param1'},
+          'timetableSubscription': {'futureSubField': 'sub1'},
+        },
+        'localData': {
+          'futureModuleData': {'saved': true},
+        },
+      };
+
+      final merged = BackupExportService.mergeUnknownFields(base, unknown);
+
+      expect(merged['futureTopKey'], 'extra_val');
+      final settings = merged['settings'] as Map<String, dynamic>;
+      expect(settings['languageCode'], 'en');
+      expect(settings['futureSettingA'], 123);
+
+      final app = settings['appearance'] as Map<String, dynamic>;
+      expect(app['futureAppearanceColor'], '#FFF');
+      final homeItems = app['homeItems'] as List;
+      expect(homeItems.length, 2);
+      expect(homeItems[0]['id'], 'courses');
+      expect(homeItems[1]['id'], 'future_tool_x');
+      final groupOrder = app['functionGroupOrder'] as List;
+      expect(groupOrder, ['daily', 'future_group_z']);
+
+      final ai = settings['ai'] as Map<String, dynamic>;
+      expect(ai['model'], 'base_model');
+      expect(ai['futureAiParam'], 'param1');
+
+      final sub = settings['timetableSubscription'] as Map<String, dynamic>;
+      expect(sub['enabled'], false);
+      expect(sub['futureSubField'], 'sub1');
+
+      final localData = merged['localData'] as Map<String, dynamic>;
+      expect(localData['futureModuleData'], {'saved': true});
+    });
+
+    test('round-trip: applyBackupData saves unknown fields, buildBackupData stitches them back', () async {
+      SharedPreferences.setMockInitialValues({});
+      await BackupExportService.clearUnknownFields();
+
+      final futureCloudBackup = {
+        'format': 'chilleast-modern',
+        'version': 1,
+        'futureGlobalConfig': {'featureFlag': true},
+        'settings': {
+          'languageCode': 'zh',
+          'futureCustomSetting': 'awesome_value',
+          'appearance': {
+            'homeItems': [
+              {'id': 'bus', 'isVisible': true},
+              {'id': 'future_tool_abc', 'isVisible': true},
+            ],
+            'futureThemeName': 'cyberpunk',
+          },
+        },
+        'localData': {
+          'futureFeatureCollection': [{'id': 1, 'text': 'hello'}],
+        },
+      };
+
+      // 1. 低版本拉取/导入该高版本备份
+      await BackupExportService.applyBackupData(futureCloudBackup);
+
+      // 2. 验证暗盒已经落盘保存
+      final loadedUnknown = await BackupExportService.loadUnknownFields();
+      expect(loadedUnknown, isNotNull);
+      expect(loadedUnknown!['futureGlobalConfig'], {'featureFlag': true});
+
+      // 3. 低版本修改了本地数据并触发 buildBackupData 组装
+      final built = await BackupExportService.buildBackupData();
+
+      // 4. 验证生成的备份不仅包含本地数据，还完美拼回了高版本的未知数据
+      expect(built['futureGlobalConfig'], {'featureFlag': true});
+      final builtSettings = built['settings'] as Map<String, dynamic>;
+      expect(builtSettings['futureCustomSetting'], 'awesome_value');
+      final builtApp = builtSettings['appearance'] as Map<String, dynamic>;
+      expect(builtApp['futureThemeName'], 'cyberpunk');
+      final homeItems = builtApp['homeItems'] as List;
+      expect(homeItems.any((e) => e['id'] == 'future_tool_abc'), isTrue);
+
+      final builtLocal = built['localData'] as Map<String, dynamic>;
+      expect(builtLocal['futureFeatureCollection'], [{'id': 1, 'text': 'hello'}]);
+
+      // 5. 验证防幽灵数据（Zombie Data Prevention）：
+      // 当随后的云端快照已经不再包含该功能数据（用户在新设备删除了），再次 apply 后暗盒被清空
+      final cleanBackup = {
+        'format': 'chilleast-modern',
+        'version': 1,
+        'settings': {'languageCode': 'zh'},
+        'localData': {},
+      };
+      await BackupExportService.applyBackupData(cleanBackup);
+
+      final clearedUnknown = await BackupExportService.loadUnknownFields();
+      expect(clearedUnknown, isNull);
+
+      final builtAgain = await BackupExportService.buildBackupData();
+      expect(builtAgain.containsKey('futureGlobalConfig'), isFalse);
+      expect((builtAgain['settings'] as Map).containsKey('futureCustomSetting'), isFalse);
+    });
+
+    test('clearUnknownFields removes passthrough file and prevents leakage across accounts', () async {
+      await BackupExportService.saveUnknownFields({'secretKey': 'secret_val'});
+      expect(await BackupExportService.loadUnknownFields(), isNotNull);
+
+      await BackupExportService.clearUnknownFields();
+      expect(await BackupExportService.loadUnknownFields(), isNull);
+    });
+  });
 }
