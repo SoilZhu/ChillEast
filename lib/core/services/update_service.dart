@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -17,8 +18,7 @@ class UpdateService {
   final Dio _dio = Dio();
   final Logger _logger = Logger();
   
-  static const String _githubRepo = 'soilzhu/chilleast';
-  static const String _apiUrl = 'https://api.github.com/repos/$_githubRepo/releases/latest';
+  static const String _apiUrl = 'https://eastchill-apk.soilzhu.su/latest/version.json';
   static const String _downloadUrl = 'https://eastchill-apk.soilzhu.su/latest/app-release.apk';
 
   /// 自动扫描并清理历史下载的 APK 安装包以释放手机存储空间
@@ -63,43 +63,67 @@ class UpdateService {
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
       
-      // 2. 获取最新版本信息 (从 GitHub 获取版本号和更新日志)
+      // 2. 获取最新版本信息 (从 CDN version.json 获取版本号和更新日志)
       final response = await _dio.get(_apiUrl);
       if (response.statusCode != 200) {
         throw Exception('Failed to fetch version information');
       }
       
-      final data = response.data;
-      final latestVersion = (data['tag_name'] as String).replaceAll('v', '');
-      final releaseNotes = data['body'] as String;
+      dynamic data = response.data;
+      if (data is String) {
+        data = jsonDecode(data);
+      }
+      
+      final String rawTag = ((data['version'] ?? data['tag_name'] ?? '') as Object).toString();
+      final latestVersion = rawTag.replaceAll('v', '').trim();
+      final releaseNotes = ((data['release_notes'] ?? data['body'] ?? '') as Object).toString();
+      final bool forceUpdate = data['force_update'] == true || data['force'] == true;
+      final downloadUrl = (data['download_url'] as String?)?.isNotEmpty == true
+          ? (data['download_url'] as String)
+          : _downloadUrl;
       
       // 3. 比较版本
-      if (_isNewerVersion(latestVersion, currentVersion)) {
+      if (isNewerVersion(latestVersion, currentVersion)) {
         if (context.mounted) {
-          // 在底部显示提醒 (类似正在登录的 SnackBar)
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(context.l10n.newVersionFoundSnackBar(latestVersion)),
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 10),
-              action: SnackBarAction(
-                label: context.l10n.viewAction,
-                onPressed: () => Navigator.push(context, createSlideUpRoute(UpdateScreen(
-                  version: latestVersion,
-                  releaseNotes: releaseNotes,
-                  downloadUrl: _downloadUrl,
-                ))),
+          if (forceUpdate) {
+            // 强制更新：不可关闭直接打开更新界面
+            Navigator.push(
+              context,
+              createSlideUpRoute(UpdateScreen(
+                version: latestVersion,
+                releaseNotes: releaseNotes,
+                downloadUrl: downloadUrl,
+                isForceUpdate: true,
+              )),
+            );
+          } else {
+            // 在底部显示提醒 (类似正在登录的 SnackBar)
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(context.l10n.newVersionFoundSnackBar(latestVersion)),
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 10),
+                action: SnackBarAction(
+                  label: context.l10n.viewAction,
+                  onPressed: () => Navigator.push(context, createSlideUpRoute(UpdateScreen(
+                    version: latestVersion,
+                    releaseNotes: releaseNotes,
+                    downloadUrl: downloadUrl,
+                    isForceUpdate: false,
+                  ))),
+                ),
               ),
-            ),
-          );
-          
-          // 如果是手动检查，或者用户没有关闭过，直接跳转到更新页面
-          if (showNoUpdate) {
-            Navigator.push(context, createSlideUpRoute(UpdateScreen(
-              version: latestVersion,
-              releaseNotes: releaseNotes,
-              downloadUrl: _downloadUrl,
-            )));
+            );
+            
+            // 如果是手动检查，或者用户没有关闭过，直接跳转到更新页面
+            if (showNoUpdate) {
+              Navigator.push(context, createSlideUpRoute(UpdateScreen(
+                version: latestVersion,
+                releaseNotes: releaseNotes,
+                downloadUrl: downloadUrl,
+                isForceUpdate: false,
+              )));
+            }
           }
         }
       } else {
@@ -119,9 +143,17 @@ class UpdateService {
     }
   }
 
-  bool _isNewerVersion(String latest, String current) {
-    List<int> latestParts = latest.split('.').map(int.parse).toList();
-    List<int> currentParts = current.split('.').map(int.parse).toList();
+  /// 比较两个版本号，判断 latest 是否高于 current
+  static bool isNewerVersion(String latest, String current) {
+    String cleanVersion(String v) => v.replaceAll('v', '').split('+')[0].split('-')[0].trim();
+    List<int> latestParts = cleanVersion(latest)
+        .split('.')
+        .map((e) => int.tryParse(e) ?? 0)
+        .toList();
+    List<int> currentParts = cleanVersion(current)
+        .split('.')
+        .map((e) => int.tryParse(e) ?? 0)
+        .toList();
     
     for (int i = 0; i < latestParts.length && i < currentParts.length; i++) {
       if (latestParts[i] > currentParts[i]) return true;
@@ -130,29 +162,37 @@ class UpdateService {
     return latestParts.length > currentParts.length;
   }
 
-  Future<void> startDownload(BuildContext context, String url, String version) async {
+  Future<void> startDownload(
+    BuildContext context,
+    String url,
+    String version, {
+    bool isForceUpdate = false,
+  }) async {
     // 下载前先清理历史旧安装包
     await cleanHistoricalApks();
 
     if (!context.mounted) return;
 
-    // 在底部显示“正在下载”提醒
-    final snackBar = ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const SizedBox(
-              width: 16, height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)),
-            ),
-            const SizedBox(width: 12),
-            Text(context.l10n.downloadingUpdate(version)),
-          ],
+    // 非强制更新时在底部显示“正在下载”提醒
+    ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? snackBar;
+    if (!isForceUpdate) {
+      snackBar = ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const SizedBox(
+                width: 16, height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)),
+              ),
+              const SizedBox(width: 12),
+              Text(context.l10n.downloadingUpdate(version)),
+            ],
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(days: 1), // 持久显示直到手动关闭或完成
         ),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(days: 1), // 持久显示直到手动关闭或完成
-      ),
-    );
+      );
+    }
 
     final messenger = ScaffoldMessenger.maybeOf(context);
     final l10n = context.l10n;
@@ -164,15 +204,16 @@ class UpdateService {
       builder: (dialogContext) => _DownloadProgressDialog(
         url: url,
         fileName: 'chilleast_v$version.apk',
+        isForceUpdate: isForceUpdate,
         onCompleted: (path) {
-          snackBar.close();
+          snackBar?.close();
           if (dialogContext.mounted) {
             Navigator.pop(dialogContext);
           }
           _installApk(path);
         },
         onError: (err) {
-          snackBar.close();
+          snackBar?.close();
           if (dialogContext.mounted) {
             Navigator.pop(dialogContext);
           }
@@ -181,7 +222,7 @@ class UpdateService {
           );
         },
         onCancel: () {
-          snackBar.close();
+          snackBar?.close();
         },
       ),
     );
@@ -203,6 +244,7 @@ class UpdateService {
 class _DownloadProgressDialog extends StatefulWidget {
   final String url;
   final String fileName;
+  final bool isForceUpdate;
   final Function(String) onCompleted;
   final Function(String) onError;
   final VoidCallback? onCancel;
@@ -210,6 +252,7 @@ class _DownloadProgressDialog extends StatefulWidget {
   const _DownloadProgressDialog({
     required this.url,
     required this.fileName,
+    this.isForceUpdate = false,
     required this.onCompleted,
     required this.onError,
     this.onCancel,
@@ -280,27 +323,31 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      title: Text(context.l10n.downloadingUpdateTitle),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          LinearProgressIndicator(value: _progress),
-          const SizedBox(height: 16),
-          Text('${(_progress * 100).toStringAsFixed(1)}%'),
+    return PopScope(
+      canPop: !widget.isForceUpdate,
+      child: AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        title: Text(context.l10n.downloadingUpdateTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            LinearProgressIndicator(value: _progress),
+            const SizedBox(height: 16),
+            Text('${(_progress * 100).toStringAsFixed(1)}%'),
+          ],
+        ),
+        actions: [
+          if (!widget.isForceUpdate)
+            TextButton(
+              onPressed: () {
+                _cancelToken?.cancel();
+                widget.onCancel?.call();
+                Navigator.pop(context);
+              },
+              child: Text(context.l10n.cancel),
+            ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            _cancelToken?.cancel();
-            widget.onCancel?.call();
-            Navigator.pop(context);
-          },
-          child: Text(context.l10n.cancel),
-        ),
-      ],
     );
   }
 }
