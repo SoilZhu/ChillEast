@@ -1344,11 +1344,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             .where((e) =>
                 !ExamStorage.isManualExamExpired(e) &&
                 (e.isCurrentSemester() || e.isManual) &&
-                e.time.year == _previewDate.year &&
-                e.time.month == _previewDate.month &&
-                e.time.day == _previewDate.day)
+                e.time != null &&
+                e.time!.year == _previewDate.year &&
+                e.time!.month == _previewDate.month &&
+                e.time!.day == _previewDate.day)
             .toList();
-        items.sort((a, b) => a.time.compareTo(b.time));
+        items.sort(ExamScheduleModel.compareTime);
         return items;
       },
       orElse: () => <ExamScheduleModel>[],
@@ -1421,7 +1422,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// 考试卡片（红色底 + 考试时间与地点，严格显示第一个出现的时间）
   Widget _buildExamTask(ExamScheduleModel item) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final timeStr = DateFormat('HH:mm').format(item.time);
+    final timeStr = item.time != null ? DateFormat('HH:mm').format(item.time!) : '';
     final location = item.location?.trim() ?? '';
     final timeLocation = location.isNotEmpty ? '$timeStr @ $location' : timeStr;
 

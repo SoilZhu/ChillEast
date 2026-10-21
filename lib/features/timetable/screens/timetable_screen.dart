@@ -262,9 +262,10 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
         final hasExam = examState.maybeWhen(
           data: (list) => list.any((e) =>
               e.isCurrentSemester(firstWeekMonday: _firstWeekMonday) &&
-              e.time.year == dayKey.year &&
-              e.time.month == dayKey.month &&
-              e.time.day == dayKey.day),
+              e.time != null &&
+              e.time!.year == dayKey.year &&
+              e.time!.month == dayKey.month &&
+              e.time!.day == dayKey.day),
           orElse: () => false,
         );
 
@@ -283,7 +284,8 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
     for (final e in examList) {
       if (ExamStorage.isManualExamExpired(e)) continue;
       if (!e.isCurrentSemester(firstWeekMonday: _firstWeekMonday)) continue;
-      final dayKey = DateTime(e.time.year, e.time.month, e.time.day);
+      if (e.time == null) continue;
+      final dayKey = DateTime(e.time!.year, e.time!.month, e.time!.day);
       if (!grouped.containsKey(dayKey)) {
         grouped[dayKey] = [];
       }
@@ -357,9 +359,10 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
           .where((e) =>
               !ExamStorage.isManualExamExpired(e) &&
               e.isCurrentSemester(firstWeekMonday: _firstWeekMonday) &&
-              e.time.year == date.year &&
-              e.time.month == date.month &&
-              e.time.day == date.day)
+              e.time != null &&
+              e.time!.year == date.year &&
+              e.time!.month == date.month &&
+              e.time!.day == date.day)
           .length;
       final homeworkCount = homeworkList
           .where((h) =>
@@ -911,13 +914,14 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
             .where((e) =>
                 !ExamStorage.isManualExamExpired(e) &&
                 e.isCurrentSemester(firstWeekMonday: _firstWeekMonday) &&
-                e.time.year == date.year &&
-                e.time.month == date.month &&
-                e.time.day == date.day)
+                e.time != null &&
+                e.time!.year == date.year &&
+                e.time!.month == date.month &&
+                e.time!.day == date.day)
             .toList();
 
-        // 按第一个出现的时间升序排列
-        dayExams.sort((a, b) => a.time.compareTo(b.time));
+        // 按时间升序排列
+        dayExams.sort(ExamScheduleModel.compareTime);
 
         return dayExams.map((e) => _buildExamAgendaTask(e)).toList();
       },
@@ -927,7 +931,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
 
   Widget _buildExamAgendaTask(ExamScheduleModel item) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final timeStr = DateFormat('HH:mm').format(item.time);
+    final timeStr = item.time != null ? DateFormat('HH:mm').format(item.time!) : '';
     final location = item.location?.trim() ?? '';
     final timeLocation = location.isNotEmpty ? '$timeStr @ $location' : timeStr;
 

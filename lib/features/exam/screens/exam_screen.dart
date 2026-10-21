@@ -191,7 +191,7 @@ class _ExamScreenState extends ConsumerState<ExamScreen> {
 
   Widget _buildExamCard(BuildContext context, ExamScheduleModel exam, bool isDark) {
     final now = DateTime.now();
-    final isPast = exam.time.isBefore(now);
+    final isPast = exam.time != null && exam.time!.isBefore(now);
     final cardColor = isDark
         ? Theme.of(context).cardTheme.color ?? const Color(0xFF1E1E1E)
         : Colors.white;
@@ -285,49 +285,51 @@ class _ExamScreenState extends ConsumerState<ExamScreen> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 10),
-                // 时间行
-                Builder(
-                  builder: (context) {
-                    final String timeDisplay;
-                    if (exam.endTime != null) {
-                      if (exam.time.year == exam.endTime!.year &&
-                          exam.time.month == exam.endTime!.month &&
-                          exam.time.day == exam.endTime!.day) {
-                        timeDisplay =
-                            '${DateFormat('yyyy-MM-dd HH:mm').format(exam.time)} ~ ${DateFormat('HH:mm').format(exam.endTime!)}';
+                // 时间行（若未提取到时间，则不显示时间）
+                if (exam.time != null) ...[
+                  const SizedBox(height: 10),
+                  Builder(
+                    builder: (context) {
+                      final String timeDisplay;
+                      if (exam.endTime != null) {
+                        if (exam.time!.year == exam.endTime!.year &&
+                            exam.time!.month == exam.endTime!.month &&
+                            exam.time!.day == exam.endTime!.day) {
+                          timeDisplay =
+                              '${DateFormat('yyyy-MM-dd HH:mm').format(exam.time!)} ~ ${DateFormat('HH:mm').format(exam.endTime!)}';
+                        } else {
+                          timeDisplay =
+                              '${DateFormat('yyyy-MM-dd HH:mm').format(exam.time!)} ~ ${DateFormat('yyyy-MM-dd HH:mm').format(exam.endTime!)}';
+                        }
                       } else {
-                        timeDisplay =
-                            '${DateFormat('yyyy-MM-dd HH:mm').format(exam.time)} ~ ${DateFormat('yyyy-MM-dd HH:mm').format(exam.endTime!)}';
+                        timeDisplay = DateFormat('yyyy-MM-dd HH:mm').format(exam.time!);
                       }
-                    } else {
-                      timeDisplay = DateFormat('yyyy-MM-dd HH:mm').format(exam.time);
-                    }
 
-                    return Row(
-                      children: [
-                        Icon(
-                          Icons.access_time_rounded,
-                          size: 16,
-                          color: isDark ? Colors.white60 : Colors.grey[600],
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            timeDisplay,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.87)
-                                  : const Color(0xFF3C4043),
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                      return Row(
+                        children: [
+                          Icon(
+                            Icons.access_time_rounded,
+                            size: 16,
+                            color: isDark ? Colors.white60 : Colors.grey[600],
                           ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              timeDisplay,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.87)
+                                    : const Color(0xFF3C4043),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
                 // 地点行 (若有)
                 if (exam.location != null && exam.location!.isNotEmpty) ...[
                   const SizedBox(height: 8),

@@ -555,6 +555,7 @@ class NotificationService {
 
     for (var exam in exams) {
       final startTime = exam.time;
+      if (startTime == null) continue;
       final reminderTime =
           startTime.subtract(Duration(minutes: reminderMinutes));
 

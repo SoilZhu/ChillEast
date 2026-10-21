@@ -140,6 +140,7 @@ class FeedSorter {
     for (final exam in exams) {
       if (!exam.isCurrentSemester()) continue;
       final examStart = exam.time;
+      if (examStart == null) continue;
       final windowStart = examStart.subtract(const Duration(minutes: 60));
       if (!now.isBefore(windowStart) && !now.isAfter(examStart)) {
         return true;
