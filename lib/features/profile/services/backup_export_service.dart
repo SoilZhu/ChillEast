@@ -1125,11 +1125,11 @@ class BackupExportService {
           if (item['isManual'] != true) return false;
           try {
             final timeStr = (item['time'] ?? item['startTime']) as String?;
-            if (timeStr == null) return false;
+            if (timeStr == null) return true;
             final t = DateTime.parse(timeStr);
             return !t.isBefore(todayStart);
           } catch (_) {
-            return false;
+            return true;
           }
         })
         .map((item) => Map<String, dynamic>.from(item))
@@ -1154,11 +1154,11 @@ class BackupExportService {
           if (item['isManual'] != true) return false;
           try {
             final timeStr = (item['time'] ?? item['startTime']) as String?;
-            if (timeStr == null) return false;
+            if (timeStr == null) return true;
             final t = DateTime.parse(timeStr);
             return !t.isBefore(todayStart);
           } catch (_) {
-            return false;
+            return true;
           }
         })
         .map((item) => Map<String, dynamic>.from(item))
@@ -1211,11 +1211,11 @@ class BackupExportService {
     final finalExams = [...mergedManual, ...localScraped].where((item) {
       try {
         final timeStr = (item['time'] ?? item['startTime']) as String?;
-        if (timeStr == null) return false;
+        if (timeStr == null) return true;
         final t = DateTime.parse(timeStr);
         return !t.isBefore(todayStart);
       } catch (_) {
-        return false;
+        return true;
       }
     }).toList();
 
