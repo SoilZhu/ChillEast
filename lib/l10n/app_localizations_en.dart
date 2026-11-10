@@ -520,7 +520,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gradeFailed => 'Failed';
 
   @override
-  String get courseReminder => 'Class Reminder';
+  String get courseReminder => 'Course Reminder';
 
   @override
   String get courseReminderTime => 'Class Reminder Time';
@@ -3241,4 +3241,110 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get analyticsPromptSubtitle =>
       'Counts your app version using an absolutely anonymous method.';
+
+  @override
+  String get setReminder => 'Set Reminder';
+
+  @override
+  String get reminderSettings => 'Reminder Settings';
+
+  @override
+  String get reminderMode => 'Reminder Mode';
+
+  @override
+  String get reminderBefore => 'Before';
+
+  @override
+  String get reminderAfter => 'After';
+
+  @override
+  String get reminderExact => 'On time';
+
+  @override
+  String get reminderDisabled => 'Disabled';
+
+  @override
+  String get reminderScope => 'Effective Scope';
+
+  @override
+  String get scopeOnlyThis => 'Only this session';
+
+  @override
+  String scopeThisWeekday(String weekday) {
+    return 'All sessions of this course on $weekday';
+  }
+
+  @override
+  String scopeThisWeek(int week) {
+    return 'All sessions of this course in week $week';
+  }
+
+  @override
+  String get scopeAll => 'All sessions across the semester';
+
+  @override
+  String get currentRule => 'Current setting';
+
+  @override
+  String get restoreDefault => 'Reset to default';
+
+  @override
+  String get reminderSaved => 'Reminder settings saved';
+
+  @override
+  String get reminderReset => 'Reset to default reminder settings';
+
+  @override
+  String get baseTime => 'Base Time';
+
+  @override
+  String get baseTimeSettings => 'Settings Time';
+
+  @override
+  String get baseTimeClassTime => 'Class Time';
+
+  @override
+  String get baseTimeSettingsDesc => 'Based on reminder time in settings';
+
+  @override
+  String get baseTimeClassTimeDesc => 'Based on class start time';
+
+  @override
+  String get relativeToSettings => 'Adjust based on default reminder';
+
+  @override
+  String get relativeToSettingsDesc =>
+      'When disabled, offsets from scheduled class time instead';
+
+  @override
+  String get adjustBasedOnDefault => 'Adjust based on default reminder';
+
+  @override
+  String adjustDefaultBefore(String time) {
+    return 'Based on default, $time earlier';
+  }
+
+  @override
+  String adjustDefaultAfter(String time) {
+    return 'Based on default, $time later';
+  }
+
+  @override
+  String directClassBefore(String time) {
+    return 'Notify $time before class';
+  }
+
+  @override
+  String directClassAfter(String time) {
+    return 'Notify $time after class starts';
+  }
+
+  @override
+  String get directClassExact => 'Notify right at class time';
+
+  @override
+  String get matchDefaultReminder => 'Match default reminder time';
+
+  @override
+  String get estimatedReminderTime => 'Estimated Reminder';
 }

@@ -527,6 +527,8 @@ class BackupExportService {
         'courses': await _readDocFileJson('courses.json'),
         'rawCourses': await _readDocFileJson('raw_courses.json'),
         'timetableRules': await _readDocFileJson('timetable_rules.json'),
+        'courseReminderRules':
+            await _readDocFileJson('course_reminder_rules.json'),
         'homeworkList': await _readManualHomeworkJson(),
         'examList': await _readManualExamJson(),
         'aiMemories': await _readDocFileJson('ai_memories.json'),
@@ -810,6 +812,8 @@ class BackupExportService {
     await _writeDocFile('raw_courses.json', localData, 'rawCourses');
     await _writeDocFile(
         'timetable_rules.json', localData, 'timetableRules');
+    await _writeDocFile(
+        'course_reminder_rules.json', localData, 'courseReminderRules');
     await _applyManualHomeworkList(localData['homeworkList']);
     await _applyManualExamList(
         localData['examList'] ?? localData['manualExamList']);

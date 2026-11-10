@@ -7,6 +7,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../l10n/app_localizations.dart';
 import '../../features/timetable/models/course_model.dart';
+import '../../features/timetable/models/course_reminder_rule.dart';
+import '../../features/timetable/services/course_reminder_storage.dart';
 import '../../features/timetable/utils/date_calculator.dart';
 import '../../features/timetable/utils/week_parser.dart';
 import '../../features/homework/models/homework_model.dart';
@@ -227,13 +229,12 @@ class NotificationService {
   /// 为课程列表安排提醒
   /// [courses]: 课程列表
   /// [firstWeekMonday]: 本学期第一周周一
-  /// [reminderMinutes]: 提前多少分钟提醒
+  /// [reminderMinutes]: 全局默认提前多少分钟提醒（<= 0 表示全局不提醒，但单课自定义规则仍生效）
   Future<void> scheduleCourseReminders(List<CourseModel> courses,
       DateTime firstWeekMonday, int reminderMinutes) async {
-    // 这里我们先不 cancelAll，避免误删作业通知
-    // 我们手动取消课程 Channel 的通知 (如果有记录的话)
-    // 暂时简单处理：如果不通知，直接返回
-    if (reminderMinutes <= 0) return;
+    final customRules = await CourseReminderStorage().readRules();
+    // 如果全局不提醒且没有针对任何课程的自定义提醒规则，直接返回
+    if (reminderMinutes <= 0 && customRules.isEmpty) return;
 
     final l10n = await _getL10n();
     final now = DateTime.now();
@@ -244,6 +245,20 @@ class NotificationService {
       final weeks = WeekParser.parseWeeks(course.weeks);
 
       for (final weekNum in weeks) {
+        // 计算此课次的最优先提醒规则
+        final rule = CourseReminderStorage.resolveEffectiveRule(
+          rules: customRules,
+          courseName: course.name,
+          week: weekNum,
+          dayOfWeek: course.dayOfWeek,
+          startPeriod: course.startPeriod,
+        );
+
+        // 如果规则明确关闭了本节课提醒，跳过
+        if (rule != null && rule.isDisabled) {
+          continue;
+        }
+
         // 计算这一周这一天的日期
         final date = DateCalculator.calculateDate(
           firstWeekMonday: firstWeekMonday,
@@ -263,14 +278,38 @@ class NotificationService {
           tod.minute,
         );
 
-        // 计算提醒时间
-        final reminderTime =
-            startTime.subtract(Duration(minutes: reminderMinutes));
+        // 计算最终提醒时间及相对于上课时间的总偏移量（负数为提前，正数为延后）
+        final DateTime reminderTime;
+        final int totalOffsetFromStartTime;
+
+        if (rule != null) {
+          if (rule.baseTime == ReminderBaseTime.settings) {
+            // 相对于设置里的默认提前提醒时间
+            final base =
+                startTime.subtract(Duration(minutes: reminderMinutes));
+            reminderTime = base.add(Duration(minutes: rule.offsetMinutes));
+            totalOffsetFromStartTime = -reminderMinutes + rule.offsetMinutes;
+          } else {
+            // 相对于正式上课时间
+            reminderTime = startTime.add(Duration(minutes: rule.offsetMinutes));
+            totalOffsetFromStartTime = rule.offsetMinutes;
+          }
+        } else {
+          // 无自定义规则走全局默认
+          if (reminderMinutes <= 0) continue;
+          reminderTime =
+              startTime.subtract(Duration(minutes: reminderMinutes));
+          totalOffsetFromStartTime = -reminderMinutes;
+        }
 
         // 如果提醒时间已经过了，检查是否需要补发
         if (!reminderTime.isAfter(now)) {
-          // 如果现在还没有到上课时间，说明是在提醒窗口期内打开了App，我们补发一个
-          if (now.isBefore(startTime)) {
+          // 提前提醒在开课前打开 App 可补发；延后提醒在开课后 30 分钟内打开 App 可补发
+          final shouldMakeup = totalOffsetFromStartTime <= 0
+              ? now.isBefore(startTime)
+              : now.isBefore(startTime.add(const Duration(minutes: 30)));
+
+          if (shouldMakeup) {
             final prefs = await SharedPreferences.getInstance();
             final String makeupKey =
                 'makeup_course_${course.id}_${date.year}_${date.month}_${date.day}_${startTime.hour}_${startTime.minute}';
@@ -283,10 +322,16 @@ class NotificationService {
               final timeStr =
                   '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
 
+              String bodyText = course.classroom;
+              if (totalOffsetFromStartTime > 0) {
+                final prefix = '已上课${totalOffsetFromStartTime}分钟';
+                bodyText = bodyText.isNotEmpty ? '[$prefix] $bodyText' : '[$prefix]';
+              }
+
               await _notificationsPlugin.show(
                 makeupId,
                 '$timeStr ${course.name}',
-                course.classroom,
+                bodyText,
                 NotificationDetails(
                   android: AndroidNotificationDetails(
                     'course_reminder_channel',
@@ -319,10 +364,19 @@ class NotificationService {
         final timeStr =
             '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
 
+        String bodyText = course.classroom;
+        if (totalOffsetFromStartTime > 0) {
+          final prefix = '已上课${totalOffsetFromStartTime}分钟';
+          bodyText = bodyText.isNotEmpty ? '[$prefix] $bodyText' : '[$prefix]';
+        } else if (rule != null && totalOffsetFromStartTime < 0) {
+          final prefix = '提前${totalOffsetFromStartTime.abs()}分钟';
+          bodyText = bodyText.isNotEmpty ? '[$prefix] $bodyText' : '[$prefix]';
+        }
+
         await _zonedScheduleWithFallback(
           id: notificationId,
           title: '$timeStr ${course.name}', // 18:20 材料力学
-          body: course.classroom, // [地点]
+          body: bodyText, // [地点 / 偏移备注]
           scheduledDate: tz.TZDateTime.from(reminderTime, tz.local),
           notificationDetails: NotificationDetails(
             android: AndroidNotificationDetails(
@@ -342,7 +396,7 @@ class NotificationService {
     }
 
     _logger.i(
-        '🚀 Scheduled $scheduledCount course reminders (Pre-notify: $reminderMinutes min)');
+        '🚀 Scheduled $scheduledCount course reminders (Default: $reminderMinutes min, Custom rules: ${customRules.length})');
   }
 
   /// 为作业列表安排提醒

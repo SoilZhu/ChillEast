@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/course_model.dart';
+import '../models/course_reminder_rule.dart';
+import '../services/course_reminder_storage.dart';
 import '../utils/date_calculator.dart';
 import '../utils/week_parser.dart';
 import '../utils/course_color_utils.dart';
+import 'course_reminder_dialog.dart';
 import '../../../core/utils/l10n_extension.dart';
 
 /// 周视图日历组件
@@ -27,6 +30,7 @@ class WeeklyCalendarView extends StatefulWidget {
 class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
   late PageController _pageController;
   int _currentWeekNumber = 1; 
+  List<CourseReminderRule> _reminderRules = [];
   
   @override
   void initState() {
@@ -35,6 +39,16 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
     _currentWeekNumber = initialWeek.clamp(1, 20);
     _pageController = PageController(initialPage: _currentWeekNumber - 1);
     CourseColorUtils.syncCourses(widget.courses.map((c) => c.name));
+    _loadReminderRules();
+  }
+
+  Future<void> _loadReminderRules() async {
+    final rules = await CourseReminderStorage().readRules();
+    if (mounted) {
+      setState(() {
+        _reminderRules = rules;
+      });
+    }
   }
 
   void jumpToToday() {
@@ -54,6 +68,7 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
         oldWidget.firstWeekMonday != widget.firstWeekMonday ||
         oldWidget.showEndTime != widget.showEndTime) {
       CourseColorUtils.syncCourses(widget.courses.map((c) => c.name));
+      _loadReminderRules();
       setState(() {});
     }
   }
@@ -175,7 +190,7 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
                       _buildFixedTimeAxis(totalBigSections, sectionHeight, targetGap),
                       
                       // 课程块
-                      ..._buildFixedCourseBlocks(weekCourses, screenWidth, sectionHeight, targetGap),
+                      ..._buildFixedCourseBlocks(weekCourses, screenWidth, sectionHeight, targetGap, weekNumber),
                     ],
                   ),
                 ),
@@ -270,7 +285,13 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
   }
 
   /// 构建固定的课程块
-  List<Widget> _buildFixedCourseBlocks(List<CourseModel> courses, double screenWidth, double blockHeight, double gap) {
+  List<Widget> _buildFixedCourseBlocks(
+    List<CourseModel> courses,
+    double screenWidth,
+    double blockHeight,
+    double gap,
+    int weekNumber,
+  ) {
     final blocks = <Widget>[];
     const timeColumnWidth = 55.0;
     final columnWidth = (screenWidth - timeColumnWidth) / 7.0;
@@ -305,6 +326,7 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
           height: height,
           child: _buildCourseBlock(
             course,
+            weekNumber: weekNumber,
             hasConflict: hasConflict,
             conflictingCourses: conflicts,
           ),
@@ -317,13 +339,23 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
   /// 构建单个课程块
   Widget _buildCourseBlock(
     CourseModel course, {
+    required int weekNumber,
     bool hasConflict = false,
     List<CourseModel>? conflictingCourses,
   }) {
     final color = _getCourseColor(course.name);
+    final customRule = CourseReminderStorage.resolveEffectiveRule(
+      rules: _reminderRules,
+      courseName: course.name,
+      week: weekNumber,
+      dayOfWeek: course.dayOfWeek,
+      startPeriod: course.startPeriod,
+    );
+
     return GestureDetector(
       onTap: () => _showCourseDetail(
         course,
+        weekNumber: weekNumber,
         conflictingCourses: conflictingCourses,
       ),
       child: Container(
@@ -377,6 +409,18 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
                   ),
               ],
             ),
+            if (customRule != null)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Icon(
+                  customRule.isDisabled
+                      ? Icons.notifications_off_rounded
+                      : Icons.alarm_on_rounded,
+                  size: 11,
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
+              ),
             if (hasConflict)
               const Positioned(
                 bottom: 0,
@@ -396,6 +440,7 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
   /// 显示课程详情
   void _showCourseDetail(
     CourseModel course, {
+    required int weekNumber,
     List<CourseModel>? conflictingCourses,
   }) {
     final hasMultiple = conflictingCourses != null && conflictingCourses.length > 1;
@@ -406,9 +451,13 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
         if (!hasMultiple) {
           return _SingleCourseDetailDialog(
             course: course,
+            weekNumber: weekNumber,
             onColorChanged: () {
               setState(() {});
               widget.onCourseColorChanged?.call();
+            },
+            onReminderChanged: () {
+              _loadReminderRules();
             },
           );
         }
@@ -416,9 +465,13 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
         return _ConflictingCoursesDialog(
           initialCourse: course,
           courses: conflictingCourses,
+          weekNumber: weekNumber,
           onColorChanged: () {
             setState(() {});
             widget.onCourseColorChanged?.call();
+          },
+          onReminderChanged: () {
+            _loadReminderRules();
           },
         );
       },
@@ -511,11 +564,15 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
 /// 单门课程详情弹窗
 class _SingleCourseDetailDialog extends StatefulWidget {
   final CourseModel course;
+  final int weekNumber;
   final VoidCallback onColorChanged;
+  final VoidCallback onReminderChanged;
 
   const _SingleCourseDetailDialog({
     required this.course,
+    required this.weekNumber,
     required this.onColorChanged,
+    required this.onReminderChanged,
   });
 
   @override
@@ -556,6 +613,19 @@ class _SingleCourseDetailDialogState extends State<_SingleCourseDetailDialog> {
         ],
       ),
       actions: [
+        TextButton(
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (reminderCtx) => CourseReminderDialog(
+                course: widget.course,
+                weekNumber: widget.weekNumber,
+                onSaved: widget.onReminderChanged,
+              ),
+            );
+          },
+          child: Text(context.l10n.setReminder),
+        ),
         TextButton(
           onPressed: () {
             showDialog(
@@ -605,12 +675,16 @@ class _SingleCourseDetailDialogState extends State<_SingleCourseDetailDialog> {
 class _ConflictingCoursesDialog extends StatefulWidget {
   final CourseModel initialCourse;
   final List<CourseModel> courses;
+  final int weekNumber;
   final VoidCallback onColorChanged;
+  final VoidCallback onReminderChanged;
 
   const _ConflictingCoursesDialog({
     required this.initialCourse,
     required this.courses,
+    required this.weekNumber,
     required this.onColorChanged,
+    required this.onReminderChanged,
   });
 
   @override
@@ -690,6 +764,19 @@ class _ConflictingCoursesDialogState extends State<_ConflictingCoursesDialog> {
         ],
       ),
       actions: [
+        TextButton(
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (reminderCtx) => CourseReminderDialog(
+                course: current,
+                weekNumber: widget.weekNumber,
+                onSaved: widget.onReminderChanged,
+              ),
+            );
+          },
+          child: Text(context.l10n.setReminder),
+        ),
         TextButton(
           onPressed: () {
             showDialog(

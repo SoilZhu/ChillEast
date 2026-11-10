@@ -3135,4 +3135,109 @@ class AppLocalizationsHsn extends AppLocalizations {
 
   @override
   String get analyticsPromptSubtitle => '光用绝对匿名方式，统计你用的版本。';
+
+  @override
+  String get setReminder => '设置提醒';
+
+  @override
+  String get reminderSettings => '提醒设置';
+
+  @override
+  String get reminderMode => '提醒方式';
+
+  @override
+  String get reminderBefore => '提前';
+
+  @override
+  String get reminderAfter => '延后';
+
+  @override
+  String get reminderExact => '准时';
+
+  @override
+  String get reminderDisabled => '不提醒';
+
+  @override
+  String get reminderScope => '生效范围';
+
+  @override
+  String get scopeOnlyThis => '仅本次课';
+
+  @override
+  String scopeThisWeekday(String weekday) {
+    return '该课程所有在$weekday的课';
+  }
+
+  @override
+  String scopeThisWeek(int week) {
+    return '该课程在第$week周所有的课';
+  }
+
+  @override
+  String get scopeAll => '该课程全学期所有的课';
+
+  @override
+  String get currentRule => '当前设置';
+
+  @override
+  String get restoreDefault => '恢复默认';
+
+  @override
+  String get reminderSaved => '提醒设置已保存';
+
+  @override
+  String get reminderReset => '已恢复默认提醒设置';
+
+  @override
+  String get baseTime => '基准时间';
+
+  @override
+  String get baseTimeSettings => '设置时间';
+
+  @override
+  String get baseTimeClassTime => '课表时间';
+
+  @override
+  String get baseTimeSettingsDesc => '以设置中的提醒时间为基准';
+
+  @override
+  String get baseTimeClassTimeDesc => '以课表上课时间为基准';
+
+  @override
+  String get relativeToSettings => '在默认提醒的基础上调整';
+
+  @override
+  String get relativeToSettingsDesc => '关闭后将直接按上课时间提醒';
+
+  @override
+  String get adjustBasedOnDefault => '在默认提醒的基础上调整';
+
+  @override
+  String adjustDefaultBefore(String time) {
+    return '在默认提醒的基础上，提前 $time';
+  }
+
+  @override
+  String adjustDefaultAfter(String time) {
+    return '在默认提醒的基础上，延后 $time';
+  }
+
+  @override
+  String directClassBefore(String time) {
+    return '直接在上课前 $time 提醒';
+  }
+
+  @override
+  String directClassAfter(String time) {
+    return '直接在上课 $time 后提醒';
+  }
+
+  @override
+  String get directClassExact => '直接在上课时提醒';
+
+  @override
+  String get matchDefaultReminder => '与默认提醒时间保持一致';
+
+  @override
+  String get estimatedReminderTime => '预计提醒时刻';
 }
