@@ -502,8 +502,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                           if (isTabletOrLandscape)
                             SizedBox(
                               height: MediaQuery.paddingOf(context).top > 0
-                                  ? (MediaQuery.paddingOf(context).top + 10)
-                                  : 16.0,
+                                  ? MediaQuery.paddingOf(context).top
+                                  : 4.0,
                             ),
                           Expanded(
                             child: MediaQuery.removePadding(
@@ -516,6 +516,16 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                                   builder: (context, _) {
                                     return AnimatedSwitcher(
                                       duration: const Duration(milliseconds: 300),
+                                      layoutBuilder: (currentChild, previousChildren) {
+                                        return Stack(
+                                          fit: StackFit.expand,
+                                          alignment: Alignment.topCenter,
+                                          children: [
+                                            ...previousChildren,
+                                            if (currentChild != null) currentChild,
+                                          ],
+                                        );
+                                      },
                                       transitionBuilder: (Widget child, Animation<double> animation) {
                                         return FadeTransition(
                                           opacity: animation,

@@ -347,6 +347,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     children: [
                       Expanded(
                         child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -402,6 +403,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             }
 
             return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
@@ -444,6 +446,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           }
 
           return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -510,16 +513,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // 单页可放 6 格；第一页固定为 5 个功能 + 更多
     if (visibleItems.length <= 5) {
       final displayItems = visibleItems.toList();
-      return Padding(
-        // 在信息流内渲染，横向内边距由父级提供
-        padding: const EdgeInsets.only(top: 8, bottom: 8),
-        child: _buildQuickGrid(
-          context,
-          items: displayItems,
-          showMore: true,
-          isDark: isDark,
-          isLoggedIn: isLoggedIn,
-        ),
+      return _buildQuickGrid(
+        context,
+        items: displayItems,
+        showMore: true,
+        isDark: isDark,
+        isLoggedIn: isLoggedIn,
       );
     }
 
@@ -538,88 +537,84 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       });
     }
 
-    return Padding(
-      // 在信息流内渲染，横向内边距由父级提供
-      padding: const EdgeInsets.only(top: 8, bottom: 8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 页间隙 10px（与格内 crossAxisSpacing 一致），同时保证静止时
-          // 卡片外沿与单页布局对齐：PageView 本体比父宽 10px（两侧各外溢 5px），
-          // 每页内对称 Padding 5px 抵消。用 OverflowBox 实现外溢，避免负边距。
-          LayoutBuilder(
-            builder: (context, constraints) {
-              const pageGap = 10.0;
-              const halfGap = pageGap / 2;
-              final viewWidth = constraints.maxWidth + pageGap;
-              return SizedBox(
-                height: gridHeight,
-                child: OverflowBox(
-                  maxWidth: viewWidth,
-                  alignment: Alignment.center,
-                  child: SizedBox(
-                    width: viewWidth,
-                    height: gridHeight,
-                    child: PageView.builder(
-                      controller: _quickPageController,
-                      itemCount: pageCount,
-                      onPageChanged: (i) =>
-                          setState(() => _quickPageIndex = i),
-                      itemBuilder: (context, page) {
-                        Widget grid;
-                        if (page == 0) {
-                          grid = _buildQuickGrid(
-                            context,
-                            items: firstPageItems,
-                            showMore: true,
-                            isDark: isDark,
-                            isLoggedIn: isLoggedIn,
-                          );
-                        } else {
-                          final start = (page - 1) * perPage;
-                          final end =
-                              (start + perPage).clamp(0, remaining.length);
-                          grid = _buildQuickGrid(
-                            context,
-                            items: remaining.sublist(start, end),
-                            showMore: false,
-                            isDark: isDark,
-                            isLoggedIn: isLoggedIn,
-                          );
-                        }
-                        return Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: halfGap),
-                          child: grid,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 页间隙 10px（与格内 crossAxisSpacing 一致），同时保证静止时
+        // 卡片外沿与单页布局对齐：PageView 本体比父宽 10px（两侧各外溢 5px），
+        // 每页内对称 Padding 5px 抵消。用 OverflowBox 实现外溢，避免负边距。
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const pageGap = 10.0;
+            const halfGap = pageGap / 2;
+            final viewWidth = constraints.maxWidth + pageGap;
+            return SizedBox(
+              height: gridHeight,
+              child: OverflowBox(
+                maxWidth: viewWidth,
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: viewWidth,
+                  height: gridHeight,
+                  child: PageView.builder(
+                    controller: _quickPageController,
+                    itemCount: pageCount,
+                    onPageChanged: (i) =>
+                        setState(() => _quickPageIndex = i),
+                    itemBuilder: (context, page) {
+                      Widget grid;
+                      if (page == 0) {
+                        grid = _buildQuickGrid(
+                          context,
+                          items: firstPageItems,
+                          showMore: true,
+                          isDark: isDark,
+                          isLoggedIn: isLoggedIn,
                         );
-                      },
-                    ),
+                      } else {
+                        final start = (page - 1) * perPage;
+                        final end =
+                            (start + perPage).clamp(0, remaining.length);
+                        grid = _buildQuickGrid(
+                          context,
+                          items: remaining.sublist(start, end),
+                          showMore: false,
+                          isDark: isDark,
+                          isLoggedIn: isLoggedIn,
+                        );
+                      }
+                      return Padding(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: halfGap),
+                        child: grid,
+                      );
+                    },
                   ),
                 ),
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(pageCount, (i) {
-              final active = i == _quickPageIndex;
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: active ? 16 : 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: active
-                      ? const Color(0xFF09C489)
-                      : (isDark ? Colors.white24 : Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              );
-            }),
-          ),
-        ],
-      ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(pageCount, (i) {
+            final active = i == _quickPageIndex;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: active ? 16 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: active
+                    ? const Color(0xFF09C489)
+                    : (isDark ? Colors.white24 : Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            );
+          }),
+        ),
+      ],
     );
   }
 
