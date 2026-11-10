@@ -523,6 +523,24 @@ class AppLocalizationsHsn extends AppLocalizations {
   String get homeworkReminderTime => '作业提个醒的时辰';
 
   @override
+  String get homeworkRepeatReminder => '作业持续提醒';
+
+  @override
+  String get homeworkRepeatReminderDesc => '未完成前定期再次提醒';
+
+  @override
+  String get homeworkRepeatInterval => '提醒频率';
+
+  @override
+  String get homeworkRepeatIntervalTime => '选择提醒频率';
+
+  @override
+  String get homeworkRemindAfterDue => '逾期后继续提醒';
+
+  @override
+  String get homeworkRemindAfterDueDesc => '截止后24小时内未完成仍提醒';
+
+  @override
   String get libraryReminder => '图书馆预约提个醒';
 
   @override
@@ -539,6 +557,16 @@ class AppLocalizationsHsn extends AppLocalizations {
   @override
   String notifHoursBefore(String hours) {
     return '还有$hours个钟头';
+  }
+
+  @override
+  String notifMinutesInterval(int minutes) {
+    return '每$minutes分钟';
+  }
+
+  @override
+  String notifHoursInterval(String hours) {
+    return '每$hours小时';
   }
 
   @override
@@ -2427,6 +2455,9 @@ class AppLocalizationsHsn extends AppLocalizations {
   String homeworkDueIn(String time) {
     return '作业还有 $time 截止哒';
   }
+
+  @override
+  String get homeworkOverdueNotice => '作业已截止，若已提交请在应用中标记完成';
 
   @override
   String minutesCount(int count) {

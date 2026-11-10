@@ -267,10 +267,16 @@
   "normalExam": "正常考试",
   "gradeExcellent": "优秀",
   "gradeFailed": "不及格",
-  "courseReminder": "课程提醒",
+  "courseReminder": "上课提醒",
   "courseReminderTime": "上课提醒时间",
   "homeworkReminder": "作业截止提醒",
   "homeworkReminderTime": "作业提醒时间",
+  "homeworkRepeatReminder": "作业持续提醒",
+  "homeworkRepeatReminderDesc": "未完成前定期再次提醒",
+  "homeworkRepeatInterval": "提醒频率",
+  "homeworkRepeatIntervalTime": "选择提醒频率",
+  "homeworkRemindAfterDue": "逾期后继续提醒",
+  "homeworkRemindAfterDueDesc": "截止后24小时内未完成仍提醒",
   "libraryReminder": "图书馆预约提醒",
   "libraryReminderTime": "图书馆预约提醒时间",
   "notifDurationNone": "不通知",
@@ -284,6 +290,22 @@
   },
   "notifHoursBefore": "{hours}小时前",
   "@notifHoursBefore": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  },
+  "notifMinutesInterval": "每{minutes}分钟",
+  "@notifMinutesInterval": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "notifHoursInterval": "每{hours}小时",
+  "@notifHoursInterval": {
     "placeholders": {
       "hours": {
         "type": "String"
@@ -1419,6 +1441,7 @@
       }
     }
   },
+  "homeworkOverdueNotice": "作业已截止，若已提交请在应用中标记完成",
   "minutesCount": "{count}分钟",
   "@minutesCount": {
     "placeholders": {

@@ -520,7 +520,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gradeFailed => 'Failed';
 
   @override
-  String get courseReminder => 'Course Reminder';
+  String get courseReminder => 'Class Reminder';
 
   @override
   String get courseReminderTime => 'Class Reminder Time';
@@ -530,6 +530,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeworkReminderTime => 'Homework Reminder Time';
+
+  @override
+  String get homeworkRepeatReminder => 'Continuous Homework Reminders';
+
+  @override
+  String get homeworkRepeatReminderDesc =>
+      'Remind periodically until completed';
+
+  @override
+  String get homeworkRepeatInterval => 'Reminder Frequency';
+
+  @override
+  String get homeworkRepeatIntervalTime => 'Select Frequency';
+
+  @override
+  String get homeworkRemindAfterDue => 'Remind When Overdue';
+
+  @override
+  String get homeworkRemindAfterDueDesc =>
+      'Keep reminding for up to 24 hours if overdue';
 
   @override
   String get libraryReminder => 'Library Booking Reminder';
@@ -548,6 +568,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String notifHoursBefore(String hours) {
     return '$hours hr before';
+  }
+
+  @override
+  String notifMinutesInterval(int minutes) {
+    return 'Every $minutes min';
+  }
+
+  @override
+  String notifHoursInterval(String hours) {
+    return 'Every $hours hr';
   }
 
   @override
@@ -2503,6 +2533,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String homeworkDueIn(String time) {
     return 'Homework is due in $time';
   }
+
+  @override
+  String get homeworkOverdueNotice =>
+      'Homework deadline has passed. Please mark as completed if submitted';
 
   @override
   String minutesCount(int count) {

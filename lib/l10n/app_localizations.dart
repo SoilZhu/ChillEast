@@ -1118,7 +1118,7 @@ abstract class AppLocalizations {
   /// No description provided for @courseReminder.
   ///
   /// In zh, this message translates to:
-  /// **'课程提醒'**
+  /// **'上课提醒'**
   String get courseReminder;
 
   /// No description provided for @courseReminderTime.
@@ -1138,6 +1138,42 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'作业提醒时间'**
   String get homeworkReminderTime;
+
+  /// No description provided for @homeworkRepeatReminder.
+  ///
+  /// In zh, this message translates to:
+  /// **'作业持续提醒'**
+  String get homeworkRepeatReminder;
+
+  /// No description provided for @homeworkRepeatReminderDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'未完成前定期再次提醒'**
+  String get homeworkRepeatReminderDesc;
+
+  /// No description provided for @homeworkRepeatInterval.
+  ///
+  /// In zh, this message translates to:
+  /// **'提醒频率'**
+  String get homeworkRepeatInterval;
+
+  /// No description provided for @homeworkRepeatIntervalTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择提醒频率'**
+  String get homeworkRepeatIntervalTime;
+
+  /// No description provided for @homeworkRemindAfterDue.
+  ///
+  /// In zh, this message translates to:
+  /// **'逾期后继续提醒'**
+  String get homeworkRemindAfterDue;
+
+  /// No description provided for @homeworkRemindAfterDueDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'截止后24小时内未完成仍提醒'**
+  String get homeworkRemindAfterDueDesc;
 
   /// No description provided for @libraryReminder.
   ///
@@ -1168,6 +1204,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'{hours}小时前'**
   String notifHoursBefore(String hours);
+
+  /// No description provided for @notifMinutesInterval.
+  ///
+  /// In zh, this message translates to:
+  /// **'每{minutes}分钟'**
+  String notifMinutesInterval(int minutes);
+
+  /// No description provided for @notifHoursInterval.
+  ///
+  /// In zh, this message translates to:
+  /// **'每{hours}小时'**
+  String notifHoursInterval(String hours);
 
   /// No description provided for @setSuccessfully.
   ///
@@ -4664,6 +4712,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'作业将在{time}后截止'**
   String homeworkDueIn(String time);
+
+  /// No description provided for @homeworkOverdueNotice.
+  ///
+  /// In zh, this message translates to:
+  /// **'作业已截止，若已提交请在应用中标记完成'**
+  String get homeworkOverdueNotice;
 
   /// No description provided for @minutesCount.
   ///

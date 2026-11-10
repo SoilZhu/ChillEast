@@ -81,8 +81,19 @@ void callbackDispatcher() {
             final hwStorage = HomeworkStorage();
             final list = await hwStorage.readHomeworkList();
             if (list.isNotEmpty) {
-              await NotificationService()
-                  .scheduleHomeworkReminders(list, hwHours);
+              final hwRepeatEnabled =
+                  prefs.getBool('homework_repeat_enabled') ?? false;
+              final hwRepeatInterval =
+                  prefs.getInt('homework_repeat_interval_minutes') ?? 60;
+              final hwRemindAfterDue =
+                  prefs.getBool('homework_remind_after_due') ?? false;
+              await NotificationService().scheduleHomeworkReminders(
+                list,
+                hwHours,
+                repeatEnabled: hwRepeatEnabled,
+                repeatIntervalMinutes: hwRepeatInterval,
+                remindAfterDue: hwRemindAfterDue,
+              );
             }
           } catch (e) {
             allSucceeded = false;

@@ -511,7 +511,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gradeFailed => '不及格';
 
   @override
-  String get courseReminder => '课程提醒';
+  String get courseReminder => '上课提醒';
 
   @override
   String get courseReminderTime => '上课提醒时间';
@@ -521,6 +521,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get homeworkReminderTime => '作业提醒时间';
+
+  @override
+  String get homeworkRepeatReminder => '作业持续提醒';
+
+  @override
+  String get homeworkRepeatReminderDesc => '未完成前定期再次提醒';
+
+  @override
+  String get homeworkRepeatInterval => '提醒频率';
+
+  @override
+  String get homeworkRepeatIntervalTime => '选择提醒频率';
+
+  @override
+  String get homeworkRemindAfterDue => '逾期后继续提醒';
+
+  @override
+  String get homeworkRemindAfterDueDesc => '截止后24小时内未完成仍提醒';
 
   @override
   String get libraryReminder => '图书馆预约提醒';
@@ -539,6 +557,16 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String notifHoursBefore(String hours) {
     return '$hours小时前';
+  }
+
+  @override
+  String notifMinutesInterval(int minutes) {
+    return '每$minutes分钟';
+  }
+
+  @override
+  String notifHoursInterval(String hours) {
+    return '每$hours小时';
   }
 
   @override
@@ -2429,6 +2457,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get homeworkOverdueNotice => '作业已截止，若已提交请在应用中标记完成';
+
+  @override
   String minutesCount(int count) {
     return '$count分钟';
   }
@@ -3759,6 +3790,24 @@ class AppLocalizationsZhHk extends AppLocalizationsZh {
 
   @override
   String get homeworkReminderTime => '作業提醒時間';
+
+  @override
+  String get homeworkRepeatReminder => '作業持續提醒';
+
+  @override
+  String get homeworkRepeatReminderDesc => '未完成前定期再次提醒';
+
+  @override
+  String get homeworkRepeatInterval => '提醒頻率';
+
+  @override
+  String get homeworkRepeatIntervalTime => '選擇提醒頻率';
+
+  @override
+  String get homeworkRemindAfterDue => '逾期後繼續提醒';
+
+  @override
+  String get homeworkRemindAfterDueDesc => '截止後24小時內未完成仍提醒';
 
   @override
   String get libraryReminder => '圖書館預約提醒';
@@ -6894,6 +6943,24 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get homeworkReminderTime => '作業提醒時間';
+
+  @override
+  String get homeworkRepeatReminder => '作業持續提醒';
+
+  @override
+  String get homeworkRepeatReminderDesc => '未完成前定期再次提醒';
+
+  @override
+  String get homeworkRepeatInterval => '提醒頻率';
+
+  @override
+  String get homeworkRepeatIntervalTime => '選擇提醒頻率';
+
+  @override
+  String get homeworkRemindAfterDue => '逾期後繼續提醒';
+
+  @override
+  String get homeworkRemindAfterDueDesc => '截止後24小時內未完成仍提醒';
 
   @override
   String get libraryReminder => '圖書館預約提醒';

@@ -399,51 +399,102 @@ class NotificationService {
         '🚀 Scheduled $scheduledCount course reminders (Default: $reminderMinutes min, Custom rules: ${customRules.length})');
   }
 
+  /// 格式化作业截止倒计时文案
+  String _formatHomeworkRemainingTime(AppLocalizations l10n, Duration duration) {
+    if (duration.inMinutes < 60) {
+      final mins = duration.inMinutes <= 0 ? 1 : duration.inMinutes;
+      return l10n.minutesCount(mins);
+    }
+    final hours = duration.inHours;
+    final mins = duration.inMinutes % 60;
+    if (mins == 0) {
+      return l10n.hoursCount('$hours');
+    }
+    return '${l10n.hoursCount('$hours')}${l10n.minutesCount(mins)}';
+  }
+
   /// 为作业列表安排提醒
   /// [homeworks]: 作业列表
   /// [advanceHours]: 提前多少小时提醒
+  /// [repeatEnabled]: 是否在完成前重复提醒
+  /// [repeatIntervalMinutes]: 重复提醒间隔（分钟）
+  /// [remindAfterDue]: 截止后是否继续提醒
   Future<void> scheduleHomeworkReminders(
     List<HomeworkModel> homeworks,
-    double advanceHours,
-  ) async {
+    double advanceHours, {
+    bool repeatEnabled = false,
+    int repeatIntervalMinutes = 60,
+    bool remindAfterDue = false,
+  }) async {
     if (advanceHours <= 0) return;
 
     final l10n = await _getL10n();
     final now = DateTime.now();
+    final prefs = await SharedPreferences.getInstance();
     int scheduledCount = 0;
 
     for (var hw in homeworks) {
       if (hw.status != HomeworkStatus.pending || hw.endTime == null) continue;
+      final endTime = hw.endTime!;
 
-      final reminderTime =
-          hw.endTime!.subtract(Duration(minutes: (advanceHours * 60).toInt()));
+      // 首次提醒时间
+      final firstReminderTime =
+          endTime.subtract(Duration(minutes: (advanceHours * 60).toInt()));
 
-      // 如果提醒时间已经过了，检查是否需要补发
-      if (!reminderTime.isAfter(now)) {
-        // 如果作业还没有截止，补发
-        if (now.isBefore(hw.endTime!)) {
-          final prefs = await SharedPreferences.getInstance();
+      // 确定所有提醒候选时间点
+      final List<DateTime> reminderTimes = [];
+      if (!repeatEnabled || repeatIntervalMinutes <= 0) {
+        reminderTimes.add(firstReminderTime);
+      } else {
+        final interval = Duration(minutes: repeatIntervalMinutes);
+        DateTime current = firstReminderTime;
+
+        // 截止后提醒的最大上限：如果开启逾期提醒，截止后最多持续 24 小时
+        final cutoffTime = remindAfterDue
+            ? endTime.add(const Duration(hours: 24))
+            : endTime;
+
+        // 限制每个作业最多排程 10 个提醒槽位，防止消耗系统全局闹钟限额
+        const int maxRemindersPerHw = 10;
+        int count = 0;
+        while (!current.isAfter(cutoffTime) && count < maxRemindersPerHw) {
+          reminderTimes.add(current);
+          current = current.add(interval);
+          count++;
+        }
+      }
+
+      // 1. 如果有过去的时间点，检查是否需要补发最新一条
+      final pastTimes = reminderTimes.where((t) => !t.isAfter(now)).toList();
+      if (pastTimes.isNotEmpty) {
+        final latestPast = pastTimes.last;
+        final isOverdue = now.isAfter(endTime);
+        final canMakeup = !isOverdue ||
+            (remindAfterDue &&
+                now.isBefore(endTime.add(const Duration(hours: 24))));
+
+        if (canMakeup) {
           final String makeupKey =
-              'makeup_hw_${hw.id}_${hw.endTime!.millisecondsSinceEpoch}';
+              'makeup_hw_${hw.id}_${latestPast.millisecondsSinceEpoch ~/ 60000}';
 
           if (prefs.getBool(makeupKey) != true) {
             final int makeupId = 250000000 +
-                ((hw.id.hashCode ^ hw.endTime!.millisecondsSinceEpoch).abs() %
+                ((hw.id.hashCode ^ latestPast.millisecondsSinceEpoch).abs() %
                     10000000);
 
-            String timeLabel = '';
-            if (advanceHours < 1) {
-              timeLabel = l10n.minutesCount((advanceHours * 60).toInt());
-            } else if (advanceHours == advanceHours.toInt()) {
-              timeLabel = l10n.hoursCount('${advanceHours.toInt()}');
+            String body;
+            if (isOverdue) {
+              body = l10n.homeworkOverdueNotice;
             } else {
-              timeLabel = l10n.hoursCount('$advanceHours');
+              final remaining = endTime.difference(now);
+              final timeLabel = _formatHomeworkRemainingTime(l10n, remaining);
+              body = l10n.homeworkDueInLessThan(timeLabel);
             }
 
             await _notificationsPlugin.show(
               makeupId,
               '${hw.title} ${hw.courseName}',
-              l10n.homeworkDueInLessThan(timeLabel),
+              body,
               NotificationDetails(
                 android: AndroidNotificationDetails(
                   'homework_reminder_channel',
@@ -459,47 +510,64 @@ class NotificationService {
             _logger.i('📨 Makeup homework notification sent for ${hw.title}');
           }
         }
-        continue;
       }
 
-      // 我们只安排未来 7 天内的
-      if (reminderTime.isAfter(now.add(const Duration(days: 7)))) continue;
+      // 2. 为未来的时间点安排排程
+      final futureTimes = reminderTimes.where((t) => t.isAfter(now)).toList();
+      for (int i = 0; i < futureTimes.length; i++) {
+        final reminderTime = futureTimes[i];
 
-      // 生成作业通知 ID (2开头)
-      final int notificationId = 200000000 + (hw.id.hashCode.abs() % 100000000);
+        // 只安排未来 7 天内的通知
+        if (reminderTime.isAfter(now.add(const Duration(days: 7)))) continue;
 
-      String timeLabel = '';
-      if (advanceHours < 1) {
-        timeLabel = l10n.minutesCount((advanceHours * 60).toInt());
-      } else if (advanceHours == advanceHours.toInt()) {
-        timeLabel = l10n.hoursCount('${advanceHours.toInt()}');
-      } else {
-        timeLabel = l10n.hoursCount('$advanceHours');
-      }
+        // 生成通知 ID (2开头)
+        // 基础作业哈希槽（每个作业分配20个slot，i对应 slotIndex）
+        final int baseOffset = (hw.id.hashCode.abs() % 4000000) * 20;
+        final int notificationId = 200000000 + baseOffset + (i % 20);
 
-      await _zonedScheduleWithFallback(
-        id: notificationId,
-        title: '${hw.title} ${hw.courseName}',
-        body: l10n.homeworkDueIn(timeLabel),
-        scheduledDate: tz.TZDateTime.from(reminderTime, tz.local),
-        notificationDetails: NotificationDetails(
-          android: AndroidNotificationDetails(
-            'homework_reminder_channel',
-            l10n.homeworkReminderChannelName,
-            channelDescription: l10n.homeworkReminderChannelDesc,
-            importance: Importance.max,
-            priority: Priority.high,
-            showWhen: true,
+        String body;
+        if (reminderTime.isAfter(endTime)) {
+          body = l10n.homeworkOverdueNotice;
+        } else {
+          final remaining = endTime.difference(reminderTime);
+          final timeLabel = _formatHomeworkRemainingTime(l10n, remaining);
+          body = l10n.homeworkDueIn(timeLabel);
+        }
+
+        await _zonedScheduleWithFallback(
+          id: notificationId,
+          title: '${hw.title} ${hw.courseName}',
+          body: body,
+          scheduledDate: tz.TZDateTime.from(reminderTime, tz.local),
+          notificationDetails: NotificationDetails(
+            android: AndroidNotificationDetails(
+              'homework_reminder_channel',
+              l10n.homeworkReminderChannelName,
+              channelDescription: l10n.homeworkReminderChannelDesc,
+              importance: Importance.max,
+              priority: Priority.high,
+              showWhen: true,
+            ),
           ),
-        ),
-        payload: 'homework_${hw.id}',
-      );
+          payload: 'homework_${hw.id}',
+        );
 
-      scheduledCount++;
+        scheduledCount++;
+      }
     }
 
     _logger.i(
-        '🚀 Scheduled $scheduledCount homework reminders (Advance: $advanceHours h)');
+        '🚀 Scheduled $scheduledCount homework reminders (Advance: $advanceHours h, Repeat: $repeatEnabled, Interval: $repeatIntervalMinutes min, Overdue: $remindAfterDue)');
+  }
+
+  /// 取消单条作业的所有排程通知
+  Future<void> cancelHomeworkReminders(String homeworkId) async {
+    final int baseOffset = (homeworkId.hashCode.abs() % 4000000) * 20;
+    for (int i = 0; i < 20; i++) {
+      try {
+        await _notificationsPlugin.cancel(200000000 + baseOffset + i);
+      } catch (_) {}
+    }
   }
 
   /// 为图书馆预约安排提醒

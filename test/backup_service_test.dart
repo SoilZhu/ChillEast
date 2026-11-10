@@ -182,6 +182,34 @@ void main() {
       expect(library['isVisible'], isTrue);
     });
 
+    test('buildBackupData and applyBackupData roundtrip homework reminder settings', () async {
+      SharedPreferences.setMockInitialValues({
+        'homework_reminder_hours': 2.0,
+        'homework_repeat_enabled': true,
+        'homework_repeat_interval_minutes': 30,
+        'homework_remind_after_due': true,
+      });
+
+      final backup = await BackupExportService.buildBackupData();
+      final settings = backup['settings'] as Map<String, dynamic>;
+
+      expect(settings['homeworkReminderHours'], 2.0);
+      expect(settings['homeworkRepeatEnabled'], true);
+      expect(settings['homeworkRepeatIntervalMinutes'], 30);
+      expect(settings['homeworkRemindAfterDue'], true);
+
+      // 清空并模拟恢复
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      await BackupExportService.applyBackupData(backup);
+
+      expect(prefs.getDouble('homework_reminder_hours'), 2.0);
+      expect(prefs.getBool('homework_repeat_enabled'), true);
+      expect(prefs.getInt('homework_repeat_interval_minutes'), 30);
+      expect(prefs.getBool('homework_remind_after_due'), true);
+    });
+
     test('buildBackupData excludes school caches and only includes manual homework', () async {
       SharedPreferences.setMockInitialValues({
         'cached_library_reserves': jsonEncode([{'title': 'seat 1'}]),

@@ -48,6 +48,9 @@ class BackupExportService {
     'languageCode',
     'courseReminderMinutes',
     'homeworkReminderHours',
+    'homeworkRepeatEnabled',
+    'homeworkRepeatIntervalMinutes',
+    'homeworkRemindAfterDue',
     'libraryReminderMinutes',
     'courseLiveEnabled',
     'flymeLiveEnabled',
@@ -482,6 +485,12 @@ class BackupExportService {
         'courseReminderMinutes': prefs.getInt('course_reminder_minutes') ?? 0,
         'homeworkReminderHours':
             prefs.getDouble('homework_reminder_hours') ?? 0,
+        'homeworkRepeatEnabled':
+            prefs.getBool('homework_repeat_enabled') ?? false,
+        'homeworkRepeatIntervalMinutes':
+            prefs.getInt('homework_repeat_interval_minutes') ?? 60,
+        'homeworkRemindAfterDue':
+            prefs.getBool('homework_remind_after_due') ?? false,
         'libraryReminderMinutes':
             prefs.getInt('library_reminder_minutes') ?? 0,
         'courseLiveEnabled': prefs.getBool('course_live_enabled') ?? false,
@@ -631,6 +640,12 @@ class BackupExportService {
         settings, 'courseReminderMinutes');
     await _writeDouble(prefs, 'homework_reminder_hours',
         settings, 'homeworkReminderHours');
+    await _writeBool(prefs, 'homework_repeat_enabled',
+        settings, 'homeworkRepeatEnabled');
+    await _writeInt(prefs, 'homework_repeat_interval_minutes',
+        settings, 'homeworkRepeatIntervalMinutes');
+    await _writeBool(prefs, 'homework_remind_after_due',
+        settings, 'homeworkRemindAfterDue');
     await _writeInt(prefs, 'library_reminder_minutes',
         settings, 'libraryReminderMinutes');
     await _writeBool(
