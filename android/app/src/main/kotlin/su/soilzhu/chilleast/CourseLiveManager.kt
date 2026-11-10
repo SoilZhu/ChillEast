@@ -157,6 +157,13 @@ object CourseLiveManager {
         val safeTotal = total.coerceAtLeast(1)
         val safeProgress = progress.coerceIn(0, safeTotal)
 
+        // 若已过开课时间（可能由唤醒延迟导致），决不重新弹卡，直接撤销
+        val now = System.currentTimeMillis()
+        if (whenMs > 0 && whenMs <= now) {
+            cancel(ctx, id)
+            return
+        }
+
         val builder = NotificationCompat.Builder(ctx, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(title)
@@ -167,7 +174,14 @@ object CourseLiveManager {
             .setShowWhen(whenMs > 0)
             .setAutoCancel(false)
 
-        if (whenMs > 0) builder.setWhen(whenMs)
+        if (whenMs > 0) {
+            builder.setWhen(whenMs)
+            val timeoutMs = whenMs - now
+            if (timeoutMs > 0) {
+                // 系统底层超时销毁：留1秒缓冲，保证即使App被杀/闹钟被清除，操作系统也会在到点时自动移除通知
+                builder.setTimeoutAfter(timeoutMs.coerceAtLeast(1000L))
+            }
+        }
         if (shortText.isNotEmpty()) {
             try {
                 builder.setShortCriticalText(shortText)

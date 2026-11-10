@@ -52,6 +52,38 @@ object LiveAlarmScheduler {
             this.action = action
         }
 
+    /**
+     * 设置单个闹钟。
+     * 若拥有精确闹钟权限，使用 setExactAndAllowWhileIdle；
+     * 若无精确闹钟权限，对于关键的开课终点撤卡（ACTION_END），优先通过 setAlarmClock 保证不被 Doze 模式延迟，
+     * 普通进度更新点则降级为 setAndAllowWhileIdle。
+     */
+    fun scheduleSingleAlarm(
+        ctx: Context,
+        am: AlarmManager,
+        exact: Boolean,
+        action: String,
+        triggerAt: Long,
+        pi: PendingIntent,
+    ) {
+        val isEnd = (action == ACTION_END)
+        if (exact) {
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
+        } else if (isEnd) {
+            try {
+                val showPi = PendingIntent.getActivity(
+                    ctx, 0, Intent(ctx, MainActivity::class.java),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+                am.setAlarmClock(AlarmManager.AlarmClockInfo(triggerAt, showPi), pi)
+            } catch (_: Exception) {
+                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
+            }
+        } else {
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
+        }
+    }
+
     /** 全量替换式编排，返回成功排入的闹钟数。 */
     fun program(ctx: Context, eventsJson: String): Int {
         cancelAllAlarmsOnly(ctx)
@@ -75,7 +107,8 @@ object LiveAlarmScheduler {
             if (triggerAt <= now) continue
             val code = o.optInt("code", 0)
             if (code == 0) continue
-            val intent = alarmIntent(ctx, o.optString("action"), code).apply {
+            val action = o.optString("action")
+            val intent = alarmIntent(ctx, action, code).apply {
                 putExtra("code", code)
                 putExtra("liveId", o.optInt("liveId"))
                 putExtra("kind", o.optString("kind"))
@@ -91,12 +124,7 @@ object LiveAlarmScheduler {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
             try {
-                if (exact) {
-                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
-                } else {
-                    // 精确闹钟权限被收回时降级为非精确（可能晚几分钟）
-                    am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
-                }
+                scheduleSingleAlarm(ctx, am, exact, action, triggerAt, pi)
                 count++
             } catch (_: Exception) {
             }

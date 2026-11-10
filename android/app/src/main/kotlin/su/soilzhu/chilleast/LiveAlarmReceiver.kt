@@ -49,8 +49,8 @@ class LiveAlarmReceiver : BroadcastReceiver() {
         }
         if (action != LiveAlarmScheduler.ACTION_FIRE) return
         val now = System.currentTimeMillis()
-        if (startTs <= now) {
-            // 触发晚了（Doze 延迟等）：已开课/已开始，不发过期卡直接撤
+        // 防竞态与过期保护：如果触发时已过开始时间，或距离开课不足3秒，决不发出或更新卡片，直接撤卡
+        if (startTs - now <= 3000L) {
             LiveAlarmScheduler.cancelCard(ctx, liveId)
             return
         }
@@ -64,7 +64,7 @@ class LiveAlarmReceiver : BroadcastReceiver() {
             val text = "还有 $remaining 分钟开始 · 请按时签到"
             val time = "${hh}:${mm}开始"
             if (channel == "flyme") {
-                FlymeLiveManager.upsert(ctx, liveId, title, text, location, time)
+                FlymeLiveManager.upsert(ctx, liveId, title, text, location, time, startTs)
             } else {
                 CourseLiveManager.upsert(ctx, liveId, title, text, location, elapsed, leadMin, startTs)
             }
@@ -73,7 +73,7 @@ class LiveAlarmReceiver : BroadcastReceiver() {
             val text = "还有 $remaining 分钟上课"
             val time = "${hh}:${mm}开课"
             if (channel == "flyme") {
-                FlymeLiveManager.upsert(ctx, liveId, title, text, location, time)
+                FlymeLiveManager.upsert(ctx, liveId, title, text, location, time, startTs)
             } else {
                 CourseLiveManager.upsert(ctx, liveId, title, text, location, elapsed, leadMin, startTs)
             }
@@ -145,11 +145,7 @@ class LiveAlarmReceiver : BroadcastReceiver() {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
                 try {
-                    if (exact) {
-                        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
-                    } else {
-                        am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
-                    }
+                    LiveAlarmScheduler.scheduleSingleAlarm(ctx, am, exact, action, triggerAt, pi)
                 } catch (_: Exception) {
                 }
             } else if (action == LiveAlarmScheduler.ACTION_FIRE) {
