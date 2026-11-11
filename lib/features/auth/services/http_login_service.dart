@@ -552,8 +552,6 @@ AuthException _loginNetworkFailure(DioException error, String stage) {
       case DioExceptionType.receiveTimeout:
         final seconds = error.requestOptions.receiveTimeout?.inSeconds;
         reason = '等待服务器响应超时${seconds == null ? '' : '（$seconds 秒）'}';
-      case DioExceptionType.transformTimeout:
-        reason = '数据转换超时';
       case DioExceptionType.badResponse:
         final status = error.response?.statusCode;
         reason = '服务器返回异常 HTTP 状态${status == null ? '' : ' $status'}';
