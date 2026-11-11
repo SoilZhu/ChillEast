@@ -53,6 +53,7 @@ class HomeWidgetService {
     'questionnaire',
     'leave',
     'gym',
+    'physical_test',
     'xgxt',
     'teaching_eval',
     'score',
@@ -79,6 +80,7 @@ class HomeWidgetService {
     'questionnaire': '📋',
     'leave': '📄',
     'gym': '🏀',
+    'physical_test': '🏃',
     'teaching_eval': '📝',
     'score': '📊',
     'exam': '📅',
@@ -105,6 +107,7 @@ class HomeWidgetService {
     'xgxt': 0xFF3476E6,
     'repairs': 0xFF607D8B,
     'gym': 0xFFE91E63,
+    'physical_test': 0xFFFF5722,
     'teaching_eval': 0xFF00BCD4,
     'score': 0xFFE63476,
     'exam': 0xFF5C6BC0,
@@ -269,7 +272,9 @@ class HomeWidgetService {
       items.add({
         'kind': 'homework',
         'title': h.title,
-        'sub': course.isEmpty ? '$deadlinePrefix $time' : '$course · $deadlinePrefix $time',
+        'sub': course.isEmpty
+            ? '$deadlinePrefix $time'
+            : '$course · $deadlinePrefix $time',
         'room': '',
         'color': homeworkAccent,
         'endTimeMs': end?.millisecondsSinceEpoch ?? 0,
@@ -335,13 +340,15 @@ class HomeWidgetService {
       if (year == null || month == null || dayNum == null) continue;
 
       // 1. 每日 22:00:01（切明日）
-      final switchTomorrow = DateTime(year, month, dayNum, 22, 0, 1).millisecondsSinceEpoch;
+      final switchTomorrow =
+          DateTime(year, month, dayNum, 22, 0, 1).millisecondsSinceEpoch;
       if (switchTomorrow > nowMs) {
         alarmSet.add(switchTomorrow);
       }
 
       // 2. 每日 00:00:01（跨天）
-      final switchMidnight = DateTime(year, month, dayNum, 0, 0, 1).millisecondsSinceEpoch;
+      final switchMidnight =
+          DateTime(year, month, dayNum, 0, 0, 1).millisecondsSinceEpoch;
       if (switchMidnight > nowMs) {
         alarmSet.add(switchMidnight);
       }
@@ -371,12 +378,14 @@ class HomeWidgetService {
     String title = '',
   }) {
     final picked = ids.where(allFunctionIds.contains).take(4).toList();
-    final items = picked.map((id) => {
-          'id': id,
-          'label': labelOf(id),
-          'emoji': functionEmoji[id] ?? '🔹',
-          'color': functionColors[id] ?? 0xFF09C489,
-        }).toList();
+    final items = picked
+        .map((id) => {
+              'id': id,
+              'label': labelOf(id),
+              'emoji': functionEmoji[id] ?? '🔹',
+              'color': functionColors[id] ?? 0xFF09C489,
+            })
+        .toList();
     return {'title': title, 'items': items};
   }
 
@@ -408,6 +417,8 @@ class HomeWidgetService {
         return l10n.funcRepairs;
       case 'gym':
         return l10n.funcGym;
+      case 'physical_test':
+        return l10n.funcPhysicalTest;
       case 'teaching_eval':
         return l10n.funcTeachingEval;
       case 'score':
@@ -490,8 +501,10 @@ class HomeWidgetService {
       if (raw == null) return List<String>.from(defaultQuickIds);
       final decoded = jsonDecode(raw);
       if (decoded is! List) return List<String>.from(defaultQuickIds);
-      final ids =
-          decoded.map((e) => e.toString()).where(allFunctionIds.contains).toList();
+      final ids = decoded
+          .map((e) => e.toString())
+          .where(allFunctionIds.contains)
+          .toList();
       return ids;
     } catch (_) {
       return List<String>.from(defaultQuickIds);
@@ -506,7 +519,8 @@ class HomeWidgetService {
   }
 
   /// 读取当前语言并解析为 Locale（跟随系统时按设备语言粗略判断）。
-  Future<AppLocalizations> _resolveLocalizations(SharedPreferences prefs) async {
+  Future<AppLocalizations> _resolveLocalizations(
+      SharedPreferences prefs) async {
     final code = prefs.getString('app_language_code');
     try {
       if (code != null && code.isNotEmpty && code != 'system') {
@@ -622,7 +636,8 @@ class HomeWidgetService {
     int currentWeek = 0;
     if (firstWeekMonday != null) {
       try {
-        currentWeek = DateCalculator.getCurrentWeekNumber(firstWeekMonday, target);
+        currentWeek =
+            DateCalculator.getCurrentWeekNumber(firstWeekMonday, target);
       } catch (_) {}
     }
     var dayCourses = filterDayCourses(allCourses, target.weekday, currentWeek);

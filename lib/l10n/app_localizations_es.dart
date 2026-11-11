@@ -216,6 +216,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get funcGym => 'Reserva de instalaciones';
 
   @override
+  String get funcPhysicalTest => 'Reserva de prueba física';
+
+  @override
   String get funcTeachingEval => 'Evaluación docente';
 
   @override

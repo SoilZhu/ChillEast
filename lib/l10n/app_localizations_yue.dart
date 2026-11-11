@@ -213,6 +213,9 @@ class AppLocalizationsYue extends AppLocalizations {
   String get funcGym => '约场馆';
 
   @override
+  String get funcPhysicalTest => '约体测';
+
+  @override
   String get funcTeachingEval => '评老师系统';
 
   @override

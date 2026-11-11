@@ -44,14 +44,14 @@ Future<void> openFunctionById(
       break;
     case 'recharge':
       isLoggedIn
-          ? Navigator.push(
-              context, createSlideHorizontalRoute(const CampusCardRechargeScreen()))
+          ? Navigator.push(context,
+              createSlideHorizontalRoute(const CampusCardRechargeScreen()))
           : _showLoginDialog(context, ref);
       break;
     case 'ele_recharge':
       isLoggedIn
-          ? Navigator.push(
-              context, createSlideHorizontalRoute(const ElectricityRechargeScreen()))
+          ? Navigator.push(context,
+              createSlideHorizontalRoute(const ElectricityRechargeScreen()))
           : _showLoginDialog(context, ref);
       break;
     case 'library':
@@ -62,8 +62,8 @@ Future<void> openFunctionById(
       break;
     case 'empty_classroom':
       isLoggedIn
-          ? Navigator.push(
-              context, createSlideHorizontalRoute(const ClassroomInquiryScreen()))
+          ? Navigator.push(context,
+              createSlideHorizontalRoute(const ClassroomInquiryScreen()))
           : _showLoginDialog(context, ref);
       break;
     case 'xgxt':
@@ -87,8 +87,8 @@ Future<void> openFunctionById(
       break;
     case 'questionnaire':
       isLoggedIn
-          ? Navigator.push(
-              context, createSlideHorizontalRoute(const QuestionnaireListScreen()))
+          ? Navigator.push(context,
+              createSlideHorizontalRoute(const QuestionnaireListScreen()))
           : _showLoginDialog(context, ref);
       break;
     case 'leave':
@@ -99,7 +99,8 @@ Future<void> openFunctionById(
       break;
     case 'repairs':
       isLoggedIn
-          ? Navigator.push(context, createSlideHorizontalRoute(const RepairScreen()))
+          ? Navigator.push(
+              context, createSlideHorizontalRoute(const RepairScreen()))
           : _showLoginDialog(context, ref);
       break;
     case 'dormitory':
@@ -149,6 +150,17 @@ Future<void> openFunctionById(
               )))
           : _showLoginDialog(context, ref);
       break;
+    case 'physical_test':
+      isLoggedIn
+          ? Navigator.push(
+              context,
+              createSlideHorizontalRoute(WebViewDetailScreen(
+                title: context.l10n.funcPhysicalTest,
+                url: AppConstants.physicalTestReservationUrl,
+                showWebBack: true,
+              )))
+          : _showLoginDialog(context, ref);
+      break;
     case 'teaching_eval':
       isLoggedIn
           ? Navigator.push(
@@ -164,14 +176,16 @@ Future<void> openFunctionById(
       break;
     case 'score':
       isLoggedIn
-          ? Navigator.push(context, createSlideHorizontalRoute(const ScoreScreen()))
+          ? Navigator.push(
+              context, createSlideHorizontalRoute(const ScoreScreen()))
           : _showLoginDialog(context, ref);
       break;
     case 'exam':
       Navigator.push(context, createSlideHorizontalRoute(const ExamScreen()));
       break;
     case 'vpn':
-      Navigator.push(context, createSlideHorizontalRoute(const VpnConverterScreen()));
+      Navigator.push(
+          context, createSlideHorizontalRoute(const VpnConverterScreen()));
       break;
     case 'campus_card':
       if (isLoggedIn) {
@@ -198,10 +212,12 @@ Future<void> openFunctionById(
       }
       break;
     case 'bus':
-      Navigator.push(context, createSlideHorizontalRoute(const BusTrackingScreen()));
+      Navigator.push(
+          context, createSlideHorizontalRoute(const BusTrackingScreen()));
       break;
     case 'campus_bus_route':
-      Navigator.push(context, createSlideHorizontalRoute(const CampusBusMapScreen()));
+      Navigator.push(
+          context, createSlideHorizontalRoute(const CampusBusMapScreen()));
       break;
     case 'cs_bus':
       final hasPermission = await LocationHelper.requestPermission();

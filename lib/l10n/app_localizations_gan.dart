@@ -213,6 +213,9 @@ class AppLocalizationsGan extends AppLocalizations {
   String get funcGym => '场馆占座';
 
   @override
+  String get funcPhysicalTest => '体测占座';
+
+  @override
   String get funcTeachingEval => '评老师系统';
 
   @override

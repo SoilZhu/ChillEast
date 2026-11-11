@@ -214,6 +214,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get funcGym => 'Gym Booking';
 
   @override
+  String get funcPhysicalTest => 'Physical Test Booking';
+
+  @override
   String get funcTeachingEval => 'Teaching Eval';
 
   @override

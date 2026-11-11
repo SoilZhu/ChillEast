@@ -216,6 +216,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get funcGym => 'Бронь спортзала';
 
   @override
+  String get funcPhysicalTest => 'Запись на физтест';
+
+  @override
   String get funcTeachingEval => 'Оценка преподавателей';
 
   @override

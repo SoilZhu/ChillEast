@@ -215,6 +215,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get funcGym => 'Reserva de Espaços';
 
   @override
+  String get funcPhysicalTest => 'Reserva de Teste Físico';
+
+  @override
   String get funcTeachingEval => 'Avaliação Docente';
 
   @override

@@ -38,7 +38,8 @@ class FunctionItem {
     };
   }
 
-  factory FunctionItem.fromJson(Map<String, dynamic> json, FunctionItem template) {
+  factory FunctionItem.fromJson(
+      Map<String, dynamic> json, FunctionItem template) {
     return template.copyWith(
       isVisible: json['isVisible'] ?? template.isVisible,
     );
@@ -103,12 +104,17 @@ const List<FunctionGroup> functionGroups = [
       titleKey: 'groupLife',
       ids: ['repairs', 'leave', 'questionnaire', 'sunshine', 'dormitory']),
   FunctionGroup(
-      titleKey: 'groupTravel',
-      ids: ['bus', 'cs_bus', 'campus_bus_route']),
+      titleKey: 'groupTravel', ids: ['bus', 'cs_bus', 'campus_bus_route']),
   FunctionGroup(titleKey: 'groupTools', ids: ['vpn']),
-  FunctionGroup(
-      titleKey: 'groupMiniApps',
-      ids: ['info_portal', 'ehall', 'xgxt', 'teaching_eval', 'gym', 'campus_card']),
+  FunctionGroup(titleKey: 'groupMiniApps', ids: [
+    'info_portal',
+    'ehall',
+    'xgxt',
+    'teaching_eval',
+    'gym',
+    'campus_card',
+    'physical_test'
+  ]),
 ];
 
 String functionGroupTitle(BuildContext context, String titleKey) {
@@ -159,6 +165,8 @@ extension FunctionItemLocalization on FunctionItem {
         return l10n.funcRepairs;
       case 'gym':
         return l10n.funcGym;
+      case 'physical_test':
+        return l10n.funcPhysicalTest;
       case 'teaching_eval':
         return l10n.funcTeachingEval;
       case 'score':

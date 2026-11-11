@@ -213,6 +213,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get funcGym => '场馆预约';
 
   @override
+  String get funcPhysicalTest => '体测预约';
+
+  @override
   String get funcTeachingEval => '教评系统';
 
   @override
@@ -3482,6 +3485,9 @@ class AppLocalizationsZhHk extends AppLocalizationsZh {
   String get funcGym => '場館預約';
 
   @override
+  String get funcPhysicalTest => '體測預約';
+
+  @override
   String get funcTeachingEval => '教評系統';
 
   @override
@@ -6635,6 +6641,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get funcGym => '場館預約';
 
   @override
+  String get funcPhysicalTest => '體測預約';
+
+  @override
   String get funcTeachingEval => '教評系統';
 
   @override
@@ -9786,6 +9795,9 @@ class AppLocalizationsZhHefei extends AppLocalizationsZh {
 
   @override
   String get funcGym => '场馆先定好';
+
+  @override
+  String get funcPhysicalTest => '体测先定好';
 
   @override
   String get funcTeachingEval => '评老师系统';

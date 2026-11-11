@@ -213,6 +213,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get funcGym => '施設予約';
 
   @override
+  String get funcPhysicalTest => '体力測定予約';
+
+  @override
   String get funcTeachingEval => '授業評価';
 
   @override

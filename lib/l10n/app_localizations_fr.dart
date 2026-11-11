@@ -216,6 +216,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get funcGym => 'Réservation de salles de sport';
 
   @override
+  String get funcPhysicalTest => 'Réservation du test physique';
+
+  @override
   String get funcTeachingEval => 'Évaluation des cours';
 
   @override

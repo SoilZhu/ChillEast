@@ -213,6 +213,9 @@ class AppLocalizationsHsn extends AppLocalizations {
   String get funcGym => '场馆约位';
 
   @override
+  String get funcPhysicalTest => '体测约位';
+
+  @override
   String get funcTeachingEval => '教评台子';
 
   @override

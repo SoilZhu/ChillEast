@@ -213,6 +213,9 @@ class AppLocalizationsWuu extends AppLocalizations {
   String get funcGym => '场馆预订';
 
   @override
+  String get funcPhysicalTest => '体测预订';
+
+  @override
   String get funcTeachingEval => '教学评价系统';
 
   @override

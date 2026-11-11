@@ -527,6 +527,12 @@ abstract class AppLocalizations {
   /// **'场馆预约'**
   String get funcGym;
 
+  /// No description provided for @funcPhysicalTest.
+  ///
+  /// In zh, this message translates to:
+  /// **'体测预约'**
+  String get funcPhysicalTest;
+
   /// No description provided for @funcTeachingEval.
   ///
   /// In zh, this message translates to:

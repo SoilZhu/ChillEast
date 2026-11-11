@@ -141,7 +141,9 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
       builder: (context, constraints) {
         final isLargeScreen = constraints.maxWidth >= 600;
 
-        if (!isLargeScreen && _embeddedScreen != null && !_isTransitioningToRoute) {
+        if (!isLargeScreen &&
+            _embeddedScreen != null &&
+            !_isTransitioningToRoute) {
           _isTransitioningToRoute = true;
           final screenToOpen = _embeddedScreen!;
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -214,83 +216,82 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
     bool isLoggedIn,
   ) {
     return SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (int gi = 0; gi < visibleGroups.length; gi++) ...[
-                if (gi > 0) const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Text(
-                    functionGroupTitle(context, visibleGroups[gi].titleKey),
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color:
-                          Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white70
-                              : Colors.grey[700],
-                    ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (int gi = 0; gi < visibleGroups.length; gi++) ...[
+              if (gi > 0) const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Text(
+                  functionGroupTitle(context, visibleGroups[gi].titleKey),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white70
+                        : Colors.grey[700],
                   ),
                 ),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate:
-                      const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 240,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    mainAxisExtent: 52,
-                  ),
-                  itemCount: visibleGroups[gi].items.length,
-                  itemBuilder: (context, index) {
-                    final item = visibleGroups[gi].items[index];
-                    final isSelected = _selectedFunctionId == item.id;
-                    return _buildFunctionGridCard(
-                      context,
-                      title: item.getLocalizedTitle(context),
-                      icon: item.icon,
-                      color: item.color,
-                      isSelected: isSelected,
-                      onTap: () =>
-                          _handleFunctionTap(context, item.id, isLoggedIn),
-                    );
-                  },
+              ),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 240,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  mainAxisExtent: 52,
                 ),
-              ],
+                itemCount: visibleGroups[gi].items.length,
+                itemBuilder: (context, index) {
+                  final item = visibleGroups[gi].items[index];
+                  final isSelected = _selectedFunctionId == item.id;
+                  return _buildFunctionGridCard(
+                    context,
+                    title: item.getLocalizedTitle(context),
+                    icon: item.icon,
+                    color: item.color,
+                    isSelected: isSelected,
+                    onTap: () =>
+                        _handleFunctionTap(context, item.id, isLoggedIn),
+                  );
+                },
+              ),
             ],
-          ),
+          ],
         ),
-      );
+      ),
+    );
   }
 
-  void _handleFunctionTap(BuildContext context, String id, bool isLoggedIn) async {
+  void _handleFunctionTap(
+      BuildContext context, String id, bool isLoggedIn) async {
     switch (id) {
       case 'payment_code':
-        isLoggedIn 
+        isLoggedIn
             ? _safeNavigate(const PaymentCodeScreen(), id: id)
             : _showLoginDialog();
         break;
       case 'recharge':
-        isLoggedIn 
+        isLoggedIn
             ? _safeNavigate(const CampusCardRechargeScreen(), id: id)
             : _showLoginDialog();
         break;
       case 'ele_recharge':
-        isLoggedIn 
+        isLoggedIn
             ? _safeNavigate(const ElectricityRechargeScreen(), id: id)
             : _showLoginDialog();
         break;
       case 'library':
-        isLoggedIn 
+        isLoggedIn
             ? _safeNavigate(const LibraryHomeScreen(), id: id)
             : _showLoginDialog();
         break;
       case 'empty_classroom':
-        isLoggedIn 
+        isLoggedIn
             ? _safeNavigate(const ClassroomInquiryScreen(), id: id)
             : _showLoginDialog();
         break;
@@ -310,7 +311,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
             : _showLoginDialog();
         break;
       case 'repairs':
-        isLoggedIn 
+        isLoggedIn
             ? _safeNavigate(
                 const RepairScreen(),
                 id: id,
@@ -323,7 +324,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
             : _showLoginDialog();
         break;
       case 'gym':
-        isLoggedIn 
+        isLoggedIn
             ? _safeNavigate(
                 WebViewDetailScreen(
                   title: context.l10n.funcGym,
@@ -334,8 +335,20 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
               )
             : _showLoginDialog();
         break;
+      case 'physical_test':
+        isLoggedIn
+            ? _safeNavigate(
+                WebViewDetailScreen(
+                  title: context.l10n.funcPhysicalTest,
+                  url: AppConstants.physicalTestReservationUrl,
+                  showWebBack: true,
+                ),
+                id: id,
+              )
+            : _showLoginDialog();
+        break;
       case 'ehall':
-        isLoggedIn 
+        isLoggedIn
             ? _safeNavigate(
                 WebViewDetailScreen(
                   title: context.l10n.funcEhall,
@@ -350,7 +363,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
             : _showLoginDialog();
         break;
       case 'info_portal':
-        isLoggedIn 
+        isLoggedIn
             ? _safeNavigate(
                 WebViewDetailScreen(
                   title: context.l10n.funcInfoPortal,
@@ -367,7 +380,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
             : _showLoginDialog();
         break;
       case 'xgxt':
-        isLoggedIn 
+        isLoggedIn
             ? _safeNavigate(
                 WebViewDetailScreen(
                   title: context.l10n.funcXgxt,
@@ -381,7 +394,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
             : _showLoginDialog();
         break;
       case 'teaching_eval':
-        isLoggedIn 
+        isLoggedIn
             ? _safeNavigate(
                 WebViewDetailScreen(
                   title: context.l10n.funcEvaluation,
@@ -395,7 +408,7 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
             : _showLoginDialog();
         break;
       case 'score':
-        isLoggedIn 
+        isLoggedIn
             ? _safeNavigate(const ScoreScreen(), id: id)
             : _showLoginDialog();
         break;
@@ -408,10 +421,11 @@ class _FunctionsScreenState extends ConsumerState<FunctionsScreen> {
       case 'campus_card':
         if (isLoggedIn) {
           final campusCardTitle = context.l10n.funcCampusCard;
-          await [Permission.camera, Permission.photos, Permission.storage].request();
+          await [Permission.camera, Permission.photos, Permission.storage]
+              .request();
           final service = ref.read(campusCardServiceProvider);
           final url = service.getCampusCardHomeUrl();
-          
+
           if (!mounted) return;
           _safeNavigate(
             WebViewDetailScreen(
