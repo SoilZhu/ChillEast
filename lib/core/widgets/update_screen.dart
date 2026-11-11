@@ -8,12 +8,14 @@ class UpdateScreen extends StatelessWidget {
   final String version;
   final String releaseNotes;
   final String downloadUrl;
+  final bool isForceUpdate;
 
   const UpdateScreen({
     super.key,
     required this.version,
     required this.releaseNotes,
     required this.downloadUrl,
+    this.isForceUpdate = false,
   });
 
   @override
@@ -21,41 +23,46 @@ class UpdateScreen extends StatelessWidget {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
+    return PopScope(
+      canPop: !isForceUpdate,
+      child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          leading: isForceUpdate
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
         ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 纯图标，左对齐
-                  Icon(
-                    Icons.system_update_rounded,
-                    size: 38,
-                    color: primaryColor,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // 发现新版本标题，左对齐
-                  Text(
-                    context.l10n.foundNewVersion(version),
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
+        body: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 纯图标，左对齐
+                    Icon(
+                      Icons.system_update_rounded,
+                      size: 38,
+                      color: primaryColor,
                     ),
-                  ),
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+
+                    // 发现新版本标题，左对齐
+                    Text(
+                      context.l10n.foundNewVersion(version),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
 
                   // 更新日志标题
                   Text(
@@ -133,8 +140,13 @@ class UpdateScreen extends StatelessWidget {
                   onPressed: () async {
                     final nav = Navigator.of(context);
                     final route = ModalRoute.of(context);
-                    await UpdateService().startDownload(context, downloadUrl, version);
-                    if (route != null && nav.mounted) {
+                    await UpdateService().startDownload(
+                      context,
+                      downloadUrl,
+                      version,
+                      isForceUpdate: isForceUpdate,
+                    );
+                    if (!isForceUpdate && route != null && nav.mounted) {
                       nav.removeRoute(route);
                     }
                   },
@@ -157,6 +169,7 @@ class UpdateScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

@@ -172,7 +172,8 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
               const Icon(Icons.check_circle, color: Color(0xFF09C489)),
               const SizedBox(width: 8),
               Text(context.l10n.reservationSuccess,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
           content: Column(
@@ -226,8 +227,8 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                 const Icon(Icons.error_outline, color: Colors.red),
                 const SizedBox(width: 8),
                 Text(context.l10n.reservationFailed,
-                    style:
-                        const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
             content: Text(e.toString().replaceAll('Exception:', '').trim()),
@@ -322,7 +323,8 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
                             size: 16, color: Color(0xFF09C489)),
                         const SizedBox(width: 8),
                         Text(
-                          context.l10n.dateAndPeriod(widget.day, '$_startTime - $_endTime'),
+                          context.l10n.dateAndPeriod(
+                              widget.day, '$_startTime - $_endTime'),
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -522,6 +524,16 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
         _usedSeats.contains(seat.seatNum) || seat.reserveStatus != 0;
     final isSelected = _selectedSeatNum == seat.seatNum;
 
+    final seatStatusText = isOccupied
+        ? context.l10n.a11ySeatStatusOccupied
+        : (isSelected
+            ? context.l10n.a11ySeatStatusSelected
+            : context.l10n.a11ySeatStatusAvailable);
+    final semanticLabel = context.l10n.a11ySeatDescription(
+      seat.seatNum,
+      seatStatusText,
+    );
+
     Color bgColor;
     Color borderColor;
     Color textColor;
@@ -546,31 +558,39 @@ class _LibrarySeatScreenState extends ConsumerState<LibrarySeatScreen> {
       top: (seat.y - 1) * cellSize,
       width: cellSize - 2,
       height: cellSize - 2,
-      child: GestureDetector(
-        onTap: isOccupied
-            ? null
-            : () {
-                setState(() {
-                  if (_selectedSeatNum == seat.seatNum) {
-                    _selectedSeatNum = null;
-                  } else {
-                    _selectedSeatNum = seat.seatNum;
-                  }
-                });
-              },
-        child: Container(
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: borderColor, width: isSelected ? 1.8 : 1),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            seat.seatNum,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: textColor,
+      child: Semantics(
+        button: !isOccupied,
+        enabled: !isOccupied,
+        selected: isOccupied ? null : isSelected,
+        label: semanticLabel,
+        excludeSemantics: true,
+        child: GestureDetector(
+          onTap: isOccupied
+              ? null
+              : () {
+                  setState(() {
+                    if (_selectedSeatNum == seat.seatNum) {
+                      _selectedSeatNum = null;
+                    } else {
+                      _selectedSeatNum = seat.seatNum;
+                    }
+                  });
+                },
+          child: Container(
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(4),
+              border:
+                  Border.all(color: borderColor, width: isSelected ? 1.8 : 1),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              seat.seatNum,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
             ),
           ),
         ),

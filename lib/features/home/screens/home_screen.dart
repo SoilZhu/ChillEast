@@ -152,8 +152,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           // 计算目标周次
           final firstWeekMonday = await storage.resolveFirstWeekMonday();
-          final targetWeek = DateCalculator.getCurrentWeekNumber(
-              firstWeekMonday, targetDate);
+          final targetWeek =
+              DateCalculator.getCurrentWeekNumber(firstWeekMonday, targetDate);
 
           // 筛选课程
           final previewCourses = allCourses.where((course) {
@@ -263,8 +263,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
       final reserves =
           ref.watch(cachedLibraryReserveProvider).valueOrNull ?? [];
-      final hasLibraryP0 =
-          FeedSorter.checkLibraryP0(reserves: reserves);
+      final hasLibraryP0 = FeedSorter.checkLibraryP0(reserves: reserves);
 
       final leaves = ref.watch(leaveCacheProvider).valueOrNull ?? [];
       final hasLeaveP1 = FeedSorter.checkLeaveP1(leaves: leaves);
@@ -276,10 +275,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         previewDate: _previewDate,
       );
 
-      final homeworks =
-          ref.watch(homeworkProvider).valueOrNull ?? [];
-      final hasHomeworkP3 =
-          FeedSorter.checkHomeworkP3(homeworks: homeworks);
+      final homeworks = ref.watch(homeworkProvider).valueOrNull ?? [];
+      final hasHomeworkP3 = FeedSorter.checkHomeworkP3(homeworks: homeworks);
 
       final eleState = ref.watch(electricityCacheProvider);
       final hasBalanceP4 = FeedSorter.checkBalanceP4(
@@ -313,7 +310,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       builder: (context, constraints) {
         final isMultiColumn = constraints.maxWidth >= 600;
 
-        if (!isMultiColumn && _embeddedScreen != null && !_isTransitioningToRoute) {
+        if (!isMultiColumn &&
+            _embeddedScreen != null &&
+            !_isTransitioningToRoute) {
           _isTransitioningToRoute = true;
           final screenToOpen = _embeddedScreen!;
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -329,143 +328,148 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           });
         }
 
-          if (isMultiColumn) {
-            if (_embeddedScreen != null) {
-              final isDark = Theme.of(context).brightness == Brightness.dark;
-              return PopScope(
-                canPop: false,
-                onPopInvokedWithResult: (didPop, result) {
-                  if (didPop) return;
-                  setState(() {
-                    _embeddedScreen = null;
-                    _selectedActionId = null;
-                  });
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 8),
-                              for (final w in builtWidgets) ...[
-                                w,
-                                const SizedBox(height: 16),
-                              ],
-                              const SizedBox(height: 24),
-                            ],
-                          ),
-                        ),
-                      ),
-                      VerticalDivider(
-                        width: 16,
-                        thickness: 0.5,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : const Color(0x1A000000),
-                      ),
-                      Expanded(
-                        child: EmbeddedDetailPane(
-                          key: ValueKey(
-                              _selectedActionId ?? _embeddedScreen.runtimeType),
-                          onClose: () {
-                            setState(() {
-                              _embeddedScreen = null;
-                              _selectedActionId = null;
-                            });
-                            ref.read(campusCardCacheProvider.notifier).refresh();
-                            ref.read(electricityCacheProvider.notifier).refresh();
-                            ref.read(leaveCacheProvider.notifier).refresh();
-                            ref.read(repairCacheProvider.notifier).refresh();
-                            ref.read(questionnaireCacheProvider.notifier).refresh();
-                          },
-                          child: _embeddedScreen!,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            final leftItems = <Widget>[];
-            final rightItems = <Widget>[];
-            for (int i = 0; i < builtWidgets.length; i++) {
-              if (i.isEven) {
-                leftItems.add(builtWidgets[i]);
-              } else {
-                rightItems.add(builtWidgets[i]);
-              }
-            }
-
-            return SingleChildScrollView(
+        if (isMultiColumn) {
+          if (_embeddedScreen != null) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return PopScope(
+              canPop: false,
+              onPopInvokedWithResult: (didPop, result) {
+                if (didPop) return;
+                setState(() {
+                  _embeddedScreen = null;
+                  _selectedActionId = null;
+                });
+              },
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    const SizedBox(height: 8),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              for (final w in leftItems) ...[
-                                w,
-                                const SizedBox(height: 16),
-                              ],
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            for (final w in builtWidgets) ...[
+                              w,
+                              const SizedBox(height: 16),
                             ],
-                          ),
+                            const SizedBox(height: 24),
+                          ],
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              for (final w in rightItems) ...[
-                                w,
-                                const SizedBox(height: 16),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 24),
+                    VerticalDivider(
+                      width: 16,
+                      thickness: 0.5,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : const Color(0x1A000000),
+                    ),
+                    Expanded(
+                      child: EmbeddedDetailPane(
+                        key: ValueKey(
+                            _selectedActionId ?? _embeddedScreen.runtimeType),
+                        onClose: () {
+                          setState(() {
+                            _embeddedScreen = null;
+                            _selectedActionId = null;
+                          });
+                          ref.read(campusCardCacheProvider.notifier).refresh();
+                          ref.read(electricityCacheProvider.notifier).refresh();
+                          ref.read(leaveCacheProvider.notifier).refresh();
+                          ref.read(repairCacheProvider.notifier).refresh();
+                          ref
+                              .read(questionnaireCacheProvider.notifier)
+                              .refresh();
+                        },
+                        child: _embeddedScreen!,
+                      ),
+                    ),
                   ],
                 ),
               ),
             );
           }
 
+          final leftItems = <Widget>[];
+          final rightItems = <Widget>[];
+          for (int i = 0; i < builtWidgets.length; i++) {
+            if (i.isEven) {
+              leftItems.add(builtWidgets[i]);
+            } else {
+              rightItems.add(builtWidgets[i]);
+            }
+          }
+
           return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 8),
-                      for (final w in builtWidgets) ...[
-                        w,
-                        const SizedBox(height: 16),
-                      ],
-                      const SizedBox(height: 24),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (final w in leftItems) ...[
+                              w,
+                              const SizedBox(height: 16),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (final w in rightItems) ...[
+                              w,
+                              const SizedBox(height: 16),
+                            ],
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           );
-        },
-      );
+        }
+
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    for (final w in builtWidgets) ...[
+                      w,
+                      const SizedBox(height: 16),
+                    ],
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildFeedSection(
@@ -510,16 +514,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // 单页可放 6 格；第一页固定为 5 个功能 + 更多
     if (visibleItems.length <= 5) {
       final displayItems = visibleItems.toList();
-      return Padding(
-        // 在信息流内渲染，横向内边距由父级提供
-        padding: const EdgeInsets.only(top: 8, bottom: 8),
-        child: _buildQuickGrid(
-          context,
-          items: displayItems,
-          showMore: true,
-          isDark: isDark,
-          isLoggedIn: isLoggedIn,
-        ),
+      return _buildQuickGrid(
+        context,
+        items: displayItems,
+        showMore: true,
+        isDark: isDark,
+        isLoggedIn: isLoggedIn,
       );
     }
 
@@ -538,88 +538,83 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       });
     }
 
-    return Padding(
-      // 在信息流内渲染，横向内边距由父级提供
-      padding: const EdgeInsets.only(top: 8, bottom: 8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 页间隙 10px（与格内 crossAxisSpacing 一致），同时保证静止时
-          // 卡片外沿与单页布局对齐：PageView 本体比父宽 10px（两侧各外溢 5px），
-          // 每页内对称 Padding 5px 抵消。用 OverflowBox 实现外溢，避免负边距。
-          LayoutBuilder(
-            builder: (context, constraints) {
-              const pageGap = 10.0;
-              const halfGap = pageGap / 2;
-              final viewWidth = constraints.maxWidth + pageGap;
-              return SizedBox(
-                height: gridHeight,
-                child: OverflowBox(
-                  maxWidth: viewWidth,
-                  alignment: Alignment.center,
-                  child: SizedBox(
-                    width: viewWidth,
-                    height: gridHeight,
-                    child: PageView.builder(
-                      controller: _quickPageController,
-                      itemCount: pageCount,
-                      onPageChanged: (i) =>
-                          setState(() => _quickPageIndex = i),
-                      itemBuilder: (context, page) {
-                        Widget grid;
-                        if (page == 0) {
-                          grid = _buildQuickGrid(
-                            context,
-                            items: firstPageItems,
-                            showMore: true,
-                            isDark: isDark,
-                            isLoggedIn: isLoggedIn,
-                          );
-                        } else {
-                          final start = (page - 1) * perPage;
-                          final end =
-                              (start + perPage).clamp(0, remaining.length);
-                          grid = _buildQuickGrid(
-                            context,
-                            items: remaining.sublist(start, end),
-                            showMore: false,
-                            isDark: isDark,
-                            isLoggedIn: isLoggedIn,
-                          );
-                        }
-                        return Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: halfGap),
-                          child: grid,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 页间隙 10px（与格内 crossAxisSpacing 一致），同时保证静止时
+        // 卡片外沿与单页布局对齐：PageView 本体比父宽 10px（两侧各外溢 5px），
+        // 每页内对称 Padding 5px 抵消。用 OverflowBox 实现外溢，避免负边距。
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const pageGap = 10.0;
+            const halfGap = pageGap / 2;
+            final viewWidth = constraints.maxWidth + pageGap;
+            return SizedBox(
+              height: gridHeight,
+              child: OverflowBox(
+                maxWidth: viewWidth,
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: viewWidth,
+                  height: gridHeight,
+                  child: PageView.builder(
+                    controller: _quickPageController,
+                    itemCount: pageCount,
+                    onPageChanged: (i) => setState(() => _quickPageIndex = i),
+                    itemBuilder: (context, page) {
+                      Widget grid;
+                      if (page == 0) {
+                        grid = _buildQuickGrid(
+                          context,
+                          items: firstPageItems,
+                          showMore: true,
+                          isDark: isDark,
+                          isLoggedIn: isLoggedIn,
                         );
-                      },
-                    ),
+                      } else {
+                        final start = (page - 1) * perPage;
+                        final end =
+                            (start + perPage).clamp(0, remaining.length);
+                        grid = _buildQuickGrid(
+                          context,
+                          items: remaining.sublist(start, end),
+                          showMore: false,
+                          isDark: isDark,
+                          isLoggedIn: isLoggedIn,
+                        );
+                      }
+                      return Padding(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: halfGap),
+                        child: grid,
+                      );
+                    },
                   ),
                 ),
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(pageCount, (i) {
-              final active = i == _quickPageIndex;
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: active ? 16 : 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: active
-                      ? const Color(0xFF09C489)
-                      : (isDark ? Colors.white24 : Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              );
-            }),
-          ),
-        ],
-      ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(pageCount, (i) {
+            final active = i == _quickPageIndex;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: active ? 16 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: active
+                    ? const Color(0xFF09C489)
+                    : (isDark ? Colors.white24 : Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            );
+          }),
+        ),
+      ],
     );
   }
 
@@ -782,6 +777,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               )
             : _showLoginDialog(context);
         break;
+      case 'physical_test':
+        isLoggedIn
+            ? _safeNavigate(
+                context,
+                WebViewDetailScreen(
+                  title: context.l10n.funcPhysicalTest,
+                  url: AppConstants.physicalTestReservationUrl,
+                  showWebBack: true,
+                ),
+                id: id,
+              )
+            : _showLoginDialog(context);
+        break;
       case 'teaching_eval':
         isLoggedIn
             ? _safeNavigate(
@@ -878,54 +886,63 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }) {
     const activeColor = Color(0xFF09C489);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isSelected
-            ? (isDark
-                ? activeColor.withValues(alpha: 0.15)
-                : activeColor.withValues(alpha: 0.08))
-            : (isDark ? const Color(0xFF1E1E1E) : Colors.white),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
+    return Semantics(
+      button: true,
+      label: label,
+      selected: isSelected,
+      child: Container(
+        decoration: BoxDecoration(
           color: isSelected
-              ? activeColor
-              : (isDark
-                  ? Colors.white.withValues(alpha: 0.12)
-                  : const Color(0xFFE0E0E0)),
-          width: isSelected ? 1.5 : 1,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+              ? (isDark
+                  ? activeColor.withValues(alpha: 0.15)
+                  : activeColor.withValues(alpha: 0.08))
+              : (isDark ? const Color(0xFF1E1E1E) : Colors.white),
           borderRadius: BorderRadius.circular(8),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  color: iconColor,
-                  size: 18,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected
-                          ? activeColor
-                          : (isDark ? Colors.white : Colors.black87),
+          border: Border.all(
+            color: isSelected
+                ? activeColor
+                : (isDark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : const Color(0xFFE0E0E0)),
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  ExcludeSemantics(
+                    child: Icon(
+                      icon,
+                      color: iconColor,
+                      size: 18,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ExcludeSemantics(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w400,
+                          color: isSelected
+                              ? activeColor
+                              : (isDark ? Colors.white : Colors.black87),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -999,8 +1016,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(6),
           onTap: () {
-            _safeNavigate(
-                context, const LibraryHomeScreen(), id: 'library');
+            _safeNavigate(context, const LibraryHomeScreen(), id: 'library');
           },
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
@@ -1344,19 +1360,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             .where((e) =>
                 !ExamStorage.isManualExamExpired(e) &&
                 (e.isCurrentSemester() || e.isManual) &&
-                e.time.year == _previewDate.year &&
-                e.time.month == _previewDate.month &&
-                e.time.day == _previewDate.day)
+                e.time != null &&
+                e.time!.year == _previewDate.year &&
+                e.time!.month == _previewDate.month &&
+                e.time!.day == _previewDate.day)
             .toList();
-        items.sort((a, b) => a.time.compareTo(b.time));
+        items.sort(ExamScheduleModel.compareTime);
         return items;
       },
       orElse: () => <ExamScheduleModel>[],
     );
 
-    if (!_isLoadingTimetable &&
-        _todayCourses.isEmpty &&
-        dayExams.isEmpty) {
+    if (!_isLoadingTimetable && _todayCourses.isEmpty && dayExams.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -1408,8 +1423,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 _buildExamTask(dayExams[i]),
               ],
               for (int i = 0; i < _todayCourses.length; i++) ...[
-                if (i > 0 || dayExams.isNotEmpty)
-                  const SizedBox(height: 4),
+                if (i > 0 || dayExams.isNotEmpty) const SizedBox(height: 4),
                 _buildCourseItem(_todayCourses[i]),
               ],
             ],
@@ -1421,7 +1435,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// 考试卡片（红色底 + 考试时间与地点，严格显示第一个出现的时间）
   Widget _buildExamTask(ExamScheduleModel item) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final timeStr = DateFormat('HH:mm').format(item.time);
+    final timeStr =
+        item.time != null ? DateFormat('HH:mm').format(item.time!) : '';
     final location = item.location?.trim() ?? '';
     final timeLocation = location.isNotEmpty ? '$timeStr @ $location' : timeStr;
 
@@ -1457,7 +1472,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           color: isDark ? const Color(0xFF382326) : const Color(0xFFFFEBEE),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: const Color(0xFFE53935).withValues(alpha: isDark ? 0.3 : 0.2),
+            color:
+                const Color(0xFFE53935).withValues(alpha: isDark ? 0.3 : 0.2),
             width: 1,
           ),
         ),
@@ -1482,7 +1498,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                             height: 1.2,
-                            color: isDark ? Colors.white : const Color(0xFF2D3436),
+                            color:
+                                isDark ? Colors.white : const Color(0xFF2D3436),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1494,7 +1511,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE53935).withValues(alpha: 0.12),
+                            color:
+                                const Color(0xFFE53935).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -1514,9 +1532,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     timeLocation,
                     style: TextStyle(
                       fontSize: 12,
-                      color: isDark
-                          ? Colors.white70
-                          : const Color(0xFF7F8C8D),
+                      color: isDark ? Colors.white70 : const Color(0xFF7F8C8D),
                     ),
                   ),
                 ],
@@ -1527,7 +1543,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
-
 
   Widget _buildCourseItem(CourseModel course) {
     final baseColor = CourseColorUtils.getColorForCourse(course.name);
@@ -1585,9 +1600,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final homeworkAsync = ref.watch(homeworkProvider);
     final pending = homeworkAsync.maybeWhen(
       data: (list) {
-        final items = list
-            .where((h) => h.status == HomeworkStatus.pending)
-            .toList();
+        final items =
+            list.where((h) => h.status == HomeworkStatus.pending).toList();
         items.sort((a, b) {
           if (a.endTime == null && b.endTime == null) return 0;
           if (a.endTime == null) return 1;
@@ -1818,8 +1832,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return _buildMergedSection(
       title: context.l10n.pendingQuestionnaires,
       onMore: () {
-        _safeNavigate(
-            context, const QuestionnaireListScreen(), id: 'questionnaire');
+        _safeNavigate(context, const QuestionnaireListScreen(),
+            id: 'questionnaire');
       },
       items: display
           .map((item) => _buildSectionItem(
@@ -1911,7 +1925,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildOngoingLeaves(BuildContext context) {
     final cachedAsync = ref.watch(leaveCacheProvider);
-    final leaves = (cachedAsync.valueOrNull ?? []).where(_shouldDisplayLeave).toList()
+    final leaves = (cachedAsync.valueOrNull ?? [])
+        .where(_shouldDisplayLeave)
+        .toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
     if (leaves.isEmpty) return const SizedBox.shrink();
 
@@ -2071,7 +2087,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : const Color(0xFF222222),
+                          color:
+                              isDark ? Colors.white : const Color(0xFF222222),
                         ),
                       ),
                       if (subtitle.isNotEmpty) ...[
@@ -2296,8 +2313,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final room = eleState.rooms[i]!;
       final roomDisplayName =
           room.roomName.isNotEmpty ? room.roomName : room.roomId;
-      final eleTitle =
-          room.areaName.isNotEmpty ? room.areaName : context.l10n.dormitoryElectricity;
+      final eleTitle = room.areaName.isNotEmpty
+          ? room.areaName
+          : context.l10n.dormitoryElectricity;
       final String eleSubtitle;
       if (room.buildingName.isNotEmpty) {
         eleSubtitle = room.buildingName.endsWith(roomDisplayName)
@@ -2307,12 +2325,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         eleSubtitle = roomDisplayName;
       }
 
-      final balanceInfo = (i < eleState.balances.length) ? eleState.balances[i] : null;
+      final balanceInfo =
+          (i < eleState.balances.length) ? eleState.balances[i] : null;
       final balanceText = balanceInfo != null
           ? '¥${_formatElectricityBalance(balanceInfo.balance)}'
           : (eleState.isLoading ? '...' : '¥--');
 
-      final double? eleBal = balanceInfo != null ? double.tryParse(balanceInfo.balance) : null;
+      final double? eleBal =
+          balanceInfo != null ? double.tryParse(balanceInfo.balance) : null;
       final bool isLowBalance = eleBal != null && eleBal <= 10.0;
       final Color eleBalanceColor = isLowBalance
           ? const Color(0xFFE53935)
@@ -2406,7 +2426,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  Future<void> _openElectricity(BuildContext context, {int initialSlot = 0}) async {
+  Future<void> _openElectricity(BuildContext context,
+      {int initialSlot = 0}) async {
     if (_canSplitScreen(context)) {
       _safeNavigate(
         context,
@@ -2417,7 +2438,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
     await Navigator.push(
       context,
-      createSlideHorizontalRoute(ElectricityRechargeScreen(initialSlot: initialSlot)),
+      createSlideHorizontalRoute(
+          ElectricityRechargeScreen(initialSlot: initialSlot)),
     );
     if (context.mounted) {
       ref.read(electricityCacheProvider.notifier).refresh();

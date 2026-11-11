@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:ChillEast/features/sunshine/models/sunshine_models.dart';
 import 'package:ChillEast/features/sunshine/services/sunshine_service.dart';
 import 'package:dio/dio.dart';
+import 'package:fast_gbk/fast_gbk.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const identityHtml = '<input id="h_CardCode" value="test-card">'
@@ -269,7 +270,8 @@ void main() {
     expect(await submit(), '1');
     expect(requests.single.queryParameters, {'AFlag': 'insert'});
     expect(requests.single.followRedirects, false);
-    expect(requests.single.data, {
+    // 站点声明 charset=gb2312，请求体必须是 GBK 百分号编码，否则服务端存进去是乱码。
+    expect(requests.single.data, SunshineService.encodeGbkForm({
       'type1': '3',
       'depid': '2',
       'depname': '测试单位',
@@ -281,7 +283,7 @@ void main() {
       'finishtime': '',
       'captchas': '',
       'CardCode': 'test-card',
-    });
+    }));
     for (final response in ['2', 'errer', '<html>登录</html>']) {
       requests.clear();
       respond = (_) => response;
@@ -290,31 +292,77 @@ void main() {
     }
   });
 
+  test('submit body is GBK percent-encoded so the server stores readable text',
+      () async {
+    respond = (_) => '1';
+    await service.submit(
+      identity: const SunshineIdentity('test-card', '测试用户', '', ''),
+      department: const SunshineDepartment('2', '测试单位'),
+      type: '3',
+      title: '标题',
+      content: '内容 一+一',
+      phone: '13800000000',
+      email: '',
+      finishTime: '',
+    );
+    final body = requests.single.data as String;
+    expect(body, contains('title=%B1%EA%CC%E2'));
+    expect(body, contains('content=%C4%DA%C8%DD+%D2%BB%2B%D2%BB'));
+    expect(body, contains('depname=%B2%E2%CA%D4%B5%A5%CE%BB'));
+    expect(body, contains('username=%B2%E2%CA%D4%D3%C3%BB%A7'));
+    // 还原成 GBK 字节后必须等于原始中文，且不含任何 UTF-8 百分号编码。
+    expect(body.contains('%E6'), isFalse);
+    final decoded = Uri.splitQueryString(body, encoding: gbk);
+    expect(decoded['title'], '标题');
+    expect(decoded['content'], '内容 一+一');
+  });
+
+  test('submit drops characters GBK cannot represent instead of corrupting',
+      () async {
+    respond = (_) => '1';
+    await service.submit(
+      identity: const SunshineIdentity('test-card', '张三', '', ''),
+      department: const SunshineDepartment('2', '测试单位'),
+      type: '3',
+      title: '标题😀',
+      content: '内容😀',
+      phone: '',
+      email: '',
+      finishTime: '',
+    );
+    final decoded =
+        Uri.splitQueryString(requests.single.data as String, encoding: gbk);
+    expect(decoded['title'], '标题');
+    expect(decoded['content'], '内容');
+    expect(decoded['username'], '张三');
+  });
+
   test('fetchTicketDetail matches HAR response and submitter only retains surname',
       () async {
+    // 夹具为合成数据，勿放真实工单内容（提交人姓名、诉求正文、工单号）。
     const harResponse =
-        '{"total":1,"rows":[{"Title":"巴士司机的驾驶素质","LinkName":"郑天塬","DepName":"后勤保障中心","CirDepName":"保卫工作部、保卫处","FinishTime":"2026-09-14","JieTime":"2026-09-16","WanTime":"2026-09-14","Status":"2","Content":"投诉9月10日11:50/11:55，修业广场偏金岸宿舍方向...","Remark":"学校保卫工作部根据校园交通车考评管理办法...","bTypeName":"咨询","cTypeName":"","dTypeName":"","Sex":""}]}';
+        '{"total":1,"rows":[{"Title":"教学楼饮水机故障","LinkName":"王小明","DepName":"后勤保障中心","CirDepName":"保卫工作部、保卫处","FinishTime":"2026-01-08","JieTime":"2026-01-10","WanTime":"2026-01-05","Status":"2","Content":"反映某教学楼三楼饮水机连续一周无法加热。","Remark":"已安排维修人员更换加热模块并回访确认。","bTypeName":"咨询","cTypeName":"","dTypeName":"","Sex":""}]}';
     respond = (_) => harResponse;
 
-    final detail = await service.fetchTicketDetail('12692');
+    final detail = await service.fetchTicketDetail('90001');
 
-    expect(requests.single.data, {'AFlag': 'Detail', 'ID': '12692'});
-    expect(detail.id, '12692');
-    expect(detail.title, '巴士司机的驾驶素质');
+    expect(requests.single.data, {'AFlag': 'Detail', 'ID': '90001'});
+    expect(detail.id, '90001');
+    expect(detail.title, '教学楼饮水机故障');
     // 注意提交人只保留到姓
-    expect(detail.submitter, '郑');
-    expect(detail.rawSubmitter, '郑天塬');
+    expect(detail.submitter, '王');
+    expect(detail.rawSubmitter, '王小明');
     expect(detail.expectedDepartment, '后勤保障中心');
     expect(detail.handlingDepartment, '保卫工作部、保卫处');
-    expect(detail.finishTime, '2026-09-14');
-    expect(detail.jieTime, '2026-09-16');
-    expect(detail.wanTime, '2026-09-14');
+    expect(detail.finishTime, '2026-01-08');
+    expect(detail.jieTime, '2026-01-10');
+    expect(detail.wanTime, '2026-01-05');
     expect(detail.status, '2');
     expect(detail.statusLabel, '已办结');
     expect(detail.isCompleted, isTrue);
     expect(detail.type, '咨询');
-    expect(detail.content, contains('投诉9月10日11:50/11:55'));
-    expect(detail.remark, contains('学校保卫工作部根据校园交通车考评管理办法'));
+    expect(detail.content, contains('三楼饮水机连续一周无法加热'));
+    expect(detail.remark, contains('已安排维修人员更换加热模块'));
   });
 
   test('fetchTicketDetail throws SunshineException when ticket not found',
@@ -331,7 +379,7 @@ void main() {
   });
 
   test('extractSurname correctly extracts single and compound surnames', () {
-    expect(SunshineTicketDetail.extractSurname('郑天塬'), '郑');
+    expect(SunshineTicketDetail.extractSurname('王小明'), '王');
     expect(SunshineTicketDetail.extractSurname('张三'), '张');
     expect(SunshineTicketDetail.extractSurname('李四'), '李');
     expect(SunshineTicketDetail.extractSurname('王五'), '王');

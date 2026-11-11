@@ -299,7 +299,7 @@ class CloudBackupManager {
       modernSettings['appearance'] = modernApp;
     }
 
-    // 3. 课表与作业数据：若老版有更新则覆盖
+    // 3. 课表、作业与考试数据：若老版有更新则覆盖
     for (final k in [
       'timetableIcs',
       'timetableMeta',
@@ -307,10 +307,16 @@ class CloudBackupManager {
       'rawCourses',
       'timetableRules',
       'homeworkList',
+      'examList',
     ]) {
       if (legacyLocalData.containsKey(k) && legacyLocalData[k] != null) {
         modernLocalData[k] = legacyLocalData[k];
       }
+    }
+    if (!legacyLocalData.containsKey('examList') &&
+        legacyLocalData.containsKey('manualExamList') &&
+        legacyLocalData['manualExamList'] != null) {
+      modernLocalData['examList'] = legacyLocalData['manualExamList'];
     }
 
     merged['settings'] = modernSettings;
@@ -391,6 +397,7 @@ class CloudBackupManager {
       await prefs.remove(_activeResidKey);
       await prefs.remove(_activeEncryptedIdKey);
       await prefs.remove(_dirtyStorageKey);
+      await BackupExportService.clearUnknownFields();
     } catch (e) {
       _logger.w('☁️ Cloud backup logout reset failed: $e');
     }

@@ -38,6 +38,7 @@ class QuickWidgetProvider : AppWidgetProvider() {
                 "xgxt" -> R.drawable.widget_ic_xgxt
                 "repairs" -> R.drawable.widget_ic_repairs
                 "gym" -> R.drawable.widget_ic_gym
+                "physical_test" -> R.drawable.widget_ic_physical_test
                 "teaching_eval" -> R.drawable.widget_ic_teaching_eval
                 "score" -> R.drawable.widget_ic_score
                 "vpn" -> R.drawable.widget_ic_vpn

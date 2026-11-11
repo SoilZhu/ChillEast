@@ -1,0 +1,104 @@
+name: Sync Release Notes to R2
+
+on:
+  release:
+    types: [published, edited]
+
+concurrency:
+  group: sync-release-notes
+  cancel-in-progress: true
+
+jobs:
+  sync-to-r2:
+    name: Sync Release Notes to Cloudflare R2
+    if: github.event.release.draft == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Check if this release is the latest release
+        id: check_latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURRENT_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          LATEST_TAG=$(gh release view --json tagName -q .tagName 2>/dev/null || echo "$CURRENT_TAG")
+          echo "Event tag: $CURRENT_TAG, Latest release tag: $LATEST_TAG"
+          if [ "$CURRENT_TAG" = "$LATEST_TAG" ]; then
+            echo "is_latest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_latest=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Edited release ($CURRENT_TAG) is not the latest release ($LATEST_TAG); skipping R2 sync."
+          fi
+
+      - name: Generate version manifest
+        if: steps.check_latest.outputs.is_latest == 'true'
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+        run: |
+          python3 -c '
+          import json, os, re
+          tag = os.environ.get("TAG_NAME", "")
+          version = tag.lstrip("v")
+          body = os.environ.get("RELEASE_BODY", "")
+          # 支持在说明中指定强制更新标记（如 [force_update]、[force] 或 <!-- force_update -->）
+          # 默认为 False
+          force_update = bool(re.search(r"\[force(_update)?\]|<!--\s*force(_update)?\s*-->|force_update:\s*true", body, re.IGNORECASE))
+          clean_body = re.sub(r"<!--\s*force(_update)?\s*-->|\[force(_update)?\]", "", body, flags=re.IGNORECASE).strip()
+          data = {
+              "version": version,
+              "tag_name": tag,
+              "force_update": force_update,
+              "release_notes": clean_body,
+              "body": clean_body,
+              "download_url": "https://eastchill-apk.soilzhu.su/latest/app-release.apk"
+          }
+          with open("version.json", "w", encoding="utf-8") as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
+          '
+          cat version.json
+
+      - name: Upload version.json to Cloudflare R2
+        if: steps.check_latest.outputs.is_latest == 'true'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          aws s3 cp version.json \
+            s3://${R2_BUCKET_NAME}/latest/version.json \
+            --endpoint-url https://${CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com \
+            --cache-control "public, max-age=60, s-maxage=180" \
+            --content-type "application/json; charset=utf-8"
+          echo "Successfully uploaded version.json to Cloudflare R2"
+
+      - name: Check CDN purge configuration
+        if: steps.check_latest.outputs.is_latest == 'true'
+        id: cdn_purge_config
+        env:
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          if [ -n "$CF_ZONE_ID" ] && [ -n "$CF_API_TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CF_ZONE_ID or CF_API_TOKEN is not configured; skipping CDN cache purge."
+          fi
+
+      - name: Purge Cloudflare CDN Cache
+        if: steps.check_latest.outputs.is_latest == 'true' && steps.cdn_purge_config.outputs.enabled == 'true'
+        env:
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          PURGE_RES=$(curl --fail-with-body -sS -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/purge_cache" \
+            -H "Authorization: Bearer ${CF_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{"files":["https://eastchill-apk.soilzhu.su/latest/version.json"]}')
+          echo "Cloudflare Purge Cache Response: $PURGE_RES"
+          python3 -c 'import json,sys; data=json.load(sys.stdin); sys.exit(0 if data.get("success") is True else 1)' <<< "$PURGE_RES"

@@ -146,6 +146,7 @@ object FlymeLiveManager {
      * 发一条实况通知（静态卡片，不更新）。
      * @param capsuleText 胶囊小条文案，只放地点，如 "教3-201"
      * @param timeText 卡片右上角时间行，如 "10:05开课"
+     * @param startTs 开课或预约开始时间戳，用于设置系统底层超时销毁
      */
     fun upsert(
         ctx: Context,
@@ -154,8 +155,16 @@ object FlymeLiveManager {
         text: String,
         capsuleText: String,
         timeText: String,
+        startTs: Long = 0L,
     ) {
         ensureChannel(ctx)
+
+        // 若已过开课时间（可能由唤醒延迟导致），决不重新弹卡，直接撤销
+        val now = System.currentTimeMillis()
+        if (startTs > 0 && startTs <= now) {
+            cancel(ctx, id)
+            return
+        }
 
         // 胶囊
         val capsuleViews = RemoteViews(ctx.packageName, R.layout.flyme_live_capsule)
@@ -186,7 +195,7 @@ object FlymeLiveManager {
         cardViews.setTextViewText(R.id.flyme_card_text, text)
         cardViews.setTextViewText(R.id.flyme_card_time, timeText)
 
-        val notification = Notification.Builder(ctx, CHANNEL_ID)
+        val builder = Notification.Builder(ctx, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(title)
             .setContentText(text)
@@ -197,7 +206,17 @@ object FlymeLiveManager {
             .setOnlyAlertOnce(true)
             .setVisibility(Notification.VISIBILITY_PUBLIC)
             .addExtras(liveBundle)
-            .build()
+
+        if (startTs > 0) {
+            builder.setWhen(startTs)
+            val timeoutMs = startTs - now
+            if (timeoutMs > 0 && Build.VERSION.SDK_INT >= 26) {
+                // 系统底层超时销毁：留1秒缓冲，保证即使App被杀/闹钟被清除，操作系统也会在到点时自动移除通知
+                builder.setTimeoutAfter(timeoutMs.coerceAtLeast(1000L))
+            }
+        }
+
+        val notification = builder.build()
         notification.contentView = cardViews
 
         try {

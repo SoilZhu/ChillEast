@@ -233,6 +233,11 @@ class AppNavigator {
       title: '场馆预约',
       description: '校园体育场馆与运动场地预约',
     ),
+    'physical_test': AppNavPageInfo(
+      id: 'physical_test',
+      title: '体测预约',
+      description: '学生体质健康测试预约系统',
+    ),
     'teaching_eval': AppNavPageInfo(
       id: 'teaching_eval',
       title: '教评系统',
@@ -517,6 +522,11 @@ class AppNavigator {
     '场馆预约': 'gym',
     '体育馆': 'gym',
 
+    '体测': 'physical_test',
+    '体测预约': 'physical_test',
+    '体质测试': 'physical_test',
+    '体测系统': 'physical_test',
+
     '教评': 'teaching_eval',
     '评教': 'teaching_eval',
     '教评系统': 'teaching_eval',
@@ -639,7 +649,8 @@ class AppNavigator {
   static List<AppNavPageInfo> getAllPages() => pages.values.toList();
 
   /// 实例化对应页面的 Widget
-  static Widget? createScreenWidget(String pageId, [Map<String, dynamic>? params]) {
+  static Widget? createScreenWidget(String pageId,
+      [Map<String, dynamic>? params]) {
     switch (pageId) {
       case 'home':
         return null;
@@ -721,6 +732,12 @@ class AppNavigator {
         return const WebViewDetailScreen(
           title: '场馆预约',
           url: AppConstants.gymReservationUrl,
+          showWebBack: true,
+        );
+      case 'physical_test':
+        return const WebViewDetailScreen(
+          title: '体测预约',
+          url: AppConstants.physicalTestReservationUrl,
           showWebBack: true,
         );
       case 'teaching_eval':

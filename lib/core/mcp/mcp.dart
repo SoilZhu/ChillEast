@@ -2,6 +2,8 @@ export 'models/mcp_tool.dart';
 export 'models/mcp_protocol.dart';
 export 'services/mcp_tool_registry.dart';
 export 'tools/timetable_tool.dart';
+export 'tools/timetable_rule_tool.dart';
+export 'tools/course_reminder_tool.dart';
 export 'tools/homework_tools.dart';
 export 'tools/classroom_tool.dart';
 export 'tools/score_tool.dart';
