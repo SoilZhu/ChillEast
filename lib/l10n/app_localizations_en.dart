@@ -3384,4 +3384,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get estimatedReminderTime => 'Estimated Reminder';
+
+  @override
+  String get loginStatusLoggedIn => 'Logged in';
+
+  @override
+  String get loginStatusLoggingIn => 'Logging in';
+
+  @override
+  String get a11yAiAssistant => 'AI Assistant';
+
+  @override
+  String a11yProfileWithStatus(String status) {
+    return 'Profile, $status';
+  }
+
+  @override
+  String get a11yTapForCourseDetail =>
+      'Double tap to view course details and conflicting classes';
+
+  @override
+  String get a11yCourseConflict => ', has schedule conflict';
+
+  @override
+  String get a11ySeatStatusOccupied => 'Occupied';
+
+  @override
+  String get a11ySeatStatusSelected => 'Selected, double tap to deselect';
+
+  @override
+  String get a11ySeatStatusAvailable => 'Available, double tap to select';
+
+  @override
+  String a11ySeatDescription(String seatNum, String status) {
+    return 'Seat $seatNum, $status';
+  }
 }

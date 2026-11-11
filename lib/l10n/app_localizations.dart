@@ -6242,6 +6242,66 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'预计提醒时刻'**
   String get estimatedReminderTime;
+
+  /// No description provided for @loginStatusLoggedIn.
+  ///
+  /// In zh, this message translates to:
+  /// **'已登录'**
+  String get loginStatusLoggedIn;
+
+  /// No description provided for @loginStatusLoggingIn.
+  ///
+  /// In zh, this message translates to:
+  /// **'登录中'**
+  String get loginStatusLoggingIn;
+
+  /// No description provided for @a11yAiAssistant.
+  ///
+  /// In zh, this message translates to:
+  /// **'AI 助理'**
+  String get a11yAiAssistant;
+
+  /// No description provided for @a11yProfileWithStatus.
+  ///
+  /// In zh, this message translates to:
+  /// **'个人中心，{status}'**
+  String a11yProfileWithStatus(String status);
+
+  /// No description provided for @a11yTapForCourseDetail.
+  ///
+  /// In zh, this message translates to:
+  /// **'双击查看课程详情与排课冲突'**
+  String get a11yTapForCourseDetail;
+
+  /// No description provided for @a11yCourseConflict.
+  ///
+  /// In zh, this message translates to:
+  /// **'，存在时间重叠冲突'**
+  String get a11yCourseConflict;
+
+  /// No description provided for @a11ySeatStatusOccupied.
+  ///
+  /// In zh, this message translates to:
+  /// **'已被占用'**
+  String get a11ySeatStatusOccupied;
+
+  /// No description provided for @a11ySeatStatusSelected.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选中，双击取消选择'**
+  String get a11ySeatStatusSelected;
+
+  /// No description provided for @a11ySeatStatusAvailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'空闲可用，双击选择'**
+  String get a11ySeatStatusAvailable;
+
+  /// No description provided for @a11ySeatDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'{seatNum}号座位，{status}'**
+  String a11ySeatDescription(String seatNum, String status);
 }
 
 class _AppLocalizationsDelegate

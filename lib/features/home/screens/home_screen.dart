@@ -886,54 +886,63 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }) {
     const activeColor = Color(0xFF09C489);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isSelected
-            ? (isDark
-                ? activeColor.withValues(alpha: 0.15)
-                : activeColor.withValues(alpha: 0.08))
-            : (isDark ? const Color(0xFF1E1E1E) : Colors.white),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
+    return Semantics(
+      button: true,
+      label: label,
+      selected: isSelected,
+      child: Container(
+        decoration: BoxDecoration(
           color: isSelected
-              ? activeColor
-              : (isDark
-                  ? Colors.white.withValues(alpha: 0.12)
-                  : const Color(0xFFE0E0E0)),
-          width: isSelected ? 1.5 : 1,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+              ? (isDark
+                  ? activeColor.withValues(alpha: 0.15)
+                  : activeColor.withValues(alpha: 0.08))
+              : (isDark ? const Color(0xFF1E1E1E) : Colors.white),
           borderRadius: BorderRadius.circular(8),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  color: iconColor,
-                  size: 18,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected
-                          ? activeColor
-                          : (isDark ? Colors.white : Colors.black87),
+          border: Border.all(
+            color: isSelected
+                ? activeColor
+                : (isDark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : const Color(0xFFE0E0E0)),
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  ExcludeSemantics(
+                    child: Icon(
+                      icon,
+                      color: iconColor,
+                      size: 18,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ExcludeSemantics(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w400,
+                          color: isSelected
+                              ? activeColor
+                              : (isDark ? Colors.white : Colors.black87),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

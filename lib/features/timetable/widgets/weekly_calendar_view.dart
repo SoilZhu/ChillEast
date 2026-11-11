@@ -14,7 +14,7 @@ class WeeklyCalendarView extends StatefulWidget {
   final DateTime firstWeekMonday;
   final bool showEndTime;
   final VoidCallback? onCourseColorChanged;
-  
+
   const WeeklyCalendarView({
     super.key,
     required this.courses,
@@ -29,13 +29,14 @@ class WeeklyCalendarView extends StatefulWidget {
 
 class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
   late PageController _pageController;
-  int _currentWeekNumber = 1; 
+  int _currentWeekNumber = 1;
   List<CourseReminderRule> _reminderRules = [];
-  
+
   @override
   void initState() {
     super.initState();
-    final initialWeek = DateCalculator.getCurrentWeekNumber(widget.firstWeekMonday);
+    final initialWeek =
+        DateCalculator.getCurrentWeekNumber(widget.firstWeekMonday);
     _currentWeekNumber = initialWeek.clamp(1, 20);
     _pageController = PageController(initialPage: _currentWeekNumber - 1);
     CourseColorUtils.syncCourses(widget.courses.map((c) => c.name));
@@ -60,7 +61,6 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
     );
   }
 
-  
   @override
   void didUpdateWidget(WeeklyCalendarView oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -102,12 +102,12 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
       widget.firstWeekMonday,
       _currentWeekNumber,
     );
-    
+
     return Column(
       children: [
         // 顶部导航栏
         _buildWeekNavigation(_currentWeekNumber, weekMonday, weekSunday),
-        
+
         // 课表网格 (仅允许 1-20 周)
         Expanded(
           child: PageView.builder(
@@ -120,7 +120,8 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
             },
             itemBuilder: (context, index) {
               final weekNum = index + 1;
-              final monday = DateCalculator.getWeekMonday(widget.firstWeekMonday, weekNum);
+              final monday =
+                  DateCalculator.getWeekMonday(widget.firstWeekMonday, weekNum);
               return _buildTimetableGrid(monday, weekNum);
             },
           ),
@@ -128,9 +129,10 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
       ],
     );
   }
-  
+
   /// 构建周导航栏
-  Widget _buildWeekNavigation(int weekNumber, DateTime monday, DateTime sunday) {
+  Widget _buildWeekNavigation(
+      int weekNumber, DateTime monday, DateTime sunday) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -144,7 +146,9 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF2D3436),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : const Color(0xFF2D3436),
             ),
           ),
           const Spacer(),
@@ -152,12 +156,12 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
       ),
     );
   }
-  
+
   /// 构建课表网格
   Widget _buildTimetableGrid(DateTime weekMonday, int weekNumber) {
     // 获取本周的课程
     final weekCourses = _getCoursesForWeek(weekNumber);
-    
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = constraints.maxWidth;
@@ -166,8 +170,9 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
         const double sectionHeight = 100.0;
         const double targetGap = 4.0;
         const int totalBigSections = 6;
-        final double totalHeight = totalBigSections * (sectionHeight + targetGap) + 40.0;
-        
+        final double totalHeight =
+            totalBigSections * (sectionHeight + targetGap) + 40.0;
+
         return SingleChildScrollView(
           scrollDirection: Axis.vertical,
           child: ConstrainedBox(
@@ -179,7 +184,7 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
               children: [
                 // 星期标题行
                 _buildWeekdayHeader(screenWidth, weekMonday),
-                
+
                 // 时间轴和课程
                 SizedBox(
                   height: totalHeight - 40,
@@ -187,10 +192,12 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
                   child: Stack(
                     children: [
                       // 左侧时间轴 (起止时间显示)
-                      _buildFixedTimeAxis(totalBigSections, sectionHeight, targetGap),
-                      
+                      _buildFixedTimeAxis(
+                          totalBigSections, sectionHeight, targetGap),
+
                       // 课程块
-                      ..._buildFixedCourseBlocks(weekCourses, screenWidth, sectionHeight, targetGap, weekNumber),
+                      ..._buildFixedCourseBlocks(weekCourses, screenWidth,
+                          sectionHeight, targetGap, weekNumber),
                     ],
                   ),
                 ),
@@ -307,7 +314,7 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
 
       final top = bigSectionIndex * (blockHeight + gap);
       final height = bigSectionSpan * blockHeight + (bigSectionSpan - 1) * gap;
-      
+
       final dayOffset = (course.dayOfWeek - 1) * columnWidth;
       final left = timeColumnWidth + dayOffset + (gap / 2);
       final width = columnWidth - gap;
@@ -335,7 +342,7 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
     }
     return blocks;
   }
-  
+
   /// 构建单个课程块
   Widget _buildCourseBlock(
     CourseModel course, {
@@ -352,98 +359,121 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
       startPeriod: course.startPeriod,
     );
 
-    return GestureDetector(
-      onTap: () => _showCourseDetail(
-        course,
-        weekNumber: weekNumber,
-        conflictingCourses: conflictingCourses,
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(6), // 圆角 6px
-          border: hasConflict
-              ? Border.all(
-                  color: Colors.white.withValues(alpha: 0.4),
-                  width: 1.0,
-                )
-              : null,
-          boxShadow: hasConflict
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 3,
-                    offset: const Offset(0, 1),
-                  ),
-                ]
-              : null,
+    final weekdays = [
+      context.l10n.weekdayMon,
+      context.l10n.weekdayTue,
+      context.l10n.weekdayWed,
+      context.l10n.weekdayThu,
+      context.l10n.weekdayFri,
+      context.l10n.weekdaySat,
+      context.l10n.weekdaySun,
+    ];
+    final weekdayStr = weekdays[(course.dayOfWeek - 1).clamp(0, 6)];
+    final semanticLabel = StringBuffer()
+      ..write(
+          '$weekdayStr 第${course.startPeriod}至${course.endPeriod}节，${course.name}')
+      ..write(course.classroom.isNotEmpty ? '，教室：${course.classroom}' : '')
+      ..write(hasConflict ? context.l10n.a11yCourseConflict : '');
+
+    return Semantics(
+      button: true,
+      label: semanticLabel.toString(),
+      hint: context.l10n.a11yTapForCourseDetail,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: () => _showCourseDetail(
+          course,
+          weekNumber: weekNumber,
+          conflictingCourses: conflictingCourses,
         ),
-        child: Stack(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  course.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    height: 1.1,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                if (course.classroom.isNotEmpty)
+        child: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(6), // 圆角 6px
+            border: hasConflict
+                ? Border.all(
+                    color: Colors.white.withValues(alpha: 0.4),
+                    width: 1.0,
+                  )
+                : null,
+            boxShadow: hasConflict
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    course.classroom,
+                    course.name,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 9,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
                       height: 1.1,
                     ),
-                    maxLines: 3, // 支持 3 行显示
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
-              ],
-            ),
-            if (customRule != null)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: Icon(
-                  customRule.isDisabled
-                      ? Icons.notifications_off_rounded
-                      : Icons.alarm_on_rounded,
-                  size: 11,
-                  color: Colors.white.withValues(alpha: 0.9),
-                ),
+                  const SizedBox(height: 2),
+                  if (course.classroom.isNotEmpty)
+                    Text(
+                      course.classroom,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        height: 1.1,
+                      ),
+                      maxLines: 3, // 支持 3 行显示
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
               ),
-            if (hasConflict)
-              const Positioned(
-                bottom: 0,
-                right: 0,
-                child: Icon(
-                  Icons.layers_rounded,
-                  size: 10,
-                  color: Colors.white70,
+              if (customRule != null)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Icon(
+                    customRule.isDisabled
+                        ? Icons.notifications_off_rounded
+                        : Icons.alarm_on_rounded,
+                    size: 11,
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
                 ),
-              ),
-          ],
+              if (hasConflict)
+                const Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Icon(
+                    Icons.layers_rounded,
+                    size: 10,
+                    color: Colors.white70,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
-  
+
   /// 显示课程详情
   void _showCourseDetail(
     CourseModel course, {
     required int weekNumber,
     List<CourseModel>? conflictingCourses,
   }) {
-    final hasMultiple = conflictingCourses != null && conflictingCourses.length > 1;
+    final hasMultiple =
+        conflictingCourses != null && conflictingCourses.length > 1;
 
     showDialog(
       context: context,
@@ -477,7 +507,7 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
       },
     );
   }
-  
+
   /// 获取本周的课程
   List<CourseModel> _getCoursesForWeek(int weekNumber) {
     return widget.courses.where((course) {
@@ -485,7 +515,7 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
       return weeks.contains(weekNumber);
     }).toList();
   }
-  
+
   /// 根据课程名称生成颜色
   Color _getCourseColor(String courseName) {
     return CourseColorUtils.getColorForCourse(courseName);
@@ -516,8 +546,9 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
           const SizedBox(width: 55),
           ...List.generate(7, (index) {
             final date = weekMonday.add(Duration(days: index));
-            final isToday = '${date.year}-${date.month}-${date.day}' == todayStr;
-            
+            final isToday =
+                '${date.year}-${date.month}-${date.day}' == todayStr;
+
             return Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -526,9 +557,11 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
                     weekdays[index],
                     style: TextStyle(
                       fontSize: 12,
-                      color: isToday 
-                          ? Theme.of(context).primaryColor 
-                          : (Theme.of(context).brightness == Brightness.dark ? Colors.white60 : const Color(0xFF636E72)),
+                      color: isToday
+                          ? Theme.of(context).primaryColor
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white60
+                              : const Color(0xFF636E72)),
                       fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
@@ -538,14 +571,20 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
                     height: 28,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isToday ? Theme.of(context).primaryColor : Colors.transparent,
+                      color: isToday
+                          ? Theme.of(context).primaryColor
+                          : Colors.transparent,
                       shape: BoxShape.circle,
                     ),
                     child: Text(
                       '${date.day}',
                       style: TextStyle(
                         fontSize: 14,
-                        color: isToday ? Colors.white : (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF2D3436)),
+                        color: isToday
+                            ? Colors.white
+                            : (Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : const Color(0xFF2D3436)),
                         fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
                       ),
                     ),
@@ -559,7 +598,6 @@ class WeeklyCalendarViewState extends State<WeeklyCalendarView> {
     );
   }
 }
-
 
 /// 单门课程详情弹窗
 class _SingleCourseDetailDialog extends StatefulWidget {
@@ -922,7 +960,8 @@ class _MaterialColorPickerDialog extends StatelessWidget {
                                           width: 8,
                                           height: 8,
                                           decoration: BoxDecoration(
-                                            color: Colors.white.withValues(alpha: 0.85),
+                                            color: Colors.white
+                                                .withValues(alpha: 0.85),
                                             shape: BoxShape.circle,
                                           ),
                                         ),

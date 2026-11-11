@@ -3275,4 +3275,38 @@ class AppLocalizationsYue extends AppLocalizations {
 
   @override
   String get estimatedReminderTime => '预计提醒时刻';
+
+  @override
+  String get loginStatusLoggedIn => '已登录';
+
+  @override
+  String get loginStatusLoggingIn => '登录中';
+
+  @override
+  String get a11yAiAssistant => 'AI 助理';
+
+  @override
+  String a11yProfileWithStatus(String status) {
+    return '个人中心，$status';
+  }
+
+  @override
+  String get a11yTapForCourseDetail => '双击查看课程详情与排课冲突';
+
+  @override
+  String get a11yCourseConflict => '，存在时间重叠冲突';
+
+  @override
+  String get a11ySeatStatusOccupied => '已被占用';
+
+  @override
+  String get a11ySeatStatusSelected => '已选中，双击取消选择';
+
+  @override
+  String get a11ySeatStatusAvailable => '空闲可用，双击选择';
+
+  @override
+  String a11ySeatDescription(String seatNum, String status) {
+    return '$seatNum号座位，$status';
+  }
 }

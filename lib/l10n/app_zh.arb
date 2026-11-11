@@ -1936,5 +1936,32 @@
   },
   "directClassExact": "直接在上课时提醒",
   "matchDefaultReminder": "与默认提醒时间保持一致",
-  "estimatedReminderTime": "预计提醒时刻"
+  "estimatedReminderTime": "预计提醒时刻",
+  "loginStatusLoggedIn": "已登录",
+  "loginStatusLoggingIn": "登录中",
+  "a11yAiAssistant": "AI 助理",
+  "a11yProfileWithStatus": "个人中心，{status}",
+  "@a11yProfileWithStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yTapForCourseDetail": "双击查看课程详情与排课冲突",
+  "a11yCourseConflict": "，存在时间重叠冲突",
+  "a11ySeatStatusOccupied": "已被占用",
+  "a11ySeatStatusSelected": "已选中，双击取消选择",
+  "a11ySeatStatusAvailable": "空闲可用，双击选择",
+  "a11ySeatDescription": "{seatNum}号座位，{status}",
+  "@a11ySeatDescription": {
+    "placeholders": {
+      "seatNum": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  }
 }

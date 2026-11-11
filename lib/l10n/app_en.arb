@@ -1049,5 +1049,15 @@
   "directClassAfter": "Notify {time} after class starts",
   "directClassExact": "Notify right at class time",
   "matchDefaultReminder": "Match default reminder time",
-  "estimatedReminderTime": "Estimated Reminder"
+  "estimatedReminderTime": "Estimated Reminder",
+  "loginStatusLoggedIn": "Logged in",
+  "loginStatusLoggingIn": "Logging in",
+  "a11yAiAssistant": "AI Assistant",
+  "a11yProfileWithStatus": "Profile, {status}",
+  "a11yTapForCourseDetail": "Double tap to view course details and conflicting classes",
+  "a11yCourseConflict": ", has schedule conflict",
+  "a11ySeatStatusOccupied": "Occupied",
+  "a11ySeatStatusSelected": "Selected, double tap to deselect",
+  "a11ySeatStatusAvailable": "Available, double tap to select",
+  "a11ySeatDescription": "Seat {seatNum}, {status}"
 }
