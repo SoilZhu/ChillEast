@@ -113,7 +113,7 @@ class ExamNotifier extends StateNotifier<AsyncValue<List<ExamScheduleModel>>> {
       final manual = await _collectManualUnion();
       // 强行同步超星云端数据，仅保留用户手动创建的考试，旧的超星缓存不合入
       final merged = [...manual, ...scraped];
-      merged.sort((a, b) => a.time.compareTo(b.time));
+      merged.sort(ExamScheduleModel.compareTime);
 
       await storage.saveExamList(merged);
       state = AsyncValue.data(merged);
@@ -138,7 +138,7 @@ class ExamNotifier extends StateNotifier<AsyncValue<List<ExamScheduleModel>>> {
 
       final manual = await _collectManualUnion();
       final merged = [...manual, ...scraped];
-      merged.sort((a, b) => a.time.compareTo(b.time));
+      merged.sort(ExamScheduleModel.compareTime);
 
       await storage.saveExamList(merged);
       state = AsyncValue.data(merged);
@@ -182,7 +182,7 @@ class ExamNotifier extends StateNotifier<AsyncValue<List<ExamScheduleModel>>> {
     final updated = [...current, newItem]
         .where((e) => ExamStorage.isUpcomingOrToday(e))
         .toList();
-    updated.sort((a, b) => a.time.compareTo(b.time));
+    updated.sort(ExamScheduleModel.compareTime);
 
     await _ref.read(examStorageProvider).saveExamList(updated);
     state = AsyncValue.data(updated);

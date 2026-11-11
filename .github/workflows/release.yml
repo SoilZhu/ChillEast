@@ -112,6 +112,34 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Generate version manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          RELEASE_BODY=$(gh release view "$TAG_NAME" --json body -q .body 2>/dev/null || true)
+          python3 -c '
+          import json, os, re
+          tag = os.environ.get("TAG_NAME", "")
+          version = tag.lstrip("v")
+          body = os.environ.get("RELEASE_BODY", "")
+          # 支持在说明中指定强制更新标记（如 [force_update]、[force] 或 <!-- force_update -->）
+          # 默认为 False
+          force_update = bool(re.search(r"\[force(_update)?\]|<!--\s*force(_update)?\s*-->|force_update:\s*true", body, re.IGNORECASE))
+          clean_body = re.sub(r"<!--\s*force(_update)?\s*-->|\[force(_update)?\]", "", body, flags=re.IGNORECASE).strip()
+          data = {
+              "version": version,
+              "tag_name": tag,
+              "force_update": force_update,
+              "release_notes": clean_body,
+              "body": clean_body,
+              "download_url": "https://eastchill-apk.soilzhu.su/latest/app-release.apk"
+          }
+          with open("dist/version.json", "w", encoding="utf-8") as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
+          '
+          cat dist/version.json
+
       # R2 是正式发布的必要目标；凭据缺失或上传失败时应让发布失败，不能静默跳过。
       # 上传至 R2 时，将体积更小的 arm64-v8a 命名为 app-release.apk，供 CDN 快速分发与应用内更新
       - name: Upload to Cloudflare R2
@@ -127,6 +155,13 @@ jobs:
             --endpoint-url https://${CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com \
             --cache-control "public, max-age=300, s-maxage=300"
           echo "Successfully uploaded app-arm64-v8a-release.apk as latest/app-release.apk to Cloudflare R2"
+
+          aws s3 cp dist/version.json \
+            s3://${R2_BUCKET_NAME}/latest/version.json \
+            --endpoint-url https://${CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com \
+            --cache-control "public, max-age=60, s-maxage=180" \
+            --content-type "application/json; charset=utf-8"
+          echo "Successfully uploaded version.json to Cloudflare R2"
 
       # CDN 清缓存是可选步骤。使用前置步骤检查 Secrets，避免在步骤自己的 if 中
       # 判断尚未映射的 env，导致 Secrets 已配置却仍被静默跳过。
@@ -153,6 +188,6 @@ jobs:
             "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/purge_cache" \
             -H "Authorization: Bearer ${CF_API_TOKEN}" \
             -H "Content-Type: application/json" \
-            --data '{"files":["https://eastchill-apk.soilzhu.su/latest/app-release.apk"]}')
+            --data '{"files":["https://eastchill-apk.soilzhu.su/latest/app-release.apk","https://eastchill-apk.soilzhu.su/latest/version.json"]}')
           echo "Cloudflare Purge Cache Response: $PURGE_RES"
           python3 -c 'import json,sys; data=json.load(sys.stdin); sys.exit(0 if data.get("success") is True else 1)' <<< "$PURGE_RES"

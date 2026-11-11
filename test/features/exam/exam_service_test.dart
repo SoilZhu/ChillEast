@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:html/parser.dart' as html_parser;
 import 'package:ChillEast/features/exam/models/exam_schedule_model.dart';
 import 'package:ChillEast/features/exam/services/exam_service.dart';
 
@@ -367,6 +368,99 @@ void main() {
       expect(requestedUrls.any((u) => u.contains('taskrefId=333')), isTrue);
       expect(requestedUrls.any((u) => u.contains('taskrefId=444')), isTrue);
       expect(requestedUrls.any((u) => u.contains('taskrefId=555')), isTrue);
+    });
+
+    test('excludeDynamicNowTime removes dynamicNowTime element from DOM', () {
+      const html1 = '''
+<p class="paper_time">当前时间<span class="din_bold font4" id="dynamicNowTime">2026-10-17 03:44:12</span></p>
+<div class="content">内容</div>
+''';
+      final doc = html_parser.parse(html1);
+      ExamService.excludeDynamicNowTime(doc);
+      expect(doc.querySelector('#dynamicNowTime'), isNull);
+      expect(doc.querySelector('.paper_time'), isNull);
+      expect(doc.body?.text.contains('2026-10-17'), isFalse);
+    });
+
+    test('parseExamDetailHtml with sequential times strictly excludes dynamicNowTime', () {
+      // 模拟页面没有“领取时间”关键词，包含动态时间和容器内真实考试时间
+      const html = '''
+<span id="dynamicNowTime">2026-10-17 03:44:00</span>
+<div id="watermark-wrapper" class="watermark-wrapper"></div>
+<div style="position:relative;z-index:100">
+    <p>真实考试时间段：2026-11-20 09:00 至 2026-11-20 11:00</p>
+</div>
+''';
+      final result = examService.parseExamDetailHtml(html);
+      expect(result, isNotNull);
+      expect(result!.startTime, equals(DateTime(2026, 11, 20, 9, 0)));
+      expect(result.endTime, equals(DateTime(2026, 11, 20, 11, 0)));
+      expect(result.allTimes.contains(DateTime(2026, 10, 17, 3, 44, 0)), isFalse);
+    });
+
+    test('fetchExams includes exams without detail time directly in results with time == null', () async {
+      final dio = Dio();
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            final uri = options.uri.toString();
+            if (uri.contains('examcode')) {
+              return handler.resolve(
+                Response(
+                  requestOptions: options,
+                  statusCode: 200,
+                  data: '''
+<ul class="ks_list">
+  <li data="/exam-ans/exam/phone/task-exam?taskrefId=valid1&courseId=1&classId=1&from=examlist" data-stopexam="0" title="正常考试">
+    <span class="ks_state">进行中</span>
+  </li>
+  <li data="/exam-ans/exam/phone/task-exam?taskrefId=invalid2&courseId=1&classId=1&from=examlist" data-stopexam="0" title="暂无时间考试">
+    <span class="ks_state">待考</span>
+  </li>
+</ul>
+''',
+                ),
+              );
+            } else if (uri.contains('taskrefId=valid1')) {
+              return handler.resolve(
+                Response(
+                  requestOptions: options,
+                  statusCode: 200,
+                  data: '''
+<div id="watermark-wrapper" class="watermark-wrapper"></div>
+<div style="position:relative;z-index:100">
+  <p>领取时间：<span class="din font16">2099-10-18 09:00</span></p>
+</div>
+''',
+                ),
+              );
+            } else if (uri.contains('taskrefId=invalid2')) {
+              // 模拟详情页无法解析出时间（例如错误页或空内容）
+              return handler.resolve(
+                Response(
+                  requestOptions: options,
+                  statusCode: 200,
+                  data: '<div>系统维护中，暂无详情</div>',
+                ),
+              );
+            }
+            return handler.next(options);
+          },
+        ),
+      );
+
+      final results = await examService.fetchExams(dioClient: dio);
+
+      // 两门考试均应出现在列表中，valid1 包含具体时间，invalid2 的 time 为 null（直接显示在安排里，不需要有时间）
+      expect(results.length, equals(2));
+      final valid = results.firstWhere((r) => r.id == 'valid1');
+      final withoutTime = results.firstWhere((r) => r.id == 'invalid2');
+
+      expect(valid.time, equals(DateTime(2099, 10, 18, 9, 0)));
+      expect(withoutTime.time, isNull);
+      // 有时间的排在前面，无时间的排在最后
+      expect(results.first.id, equals('valid1'));
+      expect(results.last.id, equals('invalid2'));
     });
   });
 }

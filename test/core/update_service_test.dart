@@ -67,4 +67,26 @@ void main() {
     expect(apkCurrent.existsSync(), isFalse);
     expect(nonApk.existsSync(), isTrue);
   });
+
+  group('isNewerVersion', () {
+    test('correctly identifies newer semantic versions', () {
+      expect(UpdateService.isNewerVersion('1.2.0', '1.1.0'), isTrue);
+      expect(UpdateService.isNewerVersion('1.1.1', '1.1.0'), isTrue);
+      expect(UpdateService.isNewerVersion('2.0.0', '1.9.9'), isTrue);
+      expect(UpdateService.isNewerVersion('1.1.0.1', '1.1.0'), isTrue);
+    });
+
+    test('correctly identifies same or older versions', () {
+      expect(UpdateService.isNewerVersion('1.1.0', '1.1.0'), isFalse);
+      expect(UpdateService.isNewerVersion('1.0.9', '1.1.0'), isFalse);
+      expect(UpdateService.isNewerVersion('1.0.0', '2.0.0'), isFalse);
+    });
+
+    test('handles v prefixes, build numbers (+), and pre-release tags (-)', () {
+      expect(UpdateService.isNewerVersion('v1.2.0', '1.1.0+14'), isTrue);
+      expect(UpdateService.isNewerVersion('1.1.0', '1.1.0+14'), isFalse);
+      expect(UpdateService.isNewerVersion('v1.1.1-beta', '1.1.0'), isTrue);
+      expect(UpdateService.isNewerVersion('1.1.0+15', '1.1.0+14'), isFalse);
+    });
+  });
 }

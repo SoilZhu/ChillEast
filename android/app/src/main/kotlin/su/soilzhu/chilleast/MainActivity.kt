@@ -135,6 +135,9 @@ class MainActivity : FlutterActivity() {
                                 (call.argument<String>("text") ?: ""),
                                 (call.argument<String>("capsuleText") ?: ""),
                                 (call.argument<String>("timeText") ?: ""),
+                                (call.argument<Number>("startTs")?.toLong()
+                                    ?: call.argument<Number>("whenMs")?.toLong()
+                                    ?: 0L),
                             )
                             result.success(true)
                         } catch (e: Exception) {

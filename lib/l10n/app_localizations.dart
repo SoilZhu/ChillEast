@@ -527,6 +527,12 @@ abstract class AppLocalizations {
   /// **'场馆预约'**
   String get funcGym;
 
+  /// No description provided for @funcPhysicalTest.
+  ///
+  /// In zh, this message translates to:
+  /// **'体测预约'**
+  String get funcPhysicalTest;
+
   /// No description provided for @funcTeachingEval.
   ///
   /// In zh, this message translates to:
@@ -1139,6 +1145,42 @@ abstract class AppLocalizations {
   /// **'作业提醒时间'**
   String get homeworkReminderTime;
 
+  /// No description provided for @homeworkRepeatReminder.
+  ///
+  /// In zh, this message translates to:
+  /// **'作业持续提醒'**
+  String get homeworkRepeatReminder;
+
+  /// No description provided for @homeworkRepeatReminderDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'未完成前定期再次提醒'**
+  String get homeworkRepeatReminderDesc;
+
+  /// No description provided for @homeworkRepeatInterval.
+  ///
+  /// In zh, this message translates to:
+  /// **'提醒频率'**
+  String get homeworkRepeatInterval;
+
+  /// No description provided for @homeworkRepeatIntervalTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择提醒频率'**
+  String get homeworkRepeatIntervalTime;
+
+  /// No description provided for @homeworkRemindAfterDue.
+  ///
+  /// In zh, this message translates to:
+  /// **'逾期后继续提醒'**
+  String get homeworkRemindAfterDue;
+
+  /// No description provided for @homeworkRemindAfterDueDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'截止后24小时内未完成仍提醒'**
+  String get homeworkRemindAfterDueDesc;
+
   /// No description provided for @libraryReminder.
   ///
   /// In zh, this message translates to:
@@ -1168,6 +1210,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'{hours}小时前'**
   String notifHoursBefore(String hours);
+
+  /// No description provided for @notifMinutesInterval.
+  ///
+  /// In zh, this message translates to:
+  /// **'每{minutes}分钟'**
+  String notifMinutesInterval(int minutes);
+
+  /// No description provided for @notifHoursInterval.
+  ///
+  /// In zh, this message translates to:
+  /// **'每{hours}小时'**
+  String notifHoursInterval(String hours);
 
   /// No description provided for @setSuccessfully.
   ///
@@ -4665,6 +4719,12 @@ abstract class AppLocalizations {
   /// **'作业将在{time}后截止'**
   String homeworkDueIn(String time);
 
+  /// No description provided for @homeworkOverdueNotice.
+  ///
+  /// In zh, this message translates to:
+  /// **'作业已截止，若已提交请在应用中标记完成'**
+  String get homeworkOverdueNotice;
+
   /// No description provided for @minutesCount.
   ///
   /// In zh, this message translates to:
@@ -5996,6 +6056,252 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'仅使用绝对匿名方式，统计您的使用版本。'**
   String get analyticsPromptSubtitle;
+
+  /// No description provided for @setReminder.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置提醒'**
+  String get setReminder;
+
+  /// No description provided for @reminderSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'提醒设置'**
+  String get reminderSettings;
+
+  /// No description provided for @reminderMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'提醒方式'**
+  String get reminderMode;
+
+  /// No description provided for @reminderBefore.
+  ///
+  /// In zh, this message translates to:
+  /// **'提前'**
+  String get reminderBefore;
+
+  /// No description provided for @reminderAfter.
+  ///
+  /// In zh, this message translates to:
+  /// **'延后'**
+  String get reminderAfter;
+
+  /// No description provided for @reminderExact.
+  ///
+  /// In zh, this message translates to:
+  /// **'准时'**
+  String get reminderExact;
+
+  /// No description provided for @reminderDisabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'不提醒'**
+  String get reminderDisabled;
+
+  /// No description provided for @reminderScope.
+  ///
+  /// In zh, this message translates to:
+  /// **'生效范围'**
+  String get reminderScope;
+
+  /// No description provided for @scopeOnlyThis.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅本次课'**
+  String get scopeOnlyThis;
+
+  /// No description provided for @scopeThisWeekday.
+  ///
+  /// In zh, this message translates to:
+  /// **'该课程所有在{weekday}的课'**
+  String scopeThisWeekday(String weekday);
+
+  /// No description provided for @scopeThisWeek.
+  ///
+  /// In zh, this message translates to:
+  /// **'该课程在第{week}周所有的课'**
+  String scopeThisWeek(int week);
+
+  /// No description provided for @scopeAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'该课程全学期所有的课'**
+  String get scopeAll;
+
+  /// No description provided for @currentRule.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前设置'**
+  String get currentRule;
+
+  /// No description provided for @restoreDefault.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复默认'**
+  String get restoreDefault;
+
+  /// No description provided for @reminderSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'提醒设置已保存'**
+  String get reminderSaved;
+
+  /// No description provided for @reminderReset.
+  ///
+  /// In zh, this message translates to:
+  /// **'已恢复默认提醒设置'**
+  String get reminderReset;
+
+  /// No description provided for @baseTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'基准时间'**
+  String get baseTime;
+
+  /// No description provided for @baseTimeSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置时间'**
+  String get baseTimeSettings;
+
+  /// No description provided for @baseTimeClassTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'课表时间'**
+  String get baseTimeClassTime;
+
+  /// No description provided for @baseTimeSettingsDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'以设置中的提醒时间为基准'**
+  String get baseTimeSettingsDesc;
+
+  /// No description provided for @baseTimeClassTimeDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'以课表上课时间为基准'**
+  String get baseTimeClassTimeDesc;
+
+  /// No description provided for @relativeToSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'在默认提醒的基础上调整'**
+  String get relativeToSettings;
+
+  /// No description provided for @relativeToSettingsDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭后将直接按上课时间提醒'**
+  String get relativeToSettingsDesc;
+
+  /// No description provided for @adjustBasedOnDefault.
+  ///
+  /// In zh, this message translates to:
+  /// **'在默认提醒的基础上调整'**
+  String get adjustBasedOnDefault;
+
+  /// No description provided for @adjustDefaultBefore.
+  ///
+  /// In zh, this message translates to:
+  /// **'在默认提醒的基础上，提前 {time}'**
+  String adjustDefaultBefore(String time);
+
+  /// No description provided for @adjustDefaultAfter.
+  ///
+  /// In zh, this message translates to:
+  /// **'在默认提醒的基础上，延后 {time}'**
+  String adjustDefaultAfter(String time);
+
+  /// No description provided for @directClassBefore.
+  ///
+  /// In zh, this message translates to:
+  /// **'直接在上课前 {time} 提醒'**
+  String directClassBefore(String time);
+
+  /// No description provided for @directClassAfter.
+  ///
+  /// In zh, this message translates to:
+  /// **'直接在上课 {time} 后提醒'**
+  String directClassAfter(String time);
+
+  /// No description provided for @directClassExact.
+  ///
+  /// In zh, this message translates to:
+  /// **'直接在上课时提醒'**
+  String get directClassExact;
+
+  /// No description provided for @matchDefaultReminder.
+  ///
+  /// In zh, this message translates to:
+  /// **'与默认提醒时间保持一致'**
+  String get matchDefaultReminder;
+
+  /// No description provided for @estimatedReminderTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'预计提醒时刻'**
+  String get estimatedReminderTime;
+
+  /// No description provided for @loginStatusLoggedIn.
+  ///
+  /// In zh, this message translates to:
+  /// **'已登录'**
+  String get loginStatusLoggedIn;
+
+  /// No description provided for @loginStatusLoggingIn.
+  ///
+  /// In zh, this message translates to:
+  /// **'登录中'**
+  String get loginStatusLoggingIn;
+
+  /// No description provided for @a11yAiAssistant.
+  ///
+  /// In zh, this message translates to:
+  /// **'AI 助理'**
+  String get a11yAiAssistant;
+
+  /// No description provided for @a11yProfileWithStatus.
+  ///
+  /// In zh, this message translates to:
+  /// **'个人中心，{status}'**
+  String a11yProfileWithStatus(String status);
+
+  /// No description provided for @a11yTapForCourseDetail.
+  ///
+  /// In zh, this message translates to:
+  /// **'双击查看课程详情与排课冲突'**
+  String get a11yTapForCourseDetail;
+
+  /// No description provided for @a11yCourseConflict.
+  ///
+  /// In zh, this message translates to:
+  /// **'，存在时间重叠冲突'**
+  String get a11yCourseConflict;
+
+  /// No description provided for @a11ySeatStatusOccupied.
+  ///
+  /// In zh, this message translates to:
+  /// **'已被占用'**
+  String get a11ySeatStatusOccupied;
+
+  /// No description provided for @a11ySeatStatusSelected.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选中，双击取消选择'**
+  String get a11ySeatStatusSelected;
+
+  /// No description provided for @a11ySeatStatusAvailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'空闲可用，双击选择'**
+  String get a11ySeatStatusAvailable;
+
+  /// No description provided for @a11ySeatDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'{seatNum}号座位，{status}'**
+  String a11ySeatDescription(String seatNum, String status);
 }
 
 class _AppLocalizationsDelegate

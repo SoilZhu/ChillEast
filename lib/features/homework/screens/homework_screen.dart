@@ -50,33 +50,8 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
   }
 
   Widget _buildBody(AuthState authState, AsyncValue<List<HomeworkModel>> homeworkState) {
-    // 直接返回带有 FAB 的 Scaffold
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.12),
-              blurRadius: 12,
-              offset: const Offset(0, 3), // 阴影偏移 3
-            ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: () => _showAddHomeworkSheet(context),
-          shape: const CircleBorder(),
-          elevation: 0, // 禁用默认阴影以使用自定义阴影
-          backgroundColor: Theme.of(context).brightness == Brightness.light 
-              ? Colors.white 
-              : Theme.of(context).cardTheme.color ?? const Color(0xFF1E1E1E),
-          child: Icon(
-            Icons.add, 
-            color: Theme.of(context).brightness == Brightness.light ? const Color(0xFF09C489) : Colors.white
-          ),
-        ),
-      ),
       body: Column(
         children: [
           _buildSubHeader(),
@@ -138,37 +113,48 @@ class _HomeworkScreenState extends ConsumerState<HomeworkScreen> with SingleTick
   Widget _buildSubHeader() {
     return Container(
       height: 52,
-      alignment: Alignment.centerLeft,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
       ),
-      child: TabBar(
-        controller: _tabController,
-        isScrollable: true,
-        tabAlignment: TabAlignment.start,
-        padding: EdgeInsets.zero,
-        labelPadding: const EdgeInsets.symmetric(horizontal: 16),
-        labelColor: const Color(0xFF09C489),
-        unselectedLabelColor: Theme.of(context).brightness == Brightness.dark ? Colors.white60 : Colors.grey[600],
-        labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        unselectedLabelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
-        indicatorSize: TabBarIndicatorSize.label,
-        dividerColor: Colors.transparent,
-        indicator: UnderlineTabIndicator(
-          borderSide: const BorderSide(
-            width: 4,
-            color: Color(0xFF09C489),
+      child: Row(
+        children: [
+          Expanded(
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              padding: EdgeInsets.zero,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+              labelColor: const Color(0xFF09C489),
+              unselectedLabelColor: Theme.of(context).brightness == Brightness.dark ? Colors.white60 : Colors.grey[600],
+              labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              unselectedLabelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+              indicatorSize: TabBarIndicatorSize.label,
+              dividerColor: Colors.transparent,
+              indicator: UnderlineTabIndicator(
+                borderSide: const BorderSide(
+                  width: 4,
+                  color: Color(0xFF09C489),
+                ),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(4),
+                  topRight: Radius.circular(4),
+                ),
+                insets: const EdgeInsets.symmetric(horizontal: 4),
+              ),
+              tabs: [
+                _buildDynamicTab(index: 0, icon: Icons.inventory_2_outlined, label: context.l10n.homeworkTabArchived),
+                _buildDynamicTab(index: 1, icon: Icons.task_alt, label: context.l10n.homeworkTabCompleted),
+                _buildDynamicTab(index: 2, icon: Icons.assignment_outlined, label: context.l10n.homeworkTabPending),
+              ],
+            ),
           ),
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(4),
-            topRight: Radius.circular(4),
+          IconButton(
+            icon: const Icon(Icons.add_rounded),
+            tooltip: context.l10n.add,
+            onPressed: () => _showAddHomeworkSheet(context),
           ),
-          insets: const EdgeInsets.symmetric(horizontal: 4),
-        ),
-        tabs: [
-          _buildDynamicTab(index: 0, icon: Icons.inventory_2_outlined, label: context.l10n.homeworkTabArchived),
-          _buildDynamicTab(index: 1, icon: Icons.task_alt, label: context.l10n.homeworkTabCompleted),
-          _buildDynamicTab(index: 2, icon: Icons.assignment_outlined, label: context.l10n.homeworkTabPending),
+          const SizedBox(width: 8),
         ],
       ),
     );

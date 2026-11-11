@@ -216,6 +216,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get funcGym => 'Reserva de instalaciones';
 
   @override
+  String get funcPhysicalTest => 'Reserva de prueba física';
+
+  @override
   String get funcTeachingEval => 'Evaluación docente';
 
   @override
@@ -537,6 +540,24 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeworkReminderTime => 'Anticipación del recordatorio de tareas';
 
   @override
+  String get homeworkRepeatReminder => '作业持续提醒';
+
+  @override
+  String get homeworkRepeatReminderDesc => '未完成前定期再次提醒';
+
+  @override
+  String get homeworkRepeatInterval => '提醒频率';
+
+  @override
+  String get homeworkRepeatIntervalTime => '选择提醒频率';
+
+  @override
+  String get homeworkRemindAfterDue => '逾期后继续提醒';
+
+  @override
+  String get homeworkRemindAfterDueDesc => '截止后24小时内未完成仍提醒';
+
+  @override
   String get libraryReminder => 'Recordatorio de reserva de biblioteca';
 
   @override
@@ -554,6 +575,16 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String notifHoursBefore(String hours) {
     return '$hours h antes';
+  }
+
+  @override
+  String notifMinutesInterval(int minutes) {
+    return '每$minutes分钟';
+  }
+
+  @override
+  String notifHoursInterval(String hours) {
+    return '每$hours小时';
   }
 
   @override
@@ -2545,6 +2576,9 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get homeworkOverdueNotice => '作业已截止，若已提交请在应用中标记完成';
+
+  @override
   String minutesCount(int count) {
     return '$count min';
   }
@@ -3131,152 +3165,309 @@ class AppLocalizationsEs extends AppLocalizations {
       '• Apple Calendar (iPhone / iPad / Mac):\nToca «Suscribirse en Calendario» arriba o, en la app Calendario, selecciona «Añadir calendario con suscripción» y pega el enlace.\n\n• Google Calendar:\nEn la web, pulsa «+» junto a «Otros calendarios», selecciona «Desde una URL», pega el enlace y guarda.\n\n• Microsoft Outlook:\nSelecciona «Añadir calendario» -> «Suscribirse desde la web», introduce el enlace y guarda.\n\n• Nota:\nEl enlace incluye todas las clases y reprogramaciones. Si hay modificaciones académicas, la suscripción se mantendrá actualizada automáticamente.';
 
   @override
-  String get onboardingWelcomeTitle => '欢迎使用 ChillEast';
+  String get onboardingWelcomeTitle => 'Te damos la bienvenida a ChillEast';
 
   @override
-  String get onboardingWelcomeSubtitle => '专为湖南农业大学学子打造的现代化校园生活助手';
+  String get onboardingWelcomeSubtitle =>
+      'Tu asistente moderno de vida universitaria diseñado para estudiantes de la Universidad Agrícola de Hunan';
 
   @override
-  String get onboardingSkip => '跳过';
+  String get onboardingSkip => 'Omitir';
 
   @override
-  String get onboardingNext => '下一步';
+  String get onboardingNext => 'Siguiente';
 
   @override
-  String get onboardingStart => '开始使用';
+  String get onboardingStart => 'Empezar';
 
   @override
-  String get onboardingGoToLogin => '去登录';
+  String get onboardingGoToLogin => 'Iniciar sesión';
 
   @override
-  String get onboardingGuideTitle => '迎新导览与功能介绍';
+  String get onboardingGuideTitle => 'Guía de bienvenida y funciones';
 
   @override
-  String get onboardingGuideSubtitle => '快速了解 ChillEast 的核心功能与使用技巧';
+  String get onboardingGuideSubtitle =>
+      'Descubre las funciones principales y consejos prácticos de ChillEast';
 
   @override
-  String get onboardingSlide1Tag => '课表与日程';
+  String get onboardingSlide1Tag => 'Horario y agenda';
 
   @override
-  String get onboardingSlide1Title => '智能课表 · 桌面实况';
+  String get onboardingSlide1Title =>
+      'Horario inteligente · Actividades en directo';
 
   @override
   String get onboardingSlide1Desc =>
-      '全自动同步教务课表，智能对齐调停补变动。配合桌面实况与小组件，随时随地查看精彩日程。';
+      'Sincroniza automáticamente tu horario académico y refleja cualquier cambio o reprogramación. Con las actividades en directo y widgets en pantalla de inicio, consulta tu día a día en todo momento.';
 
   @override
-  String get onboardingSlide2Tag => '学业助手';
+  String get onboardingSlide2Tag => 'Asistente académico';
 
   @override
-  String get onboardingSlide2Title => '作业同步 · 智能预警';
+  String get onboardingSlide2Title =>
+      'Sincronización de tareas · Alertas de entrega';
 
   @override
   String get onboardingSlide2Desc =>
-      '无缝同步超星学习通作业，倒计时清晰直观。支持自定义截止前提醒，告别拖延与作业遗漏。';
+      'Sincroniza sin esfuerzo tus tareas de XueXiTong con cuentas atrás intuitivas. Configura recordatorios personalizados antes de la fecha límite y despídete de los despistes.';
 
   @override
-  String get onboardingSlide3Tag => '校园服务';
+  String get onboardingSlide3Tag => 'Servicios del campus';
 
   @override
-  String get onboardingSlide3Title => '校园生活 · 一站通办';
+  String get onboardingSlide3Title => 'Vida en el campus · Todo en uno';
 
   @override
-  String get onboardingSlide3Desc => '图书馆选座到期提醒、一卡通账单余额明细、宿舍电费余量预警，日常校园事务一手掌握。';
+  String get onboardingSlide3Desc =>
+      'Recordatorios de reserva en la biblioteca, saldo y movimientos de tu tarjeta universitaria, y alertas de consumo eléctrico en la habitación: todo tu día a día universitario en la palma de tu mano.';
 
   @override
-  String get onboardingSlide4Tag => '多端同步';
+  String get onboardingSlide4Tag => 'Multiplataforma';
 
   @override
-  String get onboardingSlide4Title => '日历订阅 · 云端备份';
+  String get onboardingSlide4Title =>
+      'Suscripción de calendario · Copia en la nube';
 
   @override
   String get onboardingSlide4Desc =>
-      '一键生成 Webcal 日历订阅，无缝连接手机、手表与电脑；云端自动加密备份，多设备漫游换机无忧。';
+      'Genera una suscripción Webcal con un solo toque y sincronízala en tu móvil, reloj o portátil. La copia de seguridad cifrada en la nube mantiene tus datos protegidos aunque cambies de dispositivo.';
 
   @override
   String postLoginSetupStep(int current, int total) {
-    return '第 $current / $total 步';
+    return 'Paso $current de $total';
   }
 
   @override
-  String get postLoginSetupSkip => '跳过';
+  String get postLoginSetupSkip => 'Omitir';
 
   @override
-  String get postLoginSetupEnable => '开启';
+  String get postLoginSetupEnable => 'Activar';
 
   @override
-  String get courseReminderPromptMessage => '在课程开始前通知提醒上课教室。';
+  String get courseReminderPromptMessage =>
+      'Recibe una notificación antes de que empiece la clase indicando el aula correspondiente.';
 
   @override
-  String get postLoginSetupNext => '开启';
+  String get postLoginSetupNext => 'Activar';
 
   @override
-  String get postLoginSetupFinish => '开启';
+  String get postLoginSetupFinish => 'Activar';
 
   @override
-  String get postLoginSetupFinishWithoutEnable => '跳过';
+  String get postLoginSetupFinishWithoutEnable => 'Omitir';
 
   @override
-  String get timetableAutoSyncPromptTitle => '课表自动同步';
+  String get timetableAutoSyncPromptTitle =>
+      'Sincronización automática del horario';
 
   @override
-  String get timetableAutoSyncPromptMessage => '自动拉取教务系统，时刻获取最新课表。';
+  String get timetableAutoSyncPromptMessage =>
+      'Obtén tu horario directamente del sistema académico para tenerlo siempre actualizado.';
 
   @override
-  String get timetableAutoSyncPromptBadge => '推荐开启';
+  String get timetableAutoSyncPromptBadge => 'Recomendado';
 
   @override
-  String get homeworkReminderPromptTitle => '作业截止提醒';
+  String get homeworkReminderPromptTitle =>
+      'Recordatorios de entrega de tareas';
 
   @override
-  String get homeworkReminderPromptMessage => '作业截止前通知提醒，避免错过作业提交。';
+  String get homeworkReminderPromptMessage =>
+      'Recibe avisos antes de las fechas límite para que nunca se te pase ninguna entrega.';
 
   @override
-  String get homeworkReminderPromptBadge => '提前预警';
+  String get homeworkReminderPromptBadge => 'Alerta previa';
 
   @override
-  String get libraryReminderPromptTitle => '图书馆座位提醒';
+  String get libraryReminderPromptTitle =>
+      'Recordatorios de reserva en biblioteca';
 
   @override
-  String get libraryReminderPromptMessage => '预约时段开始前发送通知，防止错过预约';
+  String get libraryReminderPromptMessage =>
+      'Recibe una notificación antes del inicio del turno de reserva para no perder tu asiento.';
 
   @override
-  String get libraryReminderPromptBadge => '提前提醒';
+  String get libraryReminderPromptBadge => 'Recordatorio previo';
 
   @override
-  String get timetableSubscriptionPromptTitle => '课表日历订阅';
+  String get timetableSubscriptionPromptTitle =>
+      'Suscripción del horario al calendario';
 
   @override
   String get timetableSubscriptionPromptMessage =>
-      '生成 Webcal 订阅，一键导入系统日历与 Google Calendar。';
+      'Genera una suscripción Webcal para importar tus clases a Apple Calendar o Google Calendar en un toque.';
 
   @override
-  String get timetableSubscriptionPromptBadge => '全平台日程同步';
+  String get timetableSubscriptionPromptBadge =>
+      'Sincronización en todos tus dispositivos';
 
   @override
-  String get useLiveActivityPrompt => '使用实时活动';
+  String get useLiveActivityPrompt => 'Usar actividades en directo';
 
   @override
-  String get startGuide => '开始引导';
+  String get startGuide => 'Iniciar asistente';
 
   @override
-  String get postLoginDoneTitle => '大功告成！';
+  String get postLoginDoneTitle => '¡Todo listo!';
 
   @override
-  String get postLoginDoneMessage => '欢迎使用「自在东湖」，更多选项请访问「设置」。';
+  String get postLoginDoneMessage =>
+      '¡Te damos la bienvenida a ChillEast! Para más opciones, visita «Ajustes».';
 
   @override
-  String get postLoginDoneButton => '完成';
+  String get postLoginDoneButton => 'Listo';
 
   @override
-  String get analyticsAnonymousTitle => '允许匿名统计';
+  String get analyticsAnonymousTitle => 'Permitir estadísticas anónimas';
 
   @override
-  String get analyticsAnonymousSubtitle => '仅使用绝对匿名方式，统计您的使用版本。';
+  String get analyticsAnonymousSubtitle =>
+      'Recopila la versión de la app de forma totalmente anónima.';
 
   @override
-  String get analyticsPromptTitle => '允许匿名统计';
+  String get analyticsPromptTitle => 'Permitir estadísticas anónimas';
 
   @override
-  String get analyticsPromptSubtitle => '仅使用绝对匿名方式，统计您的使用版本。';
+  String get analyticsPromptSubtitle =>
+      'Recopila la versión de la app de forma totalmente anónima.';
+
+  @override
+  String get setReminder => '设置提醒';
+
+  @override
+  String get reminderSettings => '提醒设置';
+
+  @override
+  String get reminderMode => '提醒方式';
+
+  @override
+  String get reminderBefore => '提前';
+
+  @override
+  String get reminderAfter => '延后';
+
+  @override
+  String get reminderExact => '准时';
+
+  @override
+  String get reminderDisabled => '不提醒';
+
+  @override
+  String get reminderScope => '生效范围';
+
+  @override
+  String get scopeOnlyThis => '仅本次课';
+
+  @override
+  String scopeThisWeekday(String weekday) {
+    return '该课程所有在$weekday的课';
+  }
+
+  @override
+  String scopeThisWeek(int week) {
+    return '该课程在第$week周所有的课';
+  }
+
+  @override
+  String get scopeAll => '该课程全学期所有的课';
+
+  @override
+  String get currentRule => '当前设置';
+
+  @override
+  String get restoreDefault => '恢复默认';
+
+  @override
+  String get reminderSaved => '提醒设置已保存';
+
+  @override
+  String get reminderReset => '已恢复默认提醒设置';
+
+  @override
+  String get baseTime => '基准时间';
+
+  @override
+  String get baseTimeSettings => '设置时间';
+
+  @override
+  String get baseTimeClassTime => '课表时间';
+
+  @override
+  String get baseTimeSettingsDesc => '以设置中的提醒时间为基准';
+
+  @override
+  String get baseTimeClassTimeDesc => '以课表上课时间为基准';
+
+  @override
+  String get relativeToSettings => '在默认提醒的基础上调整';
+
+  @override
+  String get relativeToSettingsDesc => '关闭后将直接按上课时间提醒';
+
+  @override
+  String get adjustBasedOnDefault => '在默认提醒的基础上调整';
+
+  @override
+  String adjustDefaultBefore(String time) {
+    return '在默认提醒的基础上，提前 $time';
+  }
+
+  @override
+  String adjustDefaultAfter(String time) {
+    return '在默认提醒的基础上，延后 $time';
+  }
+
+  @override
+  String directClassBefore(String time) {
+    return '直接在上课前 $time 提醒';
+  }
+
+  @override
+  String directClassAfter(String time) {
+    return '直接在上课 $time 后提醒';
+  }
+
+  @override
+  String get directClassExact => '直接在上课时提醒';
+
+  @override
+  String get matchDefaultReminder => '与默认提醒时间保持一致';
+
+  @override
+  String get estimatedReminderTime => '预计提醒时刻';
+
+  @override
+  String get loginStatusLoggedIn => '已登录';
+
+  @override
+  String get loginStatusLoggingIn => '登录中';
+
+  @override
+  String get a11yAiAssistant => 'AI 助理';
+
+  @override
+  String a11yProfileWithStatus(String status) {
+    return '个人中心，$status';
+  }
+
+  @override
+  String get a11yTapForCourseDetail => '双击查看课程详情与排课冲突';
+
+  @override
+  String get a11yCourseConflict => '，存在时间重叠冲突';
+
+  @override
+  String get a11ySeatStatusOccupied => '已被占用';
+
+  @override
+  String get a11ySeatStatusSelected => '已选中，双击取消选择';
+
+  @override
+  String get a11ySeatStatusAvailable => '空闲可用，双击选择';
+
+  @override
+  String a11ySeatDescription(String seatNum, String status) {
+    return '$seatNum号座位，$status';
+  }
 }

@@ -155,6 +155,7 @@
   "clickToSelectDormitory": "点下子去拣房间或充值",
   "quickActions": "灵泛用处",
   "funcGym": "场馆约位",
+  "funcPhysicalTest": "体测约位",
   "funcTeachingEval": "教评台子",
   "funcScore": "看哈分数",
   "funcVpn": "WebVPN 换哈子",
@@ -1781,5 +1782,12 @@
   "resetSubscriptionConfirmTitle": "换只订阅连结",
   "resetSubscriptionConfirmMessage": "换掉后旧的订阅连结即刻不中用，云端旧课表也会删脱，要到订阅的设备里重添新连结。还要往下搞啵？",
   "subscriptionTutorialTitle": "别个日历订阅指路",
-  "subscriptionTutorialContent": "• Apple 日历 (iPhone / iPad / Mac)：\n戳上头「到日历里头订阅」，或者到日历里头选「添上订阅日历」，粘上连结就中。\n\n• Google 日历：\n在网页里戳「别个日历」旁边的「+」号，拣「通过网址」，粘上连结存好。\n\n• Outlook / 微软日历：\n拣「添上日历」-「从 Web 订阅」，输进连结存好。\n\n• 提个醒：\n订阅连结包哒调停后的通统堂课，要是课表有调动或教务更新，订阅源会自个对齐到最新。"
+  "subscriptionTutorialContent": "• Apple 日历 (iPhone / iPad / Mac)：\n戳上头「到日历里头订阅」，或者到日历里头选「添上订阅日历」，粘上连结就中。\n\n• Google 日历：\n在网页里戳「别个日历」旁边的「+」号，拣「通过网址」，粘上连结存好。\n\n• Outlook / 微软日历：\n拣「添上日历」-「从 Web 订阅」，输进连结存好。\n\n• 提个醒：\n订阅连结包哒调停后的通统堂课，要是课表有调动或教务更新，订阅源会自个对齐到最新。",
+  "postLoginDoneTitle": "大功告成！",
+  "postLoginDoneMessage": "欢迎使用「自在东湖」，更多选项请到「设置」里头去看。",
+  "postLoginDoneButton": "搞完",
+  "analyticsAnonymousTitle": "允许匿名统计",
+  "analyticsAnonymousSubtitle": "光用绝对匿名方式，统计你用的版本。",
+  "analyticsPromptTitle": "允许匿名统计",
+  "analyticsPromptSubtitle": "光用绝对匿名方式，统计你用的版本。"
 }

@@ -23,11 +23,12 @@ class ExamStorage {
     return File('${directory.path}/$_expiredIdsFileName');
   }
 
-  /// 判断考试开始时间是否为今天或今天之后的日期
+  /// 判断考试开始时间是否为今天或今天之后的日期（无具体时间的考试一律保留）
   static bool isUpcomingOrToday(ExamScheduleModel exam, [DateTime? now]) {
+    if (exam.time == null) return true;
     final current = now ?? DateTime.now();
     final todayStart = DateTime(current.year, current.month, current.day);
-    return !exam.time.isBefore(todayStart);
+    return !exam.time!.isBefore(todayStart);
   }
 
   /// 判断考试是否已过期（开始时间早于今天 00:00:00）

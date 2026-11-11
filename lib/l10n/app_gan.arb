@@ -155,6 +155,7 @@
   "clickToSelectDormitory": "点前往拣房间或充值",
   "quickActions": "随手搞",
   "funcGym": "场馆占座",
+  "funcPhysicalTest": "体测占座",
   "funcTeachingEval": "评老师系统",
   "funcScore": "查考分",
   "funcVpn": "VPN倒腾",
@@ -1781,5 +1782,12 @@
   "resetSubscriptionConfirmTitle": "重换订阅链接",
   "resetSubscriptionConfirmMessage": "重置后旧个订阅链接就会失效，云端旧课表会被删脱，你需要在订阅个设备里重新加上新链接。还要接着搞啵？",
   "subscriptionTutorialTitle": "外头日历订阅指点",
-  "subscriptionTutorialContent": "• Apple 日历 (iPhone / iPad / Mac)：\n点上头「到日历里订阅」，或者到日历应用里拣「添加订阅日历」，贴上链接就好哩。\n\n• Google 日历：\n到网页端点「其他日历」边上个「+」号，拣「通过网址」，贴上链接存好。\n\n• Outlook / 微软日历：\n拣「添加日历」-「从 Web 订阅」，填入链接存好。\n\n• 提个醒：\n订阅链接包齐哩挪课、歇课之后个全部功课，要是教务有变动，订阅源会自家跟到更新。\n"
+  "subscriptionTutorialContent": "• Apple 日历 (iPhone / iPad / Mac)：\n点上头「到日历里订阅」，或者到日历应用里拣「添加订阅日历」，贴上链接就好哩。\n\n• Google 日历：\n到网页端点「其他日历」边上个「+」号，拣「通过网址」，贴上链接存好。\n\n• Outlook / 微软日历：\n拣「添加日历」-「从 Web 订阅」，填入链接存好。\n\n• 提个醒：\n订阅链接包齐哩挪课、歇课之后个全部功课，要是教务有变动，订阅源会自家跟到更新。\n",
+  "postLoginDoneTitle": "大功告成！",
+  "postLoginDoneMessage": "欢迎使用「自在东湖」，更多选项请走到「设置」里向去望。",
+  "postLoginDoneButton": "搞妥",
+  "analyticsAnonymousTitle": "准许匿名统计",
+  "analyticsAnonymousSubtitle": "只用绝对匿名法子，统计你用哩版本。",
+  "analyticsPromptTitle": "准许匿名统计",
+  "analyticsPromptSubtitle": "只用绝对匿名法子，统计你用哩版本。"
 }

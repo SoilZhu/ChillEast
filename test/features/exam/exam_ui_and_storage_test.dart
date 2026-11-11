@@ -113,7 +113,7 @@ void main() {
             home: Scaffold(
               body: Builder(
                 builder: (context) {
-                  final timeStr = DateFormat('HH:mm').format(mockExam.time);
+                  final timeStr = DateFormat('HH:mm').format(mockExam.time!);
                   return Column(
                     children: [
                       Text(mockExam.title),

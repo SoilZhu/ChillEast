@@ -68,6 +68,7 @@
   "clickToSelectDormitory": "點擊前往選擇房間或增值",
   "quickActions": "快捷功能",
   "funcGym": "場館預約",
+  "funcPhysicalTest": "體測預約",
   "funcTeachingEval": "教評系統",
   "funcScore": "成績查詢",
   "funcVpn": "VPN轉換",
@@ -170,6 +171,12 @@
   "courseReminderTime": "上課提醒時間",
   "homeworkReminder": "作業截止提醒",
   "homeworkReminderTime": "作業提醒時間",
+  "homeworkRepeatReminder": "作業持續提醒",
+  "homeworkRepeatReminderDesc": "未完成前定期再次提醒",
+  "homeworkRepeatInterval": "提醒頻率",
+  "homeworkRepeatIntervalTime": "選擇提醒頻率",
+  "homeworkRemindAfterDue": "逾期後繼續提醒",
+  "homeworkRemindAfterDueDesc": "截止後24小時內未完成仍提醒",
   "libraryReminder": "圖書館預約提醒",
   "libraryReminderTime": "圖書館預約提醒時間",
   "notifDurationNone": "不通知",
@@ -930,10 +937,68 @@
   "resetSubscriptionConfirmMessage": "重設後舊的訂閲連結將立即失效，雲端舊課表將被刪除，您需要在已訂閲的裝置中重新加入新連結。是否繼續？",
   "subscriptionTutorialTitle": "第三方日曆訂閲指南",
   "subscriptionTutorialContent": "• Apple 日曆 (iPhone / iPad / Mac)：\n點擊上方「在日曆中訂閲」，或在日曆應用程式中選擇「加入訂閲日曆」，貼上連結即可。\n\n• Google 日曆：\n在網頁端點擊「其他日曆」旁的「+」號，選擇「透過網址」，貼上連結並儲存。\n\n• Outlook / 微軟日曆：\n選擇「新增日曆」-「從 Web 訂閲」，輸入連結並儲存。\n\n• 提示：\n訂閲連結包含調停後的全部課程，如有調課或教務更新，訂閲源將自動保持最新。",
+  "onboardingWelcomeTitle": "歡迎使用 ChillEast",
+  "onboardingWelcomeSubtitle": "專為湖南農業大學學子打造的現代化校園生活助手",
+  "onboardingSkip": "跳過",
+  "onboardingNext": "下一步",
+  "onboardingStart": "開始使用",
+  "onboardingGoToLogin": "前往登入",
+  "onboardingGuideTitle": "迎新導覽與功能介紹",
+  "onboardingGuideSubtitle": "快速了解 ChillEast 的核心功能與使用技巧",
+  "onboardingSlide1Tag": "課表與日程",
+  "onboardingSlide1Title": "智能課表 · 桌面實況",
+  "onboardingSlide1Desc": "全自動同步教務課表，智慧對齊調課、停課與補課變動。配合桌面實況與小工具，隨時隨地查看精彩日程。",
+  "onboardingSlide2Tag": "學業助手",
+  "onboardingSlide2Title": "作業同步 · 智能預警",
+  "onboardingSlide2Desc": "無縫同步超星學習通作業，倒數計時清晰直觀。支援自訂截止前提醒，告別拖延與作業遺漏。",
+  "onboardingSlide3Tag": "校園服務",
+  "onboardingSlide3Title": "校園生活 · 一站通辦",
+  "onboardingSlide3Desc": "圖書館選座到期提醒、校園卡帳單與餘額明細、宿舍電費餘額預警，日常校園事務一手掌握。",
+  "onboardingSlide4Tag": "多端同步",
+  "onboardingSlide4Title": "日曆訂閲 · 雲端備份",
+  "onboardingSlide4Desc": "一鍵生成 Webcal 日曆訂閲，無縫連接手機、手錶與電腦；雲端自動加密備份，多裝置漫遊換機無憂。",
+  "postLoginSetupStep": "第 {current} / {total} 步",
+  "postLoginSetupSkip": "跳過",
+  "postLoginSetupEnable": "開啟",
+  "courseReminderPromptMessage": "在課程開始前通知提醒上課教室。",
+  "postLoginSetupNext": "開啟",
+  "postLoginSetupFinish": "開啟",
+  "postLoginSetupFinishWithoutEnable": "跳過",
+  "timetableAutoSyncPromptTitle": "課表自動同步",
+  "timetableAutoSyncPromptMessage": "自動同步教務系統，隨時獲取最新課表。",
+  "timetableAutoSyncPromptBadge": "建議開啟",
+  "homeworkReminderPromptTitle": "作業截止提醒",
+  "homeworkReminderPromptMessage": "作業截止前發送通知提醒，避免錯過作業提交。",
+  "homeworkReminderPromptBadge": "提前預警",
+  "libraryReminderPromptTitle": "圖書館座位提醒",
+  "libraryReminderPromptMessage": "預約時段開始前發送通知，防止錯過預約",
+  "libraryReminderPromptBadge": "提前提醒",
+  "timetableSubscriptionPromptTitle": "課表日曆訂閲",
+  "timetableSubscriptionPromptMessage": "生成 Webcal 訂閲，一鍵匯入系統日曆與 Google 日曆。",
+  "timetableSubscriptionPromptBadge": "全平台日程同步",
+  "useLiveActivityPrompt": "使用實時活動",
+  "startGuide": "開始導覽",
+  "postLoginDoneTitle": "大功告成！",
+  "postLoginDoneMessage": "歡迎使用「自在東湖」，更多選項請前往「設定」。",
+  "postLoginDoneButton": "完成",
+  "analyticsAnonymousTitle": "允許匿名統計",
+  "analyticsAnonymousSubtitle": "僅使用絕對匿名方式，統計您的使用版本。",
+  "analyticsPromptTitle": "允許匿名統計",
+  "analyticsPromptSubtitle": "僅使用絕對匿名方式，統計您的使用版本。",
   "@repairsRequiredField": {
     "placeholders": {
       "field": {
         "type": "String"
+      }
+    }
+  },
+  "@postLoginSetupStep": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
       }
     }
   }

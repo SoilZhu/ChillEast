@@ -214,6 +214,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get funcGym => 'Gym Booking';
 
   @override
+  String get funcPhysicalTest => 'Physical Test Booking';
+
+  @override
   String get funcTeachingEval => 'Teaching Eval';
 
   @override
@@ -532,6 +535,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeworkReminderTime => 'Homework Reminder Time';
 
   @override
+  String get homeworkRepeatReminder => 'Continuous Homework Reminders';
+
+  @override
+  String get homeworkRepeatReminderDesc =>
+      'Remind periodically until completed';
+
+  @override
+  String get homeworkRepeatInterval => 'Reminder Frequency';
+
+  @override
+  String get homeworkRepeatIntervalTime => 'Select Frequency';
+
+  @override
+  String get homeworkRemindAfterDue => 'Remind When Overdue';
+
+  @override
+  String get homeworkRemindAfterDueDesc =>
+      'Keep reminding for up to 24 hours if overdue';
+
+  @override
   String get libraryReminder => 'Library Booking Reminder';
 
   @override
@@ -548,6 +571,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String notifHoursBefore(String hours) {
     return '$hours hr before';
+  }
+
+  @override
+  String notifMinutesInterval(int minutes) {
+    return 'Every $minutes min';
+  }
+
+  @override
+  String notifHoursInterval(String hours) {
+    return 'Every $hours hr';
   }
 
   @override
@@ -2505,6 +2538,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get homeworkOverdueNotice =>
+      'Homework deadline has passed. Please mark as completed if submitted';
+
+  @override
   String minutesCount(int count) {
     return '$count mins';
   }
@@ -3105,7 +3142,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingGuideSubtitle =>
-      'Quickly explore ChillEast core features and tips';
+      'Quickly explore ChillEast\'s core features and tips';
 
   @override
   String get onboardingSlide1Tag => 'Timetable & Schedule';
@@ -3115,13 +3152,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingSlide1Desc =>
-      'Fully automated timetable sync from the academic portal with adjustment rules. Live updates and desktop widgets keep your day in view.';
+      'Fully automated timetable sync from the academic portal with adjustment rules. Live updates and home screen widgets keep your day in view.';
 
   @override
   String get onboardingSlide2Tag => 'Study Assistant';
 
   @override
-  String get onboardingSlide2Title => 'Homework Sync & DDL Alerts';
+  String get onboardingSlide2Title => 'Homework Sync & Deadline Alerts';
 
   @override
   String get onboardingSlide2Desc =>
@@ -3135,7 +3172,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingSlide3Desc =>
-      'Library seat booking reminders, campus card balance and transactions, dormitory electricity alerts all in one place.';
+      'Library seat reminders, campus card balances, and dorm electricity alerts—all in one place.';
 
   @override
   String get onboardingSlide4Tag => 'Cross-Platform';
@@ -3160,7 +3197,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get courseReminderPromptMessage =>
-      'Receive notifications before class starts to remind you of the classroom.';
+      'Receive reminders before class starts with your classroom location.';
 
   @override
   String get postLoginSetupNext => 'Enable';
@@ -3176,7 +3213,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get timetableAutoSyncPromptMessage =>
-      'Automatically fetch from the educational system to keep your timetable up to date.';
+      'Automatically sync with the academic portal to keep your timetable up to date.';
 
   @override
   String get timetableAutoSyncPromptBadge => 'Recommended';
@@ -3186,20 +3223,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeworkReminderPromptMessage =>
-      'Receive notifications before homework deadlines to avoid missing submissions.';
+      'Get notified before homework deadlines so you never miss a submission.';
 
   @override
-  String get homeworkReminderPromptBadge => 'Advance Reminder';
+  String get homeworkReminderPromptBadge => 'Early Alerts';
 
   @override
   String get libraryReminderPromptTitle => 'Library Seat Reminder';
 
   @override
   String get libraryReminderPromptMessage =>
-      'Send notifications before reservation time slots to prevent missing appointments.';
+      'Receive notifications before your reservation starts so you never miss check-in.';
 
   @override
-  String get libraryReminderPromptBadge => 'Advance Reminder';
+  String get libraryReminderPromptBadge => 'Early Reminder';
 
   @override
   String get timetableSubscriptionPromptTitle =>
@@ -3207,7 +3244,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get timetableSubscriptionPromptMessage =>
-      'Generate a Webcal subscription to import into system calendar and Google Calendar with one click.';
+      'Generate a Webcal link to sync your classes with Apple Calendar, Google Calendar, and more.';
 
   @override
   String get timetableSubscriptionPromptBadge => 'Cross-Platform Sync';
@@ -3241,4 +3278,145 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get analyticsPromptSubtitle =>
       'Counts your app version using an absolutely anonymous method.';
+
+  @override
+  String get setReminder => 'Set Reminder';
+
+  @override
+  String get reminderSettings => 'Reminder Settings';
+
+  @override
+  String get reminderMode => 'Reminder Mode';
+
+  @override
+  String get reminderBefore => 'Before';
+
+  @override
+  String get reminderAfter => 'After';
+
+  @override
+  String get reminderExact => 'On time';
+
+  @override
+  String get reminderDisabled => 'Disabled';
+
+  @override
+  String get reminderScope => 'Effective Scope';
+
+  @override
+  String get scopeOnlyThis => 'Only this session';
+
+  @override
+  String scopeThisWeekday(String weekday) {
+    return 'All sessions of this course on $weekday';
+  }
+
+  @override
+  String scopeThisWeek(int week) {
+    return 'All sessions of this course in week $week';
+  }
+
+  @override
+  String get scopeAll => 'All sessions across the semester';
+
+  @override
+  String get currentRule => 'Current setting';
+
+  @override
+  String get restoreDefault => 'Reset to default';
+
+  @override
+  String get reminderSaved => 'Reminder settings saved';
+
+  @override
+  String get reminderReset => 'Reset to default reminder settings';
+
+  @override
+  String get baseTime => 'Base Time';
+
+  @override
+  String get baseTimeSettings => 'Settings Time';
+
+  @override
+  String get baseTimeClassTime => 'Class Time';
+
+  @override
+  String get baseTimeSettingsDesc => 'Based on reminder time in settings';
+
+  @override
+  String get baseTimeClassTimeDesc => 'Based on class start time';
+
+  @override
+  String get relativeToSettings => 'Adjust based on default reminder';
+
+  @override
+  String get relativeToSettingsDesc =>
+      'When disabled, offsets from scheduled class time instead';
+
+  @override
+  String get adjustBasedOnDefault => 'Adjust based on default reminder';
+
+  @override
+  String adjustDefaultBefore(String time) {
+    return 'Based on default, $time earlier';
+  }
+
+  @override
+  String adjustDefaultAfter(String time) {
+    return 'Based on default, $time later';
+  }
+
+  @override
+  String directClassBefore(String time) {
+    return 'Notify $time before class';
+  }
+
+  @override
+  String directClassAfter(String time) {
+    return 'Notify $time after class starts';
+  }
+
+  @override
+  String get directClassExact => 'Notify right at class time';
+
+  @override
+  String get matchDefaultReminder => 'Match default reminder time';
+
+  @override
+  String get estimatedReminderTime => 'Estimated Reminder';
+
+  @override
+  String get loginStatusLoggedIn => 'Logged in';
+
+  @override
+  String get loginStatusLoggingIn => 'Logging in';
+
+  @override
+  String get a11yAiAssistant => 'AI Assistant';
+
+  @override
+  String a11yProfileWithStatus(String status) {
+    return 'Profile, $status';
+  }
+
+  @override
+  String get a11yTapForCourseDetail =>
+      'Double tap to view course details and conflicting classes';
+
+  @override
+  String get a11yCourseConflict => ', has schedule conflict';
+
+  @override
+  String get a11ySeatStatusOccupied => 'Occupied';
+
+  @override
+  String get a11ySeatStatusSelected => 'Selected, double tap to deselect';
+
+  @override
+  String get a11ySeatStatusAvailable => 'Available, double tap to select';
+
+  @override
+  String a11ySeatDescription(String seatNum, String status) {
+    return 'Seat $seatNum, $status';
+  }
 }

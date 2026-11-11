@@ -68,6 +68,7 @@
   "clickToSelectDormitory": "Appuyez pour choisir une chambre ou recharger",
   "quickActions": "Accès rapides",
   "funcGym": "Réservation de salles de sport",
+  "funcPhysicalTest": "Réservation du test physique",
   "funcTeachingEval": "Évaluation des cours",
   "funcScore": "Notes et résultats",
   "funcVpn": "Outil WebVPN",
@@ -785,6 +786,13 @@
   "repairsUnnamedOrder": "Demande sans titre",
   "repairsEnterValue": "Saisissez ou collez la valeur requise",
   "repairsRequiredField": "Veuillez renseigner {field}",
+  "@repairsRequiredField": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
   "repairsSubmitSuccess": "Demande transmise avec succès",
   "repairsSubmitSuccessMessage": "Votre demande a été envoyée. Suivez son avancement dans « Mes demandes ».",
   "repairsFormHint": "Les champs marqués d'un * sont obligatoires. Les photos peuvent être prises directement ou choisies depuis la galerie.",
@@ -930,11 +938,62 @@
   "resetSubscriptionConfirmMessage": "L'ancien lien d'abonnement deviendra immédiatement invalide et le calendrier dans le cloud sera remplacé. Vous devrez vous réabonner sur tous vos appareils. Continuer ?",
   "subscriptionTutorialTitle": "Guide d'abonnement au calendrier tiers",
   "subscriptionTutorialContent": "• Calendrier Apple (iPhone / iPad / Mac) :\nAppuyez sur « S'abonner dans Calendrier » ci-dessus, ou dans l'application Calendrier, choisissez « Ajouter un abonnement à un calendrier » et collez le lien.\n\n• Google Agenda :\nSur le Web, cliquez sur le « + » à côté de « Autres agendas », choisissez « À partir de l'URL », collez le lien et enregistrez.\n\n• Microsoft Outlook :\nChoisissez « Ajouter un calendrier » → « S'abonner à partir du web », collez le lien et enregistrez.\n\n• Remarque :\nLe lien d'abonnement prend en compte les cours reportés et suspendus. Le calendrier se mettra automatiquement à jour en cas de modification de l'emploi du temps.",
-  "@repairsRequiredField": {
+  "onboardingWelcomeTitle": "Bienvenue sur ChillEast",
+  "onboardingWelcomeSubtitle": "L'assistant moderne conçu pour les étudiants de l'Université agricole du Hunan (HUNAU)",
+  "onboardingSkip": "Passer",
+  "onboardingNext": "Suivant",
+  "onboardingStart": "Commencer",
+  "onboardingGoToLogin": "Se connecter",
+  "onboardingGuideTitle": "Guide d'accueil et fonctionnalités",
+  "onboardingGuideSubtitle": "Découvrez rapidement les fonctionnalités clés et astuces de ChillEast",
+  "onboardingSlide1Tag": "Emploi du temps & Planning",
+  "onboardingSlide1Title": "Emploi du temps intelligent · Activités en direct",
+  "onboardingSlide1Desc": "Synchronisation automatique depuis le portail universitaire avec prise en compte des reports et rattrapages. Suivez votre journée grâce aux widgets et activités en direct.",
+  "onboardingSlide2Tag": "Assistant académique",
+  "onboardingSlide2Title": "Suivi des devoirs · Alertes d'échéance",
+  "onboardingSlide2Desc": "Synchronisation fluide avec XueXiTong, compte à rebours précis et rappels configurables avant chaque date limite pour ne rien oublier.",
+  "onboardingSlide3Tag": "Services du campus",
+  "onboardingSlide3Title": "Vie de campus · Tout-en-un",
+  "onboardingSlide3Desc": "Rappels de réservation en bibliothèque, solde et transactions de carte de campus, alertes d'électricité de la résidence : tout à portée de main.",
+  "onboardingSlide4Tag": "Multi-appareils",
+  "onboardingSlide4Title": "Abonnement de calendrier · Sauvegarde cloud",
+  "onboardingSlide4Desc": "Générez un abonnement de calendrier Webcal pour synchroniser smartphone, montre et ordinateur. Sauvegarde cloud chiffrée pour changer d'appareil en toute sérénité.",
+  "postLoginSetupStep": "Étape {current} sur {total}",
+  "@postLoginSetupStep": {
     "placeholders": {
-      "field": {
-        "type": "String"
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
       }
     }
-  }
+  },
+  "postLoginSetupSkip": "Passer",
+  "postLoginSetupEnable": "Activer",
+  "courseReminderPromptMessage": "Recevez une notification avant chaque cours avec le numéro de la salle.",
+  "postLoginSetupNext": "Activer",
+  "postLoginSetupFinish": "Activer",
+  "postLoginSetupFinishWithoutEnable": "Passer",
+  "timetableAutoSyncPromptTitle": "Synchronisation automatique de l'emploi du temps",
+  "timetableAutoSyncPromptMessage": "Récupère automatiquement les cours du portail universitaire pour un planning toujours à jour.",
+  "timetableAutoSyncPromptBadge": "Recommandé",
+  "homeworkReminderPromptTitle": "Rappel d'échéance des devoirs",
+  "homeworkReminderPromptMessage": "Recevez une notification avant chaque date limite pour rendre vos devoirs à temps.",
+  "homeworkReminderPromptBadge": "Alerte anticipée",
+  "libraryReminderPromptTitle": "Rappel de réservation en bibliothèque",
+  "libraryReminderPromptMessage": "Recevez une notification avant le début du créneau pour ne pas oublier de valider votre place.",
+  "libraryReminderPromptBadge": "Rappel anticipé",
+  "timetableSubscriptionPromptTitle": "Abonnement de calendrier",
+  "timetableSubscriptionPromptMessage": "Générez un flux Webcal pour intégrer vos cours dans Calendrier Apple, Google Agenda ou Outlook en un clic.",
+  "timetableSubscriptionPromptBadge": "Synchronisation universelle",
+  "useLiveActivityPrompt": "Activer les activités en direct",
+  "startGuide": "Lancer le guide",
+  "postLoginDoneTitle": "Tout est prêt !",
+  "postLoginDoneMessage": "Bienvenue sur ChillEast. Pour plus d'options, rendez-vous dans les « Paramètres ».",
+  "postLoginDoneButton": "Terminer",
+  "analyticsAnonymousTitle": "Autoriser les statistiques anonymes",
+  "analyticsAnonymousSubtitle": "Comptabilise la version de votre application de manière strictement anonyme.",
+  "analyticsPromptTitle": "Autoriser les statistiques anonymes",
+  "analyticsPromptSubtitle": "Comptabilise la version de votre application de manière strictement anonyme."
 }

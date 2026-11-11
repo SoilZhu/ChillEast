@@ -218,6 +218,9 @@ class HomeworkNotifier extends StateNotifier<AsyncValue<List<HomeworkModel>>> {
     NotificationService().scheduleHomeworkReminders(
       list,
       settings.homeworkReminderHours,
+      repeatEnabled: settings.homeworkRepeatEnabled,
+      repeatIntervalMinutes: settings.homeworkRepeatIntervalMinutes,
+      remindAfterDue: settings.homeworkRemindAfterDue,
     );
   }
 }

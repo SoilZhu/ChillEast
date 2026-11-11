@@ -3,6 +3,7 @@ import '../models/mcp_protocol.dart';
 import '../models/mcp_tool.dart';
 import '../tools/timetable_tool.dart';
 import '../tools/timetable_rule_tool.dart';
+import '../tools/course_reminder_tool.dart';
 import '../tools/homework_tools.dart';
 import '../tools/classroom_tool.dart';
 import '../tools/score_tool.dart';
@@ -74,6 +75,9 @@ final mcpToolRegistryProvider = Provider<McpToolRegistry>((ref) {
 
   // 1.1 课表规则管理（调休、停课、手动添加课程、删除规则）
   registry.register(TimetableRuleTool.create());
+
+  // 1.2 课程个性化提醒管理（提前/延后/准时/关闭，按周/单次/全学期生效）
+  registry.register(CourseReminderTool.create(ref: ref));
 
   // 2. 作业查询
   registry.register(HomeworkQueryTool.create(storage: homeworkStorage));

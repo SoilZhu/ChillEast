@@ -498,5 +498,31 @@ void main() {
       // Drain delayed timers
       await tester.pump(const Duration(seconds: 5));
     });
+
+    testWidgets('MainScaffold on tablet keeps HomeScreen aligned to top rather than vertically centered', (tester) async {
+      await tester.pumpWidget(
+        buildTestableWidget(
+          tester: tester,
+          child: const MainScaffold(),
+          width: 1024,
+          height: 600,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Quick action grid / HomeScreen should start near the top, aligned with rail
+      final railItemOffset = tester.getTopLeft(find.text('首页'));
+      // Find the first quick action button (e.g. '付款码' or whatever is in quick items)
+      final quickFinder = find.byType(HomeScreen);
+      expect(quickFinder, findsOneWidget);
+      final homeOffset = tester.getTopLeft(quickFinder);
+
+      // Home should start at or near top (below padding.top, not centered in 600 height)
+      expect(homeOffset.dy, lessThan(30.0));
+
+      // Drain delayed timers
+      await tester.pump(const Duration(seconds: 5));
+    });
   });
 }

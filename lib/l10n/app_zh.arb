@@ -155,6 +155,7 @@
   "clickToSelectDormitory": "点击前往选择房间或充值",
   "quickActions": "快捷功能",
   "funcGym": "场馆预约",
+  "funcPhysicalTest": "体测预约",
   "funcTeachingEval": "教评系统",
   "funcScore": "成绩查询",
   "funcVpn": "VPN转换",
@@ -271,6 +272,12 @@
   "courseReminderTime": "上课提醒时间",
   "homeworkReminder": "作业截止提醒",
   "homeworkReminderTime": "作业提醒时间",
+  "homeworkRepeatReminder": "作业持续提醒",
+  "homeworkRepeatReminderDesc": "未完成前定期再次提醒",
+  "homeworkRepeatInterval": "提醒频率",
+  "homeworkRepeatIntervalTime": "选择提醒频率",
+  "homeworkRemindAfterDue": "逾期后继续提醒",
+  "homeworkRemindAfterDueDesc": "截止后24小时内未完成仍提醒",
   "libraryReminder": "图书馆预约提醒",
   "libraryReminderTime": "图书馆预约提醒时间",
   "notifDurationNone": "不通知",
@@ -284,6 +291,22 @@
   },
   "notifHoursBefore": "{hours}小时前",
   "@notifHoursBefore": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  },
+  "notifMinutesInterval": "每{minutes}分钟",
+  "@notifMinutesInterval": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "notifHoursInterval": "每{hours}小时",
+  "@notifHoursInterval": {
     "placeholders": {
       "hours": {
         "type": "String"
@@ -1419,6 +1442,7 @@
       }
     }
   },
+  "homeworkOverdueNotice": "作业已截止，若已提交请在应用中标记完成",
   "minutesCount": "{count}分钟",
   "@minutesCount": {
     "placeholders": {
@@ -1839,5 +1863,105 @@
   "analyticsAnonymousTitle": "允许匿名统计",
   "analyticsAnonymousSubtitle": "仅使用绝对匿名方式，统计您的使用版本。",
   "analyticsPromptTitle": "允许匿名统计",
-  "analyticsPromptSubtitle": "仅使用绝对匿名方式，统计您的使用版本。"
+  "analyticsPromptSubtitle": "仅使用绝对匿名方式，统计您的使用版本。",
+  "setReminder": "设置提醒",
+  "reminderSettings": "提醒设置",
+  "reminderMode": "提醒方式",
+  "reminderBefore": "提前",
+  "reminderAfter": "延后",
+  "reminderExact": "准时",
+  "reminderDisabled": "不提醒",
+  "reminderScope": "生效范围",
+  "scopeOnlyThis": "仅本次课",
+  "scopeThisWeekday": "该课程所有在{weekday}的课",
+  "@scopeThisWeekday": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      }
+    }
+  },
+  "scopeThisWeek": "该课程在第{week}周所有的课",
+  "@scopeThisWeek": {
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
+  "scopeAll": "该课程全学期所有的课",
+  "currentRule": "当前设置",
+  "restoreDefault": "恢复默认",
+  "reminderSaved": "提醒设置已保存",
+  "reminderReset": "已恢复默认提醒设置",
+  "baseTime": "基准时间",
+  "baseTimeSettings": "设置时间",
+  "baseTimeClassTime": "课表时间",
+  "baseTimeSettingsDesc": "以设置中的提醒时间为基准",
+  "baseTimeClassTimeDesc": "以课表上课时间为基准",
+  "relativeToSettings": "在默认提醒的基础上调整",
+  "relativeToSettingsDesc": "关闭后将直接按上课时间提醒",
+  "adjustBasedOnDefault": "在默认提醒的基础上调整",
+  "adjustDefaultBefore": "在默认提醒的基础上，提前 {time}",
+  "@adjustDefaultBefore": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "adjustDefaultAfter": "在默认提醒的基础上，延后 {time}",
+  "@adjustDefaultAfter": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "directClassBefore": "直接在上课前 {time} 提醒",
+  "@directClassBefore": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "directClassAfter": "直接在上课 {time} 后提醒",
+  "@directClassAfter": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "directClassExact": "直接在上课时提醒",
+  "matchDefaultReminder": "与默认提醒时间保持一致",
+  "estimatedReminderTime": "预计提醒时刻",
+  "loginStatusLoggedIn": "已登录",
+  "loginStatusLoggingIn": "登录中",
+  "a11yAiAssistant": "AI 助理",
+  "a11yProfileWithStatus": "个人中心，{status}",
+  "@a11yProfileWithStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yTapForCourseDetail": "双击查看课程详情与排课冲突",
+  "a11yCourseConflict": "，存在时间重叠冲突",
+  "a11ySeatStatusOccupied": "已被占用",
+  "a11ySeatStatusSelected": "已选中，双击取消选择",
+  "a11ySeatStatusAvailable": "空闲可用，双击选择",
+  "a11ySeatDescription": "{seatNum}号座位，{status}",
+  "@a11ySeatDescription": {
+    "placeholders": {
+      "seatNum": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  }
 }

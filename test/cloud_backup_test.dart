@@ -302,6 +302,58 @@ void main() {
       expect((localData['examList'] as List).first['id'], 'ex-1');
       expect((localData['aiMemories'] as List).first['id'], 'mem-1');
     });
+
+    test('overrides examList from newer legacy backup if present', () {
+      final modern = {
+        'format': 'chilleast-modern',
+        'version': 1,
+        'localData': {
+          'examList': [
+            {'id': 'ex-old', 'title': '旧考试'}
+          ],
+        },
+      };
+
+      final newerLegacy = {
+        'format': 'chilleast-backup',
+        'version': 1,
+        'localData': {
+          'examList': [
+            {'id': 'ex-new', 'title': '新考试'}
+          ],
+        },
+      };
+
+      final merged = CloudBackupManager.mergeModernWithLegacy(modern, newerLegacy);
+      final localData = merged['localData'] as Map<String, dynamic>;
+      expect((localData['examList'] as List).first['id'], 'ex-new');
+    });
+
+    test('accepts manualExamList alias from legacy if examList is absent', () {
+      final modern = {
+        'format': 'chilleast-modern',
+        'version': 1,
+        'localData': {
+          'examList': [
+            {'id': 'ex-old', 'title': '旧考试'}
+          ],
+        },
+      };
+
+      final legacyWithAlias = {
+        'format': 'chilleast-backup',
+        'version': 1,
+        'localData': {
+          'manualExamList': [
+            {'id': 'ex-alias', 'title': '别名考试'}
+          ],
+        },
+      };
+
+      final merged = CloudBackupManager.mergeModernWithLegacy(modern, legacyWithAlias);
+      final localData = merged['localData'] as Map<String, dynamic>;
+      expect((localData['examList'] as List).first['id'], 'ex-alias');
+    });
   });
 
   group('CloudBackupManager.pickLatestBackupEntry', () {

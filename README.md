@@ -28,20 +28,22 @@
 一个尽可能好用点的湖南农大用的 App 。
 
 ### 目前已经使用原生 UI 实现的功能：
-- 课程表
+- 课程表（支持在线日历订阅与自定义颜色）
+- 考试安排
 - 图书馆
 - 阳光服务（诉求反馈与进度查看）
 - 空教室查询
 - 作业列表
 - 成绩查询
 - 校园卡付款码
-- 校园卡充值（支持支微信付宝）
-- 电费充值
+- 校园卡充值（支持微信与支付宝）
+- 电费充值（支持双宿舍）
 - 学习通通知
 - 课程实况通知
 - AI 助手
 - WebVPN 链接转换
 - 报修平台
+- 平板分屏
 
 ### 目前使用 WebView 加载官方网页的功能：
 - 学工系统
@@ -66,15 +68,16 @@
 
 # TODO
 - [ ] 场馆预约的原生UI实现
-- [ ] 校园卡充值的微信支持
 - [ ] 学工系统的原生UI实现
 - [ ] 实时校车的原生UI实现
 
 # 感谢
 
-灵感来源：[Life@USTC](https://github.com/Life-USTC/Life-USTC) ，一个优秀的帮助中国科大学生获取日常学业相关信息的项目。
+灵感来源：[Life@USTC](https://github.com/Life-USTC/Life-USTC) ；
 
-WebVPN 的链接转换则参考了 [spencerwooo/bit-webvpn-converter](https://github.com/spencerwooo/bit-webvpn-converter) 。
+WebVPN 的链接转换则参考了 [spencerwooo/bit-webvpn-converter](https://github.com/spencerwooo/bit-webvpn-converter) ；
+
+日语翻译部分由 @OIOooo 提供；
 
 感谢 Flutter 社区开源的组件们，将会尽力同步于应用中的“开源声明”页面。
 
