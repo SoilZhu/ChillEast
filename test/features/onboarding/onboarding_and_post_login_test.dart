@@ -188,14 +188,15 @@ void main() {
       expect(find.text('开启'), findsOneWidget);
       expect(find.byType(Image), findsOneWidget);
 
-      // Verify image is limited to 50% width and aligned to bottomLeft
+      // Verify image is limited to 50% width and height, aligned to bottomLeft
       final fracBox = tester.widget<FractionallySizedBox>(find.byType(FractionallySizedBox).first);
       expect(fracBox.widthFactor, 0.5);
+      expect(fracBox.heightFactor, 0.5);
       expect(fracBox.alignment, Alignment.bottomLeft);
 
-      // No progress bar, close icon is present, no step text
+      // No progress bar, close icon is absent, no step text
       expect(find.byType(LinearProgressIndicator), findsNothing);
-      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.close_rounded), findsNothing);
 
       // Advance to Step 2: 课表自动同步
       await tester.tap(find.text('跳过'));
@@ -282,7 +283,7 @@ void main() {
       );
     });
 
-    testWidgets('CloudSyncPromptScreen can be closed via top-right close button', (tester) async {
+    testWidgets('CloudSyncPromptScreen has no close button and cannot be swiped', (tester) async {
       await tester.pumpWidget(
         _buildTestApp(
           child: const CloudSyncPromptScreen(),
@@ -290,16 +291,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
-      await tester.tap(find.byIcon(Icons.close_rounded));
+      // Top-right close button is absent
+      expect(find.byIcon(Icons.close_rounded), findsNothing);
+
+      // Attempt to drag/swipe horizontally to advance page
+      expect(find.text('开启自动同步'), findsOneWidget);
+      await tester.drag(find.byType(PageView), const Offset(-400, 0));
       await tester.pumpAndSettle();
 
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getBool(CloudBackupManager.promptDecidedKey), isTrue);
-      expect(
-        prefs.getInt(CloudSyncPromptScreen.kLastSeenGuideVersionKey),
-        equals(CloudSyncPromptScreen.kCurrentOnboardingGuideVersion),
-      );
+      // Page should still be on step 1 (swipe disabled)
+      expect(find.text('开启自动同步'), findsOneWidget);
+      expect(find.text('课表自动同步'), findsNothing);
     });
 
     testWidgets('CloudSyncPromptScreen pre-fills existing settings', (tester) async {
@@ -359,7 +361,7 @@ void main() {
           child: const MainScaffold(),
           overrides: [
             authStateProvider.overrideWith((ref) => _MockAuthNotifier(
-                  AuthState.authenticated(username: '20230001'),
+                  const AuthState.authenticated(username: '20230001'),
                 )),
           ],
         ),
@@ -382,7 +384,7 @@ void main() {
           child: const MainScaffold(),
           overrides: [
             authStateProvider.overrideWith((ref) => _MockAuthNotifier(
-                  AuthState.authenticated(username: '20230001'),
+                  const AuthState.authenticated(username: '20230001'),
                 )),
           ],
         ),

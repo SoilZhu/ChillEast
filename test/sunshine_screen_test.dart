@@ -22,8 +22,8 @@ class FakeSunshineService extends SunshineService {
     if (fail) throw const SunshineException('测试加载失败');
     return [
       SunshineLetter.fromJson(
-          {'ID': '12708', 'Title': '测试咨询', 'Status': '1', 'CirDepName': '测试单位'}),
-      SunshineLetter.fromJson({'ID': '12692', 'Title': '测试建议', 'Status': '2'}),
+          {'ID': '90002', 'Title': '测试咨询', 'Status': '1', 'CirDepName': '测试单位'}),
+      SunshineLetter.fromJson({'ID': '90001', 'Title': '测试建议', 'Status': '2'}),
     ];
   }
 
@@ -35,17 +35,18 @@ class FakeSunshineService extends SunshineService {
     if (ticketDetailOverride != null) return ticketDetailOverride!;
     return SunshineTicketDetail(
       id: id,
-      title: '巴士司机的驾驶素质',
-      submitter: '郑',
-      rawSubmitter: '郑天塬',
+      // 夹具为合成数据，勿放真实工单内容（提交人姓名、诉求正文、工单号）。
+      title: '教学楼饮水机故障',
+      submitter: '王',
+      rawSubmitter: '王小明',
       expectedDepartment: '后勤保障中心',
       handlingDepartment: '保卫工作部、保卫处',
-      finishTime: '2026-09-14',
-      jieTime: '2026-09-16',
-      wanTime: '2026-09-14',
+      finishTime: '2026-01-08',
+      jieTime: '2026-01-10',
+      wanTime: '2026-01-05',
       status: '2',
-      content: '投诉9月10日11:50/11:55，修业广场偏金岸宿舍方向...',
-      remark: '学校保卫工作部根据校园交通车考评管理办法，已对校园交通车负责人进行约谈...',
+      content: '反映某教学楼三楼饮水机连续一周无法加热。',
+      remark: '已安排维修人员更换加热模块并回访确认。',
       type: '咨询',
     );
   }
@@ -176,22 +177,22 @@ void main() {
 
     // 验证进入诉求详情页
     expect(find.text('诉求详情'), findsOneWidget);
-    expect(find.text('巴士司机的驾驶素质'), findsOneWidget);
+    expect(find.text('教学楼饮水机故障'), findsOneWidget);
     expect(find.text('已办结'), findsOneWidget);
 
-    // 去掉《工单》两个字，只保留 #12692
-    expect(find.text('#12692'), findsOneWidget);
+    // 去掉《工单》两个字，只保留 #90001
+    expect(find.text('#90001'), findsOneWidget);
     expect(find.textContaining('工单 #'), findsNothing);
 
-    // 验证提交人只保留到姓（显示“郑”，不显示全名“郑天塬”）
-    expect(find.text('郑'), findsOneWidget);
-    expect(find.text('郑天塬'), findsNothing);
+    // 验证提交人只保留到姓（显示“王”，不显示全名“王小明”）
+    expect(find.text('王'), findsOneWidget);
+    expect(find.text('王小明'), findsNothing);
 
     // 验证流转信息与内容展示
     expect(find.text('后勤保障中心'), findsOneWidget);
     expect(find.text('保卫工作部、保卫处'), findsOneWidget);
-    expect(find.textContaining('投诉9月10日11:50/11:55'), findsOneWidget);
-    expect(find.textContaining('学校保卫工作部根据校园交通车考评管理办法'), findsOneWidget);
+    expect(find.textContaining('三楼饮水机连续一周无法加热'), findsOneWidget);
+    expect(find.textContaining('已安排维修人员更换加热模块'), findsOneWidget);
 
     // 流转信息无分割线 Divider
     expect(find.byType(Divider), findsNothing);

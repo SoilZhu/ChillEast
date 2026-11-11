@@ -75,6 +75,14 @@ class NotificationSettingsScreen extends ConsumerWidget {
       {'label': context.l10n.notifHoursBefore('48'), 'value': 48.0},
     ];
 
+    final homeworkRepeatIntervals = [
+      {'label': context.l10n.notifMinutesInterval(15), 'value': 15},
+      {'label': context.l10n.notifMinutesInterval(30), 'value': 30},
+      {'label': context.l10n.notifHoursInterval('1'), 'value': 60},
+      {'label': context.l10n.notifHoursInterval('2'), 'value': 120},
+      {'label': context.l10n.notifHoursInterval('4'), 'value': 240},
+    ];
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -145,6 +153,58 @@ class NotificationSettingsScreen extends ConsumerWidget {
               },
             ),
           ),
+          if (settings.homeworkReminderHours > 0) ...[
+            _buildSwitchItem(
+              context,
+              icon: Icons.repeat_rounded,
+              title: context.l10n.homeworkRepeatReminder,
+              subtitle: context.l10n.homeworkRepeatReminderDesc,
+              value: settings.homeworkRepeatEnabled,
+              onChanged: (val) async {
+                if (val) {
+                  await _ensurePermissionsIfNeeded();
+                }
+                await ref
+                    .read(settingsProvider.notifier)
+                    .setHomeworkRepeatEnabled(val);
+              },
+            ),
+            if (settings.homeworkRepeatEnabled) ...[
+              _buildSettingItem(
+                context,
+                icon: Icons.timer_outlined,
+                title: context.l10n.homeworkRepeatInterval,
+                subtitle: homeworkRepeatIntervals.firstWhere(
+                    (e) => e['value'] == settings.homeworkRepeatIntervalMinutes,
+                    orElse: () => homeworkRepeatIntervals[2])['label'] as String,
+                indent: 16,
+                onTap: () => _showPicker(
+                  context,
+                  title: context.l10n.homeworkRepeatIntervalTime,
+                  options: homeworkRepeatIntervals,
+                  currentValue: settings.homeworkRepeatIntervalMinutes,
+                  onSelected: (val) async {
+                    await ref
+                        .read(settingsProvider.notifier)
+                        .setHomeworkRepeatIntervalMinutes(val as int);
+                  },
+                ),
+              ),
+              _buildSwitchItem(
+                context,
+                icon: Icons.notification_important_outlined,
+                title: context.l10n.homeworkRemindAfterDue,
+                subtitle: context.l10n.homeworkRemindAfterDueDesc,
+                value: settings.homeworkRemindAfterDue,
+                indent: 16,
+                onChanged: (val) async {
+                  await ref
+                      .read(settingsProvider.notifier)
+                      .setHomeworkRemindAfterDue(val);
+                },
+              ),
+            ],
+          ],
           _buildSettingItem(
             context,
             icon: Icons.event_seat_outlined,
@@ -173,17 +233,20 @@ class NotificationSettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSettingItem(BuildContext context,
-      {required IconData icon,
-      required String title,
-      required String subtitle,
-      required VoidCallback onTap}) {
+  Widget _buildSettingItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    double indent = 0,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: EdgeInsets.fromLTRB(16 + indent, 16, 16, 16),
         child: Row(
           children: [
             Icon(icon, size: 24, color: const Color(0xFF5F6368)),
@@ -210,6 +273,58 @@ class NotificationSettingsScreen extends ConsumerWidget {
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSwitchItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    double indent = 0,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return InkWell(
+      onTap: () => onChanged(!value),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16 + indent, 12, 16, 12),
+        child: Row(
+          children: [
+            Icon(icon, size: 24, color: const Color(0xFF5F6368)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: isDark ? Colors.white : const Color(0xFF202124),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            BrandSwitch(
+              value: value,
+              onChanged: onChanged,
             ),
           ],
         ),

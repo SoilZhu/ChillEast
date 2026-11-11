@@ -15,6 +15,9 @@ import '../../exam/services/exam_storage.dart';
 class SettingsState {
   final int reminderMinutes; // 0: 不通知, 5, 10, 20, 30, 40, 50, 60
   final double homeworkReminderHours; // 0: 不通知, 0.5, 1, 2, 6, 12, 24, 48
+  final bool homeworkRepeatEnabled; // 是否在完成前重复提醒
+  final int homeworkRepeatIntervalMinutes; // 重复提醒间隔（分钟，默认 60）
+  final bool homeworkRemindAfterDue; // 截止后是否继续提醒（最多24小时）
   final int libraryReminderMinutes; // 0: 不通知, 5, 10, 20, 30, 40, 50, 60
   final bool courseLiveEnabled; // Android 16+ Live Updates 实时活动开关
   final bool flymeLiveEnabled; // Flyme 12+ 实况通知开关（与 courseLiveEnabled 互斥）
@@ -28,6 +31,9 @@ class SettingsState {
   SettingsState({
     required this.reminderMinutes,
     required this.homeworkReminderHours,
+    this.homeworkRepeatEnabled = false,
+    this.homeworkRepeatIntervalMinutes = 60,
+    this.homeworkRemindAfterDue = false,
     required this.libraryReminderMinutes,
     this.courseLiveEnabled = false,
     this.flymeLiveEnabled = false,
@@ -42,6 +48,9 @@ class SettingsState {
   SettingsState copyWith({
     int? reminderMinutes,
     double? homeworkReminderHours,
+    bool? homeworkRepeatEnabled,
+    int? homeworkRepeatIntervalMinutes,
+    bool? homeworkRemindAfterDue,
     int? libraryReminderMinutes,
     bool? courseLiveEnabled,
     bool? flymeLiveEnabled,
@@ -56,6 +65,12 @@ class SettingsState {
       reminderMinutes: reminderMinutes ?? this.reminderMinutes,
       homeworkReminderHours:
           homeworkReminderHours ?? this.homeworkReminderHours,
+      homeworkRepeatEnabled:
+          homeworkRepeatEnabled ?? this.homeworkRepeatEnabled,
+      homeworkRepeatIntervalMinutes:
+          homeworkRepeatIntervalMinutes ?? this.homeworkRepeatIntervalMinutes,
+      homeworkRemindAfterDue:
+          homeworkRemindAfterDue ?? this.homeworkRemindAfterDue,
       libraryReminderMinutes:
           libraryReminderMinutes ?? this.libraryReminderMinutes,
       courseLiveEnabled: courseLiveEnabled ?? this.courseLiveEnabled,
@@ -89,6 +104,9 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   int _settingsRevision = 0;
   static const String _reminderKey = 'course_reminder_minutes';
   static const String _hwReminderKey = 'homework_reminder_hours';
+  static const String _hwRepeatEnabledKey = 'homework_repeat_enabled';
+  static const String _hwRepeatIntervalKey = 'homework_repeat_interval_minutes';
+  static const String _hwRemindAfterDueKey = 'homework_remind_after_due';
   static const String _libraryReminderKey = 'library_reminder_minutes';
   static const String _courseLiveKey = 'course_live_enabled';
   static const String _flymeLiveKey = 'flyme_live_enabled';
@@ -119,6 +137,9 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     final prefs = await SharedPreferences.getInstance();
     final minutes = prefs.getInt(_reminderKey) ?? 0;
     final hwHours = prefs.getDouble(_hwReminderKey) ?? 0;
+    final hwRepeatEnabled = prefs.getBool(_hwRepeatEnabledKey) ?? false;
+    final hwRepeatInterval = prefs.getInt(_hwRepeatIntervalKey) ?? 60;
+    final hwRemindAfterDue = prefs.getBool(_hwRemindAfterDueKey) ?? false;
     final libMinutes = prefs.getInt(_libraryReminderKey) ?? 0;
     final liveEnabled = prefs.getBool(_courseLiveKey) ?? false;
     final flymeEnabled = prefs.getBool(_flymeLiveKey) ?? false;
@@ -138,6 +159,9 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     state = state.copyWith(
       reminderMinutes: minutes,
       homeworkReminderHours: hwHours,
+      homeworkRepeatEnabled: hwRepeatEnabled,
+      homeworkRepeatIntervalMinutes: hwRepeatInterval,
+      homeworkRemindAfterDue: hwRemindAfterDue,
       libraryReminderMinutes: libMinutes,
       courseLiveEnabled: liveEnabled,
       flymeLiveEnabled: flymeEnabled,
@@ -174,6 +198,36 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     state = state.copyWith(homeworkReminderHours: hours);
 
     // 更改设置后，立即重新安排通知
+    await rescheduleNotifications();
+    CloudBackupManager.instance.markDirty();
+  }
+
+  Future<void> setHomeworkRepeatEnabled(bool enabled) async {
+    _settingsRevision++;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_hwRepeatEnabledKey, enabled);
+    state = state.copyWith(homeworkRepeatEnabled: enabled);
+
+    await rescheduleNotifications();
+    CloudBackupManager.instance.markDirty();
+  }
+
+  Future<void> setHomeworkRepeatIntervalMinutes(int minutes) async {
+    _settingsRevision++;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_hwRepeatIntervalKey, minutes);
+    state = state.copyWith(homeworkRepeatIntervalMinutes: minutes);
+
+    await rescheduleNotifications();
+    CloudBackupManager.instance.markDirty();
+  }
+
+  Future<void> setHomeworkRemindAfterDue(bool enabled) async {
+    _settingsRevision++;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_hwRemindAfterDueKey, enabled);
+    state = state.copyWith(homeworkRemindAfterDue: enabled);
+
     await rescheduleNotifications();
     CloudBackupManager.instance.markDirty();
   }
@@ -382,6 +436,9 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
         await NotificationService().scheduleHomeworkReminders(
           homeworks,
           state.homeworkReminderHours,
+          repeatEnabled: state.homeworkRepeatEnabled,
+          repeatIntervalMinutes: state.homeworkRepeatIntervalMinutes,
+          remindAfterDue: state.homeworkRemindAfterDue,
         );
       }
     } catch (e) {

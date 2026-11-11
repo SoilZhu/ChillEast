@@ -5,13 +5,13 @@ class ExamScheduleModel {
   final String id;
   final String title;
   final String courseName;
-  /// 日程显示的主时间（必须为 watermark 容器内第一个出现的时间）
-  final DateTime time;
+  /// 日程显示的主时间（若未提取到时间，则为 null）
+  final DateTime? time;
   /// 考试结束时间（watermark 容器内第二个出现的时间，若有）
   final DateTime? endTime;
 
-  /// 开始时间（等同于 time，即 watermark 容器内第一个出现的时间）
-  DateTime get startTime => time;
+  /// 开始时间（等同于 time）
+  DateTime? get startTime => time;
   /// watermark 容器内提取到的全部时间列表
   final List<DateTime> allTimes;
   /// 原始时间字符串列表（如 ["2026-05-10 17:00", "2026-05-10 23:59"]）
@@ -37,7 +37,7 @@ class ExamScheduleModel {
     required this.id,
     required this.title,
     this.courseName = '',
-    required this.time,
+    this.time,
     this.endTime,
     this.allTimes = const [],
     this.rawTimeStrs = const [],
@@ -55,7 +55,7 @@ class ExamScheduleModel {
         'id': id,
         'title': title,
         'courseName': courseName,
-        'time': time.toIso8601String(),
+        'time': time?.toIso8601String(),
         'endTime': endTime?.toIso8601String(),
         'allTimes': allTimes.map((t) => t.toIso8601String()).toList(),
         'rawTimeStrs': rawTimeStrs,
@@ -70,13 +70,14 @@ class ExamScheduleModel {
       };
 
   factory ExamScheduleModel.fromJson(Map<String, dynamic> json) {
+    final rawTime = json['time'] ?? json['startTime'];
     return ExamScheduleModel(
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
       courseName: json['courseName'] as String? ?? '',
-      time: DateTime.parse((json['time'] ?? json['startTime']) as String),
+      time: rawTime != null ? DateTime.tryParse(rawTime as String) : null,
       endTime: json['endTime'] != null
-          ? DateTime.parse(json['endTime'] as String)
+          ? DateTime.tryParse(json['endTime'] as String)
           : null,
       allTimes: (json['allTimes'] as List<dynamic>?)
               ?.map((t) => DateTime.parse(t as String))
@@ -94,7 +95,7 @@ class ExamScheduleModel {
       studentName: json['studentName'] as String?,
       studentId: json['studentId'] as String?,
       createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'] as String)
+          ? DateTime.tryParse(json['createdAt'] as String)
           : null,
     );
   }
@@ -135,11 +136,21 @@ class ExamScheduleModel {
     );
   }
 
-  /// 判断该考试是否属于本学期
-  bool isCurrentSemester({DateTime? firstWeekMonday, DateTime? referenceTime}) =>
-      SemesterUtils.isCurrentSemester(
-        time,
-        firstWeekMonday: firstWeekMonday,
-        referenceTime: referenceTime,
-      );
+  /// 考试时间比较方法（用于排序，无时间的考试排在最后）
+  static int compareTime(ExamScheduleModel a, ExamScheduleModel b) {
+    if (a.time == null && b.time == null) return 0;
+    if (a.time == null) return 1;
+    if (b.time == null) return -1;
+    return a.time!.compareTo(b.time!);
+  }
+
+  /// 判断该考试是否属于本学期（无时间的考试默认属于本学期）
+  bool isCurrentSemester({DateTime? firstWeekMonday, DateTime? referenceTime}) {
+    if (time == null) return true;
+    return SemesterUtils.isCurrentSemester(
+      time!,
+      firstWeekMonday: firstWeekMonday,
+      referenceTime: referenceTime,
+    );
+  }
 }

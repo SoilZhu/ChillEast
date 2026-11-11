@@ -53,12 +53,14 @@ class FlymeLiveService {
 
   /// 创建一条实况通知（静态卡片，不更新）。
   /// capsuleText 只放地点（如教3-201）。
+  /// whenMs 为开课/预约时间戳（毫秒），用于原生层设置系统级超时自动销毁。
   Future<bool> upsert({
     required int id,
     required String title,
     required String text,
     required String capsuleText,
     required String timeText,
+    int whenMs = 0,
   }) async {
     if (kIsWeb || !Platform.isAndroid) return false;
     try {
@@ -68,6 +70,8 @@ class FlymeLiveService {
         'text': text,
         'capsuleText': capsuleText,
         'timeText': timeText,
+        'startTs': whenMs,
+        'whenMs': whenMs,
       });
       return v ?? false;
     } catch (_) {
@@ -106,6 +110,9 @@ class FlymeLiveService {
       text: '还有 $testLeadMinutes 分钟上课',
       capsuleText: '教3-201',
       timeText: _timeText('开课'),
+      whenMs: DateTime.now()
+          .add(const Duration(minutes: testLeadMinutes))
+          .millisecondsSinceEpoch,
     );
   }
 
@@ -116,6 +123,9 @@ class FlymeLiveService {
       text: '还有 $testLeadMinutes 分钟开始 · 请按时签到',
       capsuleText: '3楼自习室A区',
       timeText: _timeText('开始'),
+      whenMs: DateTime.now()
+          .add(const Duration(minutes: testLeadMinutes))
+          .millisecondsSinceEpoch,
     );
   }
 

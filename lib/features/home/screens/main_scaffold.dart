@@ -25,7 +25,6 @@ import '../../../core/utils/l10n_extension.dart';
 import '../widgets/quick_action_router.dart';
 import '../../cloudisk/services/cloud_backup_manager.dart';
 
-
 /// 自定义顶部滑动指示器，圆角朝下
 class MD2TopIndicator extends Decoration {
   final double indicatorHeight;
@@ -53,7 +52,8 @@ class _MD2Painter extends BoxPainter {
   void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
     assert(configuration.size != null);
 
-    final rect = offset & Size(configuration.size!.width, decoration.indicatorHeight);
+    final rect =
+        offset & Size(configuration.size!.width, decoration.indicatorHeight);
     final paint = Paint()
       ..color = decoration.color
       ..style = PaintingStyle.fill;
@@ -79,7 +79,8 @@ class MainScaffold extends ConsumerStatefulWidget {
   ConsumerState<MainScaffold> createState() => _MainScaffoldState();
 }
 
-class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProviderStateMixin, WidgetsBindingObserver {
+class _MainScaffoldState extends ConsumerState<MainScaffold>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
   late AnimationController _aiAnimController;
   DateTime _lastReschedule = DateTime.fromMillisecondsSinceEpoch(0);
@@ -123,7 +124,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
       _consumeWidgetAction();
       _checkOnboardingGuide();
     });
-    
+
     // 延迟检查更新，避免干扰启动
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
@@ -320,7 +321,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
     setState(() {
       _selectedImagePath = null;
     });
-    ref.read(aiAssistantProvider.notifier).sendMessage(query, imagePath: imagePath);
+    ref
+        .read(aiAssistantProvider.notifier)
+        .sendMessage(query, imagePath: imagePath);
   }
 
   @override
@@ -347,7 +350,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
       final lastTs = prefs.getInt('last_notification_reschedule_ts') ?? 0;
       final last = DateTime.fromMillisecondsSinceEpoch(lastTs);
       // 长时间未重调度，或系统中已没有待处理通知时，强制补排。
-      final pendingCount = await ref.read(settingsProvider.notifier).getPendingNotificationCount();
+      final pendingCount = await ref
+          .read(settingsProvider.notifier)
+          .getPendingNotificationCount();
       if (now.difference(last).inHours >= 12 || pendingCount == 0) {
         // 动态 import 避免循环依赖，用 ref 读取
         // 延迟一帧确保 ref 可用
@@ -355,7 +360,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
         if (!mounted) return;
         try {
           await ref.read(settingsProvider.notifier).rescheduleNotifications();
-          await prefs.setInt('last_notification_reschedule_ts', now.millisecondsSinceEpoch);
+          await prefs.setInt(
+              'last_notification_reschedule_ts', now.millisecondsSinceEpoch);
         } catch (_) {
           // ignore, 下次 resumed 再试
         }
@@ -382,7 +388,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
   // 提供切换 Tab 的方法
   void switchToTab(int index) {
     final authState = ref.read(authStateProvider);
-    
+
     // 如果正在登录中，拦截通知页的访问 (index 3)
     if (authState.status == AuthStatus.authenticating && index == 3) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -396,7 +402,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
     }
     _tabController.animateTo(index);
   }
-  
+
   // 根据登录状态动态生成页面列表
   List<Widget> _getPages(AuthStatus status) {
     return [
@@ -407,7 +413,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
       const FunctionsScreen(),
     ];
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
@@ -475,13 +481,15 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                     children: [
                       UserAccountsDrawerHeader(
                         decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor.withOpacity(0.8),
+                          color:
+                              Theme.of(context).primaryColor.withOpacity(0.8),
                         ),
                         accountName: Text(context.l10n.appTitle),
                         accountEmail: const Text('v1.0.0'),
                         currentAccountPicture: CircleAvatar(
                           backgroundColor: Theme.of(context).cardColor,
-                          child: Icon(Icons.school, color: Theme.of(context).primaryColor),
+                          child: Icon(Icons.school,
+                              color: Theme.of(context).primaryColor),
                         ),
                       ),
                       ListTile(
@@ -502,26 +510,42 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                           if (isTabletOrLandscape)
                             SizedBox(
                               height: MediaQuery.paddingOf(context).top > 0
-                                  ? (MediaQuery.paddingOf(context).top + 10)
-                                  : 16.0,
+                                  ? MediaQuery.paddingOf(context).top
+                                  : 4.0,
                             ),
                           Expanded(
                             child: MediaQuery.removePadding(
                               context: context,
                               removeTop: true,
                               child: Container(
-                                color: Theme.of(context).scaffoldBackgroundColor,
+                                color:
+                                    Theme.of(context).scaffoldBackgroundColor,
                                 child: AnimatedBuilder(
                                   animation: _tabController,
                                   builder: (context, _) {
                                     return AnimatedSwitcher(
-                                      duration: const Duration(milliseconds: 300),
-                                      transitionBuilder: (Widget child, Animation<double> animation) {
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      layoutBuilder:
+                                          (currentChild, previousChildren) {
+                                        return Stack(
+                                          fit: StackFit.expand,
+                                          alignment: Alignment.topCenter,
+                                          children: [
+                                            ...previousChildren,
+                                            if (currentChild != null)
+                                              currentChild,
+                                          ],
+                                        );
+                                      },
+                                      transitionBuilder: (Widget child,
+                                          Animation<double> animation) {
                                         return FadeTransition(
                                           opacity: animation,
                                           child: SlideTransition(
                                             position: Tween<Offset>(
-                                              begin: const Offset(0.0, 0.05), // 从下方稍微偏移
+                                              begin: const Offset(
+                                                  0.0, 0.05), // 从下方稍微偏移
                                               end: Offset.zero,
                                             ).animate(CurvedAnimation(
                                               parent: animation,
@@ -532,8 +556,10 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                                         );
                                       },
                                       child: KeyedSubtree(
-                                        key: ValueKey<int>(_tabController.index),
-                                        child: _getPages(authState.status)[_tabController.index],
+                                        key:
+                                            ValueKey<int>(_tabController.index),
+                                        child: _getPages(authState.status)[
+                                            _tabController.index],
                                       ),
                                     );
                                   },
@@ -549,7 +575,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                 bottomNavigationBar: isTabletOrLandscape
                     ? null
                     : Material(
-                        color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+                        color: Theme.of(context)
+                            .bottomNavigationBarTheme
+                            .backgroundColor,
                         elevation: 8,
                         child: SafeArea(
                           child: Container(
@@ -557,9 +585,11 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                             decoration: BoxDecoration(
                               border: Border(
                                 top: BorderSide(
-                                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : const Color(0x0D000000), 
-                                  width: 0.5
-                                ),
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white.withOpacity(0.05)
+                                        : const Color(0x0D000000),
+                                    width: 0.5),
                               ),
                             ),
                             child: TabBar(
@@ -573,14 +603,23 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                               // 这里不再需要 hacky 的 padding，因为自定义指示器就在顶部绘制
                               indicatorPadding: EdgeInsets.zero,
                               labelColor: const Color(0xFF09C489),
-                              unselectedLabelColor: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.grey,
+                              unselectedLabelColor:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white54
+                                      : Colors.grey,
                               labelPadding: EdgeInsets.zero,
-                              labelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                              unselectedLabelStyle: const TextStyle(fontSize: 10),
+                              labelStyle: const TextStyle(
+                                  fontSize: 10, fontWeight: FontWeight.bold),
+                              unselectedLabelStyle:
+                                  const TextStyle(fontSize: 10),
                               onTap: (index) {
                                 // 如果正在登录中，拦截通知页的访问 (index 3)
-                                if (authState.status == AuthStatus.authenticating && index == 3) {
-                                  _tabController.index = _tabController.previousIndex;
+                                if (authState.status ==
+                                        AuthStatus.authenticating &&
+                                    index == 3) {
+                                  _tabController.index =
+                                      _tabController.previousIndex;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(context.l10n.loggingInWait),
@@ -598,7 +637,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                                   iconMargin: const EdgeInsets.only(bottom: 4),
                                 ),
                                 Tab(
-                                  icon: const Icon(Icons.calendar_month_outlined),
+                                  icon:
+                                      const Icon(Icons.calendar_month_outlined),
                                   text: context.l10n.tabTimetable,
                                   iconMargin: const EdgeInsets.only(bottom: 4),
                                 ),
@@ -649,7 +689,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                 final orientation = MediaQuery.orientationOf(context);
                 final isTabletOrLandscape = size.width >= 600 ||
                     (orientation == Orientation.landscape && size.width >= 500);
-                final pageWidth = isTabletOrLandscape ? (size.width - 76.0) : size.width;
+                final pageWidth =
+                    isTabletOrLandscape ? (size.width - 76.0) : size.width;
                 final canSplit = pageWidth >= 600;
                 final aiLeft = isTabletOrLandscape ? 76.0 : 0.0;
                 final aiRight = canSplit ? (pageWidth / 2) : 0.0;
@@ -662,22 +703,22 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                       ? MediaQuery.of(context).viewInsets.bottom + 8
                       : MediaQuery.of(context).padding.bottom + 8),
                   child: FadeTransition(
-                opacity: CurvedAnimation(
-                  parent: _aiAnimController,
-                  curve: Curves.easeOutCubic,
-                ),
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0.0, 0.05), // 自底栏平滑上移淡入
-                    end: Offset.zero,
-                  ).animate(CurvedAnimation(
-                    parent: _aiAnimController,
-                    curve: Curves.easeOutCubic,
-                  )),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
+                    opacity: CurvedAnimation(
+                      parent: _aiAnimController,
+                      curve: Curves.easeOutCubic,
+                    ),
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0.0, 0.05), // 自底栏平滑上移淡入
+                        end: Offset.zero,
+                      ).animate(CurvedAnimation(
+                        parent: _aiAnimController,
+                        curve: Curves.easeOutCubic,
+                      )),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                           // 点击之后先不展示卡片，而是直接暴露原本的快捷提问按钮（一行一个）；
                           // 出现对话或正在加载时才展示卡片
                           Flexible(
@@ -708,7 +749,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                                       ),
                                     )
                                   : KeyedSubtree(
-                                      key: const ValueKey('ai_exposed_quick_prompts'),
+                                      key: const ValueKey(
+                                          'ai_exposed_quick_prompts'),
                                       child: AiQuickPromptsList(
                                         onDismiss: _exitAiMode,
                                         onPromptSelected: (prompt) {
@@ -739,14 +781,14 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                 );
               },
             ),
-            ],
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildLeftRail(BuildContext context, AuthState authState,
-      bool isDark) {
+  Widget _buildLeftRail(
+      BuildContext context, AuthState authState, bool isDark) {
     final navItems = [
       (
         icon: Icons.home_outlined,
@@ -818,21 +860,27 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
             ),
             const SizedBox(height: 8),
             // 底部：AI 入口与头像
-            GestureDetector(
-              key: const ValueKey('ai_entry_button'),
-              onTap: _enterAiMode,
-              behavior: HitTestBehavior.opaque,
-              child: SizedBox(
-                width: 44,
-                height: 44,
-                child: Center(
-                  child: SvgPicture.asset(
-                    'assets/images/ai_button.svg',
-                    width: 24,
-                    height: 24,
-                    colorFilter: ColorFilter.mode(
-                      isDark ? Colors.white54 : Colors.grey,
-                      BlendMode.srcIn,
+            Semantics(
+              button: true,
+              label: context.l10n.a11yAiAssistant,
+              child: GestureDetector(
+                key: const ValueKey('ai_entry_button'),
+                onTap: _enterAiMode,
+                behavior: HitTestBehavior.opaque,
+                child: SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: Center(
+                    child: ExcludeSemantics(
+                      child: SvgPicture.asset(
+                        'assets/images/ai_button.svg',
+                        width: 24,
+                        height: 24,
+                        colorFilter: ColorFilter.mode(
+                          isDark ? Colors.white54 : Colors.grey,
+                          BlendMode.srcIn,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -859,59 +907,65 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
     const activeColor = Color(0xFF09C489);
     final unselectedColor = isDark ? Colors.white54 : Colors.grey;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => switchToTab(index),
-        child: SizedBox(
-          width: 76,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isSelected ? selectedIcon : icon,
-                      color: isSelected ? activeColor : unselectedColor,
-                      size: 22,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 10,
+    return Semantics(
+      button: true,
+      label: label,
+      selected: isSelected,
+      excludeSemantics: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => switchToTab(index),
+          child: SizedBox(
+            width: 76,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isSelected ? selectedIcon : icon,
                         color: isSelected ? activeColor : unselectedColor,
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
+                        size: 22,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                      const SizedBox(height: 3),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isSelected ? activeColor : unselectedColor,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              if (isSelected)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: Center(
-                    child: Container(
-                      width: 3,
-                      height: 24,
-                      decoration: const BoxDecoration(
-                        color: activeColor,
-                        borderRadius: BorderRadius.horizontal(
-                          left: Radius.circular(3),
+                if (isSelected)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: Container(
+                        width: 3,
+                        height: 24,
+                        decoration: const BoxDecoration(
+                          color: activeColor,
+                          borderRadius: BorderRadius.horizontal(
+                            left: Radius.circular(3),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -945,8 +999,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                     );
                   },
                   transitionBuilder: (child, animation) {
-                    final isText =
-                        child.key == const ValueKey('hitokoto_text');
+                    final isText = child.key == const ValueKey('hitokoto_text');
                     if (!isText) {
                       return FadeTransition(
                         opacity: animation,
@@ -961,11 +1014,10 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                     );
                     final slide = isHomeTab
                         ? Tween<Offset>(
-                            begin: const Offset(0, 0.5), end: Offset.zero)
+                                begin: const Offset(0, 0.5), end: Offset.zero)
                             .animate(curved)
                         : Tween<Offset>(
-                            begin: const Offset(0, -0.5),
-                            end: Offset.zero)
+                                begin: const Offset(0, -0.5), end: Offset.zero)
                             .animate(curved);
                     return FadeTransition(
                       opacity: curved,
@@ -985,30 +1037,34 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                           style: TextStyle(
                             fontSize: 16,
                             height: 1.2,
-                            color:
-                                isDark ? Colors.white54 : Colors.grey[800],
+                            color: isDark ? Colors.white54 : Colors.grey[800],
                           ),
                         )
-                      : const SizedBox.shrink(
-                          key: ValueKey('hitokoto_empty')),
+                      : const SizedBox.shrink(key: ValueKey('hitokoto_empty')),
                 ),
               ),
               const SizedBox(width: 8),
-              GestureDetector(
-                key: const ValueKey('ai_entry_button'),
-                onTap: _enterAiMode,
-                behavior: HitTestBehavior.opaque,
-                child: SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Center(
-                    child: SvgPicture.asset(
-                      'assets/images/ai_button.svg',
-                      width: 24,
-                      height: 24,
-                      colorFilter: ColorFilter.mode(
-                        isDark ? Colors.white54 : Colors.grey,
-                        BlendMode.srcIn,
+              Semantics(
+                button: true,
+                label: context.l10n.a11yAiAssistant,
+                child: GestureDetector(
+                  key: const ValueKey('ai_entry_button'),
+                  onTap: _enterAiMode,
+                  behavior: HitTestBehavior.opaque,
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Center(
+                      child: ExcludeSemantics(
+                        child: SvgPicture.asset(
+                          'assets/images/ai_button.svg',
+                          width: 24,
+                          height: 24,
+                          colorFilter: ColorFilter.mode(
+                            isDark ? Colors.white54 : Colors.grey,
+                            BlendMode.srcIn,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -1018,8 +1074,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
               SizedBox(
                 width: 40,
                 height: 40,
-                child:
-                    _buildAvatar(context, authState, isDark),
+                child: _buildAvatar(context, authState, isDark),
               ),
             ],
           ),
@@ -1035,7 +1090,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
     final isLimitReached = aiState.isRoundLimitReached;
     final canSend = !isLimitReached &&
         !aiState.isLoading &&
-        (_aiInputController.text.trim().isNotEmpty || _selectedImagePath != null);
+        (_aiInputController.text.trim().isNotEmpty ||
+            _selectedImagePath != null);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -1184,7 +1240,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                 ),
                 const SizedBox(width: 4),
                 GestureDetector(
-                  onTap: canSend ? () => _submitAiQuery(_aiInputController.text) : null,
+                  onTap: canSend
+                      ? () => _submitAiQuery(_aiInputController.text)
+                      : null,
                   behavior: HitTestBehavior.opaque,
                   child: SizedBox(
                     width: 40,
@@ -1220,81 +1278,91 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
   }
 
   /// 头像（含登录状态圆环）， plain 顶栏与卡片顶栏共用
-  Widget _buildAvatar(
-      BuildContext context, AuthState authState, bool isDark,
+  Widget _buildAvatar(BuildContext context, AuthState authState, bool isDark,
       {Key? key}) {
-    return Stack(
-      key: key,
-      clipBehavior: Clip.none,
-      alignment: Alignment.topCenter,
-      children: [
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              createSlideHorizontalRoute(const ProfileScreen()),
-            );
-          },
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                if (authState.status == AuthStatus.authenticating)
-                  const SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(Colors.orange),
-                    ),
-                  )
-                else
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: _getAuthStatusColor(authState.status),
-                        width: 2,
+    final statusText = authState.status == AuthStatus.authenticated
+        ? context.l10n.loginStatusLoggedIn
+        : (authState.status == AuthStatus.authenticating
+            ? context.l10n.loginStatusLoggingIn
+            : context.l10n.notLoggedIn);
+
+    return Semantics(
+      button: true,
+      label: context.l10n.a11yProfileWithStatus(statusText),
+      excludeSemantics: true,
+      child: Stack(
+        key: key,
+        clipBehavior: Clip.none,
+        alignment: Alignment.topCenter,
+        children: [
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                createSlideHorizontalRoute(const ProfileScreen()),
+              );
+            },
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  if (authState.status == AuthStatus.authenticating)
+                    const SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(Colors.orange),
                       ),
-                    ),
-                  ),
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor:
-                      isDark ? Colors.white10 : const Color(0xFFEEEEEE),
-                  backgroundImage: _getAvatarImage(authState),
-                  child: _getAvatarImage(authState) == null
-                      ? const Icon(Icons.person, size: 20, color: Colors.grey)
-                      : null,
-                ),
-                // 登录失败/身份过期显示感叹号
-                if (authState.status == AuthStatus.unauthenticated &&
-                    authState.hasAccount)
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
+                    )
+                  else
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.priority_high_rounded,
-                        color: Colors.white,
-                        size: 10,
+                        border: Border.all(
+                          color: _getAuthStatusColor(authState.status),
+                          width: 2,
+                        ),
                       ),
                     ),
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor:
+                        isDark ? Colors.white10 : const Color(0xFFEEEEEE),
+                    backgroundImage: _getAvatarImage(authState),
+                    child: _getAvatarImage(authState) == null
+                        ? const Icon(Icons.person, size: 20, color: Colors.grey)
+                        : null,
                   ),
-              ],
+                  // 登录失败/身份过期显示感叹号
+                  if (authState.status == AuthStatus.unauthenticated &&
+                      authState.hasAccount)
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.priority_high_rounded,
+                          color: Colors.white,
+                          size: 10,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1302,7 +1370,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
     if (authState.avatarUrl == null) {
       return null;
     }
-    
+
     if (authState.avatarUrl!.startsWith('http')) {
       return NetworkImage(authState.avatarUrl!);
     } else {
@@ -1313,7 +1381,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
     }
     return null;
   }
-  
+
   Color _getAuthStatusColor(AuthStatus status) {
     switch (status) {
       case AuthStatus.authenticated:

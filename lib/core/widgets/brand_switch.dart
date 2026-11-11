@@ -4,13 +4,20 @@ import 'package:flutter/material.dart';
 class BrandSwitch extends StatelessWidget {
   final bool value;
   final ValueChanged<bool>? onChanged;
-  const BrandSwitch({super.key, required this.value, required this.onChanged});
+  final String? semanticLabel;
+
+  const BrandSwitch({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.semanticLabel,
+  });
 
   static const Color _brand = Color(0xFF09C489);
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
+    final switchWidget = Theme(
       data: ThemeData(
         useMaterial3: false,
         colorScheme: Theme.of(context).colorScheme,
@@ -30,5 +37,15 @@ class BrandSwitch extends StatelessWidget {
         }),
       ),
     );
+
+    if (semanticLabel != null) {
+      return Semantics(
+        label: semanticLabel,
+        toggled: value,
+        onTap: onChanged != null ? () => onChanged!(!value) : null,
+        child: switchWidget,
+      );
+    }
+    return switchWidget;
   }
 }

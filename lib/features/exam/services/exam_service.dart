@@ -245,6 +245,13 @@ class ExamService {
     return null;
   }
 
+  /// 排除页面中的 dynamicNowTime（超星试卷页面的顶部动态服务器时钟，避免被误提取为考试时间）
+  static void excludeDynamicNowTime(dom.Document document) {
+    document
+        .querySelectorAll('#dynamicNowTime, .dynamicNowTime, .paper_time')
+        .forEach((el) => el.remove());
+  }
+
   /// 解析包含 <div id="watermark-wrapper" class="watermark-wrapper"></div> 的考试详情 HTML
   /// 
   /// 规则：
@@ -252,8 +259,12 @@ class ExamService {
   /// - 领取时间 ➔ 开始时间 (startTime)
   /// - 提交时间 ➔ 结束时间 (endTime)
   /// - 姓名、学号等学生信息
+  /// - 额外排除页面上的 dynamicNowTime 动态时间
   ExamDetailInfo? parseExamDetailHtml(String html) {
     final document = html_parser.parse(html);
+
+    // 0. 明确排除 dynamicNowTime（超星试卷页面的顶部动态服务器时钟）
+    excludeDynamicNowTime(document);
 
     // 1. 定位 watermark-wrapper 元素
     final dom.Element? wmElement = document.querySelector(
@@ -290,7 +301,9 @@ class ExamService {
     );
 
     final String containerText = targetContainer?.text ?? '';
-    final String searchScope = containerText.isNotEmpty ? containerText : html;
+    // 若未定位到容器，搜索范围使用去除 dynamicNowTime 后的文档文本，绝不使用含 dynamicNowTime 的原始 html
+    final String searchScope =
+        containerText.isNotEmpty ? containerText : (document.body?.text ?? '');
 
     // 3. 严格针对“领取时间”和“提交时间”进行提取
     // 兼容可能存在的 HTML 标签和 span.din.font16
@@ -474,19 +487,20 @@ class ExamService {
                 ),
               );
               continue;
+            } else {
+              _logger.i('ℹ️ 详情页未提取到时间，作为未定时间考试入库: $title ($id)');
             }
           }
         } catch (e) {
           _logger.w('Failed to fetch detail for exam $title ($id): $e');
         }
 
-        // 若详情页未解析出水印时间，以标题时间或默认时间入库
-        final fallbackTime = _tryParseDateFromTitle(title) ?? DateTime.now();
+        // 如果的确没有提取到时间，直接作为未定时间的考试显示在考试安排里，不需要有时间
         examResults.add(
           ExamScheduleModel(
             id: id,
             title: title,
-            time: fallbackTime,
+            time: null,
             detailUrl: taskUrl,
             status: status,
             createdAt: DateTime.now(),
@@ -494,9 +508,9 @@ class ExamService {
         );
       }
 
-      // 始终只储存开始时间是今天以及今天之后日期的考试
+      // 始终只储存开始时间是今天以及今天之后日期的考试（无时间的考试直接保留）
       final validResults = ExamStorage.filterUpcomingAndToday(examResults);
-      validResults.sort((a, b) => a.time.compareTo(b.time));
+      validResults.sort(ExamScheduleModel.compareTime);
 
       _logger.i('✅ Successfully synced ${validResults.length} exams from cloud');
       return validResults;
@@ -504,48 +518,6 @@ class ExamService {
       _logger.e('❌ Fetch exams failed: $e');
       rethrow;
     }
-  }
-
-  /// 尝试从考试标题解析大致日期（用于未完成或历史考试的兜底排序）
-  DateTime? _tryParseDateFromTitle(String title) {
-    // 2026年9月10日
-    final m1 = RegExp(r'(\d{4})年(\d{1,2})月(\d{1,2})日').firstMatch(title);
-    if (m1 != null) {
-      final y = int.tryParse(m1.group(1)!);
-      final m = int.tryParse(m1.group(2)!);
-      final d = int.tryParse(m1.group(3)!);
-      if (y != null && m != null && d != null) {
-        return DateTime(y, m, d);
-      }
-    }
-    // 20260311
-    final m2 = RegExp(r'\b(\d{4})(\d{2})(\d{2})\b').firstMatch(title);
-    if (m2 != null) {
-      final y = int.tryParse(m2.group(1)!);
-      final m = int.tryParse(m2.group(2)!);
-      final d = int.tryParse(m2.group(3)!);
-      if (y != null && m != null && d != null) {
-        return DateTime(y, m, d);
-      }
-    }
-    // 2025年秋季 / 2025年春季
-    final m3 = RegExp(r'(\d{4})年(春|秋)季').firstMatch(title);
-    if (m3 != null) {
-      final y = int.tryParse(m3.group(1)!);
-      final isSpring = m3.group(2) == '春';
-      if (y != null) {
-        return DateTime(y, isSpring ? 3 : 9, 1);
-      }
-    }
-    // 2024 / 2025
-    final m4 = RegExp(r'\b(202\d)\b').firstMatch(title);
-    if (m4 != null) {
-      final y = int.tryParse(m4.group(1)!);
-      if (y != null) {
-        return DateTime(y, 1, 1);
-      }
-    }
-    return null;
   }
 
   /// 兼容接口：委托给 fetchExams
@@ -557,7 +529,7 @@ class ExamService {
       fetchExams(cachedExams: cachedExams);
 
   /// 日期时间字符串解析
-  DateTime? _parseDateTimeString(String str) {
+  static DateTime? parseDateTimeString(String str) {
     final clean = str.trim();
     try {
       return DateFormat('yyyy-MM-dd HH:mm:ss').parse(clean);
@@ -573,4 +545,6 @@ class ExamService {
       }
     }
   }
+
+  DateTime? _parseDateTimeString(String str) => parseDateTimeString(str);
 }

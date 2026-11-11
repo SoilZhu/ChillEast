@@ -215,6 +215,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get funcGym => 'Reserva de Espaços';
 
   @override
+  String get funcPhysicalTest => 'Reserva de Teste Físico';
+
+  @override
   String get funcTeachingEval => 'Avaliação Docente';
 
   @override
@@ -539,6 +542,24 @@ class AppLocalizationsPt extends AppLocalizations {
   String get homeworkReminderTime => 'Horário do Lembrete de Tarefa';
 
   @override
+  String get homeworkRepeatReminder => '作业持续提醒';
+
+  @override
+  String get homeworkRepeatReminderDesc => '未完成前定期再次提醒';
+
+  @override
+  String get homeworkRepeatInterval => '提醒频率';
+
+  @override
+  String get homeworkRepeatIntervalTime => '选择提醒频率';
+
+  @override
+  String get homeworkRemindAfterDue => '逾期后继续提醒';
+
+  @override
+  String get homeworkRemindAfterDueDesc => '截止后24小时内未完成仍提醒';
+
+  @override
   String get libraryReminder => 'Lembrete de Reserva da Biblioteca';
 
   @override
@@ -555,6 +576,16 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String notifHoursBefore(String hours) {
     return '$hours h antes';
+  }
+
+  @override
+  String notifMinutesInterval(int minutes) {
+    return '每$minutes分钟';
+  }
+
+  @override
+  String notifHoursInterval(String hours) {
+    return '每$hours小时';
   }
 
   @override
@@ -2534,6 +2565,9 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get homeworkOverdueNotice => '作业已截止，若已提交请在应用中标记完成';
+
+  @override
   String minutesCount(int count) {
     return '$count min';
   }
@@ -3280,4 +3314,143 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get analyticsPromptSubtitle =>
       'Contabiliza a versão do seu aplicativo de forma estritamente anônima.';
+
+  @override
+  String get setReminder => '设置提醒';
+
+  @override
+  String get reminderSettings => '提醒设置';
+
+  @override
+  String get reminderMode => '提醒方式';
+
+  @override
+  String get reminderBefore => '提前';
+
+  @override
+  String get reminderAfter => '延后';
+
+  @override
+  String get reminderExact => '准时';
+
+  @override
+  String get reminderDisabled => '不提醒';
+
+  @override
+  String get reminderScope => '生效范围';
+
+  @override
+  String get scopeOnlyThis => '仅本次课';
+
+  @override
+  String scopeThisWeekday(String weekday) {
+    return '该课程所有在$weekday的课';
+  }
+
+  @override
+  String scopeThisWeek(int week) {
+    return '该课程在第$week周所有的课';
+  }
+
+  @override
+  String get scopeAll => '该课程全学期所有的课';
+
+  @override
+  String get currentRule => '当前设置';
+
+  @override
+  String get restoreDefault => '恢复默认';
+
+  @override
+  String get reminderSaved => '提醒设置已保存';
+
+  @override
+  String get reminderReset => '已恢复默认提醒设置';
+
+  @override
+  String get baseTime => '基准时间';
+
+  @override
+  String get baseTimeSettings => '设置时间';
+
+  @override
+  String get baseTimeClassTime => '课表时间';
+
+  @override
+  String get baseTimeSettingsDesc => '以设置中的提醒时间为基准';
+
+  @override
+  String get baseTimeClassTimeDesc => '以课表上课时间为基准';
+
+  @override
+  String get relativeToSettings => '在默认提醒的基础上调整';
+
+  @override
+  String get relativeToSettingsDesc => '关闭后将直接按上课时间提醒';
+
+  @override
+  String get adjustBasedOnDefault => '在默认提醒的基础上调整';
+
+  @override
+  String adjustDefaultBefore(String time) {
+    return '在默认提醒的基础上，提前 $time';
+  }
+
+  @override
+  String adjustDefaultAfter(String time) {
+    return '在默认提醒的基础上，延后 $time';
+  }
+
+  @override
+  String directClassBefore(String time) {
+    return '直接在上课前 $time 提醒';
+  }
+
+  @override
+  String directClassAfter(String time) {
+    return '直接在上课 $time 后提醒';
+  }
+
+  @override
+  String get directClassExact => '直接在上课时提醒';
+
+  @override
+  String get matchDefaultReminder => '与默认提醒时间保持一致';
+
+  @override
+  String get estimatedReminderTime => '预计提醒时刻';
+
+  @override
+  String get loginStatusLoggedIn => '已登录';
+
+  @override
+  String get loginStatusLoggingIn => '登录中';
+
+  @override
+  String get a11yAiAssistant => 'AI 助理';
+
+  @override
+  String a11yProfileWithStatus(String status) {
+    return '个人中心，$status';
+  }
+
+  @override
+  String get a11yTapForCourseDetail => '双击查看课程详情与排课冲突';
+
+  @override
+  String get a11yCourseConflict => '，存在时间重叠冲突';
+
+  @override
+  String get a11ySeatStatusOccupied => '已被占用';
+
+  @override
+  String get a11ySeatStatusSelected => '已选中，双击取消选择';
+
+  @override
+  String get a11ySeatStatusAvailable => '空闲可用，双击选择';
+
+  @override
+  String a11ySeatDescription(String seatNum, String status) {
+    return '$seatNum号座位，$status';
+  }
 }

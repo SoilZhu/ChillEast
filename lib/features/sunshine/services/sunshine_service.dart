@@ -102,6 +102,72 @@ class SunshineService {
     }
   }
 
+  /// 该站点（form.aspx、AJAX/*.ashx）响应头全部声明 `charset=gb2312`，
+  /// ASP.NET 也会用 web.config 里的 requestEncoding 解析请求体。若按 dio 默认
+  /// 的 UTF-8 百分号编码提交，服务端会把 UTF-8 字节当成 GBK 解码，中文标题和
+  /// 正文存进去就是乱码，所以请求体必须用 GBK 字节编码。
+  ///
+  /// 返回的字符串是纯 ASCII 的百分号编码，dio 之后按 UTF-8 转字节不会改变它。
+  static String encodeGbkForm(Map<String, String> fields) {
+    final buffer = StringBuffer();
+    for (final entry in fields.entries) {
+      if (buffer.isNotEmpty) buffer.write('&');
+      buffer
+        ..write(_gbkPercentEncode(entry.key))
+        ..write('=')
+        ..write(_gbkPercentEncode(entry.value));
+    }
+    return buffer.toString();
+  }
+
+  static String _gbkPercentEncode(String value) {
+    final buffer = StringBuffer();
+    for (final byte in gbk.encode(_dropUnencodable(value))) {
+      if (byte == 0x20) {
+        // application/x-www-form-urlencoded 约定空格编码为 `+`。
+        buffer.write('+');
+      } else if (_isUnreservedAscii(byte)) {
+        buffer.writeCharCode(byte);
+      } else {
+        buffer
+          ..write('%')
+          ..write(byte.toRadixString(16).toUpperCase().padLeft(2, '0'));
+      }
+    }
+    return buffer.toString();
+  }
+
+  static bool _isUnreservedAscii(int byte) =>
+      (byte >= 0x30 && byte <= 0x39) || // 0-9
+      (byte >= 0x41 && byte <= 0x5A) || // A-Z
+      (byte >= 0x61 && byte <= 0x7A) || // a-z
+      byte == 0x2D || // -
+      byte == 0x2E || // .
+      byte == 0x5F || // _
+      byte == 0x7E; // ~
+
+  /// GBK 表示不了的字符（emoji、部分生僻字）直接丢弃。fast_gbk 遇到代理对只写入
+  /// 一个截断字节（0xF6），会连带把后一个汉字也编码错，所以必须先剔除再编码。
+  static String _dropUnencodable(String value) {
+    if (_isGbkEncodable(value)) return value;
+    final buffer = StringBuffer();
+    for (final rune in value.runes) {
+      final char = String.fromCharCode(rune);
+      if (_isGbkEncodable(char)) buffer.write(char);
+    }
+    return buffer.toString();
+  }
+
+  static bool _isGbkEncodable(String value) {
+    try {
+      return !gbk
+          .decode(gbk.encode(value), allowMalformed: true)
+          .contains('\uFFFD');
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<SunshineIdentity?> _fetchIdentity() async {
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
@@ -208,7 +274,7 @@ class SunshineService {
   }) async {
     final response = await _dio.post('$baseUrl/AJAX/form.ashx',
         queryParameters: {'AFlag': 'insert'},
-        data: {
+        data: encodeGbkForm({
           'type1': type,
           'depid': department.code,
           'depname': department.name,
@@ -220,7 +286,7 @@ class SunshineService {
           'finishtime': finishTime,
           'captchas': '',
           'CardCode': identity.cardCode,
-        },
+        }),
         options: _options.copyWith(followRedirects: false));
     if (response.statusCode != 200) return 'unknown';
     final result = response.data.toString().trim();

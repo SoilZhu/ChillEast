@@ -67,7 +67,6 @@ class _CloudSyncPromptScreenState
   final PageController _pageController = PageController();
   int _currentPage = 0;
   bool _busy = false;
-  bool _allowPop = false;
 
   static const int _totalSteps = 7;
 
@@ -143,7 +142,6 @@ class _CloudSyncPromptScreenState
     if (_busy) return;
     await _recordGuideSeen();
     if (!mounted) return;
-    setState(() => _allowPop = true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) Navigator.of(context).maybePop();
     });
@@ -379,23 +377,11 @@ class _CloudSyncPromptScreenState
                           ),
                 )
               : null,
-          actions: [
-            IconButton(
-              icon: Icon(
-                Icons.close_rounded,
-                color: isDark ? Colors.white70 : const Color(0xFF5F6368),
-              ),
-              tooltip: l10n.close,
-              onPressed: _busy ? null : _dismiss,
-            ),
-          ],
         ),
         body: SafeArea(
           child: PageView(
             controller: _pageController,
-            physics: _busy
-                ? const NeverScrollableScrollPhysics()
-                : const BouncingScrollPhysics(),
+            physics: const NeverScrollableScrollPhysics(),
             onPageChanged: (index) => setState(() => _currentPage = index),
             children: [
               // 步骤 1: 云备份同步
@@ -484,7 +470,7 @@ class _CloudSyncPromptScreenState
                                       ),
                                     ),
                                   ),
-                                  Switch(
+                                  BrandSwitch(
                                     value: _useLiveActivity,
                                     onChanged: _busy
                                         ? null
@@ -732,7 +718,7 @@ class _CloudSyncPromptScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 上方图片区域（限制宽度在 50% 且左对齐，置于标题上方一点）
+        // 上方图片区域（限制宽高不超过 50% 且左对齐，置于标题上方一点）
         Expanded(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
@@ -740,6 +726,7 @@ class _CloudSyncPromptScreenState
               alignment: Alignment.bottomLeft,
               child: FractionallySizedBox(
                 widthFactor: 0.5,
+                heightFactor: 0.5,
                 alignment: Alignment.bottomLeft,
                 child: Image.asset(
                   imageAsset,

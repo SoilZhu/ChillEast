@@ -54,7 +54,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
         // 当窗口宽度变窄不足以分屏，但当前有嵌入展示的子设置页时，
         // 自动清空嵌入状态并作为纯正全屏路由推入 Navigator，平滑降级
-        if (!isLargeScreen && _embeddedScreen != null && !_isTransitioningToRoute) {
+        if (!isLargeScreen &&
+            _embeddedScreen != null &&
+            !_isTransitioningToRoute) {
           _isTransitioningToRoute = true;
           final screenToOpen = _embeddedScreen!;
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -276,7 +278,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Padding(
+    final itemWidget = Padding(
       padding: isLargeScreen
           ? const EdgeInsets.symmetric(horizontal: 10, vertical: 2)
           : EdgeInsets.zero,
@@ -299,7 +301,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Row(
                 children: [
-                  Icon(icon, size: 24, color: const Color(0xFF5F6368)),
+                  ExcludeSemantics(
+                    child: Icon(icon, size: 24, color: const Color(0xFF5F6368)),
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -309,8 +313,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           title,
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                            color: isDark ? Colors.white : const Color(0xFF202124),
+                            fontWeight:
+                                isSelected ? FontWeight.w600 : FontWeight.w400,
+                            color:
+                                isDark ? Colors.white : const Color(0xFF202124),
                           ),
                         ),
                         if (subtitle != null) ...[
@@ -319,7 +325,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             subtitle,
                             style: TextStyle(
                               fontSize: 12,
-                              color: isDark ? Colors.white54 : const Color(0xFF9E9E9E),
+                              color: isDark
+                                  ? Colors.white54
+                                  : const Color(0xFF9E9E9E),
                             ),
                           ),
                         ],
@@ -331,18 +339,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     const SizedBox(width: 4),
                   ],
                   if (showChevron)
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: 20,
-                      color: isSelected
-                          ? (isDark ? Colors.white70 : const Color(0xFF5F6368))
-                          : const Color(0xFF9E9E9E),
+                    ExcludeSemantics(
+                      child: Icon(
+                        Icons.chevron_right_rounded,
+                        size: 20,
+                        color: isSelected
+                            ? (isDark
+                                ? Colors.white70
+                                : const Color(0xFF5F6368))
+                            : const Color(0xFF9E9E9E),
+                      ),
                     ),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        selected: isLargeScreen ? isSelected : null,
+        child: itemWidget,
       ),
     );
   }

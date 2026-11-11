@@ -51,7 +51,7 @@ class ExamQueryTool {
             final manual = local.where((e) => e.isManual).toList();
             final updated = await examService.fetchExams();
             final merged = [...manual, ...updated]
-              ..sort((a, b) => a.time.compareTo(b.time));
+              ..sort(ExamScheduleModel.compareTime);
             await examStorage.saveExamList(merged);
           } catch (e) {
             return McpToolResult.error('刷新考试数据失败: $e');
@@ -87,13 +87,13 @@ class ExamQueryTool {
         }
 
         // 5. 按考试时间升序排列
-        exams.sort((a, b) => a.time.compareTo(b.time));
+        exams.sort(ExamScheduleModel.compareTime);
 
         // 6. 格式化结果输出
         final now = DateTime.now();
         final results = exams.map((e) {
-          final timeStr = DateFormat('yyyy-MM-dd HH:mm').format(e.time);
-          final isPast = e.time.isBefore(now);
+          final timeStr = e.time != null ? DateFormat('yyyy-MM-dd HH:mm').format(e.time!) : '未定';
+          final isPast = e.time != null && e.time!.isBefore(now);
           return {
             'id': e.id,
             'title': e.title,
@@ -204,7 +204,7 @@ class ExamAddTool {
 
         final currentList = await examStorage.readExamList();
         final updated = [...currentList, newExam];
-        updated.sort((a, b) => a.time.compareTo(b.time));
+        updated.sort(ExamScheduleModel.compareTime);
         await examStorage.saveExamList(updated);
 
         if (onChanged != null) {

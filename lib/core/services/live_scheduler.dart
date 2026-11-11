@@ -361,6 +361,7 @@ class LiveScheduler {
           text: text,
           capsuleText: w.location,
           timeText: l10n.liveSeatStartingTime('$hh:$mm'),
+          whenMs: w.start.millisecondsSinceEpoch,
         );
       } else {
         await CourseLiveService().upsert(
@@ -383,6 +384,7 @@ class LiveScheduler {
           text: text,
           capsuleText: w.location,
           timeText: l10n.liveClassStartingTime('$hh:$mm'),
+          whenMs: w.start.millisecondsSinceEpoch,
         );
       } else {
         await CourseLiveService().upsert(
