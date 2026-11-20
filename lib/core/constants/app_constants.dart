@@ -77,9 +77,9 @@ class AppConstants {
       '$chaoxingNoticeBaseUrl/pc/notice/$uuid/detail?sendTag=0';
 
   // 其他功能URL
-  // 超星应用中心 - 教学评价 (会自动跳转到 jxpj.hunau.edu.cn)
+  // 教学评价 (超星授权，跳转到 jxpj.hunau.edu.cn)
   static const String teachingEvalUrl =
-      'https://v1.chaoxing.com/appInter/openPcApp?mappId=8056745';
+      'https://auth.chaoxing.com/connect/oauth2/authorize?appid=856e61b871b4445fb53ec959cd3db659&redirect_uri=https%3A%2F%2Fjxpj.hunau.edu.cn%2Fwx%2F%3Funiversitycode%3D10537%26appId%3D856e61b871b4445fb53ec959cd3db659%26appKey%3DqpeW5i35D6y673fs%26uid%3D67661390%26fidEnc%3Da915b52ee0aa18ad%26formid%3Dnull%26mappId%3D8056745&response_type=code&scope=snsapi_base&state=128516';
   // 超星场馆预约系统
   static const String gymReservationUrl =
       'https://reserve.chaoxing.com/front/web/apps/reservepc/index?reserveId=14191&fidEnc=a915b52ee0aa18ad';
